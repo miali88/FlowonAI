@@ -10,11 +10,11 @@ import {
   } from "@chakra-ui/react";
   import { useMutation } from "@tanstack/react-query";
   import { useForm, SubmitHandler } from "react-hook-form";
-  import { UsersService, type UserCreate } from "../../client";
+  import { UsersService, type UserRegister } from "../../client";
   import useCustomToast from "../../hooks/useCustomToast";
   import { emailPattern } from "../../utils";
   
-  interface OnboardingFormInputs extends UserCreate {
+  interface OnboardingFormInputs extends UserRegister {
     confirm_password: string;
   }
   
@@ -37,14 +37,18 @@ import {
     });
   
     const mutation = useMutation({
-      mutationFn: (data: UserCreate) => UsersService.createUser({ requestBody: data }),
-      onSuccess: () => {
+        mutationFn: (data: UserRegister) => UsersService.registerUser({ requestBody: data }),
+        onSuccess: () => {
         showToast("Success!", "Account created successfully.", "success");
         // You might want to add redirection logic here
       },
       onError: (err: any) => {
-        const errDetail = err.body?.detail;
-        showToast("Error", `${errDetail}`, "error");
+        if (err.status === 401) {
+          showToast("Error", "Unable to create account. Please contact support.", "error");
+        } else {
+          const errDetail = err.body?.detail || "An unexpected error occurred";
+          showToast("Error", `${errDetail}`, "error");
+        }
       },
     });
   
