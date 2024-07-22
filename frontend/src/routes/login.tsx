@@ -12,6 +12,7 @@ import {
   InputRightElement,
   Link,
   useBoolean,
+  HStack,
 } from "@chakra-ui/react"
 import {
   Link as RouterLink,
@@ -131,9 +132,20 @@ function Login() {
             Forgot password?
           </Link>
         </Center>
-        <Button variant="primary" type="submit" isLoading={isSubmitting}>
-          Log In
-        </Button>
+        <HStack spacing={4} width="100%">
+          <Button variant="primary" type="submit" isLoading={isSubmitting} flex={1}>
+            Log In
+          </Button>
+          <Button
+            as={RouterLink}
+            to="/onboarding"
+            variant="outline"
+            colorScheme="blue"
+            flex={1}
+          >
+            Register
+          </Button>
+        </HStack>
       </Container>
     </>
   )

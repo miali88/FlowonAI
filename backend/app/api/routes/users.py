@@ -148,7 +148,7 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     if not settings.USERS_OPEN_REGISTRATION:
         raise HTTPException(
             status_code=403,
-            detail="Open user registration is forbidden on this server",
+            detail="Meow, Open user registration is forbidden on this server",
         )
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
