@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str = ""
 
+    TWILIO_ACCOUNT_SID: str
+    TWILIO_AUTH_TOKEN: str
+
+    RETELL_API_KEY: str
+    AGENT_FIRST: str
+    AGENT_SECOND: str
+
     @computed_field  # type: ignore[misc]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
