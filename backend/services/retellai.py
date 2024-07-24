@@ -6,6 +6,12 @@ from retell import Retell
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 
+from pydantic import BaseModel
+from typing import Optional
+
+class Event(BaseModel):
+    name: str
+    args: Optional[dict] = None
 
 """ INITIAL CALL HANDLING """
 def get_agent_type(agent_id_path):
