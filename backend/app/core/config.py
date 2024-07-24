@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     AGENT_FIRST: str
     AGENT_SECOND: str
 
+    BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
+    TWILIO_NUMBER: str = "+447723180506"
+
     @computed_field  # type: ignore[misc]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
