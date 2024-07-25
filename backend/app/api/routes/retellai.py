@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post('/')
 async def webhook(request: Request):
     try:
-        print('\n\n / endpoint')
+        print('\n / endpoint')
         return await handle_form_webhook(request)
     except Exception as e:
         print(f"Error in / : {e}")
