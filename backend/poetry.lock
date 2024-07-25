@@ -1926,13 +1926,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "retell-sdk"
-version = "4.0.0"
+version = "3.18.0"
 description = "The official Python library for the retell API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "retell_sdk-4.0.0-py3-none-any.whl", hash = "sha256:cdfe9b98ce511691d71c985f32a7a73eca10e1eabde677b0c4b362ba7565d3b4"},
-    {file = "retell_sdk-4.0.0.tar.gz", hash = "sha256:2237a1c4a0bd89f7c6186fa7ef889250c8cc63d17ea5ab7c9805c91c66a78c1c"},
+    {file = "retell_sdk-3.18.0-py3-none-any.whl", hash = "sha256:c4e474aaa2b9585bc91912eabf58c716f6d1070de349ba4113d5625c326fa010"},
+    {file = "retell_sdk-3.18.0.tar.gz", hash = "sha256:20b95306346304e74f7c515417a4970007fd7ec7d9ec092ed4808e56bd7b778a"},
 ]
 
 [package.dependencies]
@@ -2629,4 +2629,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "c6ac7e20ef90003dfc0b19e37e16dc754221f717c6e99dbb75f0a8f6319ab874"
+content-hash = "bbabe172a9e595cefde138e8d24d4af96348fdef183c1d3d430db4449780e017"

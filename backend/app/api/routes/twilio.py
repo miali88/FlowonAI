@@ -7,7 +7,7 @@ from services.twilio import handle_voice_webhook, add_to_conference, generate_tw
 
 router = APIRouter()
 
-@router.post("/")
+@router.api_route("/", methods=['GET', 'POST'])
 async def twilio_status_update():
     return JSONResponse(content={"message": "Twilio status update received"})
 

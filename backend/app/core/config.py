@@ -55,13 +55,13 @@ class Settings(BaseSettings):
 
     TWILIO_ACCOUNT_SID: str
     TWILIO_AUTH_TOKEN: str
+    TWILIO_NUMBER: str 
 
     RETELL_API_KEY: str
     AGENT_FIRST: str
     AGENT_SECOND: str
 
     BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
-    TWILIO_NUMBER: str = "+447723180506"
 
     @computed_field  # type: ignore[misc]
     @property

@@ -7,7 +7,6 @@ from services.in_memory_cache import in_memory_cache
 
 from retell import Retell
 retell = Retell(api_key=settings.RETELL_API_KEY)
-print('\n retell api',retell)
 
 from pydantic import BaseModel
 from typing import Optional
@@ -47,7 +46,9 @@ async def handle_retell_logic(agent_id_path):
     except ValueError as ve:
         print(f"Invalid agent_id_path: {ve}")
         raise HTTPException(status_code=400, detail=f"Invalid agent_id_path: {str(ve)}")
-    
+    except AttributeError as ae:
+        print(f"AttributeError: {ae}")
+        raise HTTPException(status_code=500, detail=f"Retell API error: {str(ae)}")
     except Exception as e:
         print(f"Error in handle_retell_logic: {e}")
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
