@@ -27,7 +27,6 @@ from app.utils import generate_new_account_email, send_email
 
 router = APIRouter()
 
-
 @router.get(
     "/",
     dependencies=[Depends(get_current_active_superuser)],

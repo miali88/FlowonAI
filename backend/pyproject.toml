@@ -26,6 +26,8 @@ bcrypt = "4.0.1"
 pydantic-settings = "^2.2.1"
 sentry-sdk = {extras = ["fastapi"], version = "^1.40.6"}
 pyjwt = "^2.8.0"
+twilio = "^9.2.3"
+retell-sdk = "3.18.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

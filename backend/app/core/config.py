@@ -14,7 +14,6 @@ from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
-
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
         return [i.strip() for i in v.split(",")]
@@ -53,6 +52,16 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str = ""
+
+    TWILIO_ACCOUNT_SID: str
+    TWILIO_AUTH_TOKEN: str
+    TWILIO_NUMBER: str 
+
+    RETELL_API_KEY: str
+    AGENT_FIRST: str
+    AGENT_SECOND: str
+
+    BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
 
     @computed_field  # type: ignore[misc]
     @property
