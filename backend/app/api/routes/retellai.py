@@ -1,9 +1,7 @@
-from retell import Retell
 
 from fastapi import FastAPI, Request, HTTPException, APIRouter
 from fastapi.responses import Response, JSONResponse
 
-from app.core.config import settings
 from app.utils import generate_new_account_email, send_email
 
 from services.retellai import handle_form_webhook

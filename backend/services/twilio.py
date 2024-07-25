@@ -3,10 +3,10 @@ from fastapi.responses import Response, JSONResponse
 
 from twilio.rest import Client 
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
-from retell import Retell
 
 from services.retellai import handle_retell_logic, get_agent_type
 from services.in_memory_cache import in_memory_cache
+from app.core.config import settings
 
 from pydantic import BaseModel
 from typing import Optional
@@ -14,6 +14,10 @@ from typing import Optional
 class Event(BaseModel):
     name: str
     args: Optional[dict] = None
+
+from twilio.rest import Client
+from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
+client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 
 """ INITIAL CALL HANDLING """
@@ -25,11 +29,14 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
         agent_type = get_agent_type(agent_id_path)
 
         # Handle Twilio data
+        print('handle twilio data...')
         call_sid = await handle_twilio_logic(agent_id_path, data)
 
+        print('retell logic...')
         # Handle Retell call registration
         retell_callid, websocket_url = await handle_retell_logic(agent_id_path)
 
+        print("creating twilio voice response object..")
         # Create response
         response = create_voice_response(websocket_url)
 
@@ -68,13 +75,6 @@ def create_voice_response(websocket_url):
 
 
 
-
-def generate_twiml():
-    response = VoiceResponse()
-    dial = Dial()
-    dial.conference('MyConferenceRoom')
-    response.append(dial)
-    return Response(content=str(response), media_type='text/xml')
 
 # 1st agent places IC on hold
 async def add_to_conference(request):
@@ -135,3 +135,27 @@ async def admin_to_conf(event: Event, request: Request):
 
     print(response)
 
+
+
+
+# Lifespan contextmanager function, will run every time the app is started and stopped. to change to once call ends. 
+def cleanup():
+    print("Cleaning up before exit...")
+    ## Ensuring all prior calls are ended
+    calls = client.calls.list(status='in-progress')
+
+    # Print and end each ongoing call
+    if calls:
+        for call in calls:
+            print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
+            call = client.calls(call.sid).update(status='completed')
+            print(f"Ended call SID: {call.sid}")
+    else:
+        print('No calls in progress')
+
+def generate_twiml():
+    response = VoiceResponse()
+    dial = Dial()
+    dial.conference('MyConferenceRoom')
+    response.append(dial)
+    return Response(content=str(response), media_type='text/xml')

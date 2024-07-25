@@ -2,9 +2,12 @@ from fastapi import FastAPI, Request, HTTPException, APIRouter
 from fastapi.responses import Response, JSONResponse
 import asyncio
 
-from retell import Retell
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
+
+from retell import Retell
+retell = Retell(api_key=settings.RETELL_API_KEY)
+print('\n retell api',retell)
 
 from pydantic import BaseModel
 from typing import Optional
@@ -23,21 +26,31 @@ def get_agent_type(agent_id_path):
     else:
         raise ValueError(f"Unknown agent_id_path: {agent_id_path}")
 
+
 async def handle_retell_logic(agent_id_path):
     """Handle Retell-specific operations."""
-    agent_type = get_agent_type(agent_id_path)
-    call = await asyncio.to_thread(retell.call.register,
-        agent_id=agent_id_path,
-        audio_encoding="mulaw",
-        audio_websocket_protocol="twilio",
-        sample_rate=8000,
-    )
-    retell_callid = call.call_id
-    # if agent_type not in mem_cache:
-    #     mem_cache[agent_type] = {}
-    # mem_cache[agent_type]['retell_callid'] = retell_callid
-    websocket_url = f"wss://api.retellai.com/audio-websocket/{retell_callid}?enable_update=true"
-    return retell_callid, websocket_url
+    try:
+        agent_type = get_agent_type(agent_id_path)
+        print('agent type',agent_type)
+        call = await asyncio.to_thread(retell.call.register,
+            agent_id=agent_id_path,
+            audio_encoding="mulaw",
+            audio_websocket_protocol="twilio",
+            sample_rate=8000,
+        )
+        retell_callid = call.call_id
+        # if agent_type not in mem_cache:
+        #     mem_cache[agent_type] = {}
+        # mem_cache[agent_type]['retell_callid'] = retell_callid
+        websocket_url = f"wss://api.retellai.com/audio-websocket/{retell_callid}?enable_update=true"
+        return retell_callid, websocket_url
+    except ValueError as ve:
+        print(f"Invalid agent_id_path: {ve}")
+        raise HTTPException(status_code=400, detail=f"Invalid agent_id_path: {str(ve)}")
+    
+    except Exception as e:
+        print(f"Error in handle_retell_logic: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
 
 
 

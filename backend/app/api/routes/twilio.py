@@ -1,44 +1,21 @@
 from app.utils import generate_new_account_email, send_email
-from app.core.config import settings
 
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import Response, JSONResponse
 
-from twilio.rest import Client
-from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
-
-from services.twilio import handle_voice_webhook
+from services.twilio import handle_voice_webhook, add_to_conference, generate_twiml
 
 router = APIRouter()
-
-client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-
-# Lifespan contextmanager function, will run every time the app is started and stopped. to change to once call ends. 
-def cleanup():
-    print("Cleaning up before exit...")
-    ## Ensuring all prior calls are ended
-    calls = client.calls.list(status='in-progress')
-
-    # Print and end each ongoing call
-    if calls:
-        for call in calls:
-            print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
-            call = client.calls(call.sid).update(status='completed')
-            print(f"Ended call SID: {call.sid}")
-    else:
-        print('No calls in progress')
 
 @router.post("/")
 async def twilio_status_update():
     return JSONResponse(content={"message": "Twilio status update received"})
 
-# @router.post("/twilio-voice-webhook/{agent_id_path}", response_class=Response)
-@router.api_route("/twilio-voice-webhook/{agent_id_path}", methods=['GET', 'POST'])
+@router.post("/twilio-voice-webhook/{agent_id_path}", response_class=Response)
 async def handle_twilio_voice_webhook(agent_id_path: str, request: Request):
     try:
         print('\n\n /twilio-voice-webhook')
-        #return await handle_voice_webhook(agent_id_path, request)
-        return {'message': 'Twilio voice webhook received'}
+        return await handle_voice_webhook(agent_id_path, request)
     except Exception as e:
         print(f"Error in /twilio-voice-webhook : {e}")
         return HTTPException(status_code=500, detail=str(e))
