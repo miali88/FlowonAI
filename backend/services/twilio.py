@@ -4,7 +4,8 @@ from fastapi.responses import Response, JSONResponse
 from twilio.rest import Client 
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 
-from services.retellai import handle_retell_logic, get_agent_type
+from services import retellai
+from services.db_queries import get_admin_tel_number
 from services.in_memory_cache import in_memory_cache
 from app.core.config import settings
 
@@ -26,7 +27,7 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
         form = await request.form()
         data = dict(form)
 
-        print('agent type',get_agent_type(agent_id_path))
+        print('agent type', retellai.get_agent_type(agent_id_path))
 
         # Handle Twilio data
         print('handle twilio data...')
@@ -34,11 +35,12 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
 
         print('retell logic...')
         # Handle Retell call registration
-        websocket_url = await handle_retell_logic(agent_id_path)
+        websocket_url = await retellai.handle_retell_logic(agent_id_path)
 
         print("creating twilio voice response object..")
         # Create response
         response = create_voice_response(websocket_url)
+
 
         return Response(content=str(response), media_type='text/xml')
     except ValueError as ve:
@@ -50,7 +52,7 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
 
 async def handle_twilio_logic(agent_id_path, data):
     """Handle Twilio-specific operations."""
-    agent_type = get_agent_type(agent_id_path)
+    agent_type = retellai.get_agent_type(agent_id_path)
     if 'CallSid' in data:
         in_memory_cache.set(f"{agent_type}.twilio_callsid",data['CallSid'])
         print(in_memory_cache.get_all())
@@ -82,7 +84,7 @@ async def add_to_conference(request):
                 endConferenceOnExit="true">MyConferenceRoom</Conference></Dial></Response>'
         )
         
-        admin_tel_no = await get_admin_tel_number(mem_cache['1']['case_locator']['admin_name'])
+        admin_tel_no = await get_admin_tel_number(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
         print('admin tel number is', admin_tel_no)
         # 2nd agent to admin 
         await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no,settings.AGENT_SECOND)

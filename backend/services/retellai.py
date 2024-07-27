@@ -2,23 +2,21 @@ from fastapi import FastAPI, Request, HTTPException, APIRouter
 from fastapi.responses import Response, JSONResponse
 from retell import Retell
 from thefuzz import process
-import pandas as pd
-
-from app.core.config import settings
-from services.in_memory_cache import in_memory_cache
-from services.twilio import update_call, add_to_conference
-
-retell = Retell(api_key=settings.RETELL_API_KEY)
 
 import asyncio
 from pydantic import BaseModel
 from typing import Optional
-import os 
+
+from app.core.config import settings
+from services.in_memory_cache import in_memory_cache
+from services import twilio
+from services.db_queries import cases
+
+retell = Retell(api_key=settings.RETELL_API_KEY)
 
 class Event(BaseModel):
     name: str
     args: Optional[dict] = None
-
 
 """ INITIAL CALL HANDLING """
 def get_agent_type(agent_id_path):
@@ -119,13 +117,6 @@ async def caller_information(event: Event, request: Request):
     print('ic_info:', in_memory_cache.get(f"{agent_type}.ic_info"))
     return {"function_result": {"name": "callerInformation"}, "result": f"info noted"} 
 
-
-# Database import and into a dataframe
-current_dir = os.path.dirname(__file__)
-# Define the path to the CSV file
-csv_path = os.path.join(current_dir, 'insolv_data.csv')
-df = pd.read_csv(csv_path)
-cases = df['Company Name:'].tolist()
 async def case_locator(event: Event, request: Request):
     #try: 
     if event['args']['CaseName']:
@@ -154,7 +145,7 @@ async def case_locator(event: Event, request: Request):
 async def call_admin(event: Event, request: Request):
     print('\ncall admin function...')
     hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'      
-    await update_call(in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url,'hold')
+    await twilio.update_call(in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url,'hold')
 
 async def info_retrieve(event: Event, request: Request):
     print('\ninfo_retrieve function...')
@@ -169,7 +160,7 @@ async def admin_available(event: Event, request: Request):
     print('\nadmin available function...')
     admin_available_bool = event['args']['adminAvailable']
     if admin_available_bool == True:
-        await add_to_conference(event, request)
+        await twilio.add_to_conference(event, request)
     return admin_available_bool
 
 # async def call_connected(event: Event, request: Request):
