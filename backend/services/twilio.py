@@ -26,21 +26,19 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
         form = await request.form()
         data = dict(form)
 
-        agent_type = get_agent_type(agent_id_path)
+        print('agent type',get_agent_type(agent_id_path))
 
         # Handle Twilio data
         print('handle twilio data...')
-        call_sid = await handle_twilio_logic(agent_id_path, data)
+        await handle_twilio_logic(agent_id_path, data)
 
         print('retell logic...')
         # Handle Retell call registration
-        retell_callid, websocket_url = await handle_retell_logic(agent_id_path)
+        websocket_url = await handle_retell_logic(agent_id_path)
 
         print("creating twilio voice response object..")
         # Create response
         response = create_voice_response(websocket_url)
-
-        #print(f"Memory Cache for {agent_type}: {mem_cache[agent_type]}")  # For debugging
 
         return Response(content=str(response), media_type='text/xml')
     except ValueError as ve:
@@ -50,16 +48,13 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
         print(f"Error in handle_voice_webhook: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 async def handle_twilio_logic(agent_id_path, data):
     """Handle Twilio-specific operations."""
     agent_type = get_agent_type(agent_id_path)
-    # if 'CallSid' in data:
-    #     if agent_type not in mem_cache:
-    #         mem_cache[agent_type] = {}
-    #     mem_cache[agent_type]['twilio_callsid'] = data['CallSid']
+    if 'CallSid' in data:
+        in_memory_cache.set(f"{agent_type}.twilio_callsid",data['CallSid'])
+        print(in_memory_cache.get_all())
     return data.get('CallSid')
-
 
 def create_voice_response(websocket_url):
     """Create the VoiceResponse object."""
@@ -72,10 +67,7 @@ def create_voice_response(websocket_url):
     return response
 
 
-
-
-
-
+""" CALL HANDLING """
 # 1st agent places IC on hold
 async def add_to_conference(request):
     try:
@@ -90,10 +82,10 @@ async def add_to_conference(request):
                 endConferenceOnExit="true">MyConferenceRoom</Conference></Dial></Response>'
         )
         
-        # admin_tel_no = await get_admin_tel_number(mem_cache['1']['case_locator']['admin_name'])
-        # print('admin tel number is', admin_tel_no)
-        ## 2nd agent to admin 
-        # await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no,settings.AGENT_SECOND)
+        admin_tel_no = await get_admin_tel_number(mem_cache['1']['case_locator']['admin_name'])
+        print('admin tel number is', admin_tel_no)
+        # 2nd agent to admin 
+        await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no,settings.AGENT_SECOND)
         
         return JSONResponse(content={'message': 'Call moved to conference and agent added'}), 200
     except Exception as e:
@@ -135,10 +127,15 @@ async def admin_to_conf(event: Event, request: Request):
 
     print(response)
 
+async def update_call(call_sid, new_url, instruction):
+    try:
+        if instruction == 'hold':
+            print('_+_ Call is being held')
+            client.calls(call_sid).update(url=new_url, method='POST')
+    except Exception as e:
+        print(f"Error in update_call: {e}")
 
 
-
-# Lifespan contextmanager function, will run every time the app is started and stopped. to change to once call ends. 
 def cleanup():
     print("Cleaning up before exit...")
     ## Ensuring all prior calls are ended

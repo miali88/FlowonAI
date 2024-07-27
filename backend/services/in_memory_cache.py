@@ -8,11 +8,26 @@ class InMemoryCache:
 
     def get(self, key, default=None):
         with self._lock:
-            return self._mem_cache.get(key, default)
+            keys = key.split('.')
+            value = self._mem_cache
+            for k in keys:
+                if isinstance(value, dict):
+                    value = value.get(k)
+                    if value is None:
+                        return default
+                else:
+                    return default
+            return value
 
     def set(self, key, value):
         with self._lock:
-            self._mem_cache[key] = value
+            keys = key.split('.')
+            d = self._mem_cache
+            for k in keys[:-1]:
+                if k not in d:
+                    d[k] = {}
+                d = d[k]
+            d[keys[-1]] = value
 
     def clear(self):
         with self._lock:
@@ -29,4 +44,5 @@ class InMemoryCache:
     def __repr__(self):
         return self.__str__()
 
+# Create an instance of the cache
 in_memory_cache = InMemoryCache()

@@ -1,19 +1,24 @@
 from fastapi import FastAPI, Request, HTTPException, APIRouter
 from fastapi.responses import Response, JSONResponse
-import asyncio
+from retell import Retell
+from thefuzz import process
+import pandas as pd
 
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
+from services.twilio import update_call, add_to_conference
 
-from retell import Retell
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
+import asyncio
 from pydantic import BaseModel
 from typing import Optional
+import os 
 
 class Event(BaseModel):
     name: str
     args: Optional[dict] = None
+
 
 """ INITIAL CALL HANDLING """
 def get_agent_type(agent_id_path):
@@ -25,12 +30,10 @@ def get_agent_type(agent_id_path):
     else:
         raise ValueError(f"Unknown agent_id_path: {agent_id_path}")
 
-
 async def handle_retell_logic(agent_id_path):
     """Handle Retell-specific operations."""
     try:
         agent_type = get_agent_type(agent_id_path)
-        print('agent type',agent_type)
         call = await asyncio.to_thread(retell.call.register,
             agent_id=agent_id_path,
             audio_encoding="mulaw",
@@ -38,9 +41,8 @@ async def handle_retell_logic(agent_id_path):
             sample_rate=8000,
         )
         retell_callid = call.call_id
-        # if agent_type not in mem_cache:
-        #     mem_cache[agent_type] = {}
-        # mem_cache[agent_type]['retell_callid'] = retell_callid
+        in_memory_cache.set(f"{agent_type}.retell_callid",retell_callid)
+        print(in_memory_cache.get_all())
         websocket_url = f"wss://api.retellai.com/audio-websocket/{retell_callid}?enable_update=true"
         return retell_callid, websocket_url
     except ValueError as ve:
@@ -54,10 +56,7 @@ async def handle_retell_logic(agent_id_path):
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
 
 
-
-
-
-
+""" RETELL WEBHOOK HANDLING """
 async def handle_form_webhook(request):
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
     if content_type == 'application/json':
@@ -90,7 +89,6 @@ async def handle_form_webhook(request):
             raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
-    
 
 
 ''' PROCESSING EVENTS '''
@@ -116,12 +114,18 @@ async def process_event(event: Event, request: Request):
 
 async def caller_information(event: Event, request: Request):
     ''' from agent 1. to then be used by agent 2 in relaying to the admin'''
-    ## make all others function print the event['args]
     print('\n caller information function...')
-    mem_cache['1']['ic_info'] = event['args']
-    print('ic_info:',mem_cache['1']['ic_info'])
+    in_memory_cache.set(f"{agent_type}.ic_info", event['args'])
+    print('ic_info:', in_memory_cache.get(f"{agent_type}.ic_info"))
     return {"function_result": {"name": "callerInformation"}, "result": f"info noted"} 
 
+
+# Database import and into a dataframe
+current_dir = os.path.dirname(__file__)
+# Define the path to the CSV file
+csv_path = os.path.join(current_dir, 'insolv_data.csv')
+df = pd.read_csv(csv_path)
+cases = df['Company Name:'].tolist()
 async def case_locator(event: Event, request: Request):
     #try: 
     if event['args']['CaseName']:
@@ -139,37 +143,38 @@ async def case_locator(event: Event, request: Request):
             print(f'_*_ {best_match} LOCATED _*_')
             admin_name = df['Administrator Names:'][df['Company Name:'] == best_match[0]].values[0]
             print(f'_*_ ADMIN NAME: {admin_name} LOCATED _*_')    
-    mem_cache['1']['case_locator'] = {'admin_name': admin_name, 'case': best_match[0]}
-    print('\n\n mem_cache', mem_cache)
+    in_memory_cache.set("AGENT_FIRST.case_locator",{'admin_name': admin_name, 'case': best_match[0]})
+    print('\n\n in_memory_cache', in_memory_cache.get_all())
     return {"function_result": {"name": "CaseLocator"}, "result": {"case-name": \
-            mem_cache['1']['case_locator']['case'], \
-            "administrator-name": mem_cache['1']['case_locator']['admin_name']}}
+            in_memory_cache.get("AGENT_FIRST.case_locator.case"), \
+            "administrator-name": in_memory_cache.get("AGENT_FIRST.case_locator.admin_name")}}
     # except Exception as e:
     #     return {"case_locator function error": f"An unexpected error occurred: {e}"}, 500
 
 async def call_admin(event: Event, request: Request):
     print('\ncall admin function...')
-    hold_url = f'{BASE_URL}/add_to_conference'      
-    await update_call(mem_cache['1']['twilio_callsid'], hold_url,'hold')
+    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'      
+    await update_call(in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url,'hold')
 
 async def info_retrieve(event: Event, request: Request):
     print('\ninfo_retrieve function...')
     return {"function_result": {"name": "infoRetrieve"}, "result": \
-            {"callersName": mem_cache['1']['ic_info']['callersName'], \
-             "caseName": mem_cache['1']['case_locator']['case'], \
-             "whereCallingFrom": mem_cache['1']['ic_info']['whereCallingFrom'], \
-            "enquiry": mem_cache['1']['ic_info']['enquiry'],\
-            "administratorName": mem_cache['1']['case_locator']['admin_name']}} # may need to request full name from callers
+            {"callersName": in_memory_cache.get("AGENT_FIRST.ic_info.callersName"), \
+             "caseName": in_memory_cache.get("AGENT_FIRST.case_locator.case"), \
+             "whereCallingFrom": in_memory_cache.get("AGENT_FIRST.ic_info.whereCallingFrom"), \
+            "enquiry": in_memory_cache.get("AGENT_FIRST.ic_info.enquiry"),\
+            "administratorName": in_memory_cache.get("AGENT_FIRST.case_locator.admin_name")}} # may need to request full name from callers
 
 async def admin_available(event: Event, request: Request):
     print('\nadmin available function...')
     admin_available_bool = event['args']['adminAvailable']
     if admin_available_bool == True:
-        await admin_to_conf(event, request)
+        await add_to_conference(event, request)
+    return admin_available_bool
 
-async def call_connected(event: Event, request: Request):
-    print('\ncall connected function...')
-    return {
-        "function_result": {"name": "callConnected"},
-        "result": f"administrator available {admin_available_bool}"
-    } 
+# async def call_connected(event: Event, request: Request):
+#     print('\ncall connected function...')
+#     return {
+#         "function_result": {"name": "callConnected"},
+#         "result": f"administrator available {admin_available(event)}"
+#     } 

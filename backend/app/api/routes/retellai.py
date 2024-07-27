@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Request, HTTPException, APIRouter
 from fastapi.responses import Response, JSONResponse
 
@@ -9,10 +8,10 @@ from services.retellai import handle_form_webhook
 router = APIRouter()
 
 @router.post('/')
-async def webhook(request: Request):
+async def webhook(request: Request) -> JSONResponse:
     try:
-        print('\n / endpoint')
+        print('\n\n /retell')
         return await handle_form_webhook(request)
     except Exception as e:
         print(f"Error in / : {e}")
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
