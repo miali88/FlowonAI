@@ -10,7 +10,7 @@ from typing import Optional
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 from services import twilio
-from services.db_queries import cases
+from services.db_queries import cases, db_case_locator
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -42,7 +42,7 @@ async def handle_retell_logic(agent_id_path):
         in_memory_cache.set(f"{agent_type}.retell_callid",retell_callid)
         print(in_memory_cache.get_all())
         websocket_url = f"wss://api.retellai.com/audio-websocket/{retell_callid}?enable_update=true"
-        return retell_callid, websocket_url
+        return websocket_url
     except ValueError as ve:
         print(f"Invalid agent_id_path: {ve}")
         raise HTTPException(status_code=400, detail=f"Invalid agent_id_path: {str(ve)}")
@@ -66,8 +66,14 @@ async def handle_form_webhook(request):
                 result = await process_event(data, request)
             else:
                 result = {}
-            print(f"Received data: {data}")
-            return JSONResponse(content=result, status_code=200)
+            if 'event' in data:
+                if data['event'] not in ['call_ended','call_analyzed']:
+                    print(f"Received data: {data}")
+                    return JSONResponse(content=result, status_code=200)
+                else:
+                    print('call ended', data['call']['call_id'])
+            else:
+                return JSONResponse(content=result, status_code=200)
         except Exception as e:
             print(f"Error in webhook: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -113,38 +119,24 @@ async def process_event(event: Event, request: Request):
 async def caller_information(event: Event, request: Request):
     ''' from agent 1. to then be used by agent 2 in relaying to the admin'''
     print('\n caller information function...')
-    in_memory_cache.set(f"{agent_type}.ic_info", event['args'])
-    print('ic_info:', in_memory_cache.get(f"{agent_type}.ic_info"))
+    in_memory_cache.set("AGENT_FIRST.ic_info", event['args'])
+    print('ic_info:', in_memory_cache.get("AGENT_FIRST.ic_info"))
     return {"function_result": {"name": "callerInformation"}, "result": f"info noted"} 
 
 async def case_locator(event: Event, request: Request):
-    #try: 
-    if event['args']['CaseName']:
-        case_query = event['args']['CaseName']
-        print(f'_*_ CASE QUERY NAME {case_query} _*_')
-        best_match = process.extractOne(case_query, cases) 
-        print(f'_*_ {best_match} LOCATED _*_') # THIS LINE NEVER RUNS
-        admin_name = df['Administrator Names:'][df['Company Name:'] == best_match[0]].values[0]
-        print(f'_*_ ADMIN NAME: {admin_name} LOCATED _*_')
-    elif event['args']['AdministratorName']:
-        case_query = event['args']['AdministratorName']
-        print(f'_*_ Attempting to match Admin Name to Case Name Now {case_query} _*_')
-        best_match = process.extractOne(case_query, cases)
-        if best_match[1] >= 90:
-            print(f'_*_ {best_match} LOCATED _*_')
-            admin_name = df['Administrator Names:'][df['Company Name:'] == best_match[0]].values[0]
-            print(f'_*_ ADMIN NAME: {admin_name} LOCATED _*_')    
-    in_memory_cache.set("AGENT_FIRST.case_locator",{'admin_name': admin_name, 'case': best_match[0]})
-    print('\n\n in_memory_cache', in_memory_cache.get_all())
-    return {"function_result": {"name": "CaseLocator"}, "result": {"case-name": \
-            in_memory_cache.get("AGENT_FIRST.case_locator.case"), \
-            "administrator-name": in_memory_cache.get("AGENT_FIRST.case_locator.admin_name")}}
-    # except Exception as e:
-    #     return {"case_locator function error": f"An unexpected error occurred: {e}"}, 500
+    print('\n case locator function...')
+    case_name, admin_name = await db_case_locator(event)
+    if case_name and admin_name:
+        print('\n\n in_memory_cache', in_memory_cache.get_all())
+        return {"function_result": {"name": "CaseLocator"}, "result": {"case-name": case_name, "administrator-name": admin_name}}
+    else:
+        return {"function_result": {"name": "CaseLocator"}, "result": {"error": "Case or administrator not found"}}
 
 async def call_admin(event: Event, request: Request):
     print('\ncall admin function...')
-    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'      
+    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'
+    print('hold_url', hold_url)      
+    print('twilio_callsid', in_memory_cache.get("AGENT_FIRST.twilio_callsid"))
     await twilio.update_call(in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url,'hold')
 
 async def info_retrieve(event: Event, request: Request):

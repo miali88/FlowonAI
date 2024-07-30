@@ -615,6 +615,19 @@ doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linke
 test = ["cssselect", "importlib-resources", "jaraco.test (>=5.1)", "lxml", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [[package]]
+name = "daily-python"
+version = "0.10.1"
+description = "Daily Client SDK for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "daily_python-0.10.1-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ffb9576b901fab3eb38f91d2360044ddb2f389f502c0c636c7e71e6f6e0c9411"},
+    {file = "daily_python-0.10.1-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:dc3ccf6993ecd91b8414fbbf660a102e5427f49d3baeadfceaa82ce109db316b"},
+    {file = "daily_python-0.10.1-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:ecd46e46bf31c28c0468108ea56b3831a92e80855d1ac20f6c69baeebc565a2c"},
+    {file = "daily_python-0.10.1-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:469a4d23b990ee907ffc5c246a8a17da863a342e9171379449698d8b50782045"},
+]
+
+[[package]]
 name = "distlib"
 version = "0.3.8"
 description = "Distribution utilities"
@@ -1815,6 +1828,29 @@ files = [
 ]
 
 [[package]]
+name = "pyaudio"
+version = "0.2.14"
+description = "Cross-platform audio I/O with PortAudio"
+optional = false
+python-versions = "*"
+files = [
+    {file = "PyAudio-0.2.14-cp310-cp310-win32.whl", hash = "sha256:126065b5e82a1c03ba16e7c0404d8f54e17368836e7d2d92427358ad44fefe61"},
+    {file = "PyAudio-0.2.14-cp310-cp310-win_amd64.whl", hash = "sha256:2a166fc88d435a2779810dd2678354adc33499e9d4d7f937f28b20cc55893e83"},
+    {file = "PyAudio-0.2.14-cp311-cp311-win32.whl", hash = "sha256:506b32a595f8693811682ab4b127602d404df7dfc453b499c91a80d0f7bad289"},
+    {file = "PyAudio-0.2.14-cp311-cp311-win_amd64.whl", hash = "sha256:bbeb01d36a2f472ae5ee5e1451cacc42112986abe622f735bb870a5db77cf903"},
+    {file = "PyAudio-0.2.14-cp312-cp312-win32.whl", hash = "sha256:5fce4bcdd2e0e8c063d835dbe2860dac46437506af509353c7f8114d4bacbd5b"},
+    {file = "PyAudio-0.2.14-cp312-cp312-win_amd64.whl", hash = "sha256:12f2f1ba04e06ff95d80700a78967897a489c05e093e3bffa05a84ed9c0a7fa3"},
+    {file = "PyAudio-0.2.14-cp38-cp38-win32.whl", hash = "sha256:858caf35b05c26d8fc62f1efa2e8f53d5fa1a01164842bd622f70ddc41f55000"},
+    {file = "PyAudio-0.2.14-cp38-cp38-win_amd64.whl", hash = "sha256:2dac0d6d675fe7e181ba88f2de88d321059b69abd52e3f4934a8878e03a7a074"},
+    {file = "PyAudio-0.2.14-cp39-cp39-win32.whl", hash = "sha256:f745109634a7c19fa4d6b8b7d6967c3123d988c9ade0cd35d4295ee1acdb53e9"},
+    {file = "PyAudio-0.2.14-cp39-cp39-win_amd64.whl", hash = "sha256:009f357ee5aa6bc8eb19d69921cd30e98c42cddd34210615d592a71d09c4bd57"},
+    {file = "PyAudio-0.2.14.tar.gz", hash = "sha256:78dfff3879b4994d1f4fc6485646a57755c6ee3c19647a491f790a0895bd2f87"},
+]
+
+[package.extras]
+test = ["numpy"]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
@@ -2658,6 +2694,22 @@ docs = ["Sphinx (>=4.1.2,<4.2.0)", "sphinx-rtd-theme (>=0.5.2,<0.6.0)", "sphinxc
 test = ["Cython (>=0.29.36,<0.30.0)", "aiohttp (==3.9.0b0)", "aiohttp (>=3.8.1)", "flake8 (>=5.0,<6.0)", "mypy (>=0.800)", "psutil", "pyOpenSSL (>=23.0.0,<23.1.0)", "pycodestyle (>=2.9.0,<2.10.0)"]
 
 [[package]]
+name = "vapi-python"
+version = "0.1.9"
+description = "This package lets you start Vapi calls directly from Python."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "vapi_python-0.1.9-py2.py3-none-any.whl", hash = "sha256:ee68de0813e755d522a90aa0586611626a4e47cebda0aea7a274ad8630454449"},
+    {file = "vapi_python-0.1.9.tar.gz", hash = "sha256:c1b13fc14260ec30e3f59a6b4ecd668a7298657d1a5dc3a87b0afee8a8530583"},
+]
+
+[package.dependencies]
+daily-python = "*"
+pyaudio = "*"
+requests = "*"
+
+[[package]]
 name = "virtualenv"
 version = "20.26.3"
 description = "Virtual Python Environment builder"
@@ -2951,4 +3003,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ec5aac71b927f658e25541fb5dc00b2631929961cd99fd0bdfabab783e4e5500"
+content-hash = "167e6c5b8610fdf053178512efc0af1b7d006c20bcc2cb52b72386371826958e"

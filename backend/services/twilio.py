@@ -20,6 +20,7 @@ from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
+import logging
 
 """ INITIAL CALL HANDLING """
 async def handle_voice_webhook(agent_id_path: str, request: Request):
@@ -41,7 +42,6 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
         # Create response
         response = create_voice_response(websocket_url)
 
-
         return Response(content=str(response), media_type='text/xml')
     except ValueError as ve:
         print(f"Error in handle_voice_webhook: {ve}")
@@ -52,22 +52,30 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
 
 async def handle_twilio_logic(agent_id_path, data):
     """Handle Twilio-specific operations."""
-    agent_type = retellai.get_agent_type(agent_id_path)
-    if 'CallSid' in data:
-        in_memory_cache.set(f"{agent_type}.twilio_callsid",data['CallSid'])
-        print(in_memory_cache.get_all())
-    return data.get('CallSid')
+    try:
+        agent_type = retellai.get_agent_type(agent_id_path)
+        if 'CallSid' in data:
+            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
+            print(in_memory_cache.get_all())
+        return data.get('CallSid')
+    except Exception as e:
+        logging.error(f"Error in handle_twilio_logic: {str(e)}")
+        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
 
 def create_voice_response(websocket_url):
     """Create the VoiceResponse object."""
-    response = VoiceResponse()
-    connect = Connect()
-    stream = Stream(url=websocket_url)
-    connect.append(stream)
-    response.append(connect)
-    response.say('You are now connected to the AI receptionist.')
-    return response
-
+    try:
+        response = VoiceResponse()
+        connect = Connect()
+        stream = Stream(url=websocket_url)
+        print('websocket url', websocket_url)
+        connect.append(stream)
+        response.append(connect)
+        response.say('You are now connected to the AI receptionist.')
+        return response
+    except Exception as e:
+        logging.error(f"Error in create_voice_response: {str(e)}")
+        raise ValueError(f"Failed to create voice response: {str(e)}")
 
 """ CALL HANDLING """
 # 1st agent places IC on hold
@@ -83,11 +91,11 @@ async def add_to_conference(request):
             twiml='<Response><Dial><Conference startConferenceOnEnter="false" \
                 endConferenceOnExit="true">MyConferenceRoom</Conference></Dial></Response>'
         )
-        
+        print(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
         admin_tel_no = await get_admin_tel_number(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
         print('admin tel number is', admin_tel_no)
         # 2nd agent to admin 
-        await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no,settings.AGENT_SECOND)
+        await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no, settings.AGENT_SECOND)
         
         return JSONResponse(content={'message': 'Call moved to conference and agent added'}), 200
     except Exception as e:
@@ -134,6 +142,9 @@ async def update_call(call_sid, new_url, instruction):
         if instruction == 'hold':
             print('_+_ Call is being held')
             client.calls(call_sid).update(url=new_url, method='POST')
+        if call_sid == None:
+            print('call_sid is None')
+            return {'message': 'This is a web call, not twilio call sid to transfer the caller'}
     except Exception as e:
         print(f"Error in update_call: {e}")
 

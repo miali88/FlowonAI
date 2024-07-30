@@ -21,7 +21,6 @@ def parse_cors(v: Any) -> list[str] | str:
         return v
     raise ValueError(v)
 
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, extra="ignore"
@@ -60,6 +59,8 @@ class Settings(BaseSettings):
     RETELL_API_KEY: str
     AGENT_FIRST: str
     AGENT_SECOND: str
+
+    VAPI_API_KEY: str
 
     BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
 
