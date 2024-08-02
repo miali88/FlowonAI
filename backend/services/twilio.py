@@ -95,6 +95,7 @@ async def add_to_conference(request):
         admin_tel_no = await get_admin_tel_number(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
         print('admin tel number is', admin_tel_no)
         # 2nd agent to admin 
+        print('calling agent_outbound')
         await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no, settings.AGENT_SECOND)
         
         return JSONResponse(content={'message': 'Call moved to conference and agent added'}), 200
@@ -105,8 +106,9 @@ async def add_to_conference(request):
 # 2nd agent to admin
 async def agent_outbound(from_number: str, to_number: str, agent_id: str):
     try:
+        print('calling 2nd agent')
         client.calls.create(
-            url=f"{settings.BASE_URL}/twilio-voice-webhook/{agent_id}",
+            url=f"{settings.BASE_URL}/api/v1/twilio/twilio-voice-webhook/{agent_id}",
             to=to_number, from_=from_number
         )
         print(f"Call from: {from_number} to: {to_number}")
@@ -129,11 +131,11 @@ async def admin_to_conf(event: Event, request: Request):
         end_conference_on_exit=True
     )
     response.append(dial)
-
-    # # Update the first call to join the conference
-    # client.calls(mem_cache['1']['twilio_callsid']).update(twiml=response)
-    # # Update the second call to join the conference
-    # client.calls(mem_cache['2']['twilio_callsid']).update(twiml=response)
+    
+    # Update the first call to join the conference
+    client.calls(in_memory_cache.get("AGENT_FIRST.twilio_callsid")).update(twiml=response)
+    # Update the second call to join the conference
+    client.calls(in_memory_cache.get("AGENT_SECOND.twilio_callsid")).update(twiml=response)
 
     print(response)
 
@@ -147,7 +149,6 @@ async def update_call(call_sid, new_url, instruction):
             return {'message': 'This is a web call, not twilio call sid to transfer the caller'}
     except Exception as e:
         print(f"Error in update_call: {e}")
-
 
 def cleanup():
     print("Cleaning up before exit...")

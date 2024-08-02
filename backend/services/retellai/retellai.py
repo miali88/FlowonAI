@@ -10,7 +10,7 @@ from typing import Optional
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 from services import twilio
-from services.db_queries import cases, db_case_locator
+from services.db_queries import db_case_locator
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -98,66 +98,36 @@ async def handle_form_webhook(request):
 ''' PROCESSING EVENTS '''
 async def process_event(event: Event, request: Request):
     #print('Processing event...', event)
-    # try:
     if 'name' in event:
+
+        """ CALL ROUTING """
+        from services.retellai.call_routing import CallRouting
+        call_routing = CallRouting(in_memory_cache)
+    
         if event['name'] == 'callerInformation':
-            return await caller_information(event, request)
+            return await call_routing.caller_information(event, request)
         elif event['name'] == 'caseLocator':
-            return await case_locator(event, request)
+            return await call_routing.case_locator(event, request)
         elif event['name'] == 'callAdmin':
-            return await call_admin(event, request)
+            return await call_routing.call_admin(event, request)
         elif event['name'] == 'infoRetrieve':
-            return await info_retrieve(event, request)
+            return await call_routing.info_retrieve(event, request)
         elif event['name'] == 'adminAvailable':
-            return await admin_available(event, request)
+            return await call_routing.admin_available(event, request)
+        
+        """ OUTBOUND CALLING """
+        from services.retellai.outbound import Outbound
+        outbound = Outbound(in_memory_cache)
+
+        if event['name'] == 'outboundCalling':
+            return await outbound.outbound_calling(event, request)
+
+        """ APPOINTMENT BOOKING """
+        from services.retellai.app_booking import AppBooking
+        app_booking = AppBooking(in_memory_cache)
+    
+        if event['name'] == 'appBooking':
+            return await app_booking.app_booking(event, request)
+
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
-    # except Exception as e:
-    #     print(f"Error in process_event: {e}")
-    #     raise HTTPException(status_code=500, detail=str(e))
-
-async def caller_information(event: Event, request: Request):
-    ''' from agent 1. to then be used by agent 2 in relaying to the admin'''
-    print('\n caller information function...')
-    in_memory_cache.set("AGENT_FIRST.ic_info", event['args'])
-    print('ic_info:', in_memory_cache.get("AGENT_FIRST.ic_info"))
-    return {"function_result": {"name": "callerInformation"}, "result": f"info noted"} 
-
-async def case_locator(event: Event, request: Request):
-    print('\n case locator function...')
-    case_name, admin_name = await db_case_locator(event)
-    if case_name and admin_name:
-        print('\n\n in_memory_cache', in_memory_cache.get_all())
-        return {"function_result": {"name": "CaseLocator"}, "result": {"case-name": case_name, "administrator-name": admin_name}}
-    else:
-        return {"function_result": {"name": "CaseLocator"}, "result": {"error": "Case or administrator not found"}}
-
-async def call_admin(event: Event, request: Request):
-    print('\ncall admin function...')
-    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'
-    print('hold_url', hold_url)      
-    print('twilio_callsid', in_memory_cache.get("AGENT_FIRST.twilio_callsid"))
-    await twilio.update_call(in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url,'hold')
-
-async def info_retrieve(event: Event, request: Request):
-    print('\ninfo_retrieve function...')
-    return {"function_result": {"name": "infoRetrieve"}, "result": \
-            {"callersName": in_memory_cache.get("AGENT_FIRST.ic_info.callersName"), \
-             "caseName": in_memory_cache.get("AGENT_FIRST.case_locator.case"), \
-             "whereCallingFrom": in_memory_cache.get("AGENT_FIRST.ic_info.whereCallingFrom"), \
-            "enquiry": in_memory_cache.get("AGENT_FIRST.ic_info.enquiry"),\
-            "administratorName": in_memory_cache.get("AGENT_FIRST.case_locator.admin_name")}} # may need to request full name from callers
-
-async def admin_available(event: Event, request: Request):
-    print('\nadmin available function...')
-    admin_available_bool = event['args']['adminAvailable']
-    if admin_available_bool == True:
-        await twilio.add_to_conference(event, request)
-    return admin_available_bool
-
-# async def call_connected(event: Event, request: Request):
-#     print('\ncall connected function...')
-#     return {
-#         "function_result": {"name": "callConnected"},
-#         "result": f"administrator available {admin_available(event)}"
-#     } 
