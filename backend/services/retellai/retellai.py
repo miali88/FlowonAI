@@ -103,7 +103,6 @@ async def process_event(event: Event, request: Request):
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
         call_routing = CallRouting(in_memory_cache)
-    
         if event['name'] == 'callerInformation':
             return await call_routing.caller_information(event, request)
         elif event['name'] == 'caseLocator':
@@ -118,16 +117,18 @@ async def process_event(event: Event, request: Request):
         """ OUTBOUND CALLING """
         from services.retellai.outbound import Outbound
         outbound = Outbound(in_memory_cache)
-
         if event['name'] == 'outboundCalling':
             return await outbound.outbound_calling(event, request)
 
         """ APPOINTMENT BOOKING """
         from services.retellai.app_booking import AppBooking
         app_booking = AppBooking(in_memory_cache)
-    
-        if event['name'] == 'appBooking':
-            return await app_booking.app_booking(event, request)
+        if event['name'] == 'check_availability':
+            return await app_booking.check_availability(event, request)
+        if event['name'] == 'book_appointment':
+            return await app_booking.book_appointment(event, request)
+        
 
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
+            """ add more logic here """

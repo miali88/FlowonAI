@@ -3,7 +3,7 @@ from fastapi.responses import Response, JSONResponse
 
 from app.utils import generate_new_account_email, send_email
 
-from services.retellai import handle_form_webhook
+from services.retellai.retellai import handle_form_webhook
 
 router = APIRouter()
 

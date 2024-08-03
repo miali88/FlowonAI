@@ -4,7 +4,7 @@ from fastapi.responses import Response, JSONResponse
 from twilio.rest import Client 
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 
-from services import retellai
+from services.retellai import retellai
 from services.db_queries import get_admin_tel_number
 from services.in_memory_cache import in_memory_cache
 from app.core.config import settings
