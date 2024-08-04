@@ -54,7 +54,7 @@ async def handle_retell_logic(agent_id_path):
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
 
 
-""" RETELL WEBHOOK HANDLING """
+""" WEBHOOK HANDLING """
 async def handle_form_webhook(request):
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
     if content_type == 'application/json':
@@ -92,6 +92,7 @@ async def handle_form_webhook(request):
             print(f"Error in webhook: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     else:
+        #return "YOU LOOK GOOD IN A MOONLIGHT "
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
 
 
@@ -127,6 +128,8 @@ async def process_event(event: Event, request: Request):
             return await app_booking.check_availability(event, request)
         if event['name'] == 'book_appointment':
             return await app_booking.book_appointment(event, request)
+        if event['name'] == 'cal_webhook':
+            return await app_booking.cal_webhook(event, request)
         
 
         else:

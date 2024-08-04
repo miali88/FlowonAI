@@ -13,11 +13,11 @@ class AppBooking:
     def __init__(self, in_memory_cache: Any):
         self.in_memory_cache = in_memory_cache
 
-
-    """ GET LLM TO DESIGN THIS LOGIC. PRESENT BOTH FUNCTION CALL JSON FROM RETELL,
-        AND DETERMINE AVAILABILITY FROM CAL API. 
-        1. check pref """
-    async def check_availability():
+    async def check_availability(event, request):
+        """ For custom cal.com: GET LLM TO DESIGN THIS LOGIC. 
+            PRESENT BOTH FUNCTION CALL JSON FROM RETELL,
+            AND DETERMINE AVAILABILITY FROM CAL API. 
+            1. check pref """
 
         # API endpoint for fetching all bookings
         url = 'https://api.cal.com/v1/availability'
@@ -42,6 +42,14 @@ class AppBooking:
             print(f"Failed to fetch bookings. Status code: {response.status_code}")
             print(response.json())
 
+    async def cal_webhook(event, request):
+        print('\n cal webhook function')
+        """ alert to be used in retellai's built in cal.com.
+            since retellai coms directly with cal.com, we have to
+            manually alert our server.
+             
+            To consider whether we should check_avail ourselves too,
+            or to leave it entirely in retellai's hands """
 
 if __name__ == "__main__":
     AppBooking.check_availability()
