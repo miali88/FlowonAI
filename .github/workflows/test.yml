@@ -47,16 +47,30 @@ jobs:
           echo "EMAILS_FROM_EMAIL=${{ secrets.EMAILS_FROM_EMAIL }}" >> .env
           echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mypy
+          pip install -r backend/requirements.txt
 
+      - name: Run mypy
+        run: mypy backend
 
-      - run: docker compose build
-      - run: docker compose down -v --remove-orphans
-      - run: docker compose up -d
-      - name: Lint
+      - name: Build Docker containers
+        run: docker compose build
+
+      - name: Start Docker containers
+        run: docker compose up -d
+
+      - name: Run other linters
         run: docker compose exec -T backend bash /app/scripts/lint.sh
+
       - name: Run tests
         run: docker compose exec -T backend bash /app/tests-start.sh "Coverage for ${{ github.sha }}"
-      - run: docker compose down -v --remove-orphans
+
+      - name: Stop Docker containers
+        run: docker compose down -v --remove-orphans
+
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
