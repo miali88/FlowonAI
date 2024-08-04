@@ -41,6 +41,7 @@ services:
     networks:
       - traefik-public
       - default
+    mem_limit: 4g
     depends_on:
       - db
     env_file:
