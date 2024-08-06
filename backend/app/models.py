@@ -1,5 +1,7 @@
+from datetime import datetime
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import JSON, Column
 
 
 # Shared properties
@@ -39,6 +41,7 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
+    __table_args__ = {'extend_existing': True}
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner")
@@ -108,3 +111,27 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+class CacheEntry(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    key: str = Field(index=True)
+    value: str = Field(sa_column=Column(JSON))
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+
+class RetellAIEvent(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    event_id: str = Field(unique=True, index=True)
+    payload: str = Field(sa_column=Column(JSON))
+
+
+class RetellAICalls(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    event_id: str = Field(unique=True, index=True)
+    payload: str = Field(sa_column=Column(JSON))
+    # call_id: str = Field(unique=True, index=True)
+    # call_sid: str = Field(unique=True, index=True)
+    # call_status: str = Field(unique=True, index=True)

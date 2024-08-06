@@ -68,13 +68,17 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql+asyncpg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return str(self.SQLALCHEMY_DATABASE_URI)
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -121,6 +125,12 @@ class Settings(BaseSettings):
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
+        if self.FIRST_SUPERUSER_PASSWORD == "changethis":
+            warnings.warn(
+                "The value of FIRST_SUPERUSER_PASSWORD is 'changethis', for security, please change it, at least for deployments.",
+                UserWarning,
+                stacklevel=1
+            )
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )

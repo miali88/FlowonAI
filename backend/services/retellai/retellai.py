@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Request, HTTPException, APIRouter
+from fastapi import Request, HTTPException
 from fastapi.responses import Response, JSONResponse
 from retell import Retell
-from thefuzz import process
 
 import asyncio
 from pydantic import BaseModel
@@ -9,8 +8,17 @@ from typing import Optional
 
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
-from services import twilio
-from services.db_queries import db_case_locator
+
+from sqlmodel import Session, select
+from app.models import RetellAIEvent, RetellAICalls
+from app.core.db import engine
+from datetime import datetime
+import json
+
+from sqlalchemy.future import select
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from contextlib import asynccontextmanager
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -58,33 +66,11 @@ async def handle_retell_logic(agent_id_path):
 async def handle_form_webhook(request):
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
     if content_type == 'application/json':
-        # Process JSON data from RetellAI
         try:
             data = await request.json()
             if data:
-                #print("Received JSON event", data)
                 result = await process_event(data, request)
-            else:
-                result = {}
-            if 'event' in data:
-                if data['event'] not in ['call_ended','call_analyzed']:
-                    print(f"Received data: {data}")
-                    return JSONResponse(content=result, status_code=200)
-                else:
-                    print('call ended', data['call']['call_id'])
-            else:
-                return JSONResponse(content=result, status_code=200)
-        except Exception as e:
-            print(f"Error in webhook: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
-    elif content_type == 'application/x-www-form-urlencoded':
-        # Process form-encoded data from Twilio
-        try:
-            form = await request.form()
-            data = dict(form)
-            if data:
-                print(f"Received form-encoded data: {data}")
-                result = await process_event(data, request)
+                await save_retell_data(data)  # Call directly, no need for create_task
             else:
                 result = {}
             return JSONResponse(content=result, status_code=200)
@@ -92,9 +78,51 @@ async def handle_form_webhook(request):
             print(f"Error in webhook: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     else:
-        #return "YOU LOOK GOOD IN A MOONLIGHT "
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
 
+# Assuming your DATABASE_URL is already configured for async operations
+async_engine = create_async_engine(settings.DATABASE_URL)
+AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+
+@asynccontextmanager
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+async def save_retell_data(data):
+    async with get_db() as session:
+        try:
+            if "event" in data:
+                new_call = RetellAICalls(
+                    event_id=data.get("id", ""),
+                    payload=json.dumps(data)
+                )
+                session.add(new_call)
+            elif "call" in data and "name" in data:
+                new_event = RetellAIEvent(
+                    event_id=data.get("id", ""),
+                    payload=json.dumps(data)
+                )
+                session.add(new_event)
+            await session.commit()
+            print(f"Data saved successfully: {data.get('id', '')}")
+        except Exception as e:
+            print(f"Error saving data: {e}")
+            await session.rollback()
+        
+        # Verify the data was saved
+        if "event" in data:
+            result = await session.execute(select(RetellAICalls).where(RetellAICalls.event_id == data.get("id", "")))
+            saved_call = result.scalar_one_or_none()
+            print(f"Saved call: {saved_call}")
+        elif "call" in data and "name" in data:
+            result = await session.execute(select(RetellAIEvent).where(RetellAIEvent.event_id == data.get("id", "")))
+            saved_event = result.scalar_one_or_none()
+            print(f"Saved event: {saved_event}")
+        
 
 ''' PROCESSING EVENTS '''
 async def process_event(event: Event, request: Request):
@@ -131,7 +159,6 @@ async def process_event(event: Event, request: Request):
         if event['name'] == 'cal_webhook':
             return await app_booking.cal_webhook(event, request)
         
-
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
             """ add more logic here """

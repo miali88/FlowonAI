@@ -73,6 +73,9 @@ services:
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
     platform: linux/amd64 # Patch for M1 Mac
+    volumes:
+      - ./backend:/app
+    working_dir: /app
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
