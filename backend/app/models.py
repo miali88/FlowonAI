@@ -1,8 +1,8 @@
 from datetime import datetime
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
-from sqlalchemy import JSON, Column
-
+from sqlalchemy import Column, Integer, String, JSON
+from sqlalchemy.ext.declarative import declarative_base
 
 # Shared properties
 class UserBase(SQLModel):
@@ -135,3 +135,14 @@ class RetellAICalls(SQLModel, table=True):
     # call_id: str = Field(unique=True, index=True)
     # call_sid: str = Field(unique=True, index=True)
     # call_status: str = Field(unique=True, index=True)
+
+Base = declarative_base()
+
+class WebhookCapture(Base):
+    __tablename__ = 'webhook_captures'
+
+    id = Column(Integer, primary_key=True)
+    method = Column(String)
+    url = Column(String)
+    headers = Column(JSON)
+    body = Column(String)

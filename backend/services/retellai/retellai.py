@@ -1,5 +1,5 @@
 from fastapi import Request, HTTPException
-from fastapi.responses import Response, JSONResponse
+from fastapi.responses import JSONResponse
 from retell import Retell
 
 import asyncio
@@ -9,10 +9,9 @@ from typing import Optional
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 
-from sqlmodel import Session, select
-from app.models import RetellAIEvent, RetellAICalls
-from app.core.db import engine
-from datetime import datetime
+from sqlmodel import select
+from app.models import RetellAIEvent, RetellAICalls, WebhookCapture
+
 import json
 
 from sqlalchemy.future import select
@@ -65,12 +64,15 @@ async def handle_retell_logic(agent_id_path):
 """ WEBHOOK HANDLING """
 async def handle_form_webhook(request):
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
+    async with get_db() as session:
+        new_webhook = WebhookCapture(session, request)
+        session.add(new_webhook)
+        await session.commit()
     if content_type == 'application/json':
         try:
             data = await request.json()
             if data:
                 result = await process_event(data, request)
-                await save_retell_data(data)  # Call directly, no need for create_task
             else:
                 result = {}
             return JSONResponse(content=result, status_code=200)
@@ -80,7 +82,6 @@ async def handle_form_webhook(request):
     else:
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
 
-# Assuming your DATABASE_URL is already configured for async operations
 async_engine = create_async_engine(settings.DATABASE_URL)
 AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -95,16 +96,17 @@ async def get_db():
 async def save_retell_data(data):
     async with get_db() as session:
         try:
+            call_id = data['call']['call_id']
             if "event" in data:
                 new_call = RetellAICalls(
-                    event_id=data.get("id", ""),
-                    payload=json.dumps(data)
+                    event_id = call_id,
+                    payload = json.dumps(data)
                 )
                 session.add(new_call)
             elif "call" in data and "name" in data:
                 new_event = RetellAIEvent(
-                    event_id=data.get("id", ""),
-                    payload=json.dumps(data)
+                    event_id = call_id+call_id['name'],
+                    payload = json.dumps(data)
                 )
                 session.add(new_event)
             await session.commit()
