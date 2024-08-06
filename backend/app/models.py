@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -108,3 +109,26 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# Database model for in-memory cache
+class InMemCache(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    key: str = Field(max_length=255)
+    value: str
+    expiration: datetime | None = Field(default=None)
+
+
+# Properties to receive on in-memory cache creation
+class InMemCacheCreate(SQLModel):
+    key: str = Field(max_length=255)
+    value: str
+    expiration: datetime | None = Field(default=None)
+
+
+# Properties to return via API for in-memory cache
+class InMemCachePublic(SQLModel):
+    id: int
+    key: str
+    value: str
+    expiration: datetime | None

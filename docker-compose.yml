@@ -41,9 +41,11 @@ services:
     networks:
       - traefik-public
       - default
-    mem_limit: 4g
     depends_on:
       - db
+      - elasticsearch
+      - logstash
+      - kibana
     env_file:
       - .env
     environment:
@@ -88,6 +90,9 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls=true
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls.certresolver=le
 
+      - traefik.http.routers.fastapi.rule=Host(`flowon.ai`) && PathPrefix(`/api`)
+      - traefik.http.services.fastapi.loadbalancer.server.port=80
+
       # # Define Traefik Middleware to handle domain with and without "www" to redirect to only one
       # - traefik.http.middlewares.${STACK_NAME?Variable not set}-www-redirect.redirectregex.regex=^http(s)?://www.(${DOMAIN?Variable not set})/(.*)
       # # Redirect a domain with www to non-www
@@ -126,8 +131,54 @@ services:
       # # Enable www redirection for HTTP and HTTPS
       # - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.middlewares=${STACK_NAME?Variable not set}-www-redirect
       # - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect,${STACK_NAME?Variable not set}-www-redirect
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - traefik-public
+      - default
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.0
+    container_name: logstash
+    ports:
+      - "5044:5044"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - traefik-public
+      - default
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - traefik-public
+      - default
 volumes:
   app-db-data:
+  esdata:
+    driver: local
 
 networks:
   traefik-public:

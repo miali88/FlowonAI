@@ -8,9 +8,11 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.config import settings
-from services.in_memory_cache import in_memory_cache
 from services import twilio
 from services.db_queries import db_case_locator
+from app.crud import CacheManager
+from app.models import InMemCacheCreate
+from app.db.session import SessionLocal
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -39,8 +41,15 @@ async def handle_retell_logic(agent_id_path):
             sample_rate=8000,
         )
         retell_callid = call.call_id
-        in_memory_cache.set(f"{agent_type}.retell_callid",retell_callid)
-        print(in_memory_cache.get_all())
+        # Cache the retell_callid for the agent type
+        cache_key = f"{agent_type}.retell_callid"
+        cache_entry = InMemCacheCreate(key=cache_key, value=retell_callid)
+        
+        async with SessionLocal() as session:
+            cache_manager = CacheManager(session)
+            await cache_manager.create_entry(cache_entry)
+        
+        print(f"Cached {cache_key}: {retell_callid}")
         websocket_url = f"wss://api.retellai.com/audio-websocket/{retell_callid}?enable_update=true"
         return websocket_url
     except ValueError as ve:
@@ -100,10 +109,19 @@ async def handle_form_webhook(request):
 async def process_event(event: Event, request: Request):
     #print('Processing event...', event)
     if 'name' in event:
+        # Cache the event data
+        cache_key = f"event_{event['name']}"
+        cache_entry = InMemCacheCreate(key=cache_key, value=str(event))
+        
+        async with SessionLocal() as session:
+            cache_manager = CacheManager(session)
+            await cache_manager.create_entry(cache_entry)
+        
+        print(f"Cached event: {cache_key}")
 
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
-        call_routing = CallRouting(in_memory_cache)
+        call_routing = CallRouting(SessionLocal)
         if event['name'] == 'callerInformation':
             return await call_routing.caller_information(event, request)
         elif event['name'] == 'caseLocator':
@@ -135,3 +153,41 @@ async def process_event(event: Event, request: Request):
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
             """ add more logic here """
+
+async def fetch_caller_info_from_db(caller_id: str) -> str:
+    # This is a placeholder function. In a real application, you would
+    # query your database or external service to get caller information.
+    # For now, we'll just return a dummy string.
+    return f"Caller info for {caller_id}: Name: John Doe, Status: Active"
+
+async def get_caller_info(caller_id: str):
+    cache_key = f"caller_info_{caller_id}"
+    
+    async with SessionLocal() as session:
+        cache_manager = CacheManager(session)
+        cached_info = await cache_manager.get_entry(cache_key)
+    
+    if cached_info:
+        return cached_info.value
+    else:
+        # Fetch caller info using the placeholder function
+        caller_info = await fetch_caller_info_from_db(caller_id)
+        
+        # Cache the fetched information
+        cache_entry = InMemCacheCreate(key=cache_key, value=caller_info)
+        
+        async with SessionLocal() as session:
+            cache_manager = CacheManager(session)
+            await cache_manager.create_entry(cache_entry)
+        
+        return caller_info
+
+async def cleanup_expired_cache_entries():
+    while True:
+        async with SessionLocal() as session:
+            cache_manager = CacheManager(session)
+            await cache_manager.delete_expired_entries()
+        await asyncio.sleep(3600)  # Run every hour
+
+# Start the cleanup task
+asyncio.create_task(cleanup_expired_cache_entries())

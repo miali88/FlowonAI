@@ -2,6 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
+from loguru import logger
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -20,9 +21,17 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
+# Configure Loguru to send logs to Logstash
+logger.add("tcp://logstash:5044", format="{message}", serialize=True)
+
 @app.on_event("startup")
 async def startup_event():
+    logger.info("FastAPI application starting up")
     cleanup()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("FastAPI application shutting down")
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:
@@ -36,4 +45,8 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
+logger.info("CORS middleware configured")
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+logger.info("API router included")
