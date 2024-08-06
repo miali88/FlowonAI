@@ -59,7 +59,7 @@ async def handle_retell_logic(agent_id_path):
     except Exception as e:
         print(f"Error in handle_retell_logic: {e}")
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
-
+    
 
 """ WEBHOOK HANDLING """
 async def handle_form_webhook(request):
@@ -127,9 +127,10 @@ async def save_retell_data(data):
         
 
 ''' PROCESSING EVENTS '''
-async def process_event(event: Event, request: Request):
+async def process_event(event_data: dict, request: Request):
     #print('Processing event...', event)
-    if 'name' in event:
+    if 'name' in event_data:
+        event = Event(name=event_data['name'], args=event_data.get('args'))
 
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
