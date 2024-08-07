@@ -13,11 +13,10 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 async def get_async_session() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
-
+    
 # make sure all SQLModel models are imported (app.models) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
 # for more details: https://github.com/tiangolo/full-stack-fastapi-template/issues/28
-
 
 async def init_db(session: AsyncSession) -> None:
     try:

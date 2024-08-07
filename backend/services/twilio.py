@@ -7,6 +7,8 @@ from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 from services.retellai import retellai
 from services.db_queries import get_admin_tel_number
 from services.in_memory_cache import in_memory_cache
+from services.db.supabase_ops import supabase_ops
+
 from app.core.config import settings
 
 from pydantic import BaseModel
@@ -30,16 +32,16 @@ async def handle_voice_webhook(agent_id_path: str, request: Request):
 
         print('agent type', retellai.get_agent_type(agent_id_path))
 
-        # Handle Twilio data
         print('handle twilio data...')
         await handle_twilio_logic(agent_id_path, data)
 
+        # Save Twilio webhook data to Supabase
+        await supabase_ops.twilio.save_data(str(data['CallSid']), data)
+
         print('retell logic...')
-        # Handle Retell call registration
         websocket_url = await retellai.handle_retell_logic(agent_id_path)
 
         print("creating twilio voice response object..")
-        # Create response
         response = create_voice_response(websocket_url)
 
         return Response(content=str(response), media_type='text/xml')

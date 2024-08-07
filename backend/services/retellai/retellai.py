@@ -9,14 +9,9 @@ from typing import Optional
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 
-import json
-
-from sqlalchemy.future import select
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from contextlib import asynccontextmanager
-from supabase import create_client, Client
 from datetime import datetime
+
+from services.db.supabase_ops import supabase_ops
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -62,7 +57,6 @@ async def handle_retell_logic(agent_id_path):
     except Exception as e:
         print(f"Error in handle_retell_logic: {e}")
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
-    
 
 """ WEBHOOK HANDLING """
 async def handle_form_webhook(request):
@@ -72,7 +66,7 @@ async def handle_form_webhook(request):
             data = await request.json()
             result, retell_wh = await classify_retell_payload(data, request)
             if data:
-                await save_retell_data(data, retell_wh)  # saves to Supabase
+                await supabase_ops.retell.save_data(data, retell_wh)
             return JSONResponse(content=result, status_code=200)
         except Exception as e:
             print(f"Error in webhook: {e}")
@@ -89,56 +83,7 @@ async def classify_retell_payload(data, request):
         result = await process_event(data, request)
     else:
         raise ValueError("Unknown Retell AI payload type")
-    
     return result, retell_wh
-
-async_engine = create_async_engine(settings.DATABASE_URL)
-AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
-
-@asynccontextmanager
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
-
-from supabase import create_client, Client
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-
-async def save_retell_data(data, table_name):
-    try:
-        if table_name == "retell_ai_calls":
-            event_id = data["data"]["call_id"]
-        elif table_name == "retell_ai_events":
-            event_id = data["name"]
-        else:
-            raise ValueError("Unknown Retell AI payload type")
-        # Prepare the data for insertion
-        insert_data = {
-            "event_id": event_id,
-            "payload": json.dumps(data),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-
-        # Insert the data into Supabase
-        supabase_result = supabase.table(table_name).insert(insert_data).execute()
-
-        if supabase_result.data:
-            print(f"Data saved successfully to {table_name}: {event_id}")
-        else:
-            print(f"Error saving data to {table_name}: {supabase_result.error}")
-
-        # Verify the data was saved
-        saved_data = supabase.table(table_name).select("*").eq("event_id", event_id).execute()
-        if saved_data.data:
-            print(f"Saved data in {table_name}: {saved_data.data[0]}")
-        else:
-            print(f"No data found in {table_name} for event_id: {event_id}")
-
-    except Exception as e:
-        print(f"Error saving data to Supabase: {e}")
-        
 
 ''' PROCESSING EVENTS '''
 async def process_event(event: dict, request: Request):
@@ -162,18 +107,18 @@ async def process_event(event: dict, request: Request):
         """ OUTBOUND CALLING """
         from services.retellai.outbound import Outbound
         outbound = Outbound(in_memory_cache)
-        if event_name == 'outboundCalling':
-            return await outbound.outbound_calling(event, request)
+        # if event_name == 'outboundCalling':
+        #     return await outbound.outbound_calling(event, request)
 
         """ APPOINTMENT BOOKING """
         from services.retellai.app_booking import AppBooking
         app_booking = AppBooking(in_memory_cache)
-        if event_name == 'check_availability':
-            return await app_booking.check_availability(event, request)
-        if event_name == 'book_appointment':
-            return await app_booking.book_appointment(event, request)
-        if event_name == 'cal_webhook':
-            return await app_booking.cal_webhook(event, request)
+        # if event_name == 'check_availability':
+        #     return await app_booking.check_availability(event, request)
+        # if event_name == 'book_appointment':
+        #     return await app_booking.book_appointment(event, request)
+        # if event_name == 'cal_webhook':
+        #     return await app_booking.cal_webhook(event, request)
         
-        else:
-            raise HTTPException(status_code=400, detail="Unknown event name")
+    else:
+        raise HTTPException(status_code=400, detail="Unknown event name")
