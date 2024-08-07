@@ -1,0 +1,31 @@
+{
+    "event": "call_started",
+    "call": {
+      "call_id": "65223a767fdd9e33accc70234cce7f40",
+      "agent_id": "57c0035476745b1aef86cca2b8fd4745",
+      "call_status": "ongoing",
+      "start_timestamp": 1722941304992,
+      "cost_metadata": {
+        "llm_model": "gpt-4o",
+        "telecommunication": "none",
+        "voice_provider": "elevenlabs"
+      },
+      "opt_out_sensitive_data_storage": true,
+      "call_type": "web_call"
+    },
+    "data": {
+      "call_id": "65223a767fdd9e33accc70234cce7f40",
+      "agent_id": "57c0035476745b1aef86cca2b8fd4745",
+      "audio_websocket_protocol": "twilio",
+      "audio_encoding": "mulaw",
+      "sample_rate": 8000,
+      "call_status": "ongoing",
+      "start_timestamp": 1722941304992,
+      "cost_metadata": {
+        "llm_model": "gpt-4o",
+        "telecommunication": "none",
+        "voice_provider": "elevenlabs"
+      },
+      "opt_out_sensitive_data_storage": true
+    }
+  }

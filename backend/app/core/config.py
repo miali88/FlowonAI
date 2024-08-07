@@ -21,7 +21,6 @@ def parse_cors(v: Any) -> list[str] | str:
         return v
     raise ValueError(v)
 
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, extra="ignore"
@@ -61,19 +60,28 @@ class Settings(BaseSettings):
     AGENT_FIRST: str
     AGENT_SECOND: str
 
+    VAPI_API_KEY: str
+
     BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
 
     @computed_field  # type: ignore[misc]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql+asyncpg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return str(self.SQLALCHEMY_DATABASE_URI)
+
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -120,6 +128,12 @@ class Settings(BaseSettings):
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
+        if self.FIRST_SUPERUSER_PASSWORD == "changethis":
+            warnings.warn(
+                "The value of FIRST_SUPERUSER_PASSWORD is 'changethis', for security, please change it, at least for deployments.",
+                UserWarning,
+                stacklevel=1
+            )
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )

@@ -41,6 +41,7 @@ services:
     networks:
       - traefik-public
       - default
+    mem_limit: 4g
     depends_on:
       - db
     env_file:
@@ -72,6 +73,9 @@ services:
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
     platform: linux/amd64 # Patch for M1 Mac
+    volumes:
+      - ./backend:/app
+    working_dir: /app
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
