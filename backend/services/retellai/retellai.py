@@ -9,9 +9,6 @@ from typing import Optional
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 
-from sqlmodel import select
-from app.models import RetellAIEvent, RetellAICalls #, WebhookCapture
-
 import json
 
 from sqlalchemy.future import select
@@ -19,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from contextlib import asynccontextmanager
 from supabase import create_client, Client
+from datetime import datetime
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
@@ -72,17 +70,27 @@ async def handle_form_webhook(request):
     if content_type == 'application/json':
         try:
             data = await request.json()
+            result, retell_wh = await classify_retell_payload(data, request)
             if data:
-                result = await process_event(data, request)
-                await save_retell_data(data)  # saves to Supabase
-            else:
-                result = {}
+                await save_retell_data(data, retell_wh)  # saves to Supabase
             return JSONResponse(content=result, status_code=200)
         except Exception as e:
             print(f"Error in webhook: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
+
+async def classify_retell_payload(data, request):
+    result = {}
+    if "event" in data and 'data' in data:
+        retell_wh = "retell_ai_calls"
+    elif "name" in data and "args" in data:
+        retell_wh = "retell_ai_events"
+        result = await process_event(data, request)
+    else:
+        raise ValueError("Unknown Retell AI payload type")
+    
+    return result, retell_wh
 
 async_engine = create_async_engine(settings.DATABASE_URL)
 AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
@@ -97,20 +105,15 @@ async def get_db():
 
 from supabase import create_client, Client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-async def save_retell_data(data):
-    try:
-        table_name = "retell_ai_calls"  # or "retell_ai_events" based on the data type
-        
-        if "call" in data:
-            table_name = "retell_ai_calls"
-            event_id = data["call"].get("call_id", "")
-        elif "name" in data:
-            table_name = "retell_ai_events"
-            event_id = data.get("name", "")
-        else:
-            print("Unknown data type")
-            return
 
+async def save_retell_data(data, table_name):
+    try:
+        if table_name == "retell_ai_calls":
+            event_id = data["data"]["call_id"]
+        elif table_name == "retell_ai_events":
+            event_id = data["name"]
+        else:
+            raise ValueError("Unknown Retell AI payload type")
         # Prepare the data for insertion
         insert_data = {
             "event_id": event_id,
@@ -119,12 +122,12 @@ async def save_retell_data(data):
         }
 
         # Insert the data into Supabase
-        result = supabase.table(table_name).insert(insert_data).execute()
+        supabase_result = supabase.table(table_name).insert(insert_data).execute()
 
-        if result.data:
+        if supabase_result.data:
             print(f"Data saved successfully to {table_name}: {event_id}")
         else:
-            print(f"Error saving data to {table_name}: {result.error}")
+            print(f"Error saving data to {table_name}: {supabase_result.error}")
 
         # Verify the data was saved
         saved_data = supabase.table(table_name).select("*").eq("event_id", event_id).execute()
@@ -174,5 +177,3 @@ async def process_event(event: dict, request: Request):
         
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
-    else:
-        raise HTTPException(status_code=400, detail="Event name not provided")
