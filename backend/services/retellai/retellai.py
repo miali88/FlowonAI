@@ -74,7 +74,7 @@ async def handle_form_webhook(request):
             data = await request.json()
             if data:
                 result = await process_event(data, request)
-                await save_retell_data(data)  # This now saves to Supabase
+                await save_retell_data(data)  # saves to Supabase
             else:
                 result = {}
             return JSONResponse(content=result, status_code=200)
