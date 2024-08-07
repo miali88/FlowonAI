@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from sqlalchemy import JSON
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, CacheEntry, RetellAIEvent, RetellAICalls, WebhookCapture
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, CacheEntry, RetellAIEvent, RetellAICalls #, WebhookCapture
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -127,16 +127,16 @@ class RetellAICallsManager:
             db.delete(event)
             db.commit()
 
-class WebhookCaptureManager:
-    @staticmethod
-    def create(db: Session, method: str, url: str, headers: dict, body: str) -> WebhookCapture:
-        new_capture = WebhookCapture(
-            method=method,
-            url=url,
-            headers=headers,
-            body=body
-        )
-        db.add(new_capture)
-        db.commit()
-        db.refresh(new_capture)
-        return new_capture
+# class WebhookCaptureManager:
+#     @staticmethod
+#     def create(db: Session, method: str, url: str, headers: dict, body: str) -> WebhookCapture:
+#         new_capture = WebhookCapture(
+#             method=method,
+#             url=url,
+#             headers=headers,
+#             body=body
+#         )
+#         db.add(new_capture)
+#         db.commit()
+#         db.refresh(new_capture)
+#         return new_capture

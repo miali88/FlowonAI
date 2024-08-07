@@ -136,13 +136,16 @@ class RetellAICalls(SQLModel, table=True):
     # call_sid: str = Field(unique=True, index=True)
     # call_status: str = Field(unique=True, index=True)
 
-Base = declarative_base()
 
-class WebhookCapture(Base):
-    __tablename__ = 'webhook_captures'
+""" the below table uses sqlalchemy, the others above use sqlmodel. 
+    should be refactored to use sqlmodel. """
+# Base = declarative_base()
 
-    id = Column(Integer, primary_key=True)
-    method = Column(String)
-    url = Column(String)
-    headers = Column(JSON)
-    body = Column(String)
+# class WebhookCapture(Base):
+#     __tablename__ = 'webhook_captures'
+
+#     id = Column(Integer, primary_key=True)
+#     method = Column(String)
+#     url = Column(String)
+#     headers = Column(JSON)
+#     body = Column(String)

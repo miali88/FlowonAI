@@ -10,7 +10,7 @@ from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
 
 from sqlmodel import select
-from app.models import RetellAIEvent, RetellAICalls, WebhookCapture
+from app.models import RetellAIEvent, RetellAICalls #, WebhookCapture
 
 import json
 
@@ -20,6 +20,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from contextlib import asynccontextmanager
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
+
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 class Event(BaseModel):
     name: str
@@ -64,15 +69,15 @@ async def handle_retell_logic(agent_id_path):
 """ WEBHOOK HANDLING """
 async def handle_form_webhook(request):
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
-    async with get_db() as session:
-        new_webhook = WebhookCapture(session, request)
-        session.add(new_webhook)
-        await session.commit()
     if content_type == 'application/json':
         try:
             data = await request.json()
             if data:
-                result = await process_event(data, request)
+                async with get_db() as session:
+                    #new_webhook = WebhookCapture(session, request)
+                    # Use new_webhook as needed
+                    result = await process_event(data, request)
+                    await save_retell_data(data)
             else:
                 result = {}
             return JSONResponse(content=result, status_code=200)
@@ -127,10 +132,15 @@ async def save_retell_data(data):
         
 
 ''' PROCESSING EVENTS '''
-async def process_event(event_data: dict, request: Request):
-    #print('Processing event...', event)
-    if 'name' in event_data:
-        event = Event(name=event_data['name'], args=event_data.get('args'))
+async def process_event(event: Event, request: Request):
+
+    logger.info("Processing event: %s", event.name)
+    try:
+        if 'name' in event:
+            # Create instances once
+            call_routing = CallRouting(in_memory_cache)
+            outbound = Outbound(in_memory_cache)
+            app_booking = AppBooking(in_memory_cache)
 
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
@@ -165,3 +175,7 @@ async def process_event(event_data: dict, request: Request):
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
             """ add more logic here """
+    except Exception as e:
+        logger.error("Error in process_event: %s", str(e))
+        logger.error("Full traceback: %s", traceback.format_exc())
+        raise
