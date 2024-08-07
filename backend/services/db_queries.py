@@ -13,8 +13,8 @@ cases = df['Company Name:'].tolist()
 async def db_case_locator(event):
     print('_*_ DB CASE LOCATOR FUNCTION _*_')
     print(event)
-    if 'CaseName' in event['args']:
-        query = event['args']['CaseName']
+    if 'case_name' in event['args']:
+        query = event['args']['case_name']
         query_type = 'CaseName'
     elif 'AdministratorName' in event['args']:
         query = event['args']['AdministratorName']

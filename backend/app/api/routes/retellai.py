@@ -12,14 +12,15 @@ logger = logging.getLogger(__name__)
 async def webhook(request: Request):
     logger.info("Received webhook request")
     try:
-        logger.debug("Request headers: %s", request.headers)
-        body = await request.json()
-        logger.debug("Request body: %s", body)
-        
+        print('\n\n /retell')
         result = await handle_form_webhook(request)
-        logger.info("Webhook processed successfully")
-        return JSONResponse(content=result)
+        
+        # Check if result is already a JSONResponse
+        if isinstance(result, JSONResponse):
+            return result
+        else:
+            # If it's not a JSONResponse, wrap it in one
+            return JSONResponse(content=result)
     except Exception as e:
-        logger.error("Error in webhook: %s", str(e))
-        logger.error("Full traceback: %s", traceback.format_exc())
+        print(f"Error in webhook: {e}")
         raise HTTPException(status_code=500, detail=str(e))

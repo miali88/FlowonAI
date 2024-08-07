@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:
         return str(self.SQLALCHEMY_DATABASE_URI)
 
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     SMTP_PORT: int = 587

@@ -18,11 +18,11 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from contextlib import asynccontextmanager
+from supabase import create_client, Client
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
 
 import logging
-import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +73,8 @@ async def handle_form_webhook(request):
         try:
             data = await request.json()
             if data:
-                async with get_db() as session:
-                    #new_webhook = WebhookCapture(session, request)
-                    # Use new_webhook as needed
-                    result = await process_event(data, request)
-                    await save_retell_data(data)
+                result = await process_event(data, request)
+                await save_retell_data(data)  # This now saves to Supabase
             else:
                 result = {}
             return JSONResponse(content=result, status_code=200)
@@ -98,84 +95,84 @@ async def get_db():
         finally:
             await session.close()
 
+from supabase import create_client, Client
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 async def save_retell_data(data):
-    async with get_db() as session:
-        try:
-            call_id = data['call']['call_id']
-            if "event" in data:
-                new_call = RetellAICalls(
-                    event_id = call_id,
-                    payload = json.dumps(data)
-                )
-                session.add(new_call)
-            elif "call" in data and "name" in data:
-                new_event = RetellAIEvent(
-                    event_id = call_id+call_id['name'],
-                    payload = json.dumps(data)
-                )
-                session.add(new_event)
-            await session.commit()
-            print(f"Data saved successfully: {data.get('id', '')}")
-        except Exception as e:
-            print(f"Error saving data: {e}")
-            await session.rollback()
+    try:
+        table_name = "retell_ai_calls"  # or "retell_ai_events" based on the data type
         
+        if "call" in data:
+            table_name = "retell_ai_calls"
+            event_id = data["call"].get("call_id", "")
+        elif "name" in data:
+            table_name = "retell_ai_events"
+            event_id = data.get("name", "")
+        else:
+            print("Unknown data type")
+            return
+
+        # Prepare the data for insertion
+        insert_data = {
+            "event_id": event_id,
+            "payload": json.dumps(data),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        # Insert the data into Supabase
+        result = supabase.table(table_name).insert(insert_data).execute()
+
+        if result.data:
+            print(f"Data saved successfully to {table_name}: {event_id}")
+        else:
+            print(f"Error saving data to {table_name}: {result.error}")
+
         # Verify the data was saved
-        if "event" in data:
-            result = await session.execute(select(RetellAICalls).where(RetellAICalls.event_id == data.get("id", "")))
-            saved_call = result.scalar_one_or_none()
-            print(f"Saved call: {saved_call}")
-        elif "call" in data and "name" in data:
-            result = await session.execute(select(RetellAIEvent).where(RetellAIEvent.event_id == data.get("id", "")))
-            saved_event = result.scalar_one_or_none()
-            print(f"Saved event: {saved_event}")
+        saved_data = supabase.table(table_name).select("*").eq("event_id", event_id).execute()
+        if saved_data.data:
+            print(f"Saved data in {table_name}: {saved_data.data[0]}")
+        else:
+            print(f"No data found in {table_name} for event_id: {event_id}")
+
+    except Exception as e:
+        print(f"Error saving data to Supabase: {e}")
         
 
 ''' PROCESSING EVENTS '''
-async def process_event(event: Event, request: Request):
-
-    logger.info("Processing event: %s", event.name)
-    try:
-        if 'name' in event:
-            # Create instances once
-            call_routing = CallRouting(in_memory_cache)
-            outbound = Outbound(in_memory_cache)
-            app_booking = AppBooking(in_memory_cache)
+async def process_event(event: dict, request: Request):
+    if 'name' in event:
+        event_name = event['name']
 
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
         call_routing = CallRouting(in_memory_cache)
-        if event['name'] == 'callerInformation':
+        if event_name == 'callerInformation':
             return await call_routing.caller_information(event, request)
-        elif event['name'] == 'caseLocator':
+        elif event_name == 'caseLocator':
             return await call_routing.case_locator(event, request)
-        elif event['name'] == 'callAdmin':
+        elif event_name == 'callAdmin':
             return await call_routing.call_admin(event, request)
-        elif event['name'] == 'infoRetrieve':
+        elif event_name == 'infoRetrieve':
             return await call_routing.info_retrieve(event, request)
-        elif event['name'] == 'adminAvailable':
+        elif event_name == 'adminAvailable':
             return await call_routing.admin_available(event, request)
         
         """ OUTBOUND CALLING """
         from services.retellai.outbound import Outbound
         outbound = Outbound(in_memory_cache)
-        if event['name'] == 'outboundCalling':
+        if event_name == 'outboundCalling':
             return await outbound.outbound_calling(event, request)
 
         """ APPOINTMENT BOOKING """
         from services.retellai.app_booking import AppBooking
         app_booking = AppBooking(in_memory_cache)
-        if event['name'] == 'check_availability':
+        if event_name == 'check_availability':
             return await app_booking.check_availability(event, request)
-        if event['name'] == 'book_appointment':
+        if event_name == 'book_appointment':
             return await app_booking.book_appointment(event, request)
-        if event['name'] == 'cal_webhook':
+        if event_name == 'cal_webhook':
             return await app_booking.cal_webhook(event, request)
         
         else:
             raise HTTPException(status_code=400, detail="Unknown event name")
-            """ add more logic here """
-    except Exception as e:
-        logger.error("Error in process_event: %s", str(e))
-        logger.error("Full traceback: %s", traceback.format_exc())
-        raise
+    else:
+        raise HTTPException(status_code=400, detail="Event name not provided")
