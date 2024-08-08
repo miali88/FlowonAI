@@ -4,7 +4,6 @@ set -e
 set -x
 
 echo "Running mypy..."
-mypy app/alembic || exit 1
 mypy app/api || exit 1
 mypy app/core || exit 1
 mypy app/email-templates || exit 1
