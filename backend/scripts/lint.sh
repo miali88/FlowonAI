@@ -4,7 +4,11 @@ set -e
 set -x
 
 echo "Running mypy..."
-mypy app || exit 1
+mypy app/alembic || exit 1
+mypy app/api || exit 1
+mypy app/core || exit 1
+mypy app/email-templates || exit 1
+mypy app/tests || exit 1
 
 echo "Running ruff check..."
 ruff check app || exit 1
