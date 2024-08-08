@@ -70,17 +70,13 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
-            scheme="postgresql+asyncpg",
+            scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
-
-    @property
-    def DATABASE_URL(self) -> str:
-        return str(self.SQLALCHEMY_DATABASE_URI)
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""

@@ -1,6 +1,0 @@
-CMDLINE mypy app --explicit-package-bases --config-file /Users/michaelali/Library/CloudStorage/OneDrive-Personal/Softwares/FlowonAI/flowon_ai/backend/pyproject.toml
-MEM 0.156250 1723122475.0156
-MEM 20.625000 1723122475.1330
-MEM 30.531250 1723122475.2444
-MEM 34.421875 1723122475.3613
-MEM 40.609375 1723122475.4690
