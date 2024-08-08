@@ -1,11 +1,11 @@
-from typing import Any, List
-from datetime import datetime
+import uuid
+from typing import Any
 
 from sqlmodel import Session, select
-from sqlalchemy import JSON
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, CacheEntry, RetellAIEvent, RetellAICalls #, WebhookCapture
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -15,6 +15,7 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -29,10 +30,12 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
     session_user = session.exec(statement).first()
     return session_user
+
 
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
     db_user = get_user_by_email(session=session, email=email)
@@ -42,101 +45,10 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         return None
     return db_user
 
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: int) -> Item:
+
+def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
     db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
     session.add(db_item)
     session.commit()
     session.refresh(db_item)
     return db_item
-
-class CacheManager:
-    @staticmethod
-    def create(db: Session, key: str, value: dict) -> CacheEntry:
-        cache_entry = CacheEntry(key=key, value=value)
-        db.add(cache_entry)
-        db.commit()
-        db.refresh(cache_entry)
-        return cache_entry
-
-    @staticmethod
-    def get(db: Session, key: str) -> CacheEntry | None:
-        return db.exec(select(CacheEntry).where(CacheEntry.key == key)).first()
-
-    @staticmethod
-    def update(db: Session, key: str, value: dict) -> CacheEntry | None:
-        cache_entry = CacheManager.get(db, key)
-        if cache_entry:
-            cache_entry.value = value
-            cache_entry.last_updated = datetime.utcnow()
-            db.commit()
-            db.refresh(cache_entry)
-        return cache_entry
-
-    @staticmethod
-    def delete(db: Session, key: str) -> None:
-        cache_entry = CacheManager.get(db, key)
-        if cache_entry:
-            db.delete(cache_entry)
-            db.commit()
-
-class RetellAIEventManager:
-    @staticmethod
-    def create(db: Session, event_id: str, payload: dict) -> RetellAIEvent:
-        event = RetellAIEvent(event_id=event_id, payload=payload)
-        db.add(event)
-        db.commit()
-        db.refresh(event)
-        return event
-
-    @staticmethod
-    def get(db: Session, event_id: str) -> RetellAIEvent | None:
-        return db.exec(select(RetellAIEvent).where(RetellAIEvent.event_id == event_id)).first()
-
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[RetellAIEvent]:
-        return db.exec(select(RetellAIEvent).offset(skip).limit(limit)).all()
-
-    @staticmethod
-    def delete(db: Session, event_id: str) -> None:
-        event = RetellAIEventManager.get(db, event_id)
-        if event:
-            db.delete(event)
-            db.commit()
-
-class RetellAICallsManager:
-    @staticmethod
-    def create(db: Session, event_id: str, payload: dict) -> RetellAICalls:
-        event = RetellAICalls(event_id=event_id, payload=payload)
-        db.add(event)
-        db.commit()
-        db.refresh(event)
-        return event
-    
-    @staticmethod
-    def get(db: Session, event_id: str) -> RetellAICalls | None:
-        return db.exec(select(RetellAICalls).where(RetellAICalls.event_id == event_id)).first()
-    
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[RetellAICalls]:
-        return db.exec(select(RetellAICalls).offset(skip).limit(limit)).all()
-    
-    @staticmethod
-    def delete(db: Session, event_id: str) -> None:
-        event = RetellAICallsManager.get(db, event_id)
-        if event:
-            db.delete(event)
-            db.commit()
-
-# class WebhookCaptureManager:
-#     @staticmethod
-#     def create(db: Session, method: str, url: str, headers: dict, body: str) -> WebhookCapture:
-#         new_capture = WebhookCapture(
-#             method=method,
-#             url=url,
-#             headers=headers,
-#             body=body
-#         )
-#         db.add(new_capture)
-#         db.commit()
-#         db.refresh(new_capture)
-#         return new_capture

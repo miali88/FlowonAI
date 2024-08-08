@@ -14,13 +14,13 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 tenacity = "^8.2.3"
 pydantic = ">2.0"
 emails = "^0.6"
-asyncpg = "0.29.0"
 gunicorn = "^22.0.0"
 jinja2 = "^3.1.4"
 alembic = "^1.12.1"
 httpx = "^0.25.1"
 psycopg = {extras = ["binary"], version = "^3.1.13"}
-sqlmodel = "^0.0.19"
+sqlmodel = "^0.0.21"
+sqlalchemy ="2.0.31"
 # Pin bcrypt until passlib supports the latest
 bcrypt = "4.0.1"
 pydantic-settings = "^2.2.1"

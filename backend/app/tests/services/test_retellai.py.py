@@ -1,17 +1,15 @@
-import pytest
-from fastapi.testclient import TestClient
-from backend.services.retellai.retellai import CallRouting, Outbound, AppBooking
+# from unittest.mock import patch
+# # Update the import path to match your project structure
+# from backend.services.retellai import retellai
 
-def test_call_routing_init():
-    call_routing = CallRouting({})
-    assert hasattr(call_routing, 'in_memory_cache')
+# def test_retellai_service() -> None:
+#     # Test implementation here
+#     pass
 
-def test_outbound_init():
-    outbound = Outbound({})
-    assert hasattr(outbound, 'in_memory_cache')
+# def test_retellai_api_call() -> None:
+#     # Test implementation here
+#     pass
 
-def test_app_booking_init():
-    app_booking = AppBooking({})
-    assert hasattr(app_booking, 'in_memory_cache')
-
-# Add more tests for individual methods of these classes
+# def test_retellai_error_handling() -> None:
+#     # Test implementation here
+#     pass

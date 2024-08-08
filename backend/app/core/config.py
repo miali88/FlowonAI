@@ -44,23 +44,25 @@ class Settings(BaseSettings):
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
 
-    PROJECT_NAME: str
+    PROJECT_NAME: str = "FlowOn AI"
     SENTRY_DSN: HttpUrl | None = None
-    POSTGRES_SERVER: str
+    POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "changethis"
     POSTGRES_DB: str = ""
 
-    TWILIO_ACCOUNT_SID: str
-    TWILIO_AUTH_TOKEN: str
-    TWILIO_NUMBER: str 
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_NUMBER: str = ""
 
-    RETELL_API_KEY: str
-    AGENT_FIRST: str
-    AGENT_SECOND: str
+    RETELL_API_KEY: str = ""
+    AGENT_FIRST: str = ""
+    AGENT_SECOND: str = ""
 
-    VAPI_API_KEY: str
+    VAPI_API_KEY: str = ""
+
+    CAL_API_KEY: str = ""
 
     BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
 
@@ -68,7 +70,7 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
-            scheme="postgresql+asyncpg",
+            scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
@@ -76,12 +78,8 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    @property
-    def DATABASE_URL(self) -> str:
-        return str(self.SQLALCHEMY_DATABASE_URI)
-
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -94,7 +92,7 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str | None = None
 
     @model_validator(mode="after")
-    def _set_default_emails_from(self) -> Self:
+    def _set_default_emails_from(self) -> 'Settings':
         if not self.EMAILS_FROM_NAME:
             self.EMAILS_FROM_NAME = self.PROJECT_NAME
         return self
@@ -109,8 +107,8 @@ class Settings(BaseSettings):
     # TODO: update type to EmailStr when sqlmodel supports it
     EMAIL_TEST_USER: str = "test@example.com"
     # TODO: update type to EmailStr when sqlmodel supports it
-    FIRST_SUPERUSER: str
-    FIRST_SUPERUSER_PASSWORD: str
+    FIRST_SUPERUSER: str = "admin@example.com"
+    FIRST_SUPERUSER_PASSWORD: str = "changethis"
     USERS_OPEN_REGISTRATION: bool = True
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
@@ -125,7 +123,7 @@ class Settings(BaseSettings):
                 raise ValueError(message)
 
     @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
+    def _enforce_non_default_secrets(self) -> 'Settings':
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
         if self.FIRST_SUPERUSER_PASSWORD == "changethis":
@@ -137,8 +135,7 @@ class Settings(BaseSettings):
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
-
         return self
 
 
-settings = Settings()  # type: ignore
+settings = Settings()

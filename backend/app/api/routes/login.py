@@ -20,6 +20,7 @@ from app.utils import (
 
 router = APIRouter()
 
+
 @router.post("/login/access-token")
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
@@ -40,6 +41,7 @@ def login_access_token(
             user.id, expires_delta=access_token_expires
         )
     )
+
 
 @router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:

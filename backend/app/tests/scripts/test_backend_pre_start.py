@@ -5,7 +5,7 @@ from sqlmodel import select
 from app.backend_pre_start import init, logger
 
 
-def test_init_successful_connection() -> None:
+async def test_init_successful_connection() -> None:
     engine_mock = MagicMock()
 
     session_mock = MagicMock()
@@ -19,7 +19,7 @@ def test_init_successful_connection() -> None:
         patch.object(logger, "warn"),
     ):
         try:
-            init(engine_mock)
+            await init(engine_mock)  # Add await here
             connection_successful = True
         except Exception:
             connection_successful = False

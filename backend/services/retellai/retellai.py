@@ -4,7 +4,7 @@ from retell import Retell
 
 import asyncio
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from app.core.config import settings
 from services.in_memory_cache import in_memory_cache
@@ -21,10 +21,9 @@ logger = logging.getLogger(__name__)
 
 class Event(BaseModel):
     name: str
-    args: Optional[dict] = None
+    args: Optional[Dict[str, Any]] = None
 
-""" INITIAL CALL HANDLING """
-def get_agent_type(agent_id_path):
+def get_agent_type(agent_id_path: str) -> str:
     """Determine the agent type based on the agent_id_path."""
     if agent_id_path == settings.AGENT_FIRST:
         return "AGENT_FIRST"
@@ -33,7 +32,7 @@ def get_agent_type(agent_id_path):
     else:
         raise ValueError(f"Unknown agent_id_path: {agent_id_path}")
 
-async def handle_retell_logic(agent_id_path):
+async def handle_retell_logic(agent_id_path: str) -> str:
     """Handle Retell-specific operations."""
     try:
         agent_type = get_agent_type(agent_id_path)
@@ -59,14 +58,14 @@ async def handle_retell_logic(agent_id_path):
         raise HTTPException(status_code=500, detail=f"Error processing Retell logic: {str(e)}")
 
 """ WEBHOOK HANDLING """
-async def handle_form_webhook(request):
+async def handle_form_webhook(request: Request) -> JSONResponse:
     content_type = request.headers.get('Content-Type', '').split(';')[0].strip()
     if content_type == 'application/json':
         try:
             data = await request.json()
             result, retell_wh = await classify_retell_payload(data, request)
             if data:
-                await supabase_ops.retell.save_data(data, retell_wh)
+                await supabase_ops.retell.create(data, retell_wh)
             return JSONResponse(content=result, status_code=200)
         except Exception as e:
             print(f"Error in webhook: {e}")
@@ -74,7 +73,7 @@ async def handle_form_webhook(request):
     else:
         raise HTTPException(status_code=415, detail="Unsupported Media Type")
 
-async def classify_retell_payload(data, request):
+async def classify_retell_payload(data: Dict[str, Any], request: Request) -> tuple[Dict[str, Any], str]:
     result = {}
     if "event" in data and 'data' in data:
         retell_wh = "retell_ai_calls"
@@ -86,7 +85,7 @@ async def classify_retell_payload(data, request):
     return result, retell_wh
 
 ''' PROCESSING EVENTS '''
-async def process_event(event: dict, request: Request):
+async def process_event(event: Dict[str, Any], request: Request) -> Any:
     if 'name' in event:
         event_name = event['name']
 
