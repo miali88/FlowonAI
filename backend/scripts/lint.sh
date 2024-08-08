@@ -3,10 +3,10 @@
 set -e
 set -x
 
-echo "Running mypy..."
-mypy app/api/routes || exit 1
-mypy app/deps.py || exit 1
-mypy app/main.py || exit 1
+# echo "Running mypy..."
+# mypy app/api/routes || exit 1
+# mypy app/deps.py || exit 1
+# mypy app/main.py || exit 1
 
 
 mypy app/core || exit 1

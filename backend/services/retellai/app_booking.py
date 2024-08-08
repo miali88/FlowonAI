@@ -13,7 +13,7 @@ class AppBooking:
     def __init__(self, in_memory_cache: Any):
         self.in_memory_cache = in_memory_cache
 
-    async def check_availability(self, event, request):
+    async def check_availability(self, event: Optional[Dict[str, Any]], request: Optional[Request]) -> Dict[str, Any]:
         """ For custom cal.com: GET LLM TO DESIGN THIS LOGIC. 
             PRESENT BOTH FUNCTION CALL JSON FROM RETELL,
             AND DETERMINE AVAILABILITY FROM CAL API. 
@@ -38,11 +38,13 @@ class AppBooking:
         if response.status_code == 200:
             bookings = response.json()
             print(bookings)
+            return bookings  # Return the bookings dictionary
         else:
             print(f"Failed to fetch bookings. Status code: {response.status_code}")
             print(response.json())
+            return {"error": "Failed to fetch bookings"}  # Return an error dictionary
 
-    async def cal_webhook(self, event, request):
+    async def cal_webhook(self, event: Dict[str, Any], request: Request) -> None:
         print('\n cal webhook function')
         """ alert to be used in retellai's built in cal.com.
             since retellai coms directly with cal.com, we have to
