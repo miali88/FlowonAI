@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from app.core.config import settings
 from supabase import create_client, Client
 from datetime import datetime
@@ -7,17 +8,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SupabaseOps:
-    def __init__(self):
+    def __init__(self) -> None:
         self.supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         self.retell = self.Retell(self)
         self.twilio = self.Twilio(self)
         self.vapi = self.VAPI(self)
 
     class Retell:
-        def __init__(self, parent):
+        def __init__(self, parent: 'SupabaseOps') -> None:
             self.parent = parent
 
-        async def create(self, data: dict, retell_wh: str):
+        async def create(self, data: Dict[str, Any], retell_wh: str) -> Any:
             try:
                 if retell_wh == "retell_ai_calls":
                     event_id = data["data"]["call_id"]
@@ -36,7 +37,7 @@ class SupabaseOps:
                 if result.data:
                     logger.info(f"Retell data saved successfully to {retell_wh}: {event_id}")
                 else:
-                    logger.error(f"Error saving Retell data to {retell_wh}: {result.error}")
+                    logger.error(f"Error saving Retell data to {retell_wh}") #: {result.error}")
 
                 return result.data
             except Exception as e:
@@ -44,10 +45,10 @@ class SupabaseOps:
                 raise
 
     class Twilio:
-        def __init__(self, parent):
+        def __init__(self, parent: 'SupabaseOps') -> None:
             self.parent = parent
 
-        async def create(self, call_sid: str, payload: dict):
+        async def create(self, call_sid: str, payload: Dict[str, Any]) -> Any:
             try:
                 insert_data = {
                     "event_id": call_sid,
@@ -59,7 +60,7 @@ class SupabaseOps:
                 if result.data:
                     logger.info(f"Twilio data saved successfully: {call_sid}")
                 else:
-                    logger.error(f"Error saving Twilio data: {result.error}")
+                    logger.error(f"Error saving Twilio data:") # {result.error}")
 
                 return result.data
             except Exception as e:
@@ -67,10 +68,10 @@ class SupabaseOps:
                 raise
 
     class VAPI:
-        def __init__(self, parent):
+        def __init__(self, parent: 'SupabaseOps') -> None:
             self.parent = parent
 
-        async def create(self, payload: dict):
+        async def create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 message = payload.get("message", {})
                 event_type = message.get("type")
@@ -112,4 +113,4 @@ class SupabaseOps:
                 logger.exception(f"Error saving VAPI data to Supabase: {str(e)}")
                 return {"success": False, "message": "Error saving VAPI data", "error": str(e)}
 
-supabase_ops = SupabaseOps()
+supabase_ops: SupabaseOps = SupabaseOps()

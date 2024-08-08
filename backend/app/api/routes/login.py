@@ -17,6 +17,8 @@ from app.utils import (
     send_email,
     verify_password_reset_token,
 )
+from sqlalchemy.orm import Session
+
 
 router = APIRouter()
 

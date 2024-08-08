@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import emails  # type: ignore
 import jwt
@@ -109,7 +109,7 @@ def generate_password_reset_token(email: str) -> str:
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
+def verify_password_reset_token(token: str) -> Optional[str]:
     try:
         decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         return str(decoded_token["sub"])

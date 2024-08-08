@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel  # type: ignore
 from sqlalchemy import Column, Integer, String, JSON
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -40,7 +40,7 @@ class UpdatePassword(SQLModel):
 
 
 # Database model, database table inferred from class name
-class User(UserBase, table=True):
+class User(UserBase, table=True):  # type: ignore[call-arg]
     __table_args__ = {'extend_existing': True}
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
@@ -74,7 +74,7 @@ class ItemUpdate(ItemBase):
 
 
 # Database model, database table inferred from class name
-class Item(ItemBase, table=True):
+class Item(ItemBase, table=True):  # type: ignore[call-arg]
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(max_length=255)
     owner_id: int | None = Field(default=None, foreign_key="user.id", nullable=False)
@@ -113,28 +113,28 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 
-class CacheEntry(SQLModel, table=True):
+class CacheEntry(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     key: str = Field(index=True)
     value: str = Field(sa_column=Column(JSON))
     last_updated: datetime = Field(default_factory=datetime.utcnow)
 
 
-class RetellAIEvent(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    event_id: str = Field(unique=True, index=True)
-    payload: str = Field(sa_column=Column(JSON))
+# class RetellAIEvent(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     timestamp: datetime = Field(default_factory=datetime.utcnow)
+#     event_id: str = Field(unique=True, index=True)
+#     payload: str = Field(sa_column=Column(JSON))
 
 
-class RetellAICalls(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    event_id: str = Field(unique=True, index=True)
-    payload: str = Field(sa_column=Column(JSON))
-    # call_id: str = Field(unique=True, index=True)
-    # call_sid: str = Field(unique=True, index=True)
-    # call_status: str = Field(unique=True, index=True)
+# class RetellAICalls(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     timestamp: datetime = Field(default_factory=datetime.utcnow)
+#     event_id: str = Field(unique=True, index=True)
+#     payload: str = Field(sa_column=Column(JSON))
+#     # call_id: str = Field(unique=True, index=True)
+#     # call_sid: str = Field(unique=True, index=True)
+#     # call_status: str = Field(unique=True, index=True)
 
 
 """ the below table uses sqlalchemy, the others above use sqlmodel. 

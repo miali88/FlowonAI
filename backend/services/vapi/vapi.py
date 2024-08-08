@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-async def handle_vapi_webhook(request: Request):
+async def handle_vapi_webhook(request: Request) -> Response:
     try:
         payload = await request.json()
     except json.JSONDecodeError:
