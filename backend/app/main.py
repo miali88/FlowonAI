@@ -7,13 +7,14 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.config import settings
 from services.twilio import cleanup
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
+from sqlalchemy.orm import AsyncSession
 from sqlalchemy import text, select
 from app.models import User
 from app.core.security import get_password_hash
-
+import asyncio 
 import logging
+from typing import AsyncGenerator
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -21,9 +22,9 @@ logger = logging.getLogger(__name__)
 logger.debug("Starting application")
 
 try:
-    engine = create_async_engine(settings.DATABASE_URL, echo=True)
+    engine: AsyncEngine = create_async_engine(settings.DATABASE_URL, echo=True)
     logger.debug("Created async engine")
-    AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
     logger.debug("Created AsyncSessionLocal")
 except Exception as e:
     logger.exception(f"Error creating engine or session: {e}")
@@ -53,18 +54,18 @@ async def init_db(session: AsyncSession) -> None:
                 is_superuser=True,
             )
             session.add(user)
-            await session.commit()
+            await session.commit()  # type: ignore
     except Exception as e:
         print(f"Error initializing DB: {e}")
-        await session.rollback()
+        await session.rollback()  # type: ignore
         raise
 
-async def init():
+async def init() -> None:
     async with AsyncSessionLocal() as session:
         await init_db(session)
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.debug("Entering lifespan function")
     # Startup
     retry_count = 0
@@ -83,7 +84,8 @@ async def lifespan(app: FastAPI):
                 raise  # Re-raise the last exception if all retries fail
     yield
     # Shutdown
-    await engine.dispose()
+    await engine.dispose()  # type: ignore
+    cleanup()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

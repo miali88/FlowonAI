@@ -32,6 +32,7 @@ pandas = "2.2.2"
 thefuzz = "0.22.1"
 vapi-python = "0.1.9"
 supabase = "2.6.0"
+sqlalchemy = "2.0.32"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

@@ -10,13 +10,12 @@ class InMemoryCache:
     def get(self, key: Any, default: Optional[Any] = None) -> Any:
         with self._lock:
             keys = key.split('.')
-            value = self._mem_cache
+            value: Any = self._mem_cache
             for k in keys:
-                if isinstance(value, dict):
-                    value = value.get(k)
-                    if value is None:
-                        return default
-                else:
+                if not isinstance(value, dict):
+                    return default
+                value = value.get(k)
+                if value is None:
                     return default
             return value
 

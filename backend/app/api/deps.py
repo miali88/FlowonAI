@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import jwt
@@ -12,15 +12,19 @@ from sqlalchemy.orm import sessionmaker
 from app.core import security
 from app.core.config import settings
 from app.models import TokenPayload, User
+from app.core.db import get_async_session  # Import get_async_session
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
 
-async def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async for session in get_async_session():
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
@@ -43,7 +47,7 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return user
+    return user  # Ensure User is returned
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
