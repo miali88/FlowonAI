@@ -4,15 +4,9 @@ set -e
 set -x
 
 echo "Running mypy..."
-mypy app/api/routes/items || exit 1
-mypy app/api/routes/login || exit 1
-mypy app/api/routes/retellai || exit 1
-mypy app/api/routes/twilio || exit 1
-mypy app/api/routes/users || exit 1
-mypy app/api/routes/vapi || exit 1
-mypy app/api/routes/utils || exit 1
-mypy app/deps || exit 1
-mypy app/main || exit 1
+mypy app/api/routes || exit 1
+mypy app/deps.py || exit 1
+mypy app/main.py || exit 1
 
 
 mypy app/core || exit 1
