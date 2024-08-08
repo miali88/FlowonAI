@@ -1,5 +1,5 @@
 # FastAPI Project - Backend
-# stop fucking around hector
+
 ## Requirements
 
 * [Docker](https://www.docker.com/).

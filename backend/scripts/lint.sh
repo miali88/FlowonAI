@@ -3,6 +3,11 @@
 set -e
 set -x
 
-mypy app
-ruff check app
-ruff format app --check
+echo "Running mypy..."
+mypy app || exit 1
+
+echo "Running ruff check..."
+ruff check app || exit 1
+
+echo "Running ruff format check..."
+ruff format app --check || exit 1
