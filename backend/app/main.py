@@ -2,6 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
+from services.twilio import cleanup
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -21,14 +22,6 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Code to run at startup
-    cleanup()
-    yield
-
-app = FastAPI(lifespan=lifespan)
-
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
@@ -42,3 +35,11 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+@app.on_event("startup")
+async def startup_event():
+    cleanup()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    cleanup()

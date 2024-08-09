@@ -13,6 +13,7 @@ from app.core.config import settings
 
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+import logging
 
 class Event(BaseModel):
     name: str
@@ -21,8 +22,6 @@ class Event(BaseModel):
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-
-import logging
 
 """ INITIAL CALL HANDLING """
 async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:
