@@ -12,10 +12,9 @@ from services.in_memory_cache import in_memory_cache
 from datetime import datetime
 
 from services.db.supabase_ops import supabase_ops
+import logging
 
 retell = Retell(api_key=settings.RETELL_API_KEY)
-
-import logging
 
 logger = logging.getLogger(__name__)
 
