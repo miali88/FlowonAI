@@ -81,6 +81,25 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
 
+
+
+        # LLM service
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = "" 
+
+    # TTS, STT
+    DEEPGRAM_API_KEY: str = ""  
+    ELEVENLABS_API_KEY: str = ""
+    ELEVENLABS_VOICE_ID: str = ""
+
+    # Daily
+    DAILY_SAMPLE_ROOM_URL: str = ""
+    DAILY_API_KEY: str = ""
+
+
+
+
+
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     SMTP_PORT: int = 587

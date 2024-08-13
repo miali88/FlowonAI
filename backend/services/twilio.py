@@ -23,27 +23,8 @@ from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
-""" INITIAL CALL HANDLING """
-def register_inbound_agent(phone_number, agent_id):
-    try:
-        phone_number_objects = client.incoming_phone_numbers.list(limit=200)
-        numbers_sid = ""
-        for phone_number_object in phone_number_objects:
-            if phone_number_object.phone_number == phone_number:
-                number_sid = phone_number_object.sid
-        if number_sid is None:
-            print(
-                "Unable to locate this number in your Twilio account, is the number you used in BCP 47 format?")
-            return
-        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/twilio-voice-webhook/{agent_id}")
-        print("Register phone agent:", vars(phone_number_object))
-        return phone_number_object
-    except Exception as err:
-        print(err)
 
-register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
-
-
+""" WEBHOOK HANDLER """
 async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:
     try:
         form = await request.form()
@@ -71,18 +52,6 @@ async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response
         print(f"Error in handle_voice_webhook: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optional[str]:
-    """Handle Twilio-specific operations."""
-    try:
-        agent_type = retellai.get_agent_type(agent_id_path)
-        if 'CallSid' in data:
-            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
-            print(in_memory_cache.get_all())
-        return data.get('CallSid')
-    except Exception as e:
-        logging.error(f"Error in handle_twilio_logic: {str(e)}")
-        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
-
 def create_voice_response(websocket_url: str) -> VoiceResponse:
     """Create the VoiceResponse object."""
     try:
@@ -97,6 +66,7 @@ def create_voice_response(websocket_url: str) -> VoiceResponse:
     except Exception as e:
         logging.error(f"Error in create_voice_response: {str(e)}")
         raise ValueError(f"Failed to create voice response: {str(e)}")
+
 
 """ CALL HANDLING """
 # 1st agent places IC on hold
@@ -162,6 +132,39 @@ async def admin_to_conf(event: Event, request: Request) -> None:
     client.calls(in_memory_cache.get("AGENT_SECOND.twilio_callsid")).update(twiml=response)
 
     print(response)
+
+async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optional[str]:
+    """Handle Twilio-specific operations."""
+    try:
+        agent_type = retellai.get_agent_type(agent_id_path)
+        if 'CallSid' in data:
+            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
+            print(in_memory_cache.get_all())
+        return data.get('CallSid')
+    except Exception as e:
+        logging.error(f"Error in handle_twilio_logic: {str(e)}")
+        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
+
+
+""" UTILS """
+def register_inbound_agent(phone_number, agent_id):
+    try:
+        phone_number_objects = client.incoming_phone_numbers.list(limit=200)
+        numbers_sid = None
+        for phone_number_object in phone_number_objects:
+            if phone_number_object.phone_number == phone_number:
+                number_sid = phone_number_object.sid
+        if number_sid is None:
+            print(
+                "Unable to locate this number in your Twilio account, is the number you used in BCP 47 format?")
+            return
+        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/twilio-voice-webhook/{agent_id}")
+        print("Register phone agent:", vars(phone_number_object))
+        return phone_number_object
+    except Exception as err:
+        print(err)
+
+register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
 
 async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
     try:

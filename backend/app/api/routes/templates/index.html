@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        #result, #error {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="startButton">Start Speaking</button>
+        <p id="instructions">Click the button and allow microphone access when prompted.</p>
+        <p id="result"></p>
+        <p id="error"></p>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const instructions = document.getElementById('instructions');
+        let mediaRecorder;
+        let socket;
+
+        startButton.addEventListener('click', async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                result.textContent = 'Connected to microphone. Speaking...';
+                error.textContent = '';
+                instructions.textContent = 'Speak now...';
+
+                // Use WSS if the page is loaded over HTTPS
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+                
+                socket.onopen = () => {
+                    console.log('WebSocket connected');
+                    // Send a simulated start message
+                    socket.send(JSON.stringify({
+                        start: {
+                            streamSid: 'browser_' + Date.now()
+                        }
+                    }));
+                };
+
+                // Add error and close event handlers
+                socket.onerror = (event) => {
+                    console.error('WebSocket error:', event);
+                    error.textContent = 'WebSocket error occurred';
+                };
+
+                socket.onclose = (event) => {
+                    console.log('WebSocket closed:', event.code, event.reason);
+                    error.textContent = 'WebSocket connection closed';
+                };
+
+                // Set up audio processing
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
+                const processor = audioContext.createScriptProcessor(1024, 1, 1);
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                // Add logging to check if audio is being processed
+                processor.onaudioprocess = function(e) {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        const audioData = e.inputBuffer.getChannelData(0);
+                        console.log('Audio data:', audioData.slice(0, 10)); // Log first 10 samples
+                        socket.send(audioData);
+                    }
+                };
+
+                startButton.disabled = true;
+            } catch (err) {
+                console.error('Error accessing microphone', err);
+                error.textContent = 'Error: ' + err.message;
+                result.textContent = '';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -25,9 +25,3 @@ async def onboarding_endpoint(request: Request):
         print(f"Error in webhook: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
-from enum import Enum
-
-class ImageRatio(str, Enum):
-    square = "1024x1024"
-    landscape = "1024x768"
-    portrait = "768x1024"

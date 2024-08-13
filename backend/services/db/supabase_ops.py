@@ -14,6 +14,10 @@ class SupabaseOps:
         self.twilio = self.Twilio(self)
         self.vapi = self.VAPI(self)
 
+    class PipeCat_Pipeline:
+        def __init__(self, parent: 'SupabaseOps') -> None:
+            self.parent = parent
+
     class Retell:
         def __init__(self, parent: 'SupabaseOps') -> None:
             self.parent = parent
