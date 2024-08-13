@@ -24,6 +24,26 @@ from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 """ INITIAL CALL HANDLING """
+def register_inbound_agent(phone_number, agent_id):
+    try:
+        phone_number_objects = client.incoming_phone_numbers.list(limit=200)
+        numbers_sid = ""
+        for phone_number_object in phone_number_objects:
+            if phone_number_object.phone_number == phone_number:
+                number_sid = phone_number_object.sid
+        if number_sid is None:
+            print(
+                "Unable to locate this number in your Twilio account, is the number you used in BCP 47 format?")
+            return
+        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/twilio-voice-webhook/{agent_id}")
+        print("Register phone agent:", vars(phone_number_object))
+        return phone_number_object
+    except Exception as err:
+        print(err)
+
+register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
+
+
 async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:
     try:
         form = await request.form()
