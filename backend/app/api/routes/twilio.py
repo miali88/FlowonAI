@@ -1,9 +1,9 @@
 from app.utils import generate_new_account_email, send_email
 
 from fastapi import APIRouter, Request, Response, HTTPException
-from fastapi.responses import Response, JSONResponse
+from fastapi.responses import Response, JSONResponse, HTMLResponse
 
-from services.twilio import handle_voice_webhook, add_to_conference, generate_twiml
+from services.twilio import handle_voice_webhook, add_to_conference, generate_twiml, call_init_handler
 
 router = APIRouter()
 
@@ -11,13 +11,22 @@ router = APIRouter()
 async def twilio_status_update() -> JSONResponse:
     return JSONResponse(content={"message": "Twilio status update received"})
 
-@router.post("/twilio-voice-webhook/{agent_id_path}", response_class=Response)
-async def handle_twilio_voice_webhook(agent_id_path: str, request: Request) -> Response:
+@router.post("/call_init/{twil_numb}")
+async def call_init(twil_numb: str, request: Request) -> HTMLResponse:
+    """ extract twilio data here """
+    await call_init_handler(twil_numb, request)
+    return HTMLResponse(content=open("templates/streams.xml").read(), media_type="application/xml")
+
+
+
+
+@router.post("/retell_handle/{agent_id_path}", response_class=Response)
+async def retell_handle(agent_id_path: str, request: Request) -> Response:
     try:
-        print('\n\n /twilio-voice-webhook')
+        print('\n\n /retell_handle')
         return await handle_voice_webhook(agent_id_path, request)
     except Exception as e:
-        print(f"Error in /twilio-voice-webhook : {e}")
+        print(f"Error in /retell_handle : {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post('/add_to_conference')

@@ -25,6 +25,15 @@ client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 
 """ WEBHOOK HANDLER """
+async def call_init_handler(twil_numb: str, request: Request) -> None:
+    try:
+        form = await request.form()
+        data = dict(form)
+        await supabase_ops.twilio.create(str(data['CallSid']), data)
+    except Exception as e:
+        print(f"Error in call_init_handler: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:
     try:
         form = await request.form()
@@ -158,13 +167,13 @@ def register_inbound_agent(phone_number, agent_id):
             print(
                 "Unable to locate this number in your Twilio account, is the number you used in BCP 47 format?")
             return
-        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/twilio-voice-webhook/{agent_id}")
+        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{agent_id}")
         print("Register phone agent:", vars(phone_number_object))
         return phone_number_object
     except Exception as err:
         print(err)
 
-register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
+#register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
 
 async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
     try:
