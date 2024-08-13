@@ -5,6 +5,8 @@ import atexit
 import asyncio
 from contextlib import asynccontextmanager
 
+import sys
+print(sys.path)
 from pipecat.frames.frames import EndFrame, LLMMessagesFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
@@ -27,6 +29,13 @@ from loguru import logger
 
 logger.remove()
 logger.add(sys.stdout, level="DEBUG")
+
+
+import sys
+print("Python path:", sys.path)
+import pipecat
+print("pipecat location:", pipecat.__file__)
+from pipecat.frames.frames import EndFrame, LLMMessagesFrame
 
 # Add this import if not already present
 from pipecat.transports.network.fastapi_websocket import FastAPIWebsocketTransport
@@ -72,6 +81,7 @@ async def cleanup():
 # Register the cleanup function to be called on exit
 atexit.register(lambda: asyncio.run(cleanup()))
 
+
 async def run_bot(websocket_client, stream_sid):
     global runner, aiohttp_session
     logger.info("run_bot called with stream_sid: {}", stream_sid)
@@ -106,14 +116,13 @@ async def run_bot(websocket_client, stream_sid):
         )
         logger.debug("LoggingFastAPIWebsocketTransport created")
 
+        """ services """
         llm = OpenAILLMService(
             api_key=settings.OPENAI_API_KEY,
             model="gpt-4o")
         logger.debug("OpenAILLMService created")
-
         stt = DeepgramSTTService(api_key=settings.DEEPGRAM_API_KEY)
         logger.debug("DeepgramSTTService created")
-
         tts = ElevenLabsTTSService(
             aiohttp_session=aiohttp_session,  # Pass the session here
             api_key=settings.ELEVENLABS_API_KEY,
@@ -123,7 +132,6 @@ async def run_bot(websocket_client, stream_sid):
 
         tma_in = LLMUserResponseAggregator(messages)
         logger.debug("LLMUserResponseAggregator created:", tma_in)
-
         tma_out = LLMAssistantResponseAggregator(messages)
         logger.debug("LLMAssistantResponseAggregator created:", tma_out)
 

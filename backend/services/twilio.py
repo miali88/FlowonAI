@@ -29,9 +29,13 @@ async def call_init_handler(twil_numb: str, request: Request) -> None:
     try:
         form = await request.form()
         data = dict(form)
+        logging.info(f"Received data: {data}")
+        logging.info(f"Attempting to create Twilio event with CallSid: {data.get('CallSid')}")
         await supabase_ops.twilio.create(str(data['CallSid']), data)
+        logging.info("Twilio event created successfully")
     except Exception as e:
-        print(f"Error in call_init_handler: {e}")
+        logging.error(f"Error in call_init_handler: {str(e)}")
+        logging.error(f"Error type: {type(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:

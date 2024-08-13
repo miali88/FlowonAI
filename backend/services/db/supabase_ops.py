@@ -5,11 +5,20 @@ from datetime import datetime
 import json
 import logging
 
+import logging
+from postgrest.exceptions import APIError
+
 logger = logging.getLogger(__name__)
 
 class SupabaseOps:
     def __init__(self) -> None:
         self.supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+
+        if not self.supabase:
+            raise ValueError("Failed to create Supabase client")
+        
+        print("Supabase KEY and URL:", settings.SUPABASE_KEY, settings.SUPABASE_URL)
+
         self.retell = self.Retell(self)
         self.twilio = self.Twilio(self)
         self.vapi = self.VAPI(self)
@@ -54,21 +63,31 @@ class SupabaseOps:
 
         async def create(self, call_sid: str, payload: Dict[str, Any]) -> Any:
             try:
+                if not self.parent.check_connection():
+                    raise ConnectionError("Failed to connect to Supabase")
+
                 insert_data = {
                     "event_id": call_sid,
                     "payload": json.dumps(payload),
                     "timestamp": datetime.utcnow().isoformat()
                 }
+                logging.info(f"Attempting to insert data: {insert_data}")
                 result = self.parent.supabase.table("twilio_events").insert(insert_data).execute()
-
+                logging.info(f"Insert successful. Result: {result}")
                 if result.data:
                     logger.info(f"Twilio data saved successfully: {call_sid}")
                 else:
-                    logger.error(f"Error saving Twilio data:") # {result.error}")
-
+                    logger.error(f"Error saving Twilio data:")
+                    raise APIError(result.error)
                 return result.data
+            except APIError as e:
+                logger.error(f"Supabase API Error: {str(e)}")
+                logger.error(f"Error details: {e.args}")
+                logger.error(f"Error response: {e.response.text if hasattr(e, 'response') else 'No response'}")
+                raise
             except Exception as e:
-                logger.exception(f"Error saving Twilio data to Supabase: {e}")
+                logger.error(f"Unexpected error: {str(e)}")
+                logger.error(f"Error type: {type(e)}")
                 raise
 
     class VAPI:
@@ -116,5 +135,14 @@ class SupabaseOps:
             except Exception as e:
                 logger.exception(f"Error saving VAPI data to Supabase: {str(e)}")
                 return {"success": False, "message": "Error saving VAPI data", "error": str(e)}
+
+    def check_connection(self):
+        try:
+            result = self.supabase.table("twilio_events").select("id").limit(1).execute()
+            logging.info("Supabase connection successful")
+            return True
+        except Exception as e:
+            logging.error(f"Supabase connection failed: {str(e)}")
+            return False
 
 supabase_ops: SupabaseOps = SupabaseOps()
