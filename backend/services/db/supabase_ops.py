@@ -17,8 +17,6 @@ class SupabaseOps:
         if not self.supabase:
             raise ValueError("Failed to create Supabase client")
         
-        print("Supabase KEY and URL:", settings.SUPABASE_KEY, settings.SUPABASE_URL)
-
         self.retell = self.Retell(self)
         self.twilio = self.Twilio(self)
         self.vapi = self.VAPI(self)

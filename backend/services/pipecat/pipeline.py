@@ -120,6 +120,7 @@ async def run_bot(websocket_client, stream_sid):
         llm = OpenAILLMService(
             api_key=settings.OPENAI_API_KEY,
             model="gpt-4o")
+        
         logger.debug("OpenAILLMService created")
         stt = DeepgramSTTService(api_key=settings.DEEPGRAM_API_KEY)
         logger.debug("DeepgramSTTService created")

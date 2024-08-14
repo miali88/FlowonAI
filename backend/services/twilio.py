@@ -160,22 +160,27 @@ async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optio
 
 
 """ UTILS """
-def register_inbound_agent(phone_number, agent_id):
+def register_url():
     try:
-        phone_number_objects = client.incoming_phone_numbers.list(limit=200)
-        numbers_sid = None
-        for phone_number_object in phone_number_objects:
-            if phone_number_object.phone_number == phone_number:
-                number_sid = phone_number_object.sid
-        if number_sid is None:
-            print(
-                "Unable to locate this number in your Twilio account, is the number you used in BCP 47 format?")
+        # Find the phone number object
+        phone_number_objects = client.incoming_phone_numbers.list(phone_number=settings.TWILIO_NUMBER)
+        
+        if not phone_number_objects:
+            print(f"Unable to locate the number {settings.TWILIO_NUMBER} in your Twilio account.")
             return
-        phone_number_object = client.incoming_phone_numbers(number_sid).update(voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{agent_id}")
-        print("Register phone agent:", vars(phone_number_object))
-        return phone_number_object
+
+        # Get the first (and should be only) matching phone number
+        phone_number_object = phone_number_objects[0]
+        
+        # Update the voice URL
+        updated_number = client.incoming_phone_numbers(phone_number_object.sid).update(
+            voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{settings.TWILIO_NUMBER}"
+        )
+        
+        #print("Registered phone agent:", vars(updated_number))
+        return updated_number
     except Exception as err:
-        print(err)
+        print(f"Error in register_url: {err}")
 
 #register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
 
@@ -195,6 +200,8 @@ def cleanup() -> None:
     ## Ensuring all prior calls are ended
     calls = client.calls.list(status='in-progress')
 
+    print("Registering twilio URL")
+    register_url()
     # Print and end each ongoing call
     if calls:
         for call in calls:
