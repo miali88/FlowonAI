@@ -17,7 +17,7 @@ async def handle_websocket(websocket: WebSocket) -> None:
     print(call_data, flush=True)
     stream_sid = call_data['start']['streamSid']
     print("WebSocket connection accepted")
-    await run_bot(websocket, stream_sid) # add condition, only for twilio call
+    await run_bot(websocket, stream_sid) 
 
     """ WEB CALL """
     # await websocket.accept()

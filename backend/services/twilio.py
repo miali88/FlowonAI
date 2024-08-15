@@ -23,8 +23,19 @@ from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
+# Add this near the top of the file, after imports
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Suppress debug logs from multipart and urllib3
+logging.getLogger('multipart').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+
 
 """ WEBHOOK HANDLER """
+# async def twilio_start_bot(request: Request) -> None:
+## dailyco dialin-chatbot here. 
+
 async def call_init_handler(twil_numb: str, request: Request) -> None:
     try:
         form = await request.form()
@@ -174,24 +185,22 @@ def register_url():
 
         # Get the first (and should be only) matching phone number
         phone_number_object = phone_number_objects[0]
-        
-        # FlowonAI Infra 
-        # updated_number = client.incoming_phone_numbers(phone_number_object.sid).update(
-        #     voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{settings.TWILIO_NUMBER}"
-        # )
-        
-        # RetellAI Infra
-        agent_id = "agent_6fbcc967dde3c2e6c59a12d6dc"
-        voice_url = f"https://internally-wise-spaniel.ap.ngrok.io/api/v1/twilio/retell_handle/{agent_id}"
+        """ FlowonAI Infra """
+        voice_url = f"{settings.BASE_URL}/api/v1/twilio/call_init/{settings.TWILIO_NUMBER}"
         client.incoming_phone_numbers(phone_number_object.sid).update(
             voice_url=voice_url
         )
+
+        """ RetellAI Infra """
+        # agent_id = "agent_6fbcc967dde3c2e6c59a12d6dc"
+        # voice_url = f"{settings.BASE_URL}/api/v1/twilio/retell_handle/{agent_id}"
+        # client.incoming_phone_numbers(phone_number_object.sid).update(
+        #     voice_url=voice_url
+        # )
         
         return voice_url
     except Exception as err:
         print(f"Error in register_url: {err}")
-
-#register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
 
 async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
     try:
