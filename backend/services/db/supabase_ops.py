@@ -130,14 +130,22 @@ class SupabaseOps:
                             "payload": json.dumps(payload)
                         }
                         logger.info(f"Attempting to insert tool-calls data: {insert_data}")
-                        result = self.parent.supabase.table("vapi_tool_calls").insert(insert_data).execute()
-                        log_message = "VAPI tool-calls"
+                        
+                        # Add more detailed error handling
+                        try:
+                            result = self.parent.supabase.table("vapi_tool_calls").insert(insert_data).execute()
+                            logger.info(f"Insert result: {result}")
+                        except Exception as insert_error:
+                            logger.exception(f"Error during insert operation: {str(insert_error)}")
+                            return {"success": False, "message": "Error during insert operation", "error": str(insert_error)}
+                        
+                        log_message = "VAPI tool-calls data inserted successfully"
                     else:
                         logger.warning("No tool calls found in the payload")
                         return {"success": False, "message": "No tool calls found in the payload"}
                 else:
-                    logger.warning(f"Unknown VAPI event type: {event_type}")
-                    return {"success": False, "message": f"Unknown event type: {event_type}"}
+                    logger.info(f"Unhandled event type: {event_type}")
+                    return {"success": True, "message": f"Unhandled event type: {event_type}"}
 
                 logger.debug(f"Supabase result: {result}")
                 logger.debug(f"Supabase result data: {result.data}")
