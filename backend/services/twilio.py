@@ -161,6 +161,9 @@ async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optio
 
 """ UTILS """
 def register_url():
+    """ This updates the webhook URL for a given Twilio number.
+        i.e settings.TWILIO_NUMBER, but can be any db of numbers.
+    """
     try:
         # Find the phone number object
         phone_number_objects = client.incoming_phone_numbers.list(phone_number=settings.TWILIO_NUMBER)
@@ -172,13 +175,19 @@ def register_url():
         # Get the first (and should be only) matching phone number
         phone_number_object = phone_number_objects[0]
         
-        # Update the voice URL
-        updated_number = client.incoming_phone_numbers(phone_number_object.sid).update(
-            voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{settings.TWILIO_NUMBER}"
+        # FlowonAI Infra 
+        # updated_number = client.incoming_phone_numbers(phone_number_object.sid).update(
+        #     voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{settings.TWILIO_NUMBER}"
+        # )
+        
+        # RetellAI Infra
+        agent_id = ""
+        voice_url = f"https://internally-wise-spaniel.ap.ngrok.io/api/v1/twilio/retell_handle/{agent_id}"
+        client.incoming_phone_numbers(phone_number_object.sid).update(
+            voice_url=voice_url
         )
         
-        #print("Registered phone agent:", vars(updated_number))
-        return updated_number
+        return voice_url
     except Exception as err:
         print(f"Error in register_url: {err}")
 
