@@ -6,8 +6,6 @@ provisioning a room and starting a Pipecat bot in response.
 
 Refer to README for more information.
 """
-
-
 import aiohttp
 import os
 import argparse

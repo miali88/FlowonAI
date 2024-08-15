@@ -1,6 +1,6 @@
 from fastapi import WebSocket
 
-from flowon_ai.backend.services.pipecat.ws_pipeline import run_bot
+from services.pipecat.ws_pipeline import run_bot
 import json
 
 from services.db.supabase_ops import supabase_ops

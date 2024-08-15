@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse
 
-from flowon_ai.backend.services.pipecat.ws_main import handle_websocket
+from services.pipecat.ws_main import handle_websocket
 import logging
 import traceback
 

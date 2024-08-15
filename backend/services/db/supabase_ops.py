@@ -116,6 +116,25 @@ class SupabaseOps:
                     logger.info(f"Attempting to insert EoC report: {insert_data}")
                     result = self.parent.supabase.table("vapi_eoc_report").insert(insert_data).execute()
                     log_message = "VAPI end-of-call report"
+                elif event_type == "tool-calls":
+                    tool_calls = message.get("toolCalls", [])
+                    if tool_calls:
+                        tool_call = tool_calls[0]
+                        insert_data = {
+                            "call_id": call_info.get("id"),
+                            "tool_call_id": tool_call.get("id"),
+                            "function_name": tool_call.get("function", {}).get("name"),
+                            "arguments": json.dumps(tool_call.get("function", {}).get("arguments")),
+                            "assistant_id": call_info.get("assistantId"),
+                            "created_at": call_info.get("createdAt"),
+                            "payload": json.dumps(payload)
+                        }
+                        logger.info(f"Attempting to insert tool-calls data: {insert_data}")
+                        result = self.parent.supabase.table("vapi_tool_calls").insert(insert_data).execute()
+                        log_message = "VAPI tool-calls"
+                    else:
+                        logger.warning("No tool calls found in the payload")
+                        return {"success": False, "message": "No tool calls found in the payload"}
                 else:
                     logger.warning(f"Unknown VAPI event type: {event_type}")
                     return {"success": False, "message": f"Unknown event type: {event_type}"}

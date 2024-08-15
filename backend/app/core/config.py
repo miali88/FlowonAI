@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     RETELL_API_KEY: str = ""
     AGENT_FIRST: str = ""
     AGENT_SECOND: str = ""
+    AGENT_FF: str = ""
 
     VAPI_API_KEY: str = ""
 

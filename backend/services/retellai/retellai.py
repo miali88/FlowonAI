@@ -28,6 +28,8 @@ def get_agent_type(agent_id_path: str) -> str:
         return "AGENT_FIRST"
     elif agent_id_path == settings.AGENT_SECOND:
         return "AGENT_SECOND"
+    elif agent_id_path == settings.AGENT_FF:
+        return "AGENT_FF"
     else:
         raise ValueError(f"Unknown agent_id_path: {agent_id_path}")
 

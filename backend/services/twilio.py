@@ -181,7 +181,7 @@ def register_url():
         # )
         
         # RetellAI Infra
-        agent_id = ""
+        agent_id = "agent_6fbcc967dde3c2e6c59a12d6dc"
         voice_url = f"https://internally-wise-spaniel.ap.ngrok.io/api/v1/twilio/retell_handle/{agent_id}"
         client.incoming_phone_numbers(phone_number_object.sid).update(
             voice_url=voice_url
@@ -205,12 +205,12 @@ async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
         print(f"Error in update_call: {e}")
 
 def cleanup() -> None:
-    print("Cleaning up before exit...")
+    print("\nCleaning up before exit...")
     ## Ensuring all prior calls are ended
     calls = client.calls.list(status='in-progress')
 
-    print("Registering twilio URL")
-    register_url()
+    print("Registering twilio URL:")
+    print(register_url())
     # Print and end each ongoing call
     if calls:
         for call in calls:
