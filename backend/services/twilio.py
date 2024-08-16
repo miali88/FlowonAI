@@ -24,12 +24,7 @@ from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 # Add this near the top of the file, after imports
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-# Suppress debug logs from multipart and urllib3
-logging.getLogger('multipart').setLevel(logging.WARNING)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 
 """ WEBHOOK HANDLER """

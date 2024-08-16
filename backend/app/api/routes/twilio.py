@@ -1,9 +1,9 @@
 from app.utils import generate_new_account_email, send_email
 
 from fastapi import APIRouter, Request, Response, HTTPException
-from fastapi.responses import Response, JSONResponse, HTMLResponse, PlainTextResponse
+from fastapi.responses import Response, JSONResponse, HTMLResponse
 
-from services.twilio import handle_voice_webhook, add_to_conference, generate_twiml, call_init_handler, twilio_start_bot
+from services.twilio import handle_voice_webhook, add_to_conference, generate_twiml, call_init_handler
 
 router = APIRouter()
 
