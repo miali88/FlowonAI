@@ -3,6 +3,7 @@ from thefuzz import process  # type: ignore
 from typing import List, Set
 from services.in_memory_cache import in_memory_cache
 import os
+import logging
 
 # Database import and into a dataframe
 current_dir = os.path.dirname(__file__)
@@ -43,18 +44,31 @@ async def db_case_locator(event) -> tuple[str, str]:
     in_memory_cache.set("AGENT_FIRST.case_locator", {'admin_name': admin_name, 'case': best_match[0]})
     return best_match[0], admin_name
 
-async def db_staff_locator(event) -> str:
-    print('_*_ DB STAFF LOCATOR FUNCTION _*_')
-    print(event)
-    if 'staff_name' in event['args']:
-        admin_name = event['args']['staff_name']
-        result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]
-        if not result.empty:
-            return str(result.values[0])
+
+async def db_staff_locator(event):
+    try:
+        print('_*_ DB STAFF LOCATOR FUNCTION _*_')
+        print("event:",event)
+        if 'staff_name' in event['args']:
+            query = event['args']['staff_name']
+            print(f'_*_ STAFF QUERY NAME {query} _*_')
+            """ work to be done on name matching, thefuzz is fuzzy """
+            best_match = process.extractBests(query, df['Administrator Names:'])
+            print("matches found:", best_match)
+            best_match = process.extractOne(query, df['Administrator Names:'])
+            if best_match[1] >= 90:  # if more than one match, request caller to clarify
+                print(f'_*_ {best_match} LOCATED _*_')
+                result = df[df["Administrator Names:"] == best_match[0]]["Administrator's Tel Number:"]
+                if not result.empty:
+                    return str(result.values[0])
+                else:
+                    return "Staff not found."
         else:
             return "Staff not found."
-    else:
-        return "Staff not found."
+    except Exception as e:
+        logging.error(f"Error in db_staff_locator: {str(e)}")
+        return "An error occurred while locating staff."
+
 
 async def get_admin_tel_number(admin_name: str) -> str:
     result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]

@@ -24,8 +24,8 @@ class CallRouting:
             return {"function_result": {"name": "CaseLocator"}, "result": {"error": "Case or administrator not found"}}
 
     async def staff_locator(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]:
-        print('\n case locator function...')
-        admin_name = await db_staff_locator(event['args']['adminName'])
+        print('\n staff locator function...')
+        admin_name = await db_staff_locator(event)
         if admin_name:
             print('\n\n in_memory_cache', self.in_memory_cache.get_all())
             return {"function_result": {"name": "staffLocator"}, "result": { "staff-name": admin_name}}
