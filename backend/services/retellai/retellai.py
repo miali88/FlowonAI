@@ -97,6 +97,8 @@ async def process_event(event: Dict[str, Any], request: Request) -> Any:
             return await call_routing.caller_information(event, request)
         elif event_name == 'caseLocator':
             return await call_routing.case_locator(event, request)
+        elif event_name == 'staffLocator':
+            return await call_routing.staff_locator(event, request)
         elif event_name == 'callAdmin':
             return await call_routing.call_admin(event, request)
         elif event_name == 'infoRetrieve':

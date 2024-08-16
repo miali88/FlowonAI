@@ -43,12 +43,18 @@ async def db_case_locator(event) -> tuple[str, str]:
     in_memory_cache.set("AGENT_FIRST.case_locator", {'admin_name': admin_name, 'case': best_match[0]})
     return best_match[0], admin_name
 
-async def db_staff_locator(admin_name: str) -> str:
-    result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]
-    if not result.empty:
-        return str(result.values[0])
+async def db_staff_locator(event) -> str:
+    print('_*_ DB STAFF LOCATOR FUNCTION _*_')
+    print(event)
+    if 'staff_name' in event['args']:
+        admin_name = event['args']['staff_name']
+        result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]
+        if not result.empty:
+            return str(result.values[0])
+        else:
+            return "Staff not found."
     else:
-        return "Administrator not found."
+        return "Staff not found."
 
 async def get_admin_tel_number(admin_name: str) -> str:
     result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]

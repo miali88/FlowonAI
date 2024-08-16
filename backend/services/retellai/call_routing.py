@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request
 from services import twilio
-from services.db_queries import db_case_locator
+from services.db_queries import db_case_locator, db_staff_locator
 from app.core.config import settings
 from typing import Dict, Any, Tuple, Optional
 
@@ -22,6 +22,16 @@ class CallRouting:
             return {"function_result": {"name": "CaseLocator"}, "result": {"case-name": case_name, "administrator-name": admin_name}}
         else:
             return {"function_result": {"name": "CaseLocator"}, "result": {"error": "Case or administrator not found"}}
+
+    async def staff_locator(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]:
+        print('\n case locator function...')
+        admin_name = await db_staff_locator(event['args']['adminName'])
+        if admin_name:
+            print('\n\n in_memory_cache', self.in_memory_cache.get_all())
+            return {"function_result": {"name": "staffLocator"}, "result": { "staff-name": admin_name}}
+        else:
+            return {"function_result": {"name": "staffLocator"}, "result": {"error": "staff not found"}}
+
 
     async def call_admin(self, event: Dict[str, Any], request: Request) -> None:
         print('\ncall admin function...')
