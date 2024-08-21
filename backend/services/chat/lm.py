@@ -1,12 +1,8 @@
-# pyright: reportGeneralTypeIssues=false
-# pylint: disable=E1101
-
 import weaviate
 from weaviate.classes.init import Auth
 import weaviate.classes as wvc
 import os
 from dotenv import load_dotenv
-from termcolor import colored  
 from openai import OpenAI
 
 load_dotenv()
