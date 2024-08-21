@@ -58,9 +58,9 @@ async def db_staff_locator(event):
             best_match = process.extractOne(query, df['Administrator Names:'])
             if best_match[1] >= 90:  # if more than one match, request caller to clarify
                 print(f'_*_ {best_match} LOCATED _*_')
-                result = df[df["Administrator Names:"] == best_match[0]]["Administrator's Tel Number:"]
-                if not result.empty:
-                    return str(result.values[0])
+                result = best_match[0]
+                if result:
+                    return str(result)
                 else:
                     return "Staff not found."
         else:

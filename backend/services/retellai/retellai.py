@@ -93,7 +93,7 @@ async def process_event(event: Dict[str, Any], request: Request) -> Any:
         """ CALL ROUTING """
         from services.retellai.call_routing import CallRouting
         call_routing = CallRouting(in_memory_cache)
-        if event_name == 'callerInformation':
+        if event_name == 'callerInformation': #
             return await call_routing.caller_information(event, request)
         elif event_name == 'caseLocator':
             return await call_routing.case_locator(event, request)
@@ -109,18 +109,18 @@ async def process_event(event: Dict[str, Any], request: Request) -> Any:
         """ OUTBOUND CALLING """
         from services.retellai.outbound import Outbound
         outbound = Outbound(in_memory_cache)
-        # if event_name == 'outboundCalling':
-        #     return await outbound.outbound_calling(event, request)
+        if event_name == 'outboundCalling':
+            return await outbound.outbound_calling(event, request)
 
         """ APPOINTMENT BOOKING """
         from services.retellai.app_booking import AppBooking
         app_booking = AppBooking(in_memory_cache)
-        # if event_name == 'check_availability':
-        #     return await app_booking.check_availability(event, request)
-        # if event_name == 'book_appointment':
-        #     return await app_booking.book_appointment(event, request)
-        # if event_name == 'cal_webhook':
-        #     return await app_booking.cal_webhook(event, request)
+        if event_name == 'check_availability':
+            return await app_booking.check_availability(event, request)
+        if event_name == 'book_appointment':
+            return await app_booking.book_appointment(event, request)
+        if event_name == 'cal_webhook':
+            return await app_booking.cal_webhook(event, request)
         
     else:
         raise HTTPException(status_code=400, detail="Unknown event name")
