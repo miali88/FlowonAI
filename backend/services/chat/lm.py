@@ -103,7 +103,7 @@ with weaviate.connect_to_weaviate_cloud(
         print()  # New line after the full response
         return full_response
 
-    print("User Query: ", query)
+    print("User Queroy: ", query)
     print("Retriever agent response: ")
     output_agent_retriever = agent_retriever(cx_sys_prompt, retriever_prompt)
 
