@@ -1,4 +1,3 @@
-# At the top of your file, add these lines:
 # pyright: reportGeneralTypeIssues=false
 # pylint: disable=E1101
 
@@ -85,26 +84,12 @@ with weaviate.connect_to_weaviate_cloud(
     def agent_retriever(system_prompt, user_prompt):
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": 'user', "content": user_prompt}, # can add few shot prompts for more context 
+            {"role": 'user', "content": user_prompt},
         ]
 
         response = lm.chat.completions.create(
             model="gpt-4o-mini",
-            messages=messages,
-            stream=True
+            messages=messages
         )
 
-        full_response = ""
-        for chunk in response:
-            if chunk.choices[0].delta.content:
-                print(colored(chunk.choices[0].delta.content, "green"), end='', flush=True)
-                full_response += chunk.choices[0].delta.content
-
-        print()  # New line after the full response
-        return full_response
-
-    print("User Queroy: ", query)
-    print("Retriever agent response: ")
-    output_agent_retriever = agent_retriever(cx_sys_prompt, retriever_prompt)
-
-
+        return response.choices[0].message.content

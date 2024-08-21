@@ -1,7 +1,6 @@
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from services.db.supabase_ops import supabase_ops
-from openai import OpenAI
 from app.core.config import settings
 from dotenv import load_dotenv
 import json
@@ -9,9 +8,9 @@ import logging
 
 load_dotenv()
 
-client = OpenAI()
-
 logger = logging.getLogger(__name__)
+
+from services.chat.lm import agent_retriever, cx_sys_prompt, retriever_prompt
 
 async def handle_chat_webhook(request: Request):
     try:
@@ -24,16 +23,8 @@ async def handle_chat_webhook(request: Request):
         
         logger.info(f"User message: {user_message}")
         
-        """ replace with lm_client"""
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "user", "content": user_message}
-            ]
-        )   
-        bot_response = response.choices[0].message.content
-        """ --------------  """
-
+        bot_response = agent_retriever(cx_sys_prompt, retriever_prompt.format(query=user_message))
+        
         logger.info(f"Bot response generated successfully")
         
         return JSONResponse({"response": bot_response})
