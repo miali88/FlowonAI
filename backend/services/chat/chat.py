@@ -24,13 +24,16 @@ async def handle_chat_webhook(request: Request):
         
         logger.info(f"User message: {user_message}")
         
+        """ replace with lm_client"""
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "user", "content": user_message}
             ]
-        )    
+        )   
         bot_response = response.choices[0].message.content
+        """ --------------  """
+
         logger.info(f"Bot response generated successfully")
         
         return JSONResponse({"response": bot_response})
