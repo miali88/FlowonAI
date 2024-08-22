@@ -23,7 +23,7 @@ async def handle_chat_webhook(request: Request):
         
         logger.info(f"User message: {user_message}")
         #retriever_prompt.format(query=user_message)
-        bot_response = agent_retriever(cx_sys_prompt, "olla amigo")
+        bot_response = agent_retriever(cx_sys_prompt, user_message)
         
         logger.info(f"Bot response generated successfully")
 
