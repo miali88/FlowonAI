@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 from services.chat.lm import agent_retriever, cx_sys_prompt, retriever_prompt
 
 async def handle_chat_webhook(request: Request):
-    try:
+    try:    
         logger.info("Received chat webhook request")
         body = await request.json()
         user_message = body.get('message')
@@ -22,11 +22,11 @@ async def handle_chat_webhook(request: Request):
             return JSONResponse({"error": "No message provided"}, status_code=400)
         
         logger.info(f"User message: {user_message}")
-        
-        bot_response = agent_retriever(cx_sys_prompt, retriever_prompt.format(query=user_message))
+        #retriever_prompt.format(query=user_message)
+        bot_response = agent_retriever(cx_sys_prompt, "olla amigo")
         
         logger.info(f"Bot response generated successfully")
-        
+
         return JSONResponse({"response": bot_response})
     except json.JSONDecodeError:
         logger.error("Invalid JSON in request body")

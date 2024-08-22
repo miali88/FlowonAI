@@ -47,8 +47,8 @@ try:
             logging.info(f"Retrieved {len(ir_results.objects)} results from Weaviate")
 
             for obj in ir_results.objects:
-                logging.info(f"Question: {obj.properties['question']}")
-                logging.info(f"Answer: {obj.properties['answer']}")
+                #logging.info(f"Question: {obj.properties['question']}")
+                #logging.info(f"Answer: {obj.properties['answer']}")
                 logging.info("---")
 
         except Exception as e:
@@ -91,6 +91,7 @@ try:
                 """
         
         def agent_retriever(system_prompt, user_prompt):
+            print('agent_retriever...')
             try:
                 messages = [
                     {"role": "system", "content": system_prompt},
@@ -103,12 +104,19 @@ try:
                 )
 
                 logging.info("Successfully retrieved response from OpenAI")
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                print('response...', content)
+                logging.info(f"OpenAI response content: {content}")
+                return {"answer": content}  # Return a dictionary with 'answer' key
 
             except Exception as e:
-                logging.error(f"Error in agent_retriever: {str(e)}")
-                raise
+                logging.error(f"Error in agent_retriever: {str(e)}", exc_info=True)
+                return {"error": str(e)}  # Return error information instead of raising
 
 except Exception as e:
     logging.error(f"An error occurred: {str(e)}")
     raise
+
+
+if __name__ == "__main__":
+    agent_retriever(cx_sys_prompt, retriever_prompt)

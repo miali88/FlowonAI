@@ -6,9 +6,6 @@ import logging
 from services.chat.chat import handle_chat_webhook
 from services.db.supabase_ops import supabase_ops
 
-# twilio vapi endpoint to connect. 
-#https://api.vapi.ai/twilio/inbound
-
 router = APIRouter()
 
 @router.api_route('/', methods=['POST', 'GET'])
@@ -17,6 +14,7 @@ async def webhook(request: Request) -> Response:
         logger = logging.getLogger(__name__)
         logger.info("Received request at /chat")
         response = await handle_chat_webhook(request)
+        print("\n\n\nresponse...",response)
         return response
     except Exception as e:
         logger.error(f"Error in /chat: {str(e)}")
