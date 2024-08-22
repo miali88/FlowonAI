@@ -4,6 +4,10 @@ import weaviate.classes as wvc
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 load_dotenv()
 
@@ -14,36 +18,45 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 
 lm = OpenAI(api_key=openai_api_key)
 
-""" instantiate weviate client """
-with weaviate.connect_to_weaviate_cloud(
-    cluster_url=wcd_url,  # Replace with your Weaviate Cloud URL
-    auth_credentials=Auth.api_key(wcd_api_key),  # Replace with your Weaviate Cloud key
-    headers={
-        'X-OpenAI-Api-key': openai_api_key  # Replace with appropriate header key/value pair for the required API
-    }
-) as client:  # Use this context manager to ensure the connection is closed
-    print(client.is_ready())
+try:
+    """ instantiate weviate client """
+    with weaviate.connect_to_weaviate_cloud(
+        cluster_url=wcd_url,
+        auth_credentials=Auth.api_key(wcd_api_key),
+        headers={
+            'X-OpenAI-Api-key': openai_api_key
+        }
+    ) as client:
+        logging.info("Connected to Weaviate Cloud")
+        logging.info(f"Client is ready: {client.is_ready()}")
 
-    """ Retrieve the context from KB """
-    weaviate_coll = "EcommerceFAQ"
-    ecommerce_faq = client.collections.get(weaviate_coll)
+        """ Retrieve the context from KB """
+        weaviate_coll = "EcommerceFAQ"
+        ecommerce_faq = client.collections.get(weaviate_coll)
+        logging.info(f"Retrieved collection: {weaviate_coll}")
 
-    query = "i just received my Macbook M1 2021 today, i ordered it last week, but noticed the edges have a few chips, I would like to request a refund for this." #user input 
-    ir_results = ecommerce_faq.query.near_text(
-        query=query,
-        limit=5,
-        return_metadata=wvc.query.MetadataQuery(certainty=True), #certainaty not the best
+        query = "i just received my Macbook M1 2021 today, i ordered it last week, but noticed the edges have a few chips, I would like to request a refund for this."
+        logging.info(f"Processing query: {query}")
 
-    )
+        try:
+            ir_results = ecommerce_faq.query.near_text(
+                query=query,
+                limit=5,
+                return_metadata=wvc.query.MetadataQuery(certainty=True),
+            )
+            logging.info(f"Retrieved {len(ir_results.objects)} results from Weaviate")
 
-    for obj in ir_results.objects:
-        print(f"Question: {obj.properties['question']}")
-        print(f"Answer: {obj.properties['answer']}")
-        #print(f"Certainty: {obj.metadata.certainty}")
-        print("---")
+            for obj in ir_results.objects:
+                logging.info(f"Question: {obj.properties['question']}")
+                logging.info(f"Answer: {obj.properties['answer']}")
+                logging.info("---")
 
-    p_company_name = "E Commie"
-    cx_sys_prompt = f"""
+        except Exception as e:
+            logging.error(f"Error querying Weaviate: {str(e)}")
+            raise
+
+        p_company_name = "E Commie"
+        cx_sys_prompt = f"""
                 # System Prompt
                 You are an AI assistant for {p_company_name}, designed to provide accurate and relevant information based solely on the company's knowledge base. Your primary function is to interpret user queries and generate responses grounded in the provided context.
 
@@ -60,8 +73,8 @@ with weaviate.connect_to_weaviate_cloud(
                 - Use a professional and helpful tone, reflecting the company's values and communication style.
                 - When appropriate, cite specific parts of the context to support your answers.
                 """
-    
-    retriever_prompt = f""" 
+        
+        retriever_prompt = f""" 
                 ## Context from knowledge base:
                 {ir_results}
 
@@ -76,16 +89,26 @@ with weaviate.connect_to_weaviate_cloud(
 
                 ## Your response:
                 """
-    
-    def agent_retriever(system_prompt, user_prompt):
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": 'user', "content": user_prompt},
-        ]
+        
+        def agent_retriever(system_prompt, user_prompt):
+            try:
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": 'user', "content": user_prompt},
+                ]
 
-        response = lm.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages
-        )
+                response = lm.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages
+                )
 
-        return response.choices[0].message.content
+                logging.info("Successfully retrieved response from OpenAI")
+                return response.choices[0].message.content
+
+            except Exception as e:
+                logging.error(f"Error in agent_retriever: {str(e)}")
+                raise
+
+except Exception as e:
+    logging.error(f"An error occurred: {str(e)}")
+    raise
