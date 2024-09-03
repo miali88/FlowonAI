@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +47,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_layout/app")({
-  component: AdminDashboard,
+  component: ProtectedAdminDashboard,
 })
 
 function SidebarItem({ icon: Icon, label, isActive, onClick }) {
@@ -257,6 +258,19 @@ function FeatureDetailContent({ feature }) {
       </p>
       {/* Add feature-specific content here */}
     </div>
+  );
+}
+
+function ProtectedAdminDashboard() {
+  return (
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+      <SignedIn>
+        <AdminDashboard />
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </ClerkProvider>
   );
 }
 

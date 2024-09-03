@@ -12,7 +12,7 @@ import {
   import { useForm, SubmitHandler } from "react-hook-form";
   import { UsersService, type UserRegister } from "../../client";
   import useCustomToast from "../../hooks/useCustomToast";
-  import { emailPattern } from "../../utils";
+  import { emailPattern } from "../../formUtils";
   
   interface OnboardingFormInputs extends UserRegister {
     confirm_password: string;

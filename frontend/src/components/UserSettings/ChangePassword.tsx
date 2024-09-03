@@ -14,7 +14,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { type ApiError, type UpdatePassword, UsersService } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, passwordRules } from "../../utils"
+import { confirmPasswordRules, passwordRules } from "../../formUtils"
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
