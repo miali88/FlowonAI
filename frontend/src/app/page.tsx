@@ -56,7 +56,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
 
 // Add this constant at the top of your file, outside of any component
-const API_BASE_URL = 'http://localhost:80';
+const API_BASE_URL = 'http://localhost:8000';
+
+// Add this interface at the top of your file
+interface SavedItem {
+  id: number;
+  title: string;
+  content: string;
+  // Add other properties as needed
+}
 
 function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   return (
@@ -194,7 +202,7 @@ function KnowledgeBaseContent() {
   const { user } = useUser();
   const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [savedItems, setSavedItems] = useState([]);
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [newItemContent, setNewItemContent] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
@@ -224,18 +232,23 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      const response = await axios.get(`${API_BASE_URL}/api/v1/knowledgeBase`, {
+      const response = await axios.get(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-User-ID': user.id,
         },
       });
       console.log("Fetched items:", response.data);
-      setSavedItems(response.data);
+      console.log("API response:", response);
+      console.log("Response data type:", typeof response.data);
+      console.log("Is response.data an array?", Array.isArray(response.data));
+      
+      // Ensure savedItems is always an array
+      setSavedItems(Array.isArray(response.data) ? response.data : []);
 
       // Calculate total tokens
       const aggregatedContent = response.data.map(item => item.content).join(' ');
-      const tokenCountResponse = await axios.post(`${API_BASE_URL}/api/v1/calculate_tokens`, 
+      const tokenCountResponse = await axios.post(`${API_BASE_URL}/api/v1/dashboard/calculate_tokens`, 
         { content: aggregatedContent },
         {
           headers: {
@@ -270,7 +283,7 @@ function KnowledgeBaseContent() {
       };
       console.log("Sending request data:", requestData);
 
-      const response = await axios.post(`${API_BASE_URL}/api/v1/knowledgeBase`, requestData, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, requestData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -343,7 +356,7 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      const response = await axios.post(`${API_BASE_URL}/api/v1/scrape_url`, 
+      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/scrape_url`, 
         { url: scrapeUrl },
         {
           headers: {
@@ -391,7 +404,7 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      await axios.delete(`${API_BASE_URL}/api/v1/knowledgeBase/${itemId}`, {
+      await axios.delete(`${API_BASE_URL}/api/v1/dashboard/knowledge_base/${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-User-ID': user.id,
