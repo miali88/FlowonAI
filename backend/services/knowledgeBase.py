@@ -47,7 +47,6 @@ async def get_current_user(authorization: str = Header(...), x_user_id: str = He
     # For now, we'll just return the user ID from the header
     return x_user_id
 
-@router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
 async def get_items(current_user: str = Depends(get_current_user)):
     try:
         print(f"Fetching items for user: {current_user}")
@@ -58,7 +57,6 @@ async def get_items(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/knowledge_base")
 async def create_item(request: Request):
     logger.debug("Received POST request to /knowledge_base")
     
@@ -88,7 +86,6 @@ async def create_item(request: Request):
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-@router.delete("/knowledge_base/{item_id}")
 async def delete_item(item_id: int, current_user: str = Depends(get_current_user)):
     try:
         result = supabase.table('knowledge_base').delete().eq('id', item_id).eq('user_id', current_user).execute()
@@ -99,7 +96,6 @@ async def delete_item(item_id: int, current_user: str = Depends(get_current_user
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/chat")
 async def chat(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
@@ -118,7 +114,7 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
     logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
     return JSONResponse(status_code=422, content={"detail": error_details})
 
-@app.post("/scrape_url")
+@router.post("/scrape_url")
 async def scrape_url(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
         crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
@@ -140,7 +136,7 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
-@app.post("/calculate_tokens")
+@router.post("/calculate_tokens")
 async def calculate_tokens(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
@@ -151,10 +147,6 @@ async def calculate_tokens(request: Request, current_user: str = Depends(get_cur
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
     
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the FastAPI server"}
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

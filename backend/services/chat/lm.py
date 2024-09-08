@@ -6,15 +6,17 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import logging
 
+from app.core.config import settings
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 load_dotenv()
 
 # Best practice: store your credentials in environment variables
-wcd_url = os.getenv("WEAVIATE_URL")
-wcd_api_key = os.getenv("WEAVIATE_API_KEY")
-openai_api_key = os.getenv("OPENAI_API_KEY")
+wcd_url = settings.WEAVIATE_URL
+wcd_api_key = settings.WEAVIATE_API_KEY
+openai_api_key = settings.OPENAI_API_KEY
 
 lm = OpenAI(api_key=openai_api_key)
 

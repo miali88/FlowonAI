@@ -65,7 +65,11 @@ class Settings(BaseSettings):
 
     CAL_API_KEY: str = ""
 
-    BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
+    WEAVIATE_URL: str = ""
+    WEAVIATE_API_KEY: str = ""
+
+    #BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
+    BASE_URL: str = "http://localhost:8000"
 
     @computed_field  # type: ignore[misc]
     @property

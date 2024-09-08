@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 from services.twilio import cleanup
+import uvicorn
 
 from app.api.main import api_router
 from app.core.config import settings
