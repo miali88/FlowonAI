@@ -4,8 +4,6 @@ from supabase import create_client, Client
 from datetime import datetime
 import json
 import logging
-
-import logging
 from postgrest.exceptions import APIError
 
 logger = logging.getLogger(__name__)
