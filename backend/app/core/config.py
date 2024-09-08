@@ -68,8 +68,8 @@ class Settings(BaseSettings):
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
 
-    #BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
-    BASE_URL: str = "http://localhost:8000"
+    BASE_URL: str = "https://internally-wise-spaniel.eu.ngrok.io"
+    #BASE_URL: str = "http://localhost:8000"
 
     @computed_field  # type: ignore[misc]
     @property
@@ -85,8 +85,7 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
-
-
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
         # LLM service
     OPENAI_API_KEY: str = ""

@@ -1,124 +1,124 @@
-import weaviate
-from weaviate.classes.init import Auth
-import weaviate.classes as wvc
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-import logging
+# import weaviate
+# from weaviate.classes.init import Auth
+# import weaviate.classes as wvc
+# import os
+# from dotenv import load_dotenv
+# from openai import OpenAI
+# import logging
 
-from app.core.config import settings
+# from app.core.config import settings
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# # Set up logging
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-load_dotenv()
+# load_dotenv()
 
-# Best practice: store your credentials in environment variables
-wcd_url = settings.WEAVIATE_URL
-wcd_api_key = settings.WEAVIATE_API_KEY
-openai_api_key = settings.OPENAI_API_KEY
+# # Best practice: store your credentials in environment variables
+# wcd_url = settings.WEAVIATE_URL
+# wcd_api_key = settings.WEAVIATE_API_KEY
+# openai_api_key = settings.OPENAI_API_KEY
 
-lm = OpenAI(api_key=openai_api_key)
+# lm = OpenAI(api_key=openai_api_key)
 
-try:
-    """ instantiate weviate client """
-    with weaviate.connect_to_weaviate_cloud(
-        cluster_url=wcd_url,
-        auth_credentials=Auth.api_key(wcd_api_key),
-        headers={
-            'X-OpenAI-Api-key': openai_api_key
-        }
-    ) as client:
-        logging.info("Connected to Weaviate Cloud")
-        logging.info(f"Client is ready: {client.is_ready()}")
+# try:
+#     """ instantiate weviate client """
+#     with weaviate.connect_to_weaviate_cloud(
+#         cluster_url=wcd_url,
+#         auth_credentials=Auth.api_key(wcd_api_key),
+#         headers={
+#             'X-OpenAI-Api-key': openai_api_key
+#         }
+#     ) as client:
+#         logging.info("Connected to Weaviate Cloud")
+#         logging.info(f"Client is ready: {client.is_ready()}")
 
-        """ Retrieve the context from KB """
-        weaviate_coll = "EcommerceFAQ"
-        ecommerce_faq = client.collections.get(weaviate_coll)
-        logging.info(f"Retrieved collection: {weaviate_coll}")
+#         """ Retrieve the context from KB """
+#         weaviate_coll = "EcommerceFAQ"
+#         ecommerce_faq = client.collections.get(weaviate_coll)
+#         logging.info(f"Retrieved collection: {weaviate_coll}")
 
-        query = "i just received my Macbook M1 2021 today, i ordered it last week, but noticed the edges have a few chips, I would like to request a refund for this."
-        logging.info(f"Processing query: {query}")
+#         query = "i just received my Macbook M1 2021 today, i ordered it last week, but noticed the edges have a few chips, I would like to request a refund for this."
+#         logging.info(f"Processing query: {query}")
 
-        try:
-            ir_results = ecommerce_faq.query.near_text(
-                query=query,
-                limit=5,
-                return_metadata=wvc.query.MetadataQuery(certainty=True),
-            )
-            logging.info(f"Retrieved {len(ir_results.objects)} results from Weaviate")
+#         try:
+#             ir_results = ecommerce_faq.query.near_text(
+#                 query=query,
+#                 limit=5,
+#                 return_metadata=wvc.query.MetadataQuery(certainty=True),
+#             )
+#             logging.info(f"Retrieved {len(ir_results.objects)} results from Weaviate")
 
-            for obj in ir_results.objects:
-                #logging.info(f"Question: {obj.properties['question']}")
-                #logging.info(f"Answer: {obj.properties['answer']}")
-                logging.info("---")
+#             for obj in ir_results.objects:
+#                 #logging.info(f"Question: {obj.properties['question']}")
+#                 #logging.info(f"Answer: {obj.properties['answer']}")
+#                 logging.info("---")
 
-        except Exception as e:
-            logging.error(f"Error querying Weaviate: {str(e)}")
-            raise
+#         except Exception as e:
+#             logging.error(f"Error querying Weaviate: {str(e)}")
+#             raise
 
-        p_company_name = "E Commie"
-        cx_sys_prompt = f"""
-                # System Prompt
-                You are an AI assistant for {p_company_name}, designed to provide accurate and relevant information based solely on the company's knowledge base. Your primary function is to interpret user queries and generate responses grounded in the provided context.
+#         p_company_name = "E Commie"
+#         cx_sys_prompt = f"""
+#                 # System Prompt
+#                 You are an AI assistant for {p_company_name}, designed to provide accurate and relevant information based solely on the company's knowledge base. Your primary function is to interpret user queries and generate responses grounded in the provided context.
 
-                ## Core Principles:
-                1. Accuracy: Only use information explicitly stated in the provided context.
-                2. Relevance: Tailor your responses directly to the user's query.
-                3. Transparency: Clearly state when information is insufficient or missing.
-                4. Conciseness: Provide clear, direct answers without unnecessary elaboration.
+#                 ## Core Principles:
+#                 1. Accuracy: Only use information explicitly stated in the provided context.
+#                 2. Relevance: Tailor your responses directly to the user's query.
+#                 3. Transparency: Clearly state when information is insufficient or missing.
+#                 4. Conciseness: Provide clear, direct answers without unnecessary elaboration.
 
-                ## Operational Guidelines:
-                - Analyze the given context thoroughly before formulating responses.
-                - Do not introduce external information or make assumptions beyond the provided context.
-                - If asked about topics outside the given context, politely explain that you can only discuss information within the company's knowledge base.
-                - Use a professional and helpful tone, reflecting the company's values and communication style.
-                - When appropriate, cite specific parts of the context to support your answers.
-                """
+#                 ## Operational Guidelines:
+#                 - Analyze the given context thoroughly before formulating responses.
+#                 - Do not introduce external information or make assumptions beyond the provided context.
+#                 - If asked about topics outside the given context, politely explain that you can only discuss information within the company's knowledge base.
+#                 - Use a professional and helpful tone, reflecting the company's values and communication style.
+#                 - When appropriate, cite specific parts of the context to support your answers.
+#                 """
         
-        retriever_prompt = f""" 
-                ## Context from knowledge base:
-                {ir_results}
+#         retriever_prompt = f""" 
+#                 ## Context from knowledge base:
+#                 {ir_results}
 
-                User query: "{query}"
+#                 User query: "{query}"
 
-                ##Instructions:
-                1. Carefully read the provided context and the human's query.
-                2. Formulate a response that directly answers the query using only the information given in the context.
-                3. If the context doesn't contain enough information to fully answer the query, state this clearly and explain what specific information is missing.
-                4. Do not introduce any information or opinions not present in the provided context.
-                5. If appropriate, cite specific parts of the context to support your answer.
+#                 ##Instructions:
+#                 1. Carefully read the provided context and the human's query.
+#                 2. Formulate a response that directly answers the query using only the information given in the context.
+#                 3. If the context doesn't contain enough information to fully answer the query, state this clearly and explain what specific information is missing.
+#                 4. Do not introduce any information or opinions not present in the provided context.
+#                 5. If appropriate, cite specific parts of the context to support your answer.
 
-                ## Your response:
-                """
+#                 ## Your response:
+#                 """
         
-        def agent_retriever(system_prompt, user_prompt):
-            print('agent_retriever...')
-            try:
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": 'user', "content": user_prompt},
-                ]
+#         def agent_retriever(system_prompt, user_prompt):
+#             print('agent_retriever...')
+#             try:
+#                 messages = [
+#                     {"role": "system", "content": system_prompt},
+#                     {"role": 'user', "content": user_prompt},
+#                 ]
 
-                response = lm.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=messages
-                )
+#                 response = lm.chat.completions.create(
+#                     model="gpt-4o-mini",
+#                     messages=messages
+#                 )
 
-                logging.info("Successfully retrieved response from OpenAI")
-                content = response.choices[0].message.content
-                print('response...', content)
-                logging.info(f"OpenAI response content: {content}")
-                return {"answer": content}  # Return a dictionary with 'answer' key
+#                 logging.info("Successfully retrieved response from OpenAI")
+#                 content = response.choices[0].message.content
+#                 print('response...', content)
+#                 logging.info(f"OpenAI response content: {content}")
+#                 return {"answer": content}  # Return a dictionary with 'answer' key
 
-            except Exception as e:
-                logging.error(f"Error in agent_retriever: {str(e)}", exc_info=True)
-                return {"error": str(e)}  # Return error information instead of raising
+#             except Exception as e:
+#                 logging.error(f"Error in agent_retriever: {str(e)}", exc_info=True)
+#                 return {"error": str(e)}  # Return error information instead of raising
 
-except Exception as e:
-    logging.error(f"An error occurred: {str(e)}")
-    raise
+# except Exception as e:
+#     logging.error(f"An error occurred: {str(e)}")
+#     raise
 
 
-if __name__ == "__main__":
-    agent_retriever(cx_sys_prompt, retriever_prompt)
+# if __name__ == "__main__":
+#     agent_retriever(cx_sys_prompt, retriever_prompt)

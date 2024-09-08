@@ -55,6 +55,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
 
+// Add this constant at the top of your file, outside of any component
+const API_BASE_URL = 'http://localhost:80';
+
 function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   return (
     <TooltipProvider>
@@ -221,7 +224,7 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      const response = await axios.get('http://localhost:8000/knowledge_base', {
+      const response = await axios.get(`${API_BASE_URL}/api/v1/knowledgeBase`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-User-ID': user.id,
@@ -232,7 +235,7 @@ function KnowledgeBaseContent() {
 
       // Calculate total tokens
       const aggregatedContent = response.data.map(item => item.content).join(' ');
-      const tokenCountResponse = await axios.post('http://localhost:8000/calculate_tokens', 
+      const tokenCountResponse = await axios.post(`${API_BASE_URL}/api/v1/calculate_tokens`, 
         { content: aggregatedContent },
         {
           headers: {
@@ -267,7 +270,7 @@ function KnowledgeBaseContent() {
       };
       console.log("Sending request data:", requestData);
 
-      const response = await axios.post('http://localhost:8000/knowledge_base', requestData, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/knowledgeBase`, requestData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -340,7 +343,7 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      const response = await axios.post('http://localhost:8000/scrape_url', 
+      const response = await axios.post(`${API_BASE_URL}/api/v1/scrape_url`, 
         { url: scrapeUrl },
         {
           headers: {
@@ -388,7 +391,7 @@ function KnowledgeBaseContent() {
 
     try {
       const token = await getToken();
-      await axios.delete(`http://localhost:8000/knowledge_base/${itemId}`, {
+      await axios.delete(`${API_BASE_URL}/api/v1/knowledgeBase/${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-User-ID': user.id,

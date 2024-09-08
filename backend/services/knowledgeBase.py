@@ -10,14 +10,11 @@ from pydantic import BaseModel, ValidationError
 import json
 from firecrawl import FirecrawlApp
 import tiktoken
+from app.core.config import settings
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -107,12 +104,14 @@ async def chat(request: Request, current_user: str = Depends(get_current_user)):
         logger.error(f"Error in chat: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
-    logger.error(f"Validation error in request: {str(exc)}")
-    error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
-    logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
-    return JSONResponse(status_code=422, content={"detail": error_details})
+def setup_exception_handlers(app: FastAPI):
+    @app.exception_handler(ValidationError)
+    async def validation_exception_handler(request: Request, exc: ValidationError):
+        logger.error(f"Validation error in request: {str(exc)}")
+        error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
+        logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
+        return JSONResponse(status_code=422, content={"detail": error_details})
+
 
 @router.post("/scrape_url")
 async def scrape_url(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
