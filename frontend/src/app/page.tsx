@@ -55,7 +55,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
-import MorphingStreamButton from "@/components/MorphingStreamButton";
+import VapiButton from '../components/VapiButton';
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -703,14 +703,48 @@ function AIAgentContent() {
 }
 
 function VoiceAgentContent() {
+  const [callActive, setCallActive] = useState(false);
+
+  // Use environment variables directly
+  const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
+  const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+
+  console.log("VoiceAgentContent: VAPI API Key:", apiKey);
+  console.log("VoiceAgentContent: VAPI Assistant ID:", assistantId);
+
+  const handleCallStart = () => {
+    setCallActive(true);
+    console.log("VoiceAgentContent: Call started");
+  };
+
+  const handleCallEnd = () => {
+    setCallActive(false);
+    console.log("VoiceAgentContent: Call ended");
+  };
+
+  if (!apiKey || !assistantId) {
+    console.error("VoiceAgentContent: API Key or Assistant ID is missing");
+    return <div>Error: Missing API Key or Assistant ID</div>;
+  }
+
   return (
     <div className="p-6 flex flex-col items-center justify-center h-full">
       <h3 className="text-xl font-semibold mb-4">Voice Agent</h3>
       <p className="text-muted-foreground mb-6 text-center max-w-2xl">
-        Experience our Voice Agent feature. Click the button below to start a simulated conversation.
+        Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
       </p>
-      <div className="flex justify-center w-full">
-        <MorphingStreamButton />
+      <div className="flex flex-col items-center w-full">
+        <VapiButton 
+          apiKey={apiKey}
+          assistant={assistantId}
+          onCallStart={handleCallStart}
+          onCallEnd={handleCallEnd}
+        />
+        {callActive && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Call in progress. Speak into your microphone.
+          </p>
+        )}
       </div>
     </div>
   );
