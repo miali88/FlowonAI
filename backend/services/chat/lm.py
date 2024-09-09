@@ -1,6 +1,3 @@
-import weaviate
-from weaviate.classes.init import Auth
-import weaviate.classes as wvc
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -22,42 +19,10 @@ lm = OpenAI(api_key=openai_api_key)
 
 try:
     """ instantiate weviate client """
-    with weaviate.connect_to_weaviate_cloud(
-        cluster_url=wcd_url,
-        auth_credentials=Auth.api_key(wcd_api_key),
-        headers={
-            'X-OpenAI-Api-key': openai_api_key
-        }
-    ) as client:
-        logging.info("Connected to Weaviate Cloud")
-        logging.info(f"Client is ready: {client.is_ready()}")
 
-        """ Retrieve the context from KB """
-        weaviate_coll = "EcommerceFAQ"
-        ecommerce_faq = client.collections.get(weaviate_coll)
-        logging.info(f"Retrieved collection: {weaviate_coll}")
 
-        query = "i just received my Macbook M1 2021 today, i ordered it last week, but noticed the edges have a few chips, I would like to request a refund for this."
-        logging.info(f"Processing query: {query}")
 
-        try:
-            ir_results = ecommerce_faq.query.near_text(
-                query=query,
-                limit=5,
-                return_metadata=wvc.query.MetadataQuery(certainty=True),
-            )
-            logging.info(f"Retrieved {len(ir_results.objects)} results from Weaviate")
-
-            for obj in ir_results.objects:
-                #logging.info(f"Question: {obj.properties['question']}")
-                #logging.info(f"Answer: {obj.properties['answer']}")
-                logging.info("---")
-
-        except Exception as e:
-            logging.error(f"Error querying Weaviate: {str(e)}")
-            raise
-
-        p_company_name = "E Commie"
+        p_company_name = ""
         cx_sys_prompt = f"""
                 # System Prompt
                 You are an AI assistant for {p_company_name}, designed to provide accurate and relevant information based solely on the company's knowledge base. Your primary function is to interpret user queries and generate responses grounded in the provided context.

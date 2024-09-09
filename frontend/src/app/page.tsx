@@ -40,6 +40,7 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Mic,
   Moon,
   PlusCircle,
   Search,
@@ -54,6 +55,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
+import MorphingStreamButton from "@/components/MorphingStreamButton";
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -92,6 +94,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
     { icon: BookOpen, label: "Knowledge Base" },
+    { icon: Mic, label: "Voice Agent" },
     { icon: Globe, label: "AI Agent" },
     { icon: MessageSquare, label: "Features" },
     { icon: BarChart3, label: "Analytics" },
@@ -699,6 +702,20 @@ function AIAgentContent() {
   );
 }
 
+function VoiceAgentContent() {
+  return (
+    <div className="p-6 flex flex-col items-center justify-center h-full">
+      <h3 className="text-xl font-semibold mb-4">Voice Agent</h3>
+      <p className="text-muted-foreground mb-6 text-center max-w-2xl">
+        Experience our Voice Agent feature. Click the button below to start a simulated conversation.
+      </p>
+      <div className="flex justify-center w-full">
+        <MorphingStreamButton />
+      </div>
+    </div>
+  );
+}
+
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeItem, setActiveItem] = useState("Knowledge Base");
@@ -729,6 +746,8 @@ function AdminDashboard() {
     switch (activeItem) {
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
+      case "Voice Agent":
+        return <VoiceAgentContent />;
       case "AI Agent":
         return <AIAgentContent />;
       case "Features":
