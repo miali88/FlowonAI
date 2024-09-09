@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser, useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from 'axios';
 
@@ -55,7 +55,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
-import VapiButton from '../components/VapiButton';
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -704,26 +703,68 @@ function AIAgentContent() {
 
 function VoiceAgentContent() {
   const [callActive, setCallActive] = useState(false);
+  const containerRef = useRef(null);
 
-  // Use environment variables directly
+  // Use environment variables
   const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
   const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
 
-  console.log("VoiceAgentContent: VAPI API Key:", apiKey);
-  console.log("VoiceAgentContent: VAPI Assistant ID:", assistantId);
+  useEffect(() => {
+    if (!apiKey || !assistantId) {
+      console.error("VoiceAgentContent: API Key or Assistant ID is missing");
+      return;
+    }
 
-  const handleCallStart = () => {
-    setCallActive(true);
-    console.log("VoiceAgentContent: Call started");
-  };
+    const script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@1.1.6/dist/assets/index.js";
+    script.async = true;
+    document.body.appendChild(script);
 
-  const handleCallEnd = () => {
-    setCallActive(false);
-    console.log("VoiceAgentContent: Call ended");
-  };
+    script.onload = () => {
+      const buttonConfig = {
+        position: "custom",
+        container: "vapi-container",
+        width: "200px",
+        height: "50px",
+        zIndex: 2147483647,
+        idle: {
+          // Add idle configuration here
+        },
+        loading: {
+          // Add loading configuration here
+        },
+        active: {
+          // Add active configuration here
+        },
+      };
+
+      const vapi = window.vapiSDK.run({
+        apiKey: apiKey,
+        assistant: assistantId,
+        config: buttonConfig,
+      });
+
+      if (vapi) {
+        vapi.on("call-start", () => {
+          console.log("Call has started");
+          setCallActive(true);
+        });
+
+        vapi.on("call-end", () => {
+          console.log("Call has stopped");
+          setCallActive(false);
+        });
+
+        // Add other event listeners as needed
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [apiKey, assistantId]);
 
   if (!apiKey || !assistantId) {
-    console.error("VoiceAgentContent: API Key or Assistant ID is missing");
     return <div>Error: Missing API Key or Assistant ID</div>;
   }
 
@@ -734,12 +775,7 @@ function VoiceAgentContent() {
         Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
       </p>
       <div className="flex flex-col items-center w-full">
-        <VapiButton 
-          apiKey={apiKey}
-          assistant={assistantId}
-          onCallStart={handleCallStart}
-          onCallEnd={handleCallEnd}
-        />
+        <div id="vapi-container" ref={containerRef} style={{ width: '200px', height: '50px' }}></div>
         {callActive && (
           <p className="mt-4 text-sm text-muted-foreground">
             Call in progress. Speak into your microphone.
