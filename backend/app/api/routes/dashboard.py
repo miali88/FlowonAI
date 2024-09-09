@@ -11,6 +11,7 @@ import json
 from firecrawl import FirecrawlApp
 import tiktoken
 from app.core.config import settings
+from openai import OpenAI
 
 load_dotenv()
 
@@ -48,6 +49,20 @@ async def get_current_user(authorization: str = Header(...), x_user_id: str = He
     # For now, we'll just return the user ID from the header
     return x_user_id
 
+def get_embedding(text: str) -> list:
+    openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response = openai_client.embeddings.create(
+        input=text,
+        model="text-embedding-3-small"
+    )
+    return response.data[0].embedding
+
+def insert_into_supabase(content: str, embedding: list):
+    print(" func insert_into_supabase..")
+    data = supabase.table("knowledge_base").insert({"content": content, "embedding": embedding}).execute()
+    return data
+
+
 @router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
 async def get_items(current_user: str = Depends(get_current_user)):
     try:
@@ -74,12 +89,16 @@ async def create_item(request: Request):
     try:
         # Parse the JSON data from the request body
         data = await request.json()
+        print("\n\n\n DATA:", data)
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
 
         # Insert the data into Supabase
         new_item = supabase.table('knowledge_base').insert(data).execute()
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
-
+        print("\n\n NEW ITEM:", new_item)
+        
+        embedding = get_embedding(new_item.data[0].content)
+        print("\n\n Embedding:", embedding)
         # Return a success response
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
@@ -100,17 +119,18 @@ async def delete_item(item_id: int, current_user: str = Depends(get_current_user
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/chat")
-async def chat(request: Request, current_user: str = Depends(get_current_user)):
-    try:
-        data = await request.json()
-        message = data.get('message', '')
-        # Here you would typically use the user's knowledge base and context to generate a response
-        # For now, we'll just return a placeholder response
-        return {"response": {"answer": "This is a placeholder response"}}
-    except Exception as e:
-        logger.error(f"Error in chat: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+# @router.post("/chat")
+# async def chat(request: Request, current_user: str = Depends(get_current_user)):
+#     try:
+#         data = await request.json()
+#         message = data.get('message', '')
+#         # Here you would typically use the user's knowledge base and context to generate a response
+#         # For now, we'll just return a placeholder response
+#         return {"response": {"answer": "This is a placeholder response"}}
+#     except Exception as e:
+#         logger.error(f"Error in chat: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(ValidationError)

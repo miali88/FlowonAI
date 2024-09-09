@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SendIcon, Bot } from 'lucide-react';
 import { useUser, useAuth } from "@clerk/nextjs";
 
+// Add this constant at the top of your file, outside of any component
+const API_BASE_URL = 'http://localhost:8000';
+
 interface Message {
   text: string;
   type: 'incoming' | 'outgoing';
@@ -43,7 +46,7 @@ export function Playground() {
 
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -57,10 +60,12 @@ export function Playground() {
       });
       const data = await response.json();
       
+      console.log('API response:', data); // Add this line for debugging
+
       // Replace "Typing..." with actual response
       setMessages(prev => [
         ...prev.slice(0, -1),
-        { text: data.response.answer.trim(), type: 'incoming' }
+        { text: data.response?.answer?.trim() || "Sorry, I couldn't process that request.", type: 'incoming' }
       ]);
     } catch (error) {
       console.error('Error:', error);

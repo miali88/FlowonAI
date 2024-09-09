@@ -1,4 +1,4 @@
-# from fastapi import Request, Response
+# from fastapi import Request
 # from fastapi.responses import JSONResponse
 # from services.db.supabase_ops import supabase_ops
 # from app.core.config import settings
@@ -10,7 +10,7 @@
 
 # logger = logging.getLogger(__name__)
 
-# from services.chat.lm import agent_retriever, cx_sys_prompt, retriever_prompt
+# from services.chat.lm import initialize_weaviate, query_weaviate, agent_retriever, cx_sys_prompt
 
 # async def handle_chat_webhook(request: Request):
 #     try:    
@@ -22,8 +22,15 @@
 #             return JSONResponse({"error": "No message provided"}, status_code=400)
         
 #         logger.info(f"User message: {user_message}")
-#         #retriever_prompt.format(query=user_message)
-#         bot_response = agent_retriever(cx_sys_prompt, user_message)
+        
+#         # Initialize Weaviate client
+#         weaviate_client = initialize_weaviate()
+        
+#         # Query Weaviate
+#         weaviate_results = query_weaviate(weaviate_client, user_message)
+        
+#         # Generate bot response
+#         bot_response = agent_retriever(cx_sys_prompt, user_message, weaviate_results)
         
 #         logger.info(f"Bot response generated successfully")
 

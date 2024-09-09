@@ -36,6 +36,8 @@ pipecat-ai = {version = "0.0.39", extras = ["daily", "openai", "silero", "deepgr
 weaviate-client = "4.7.1"
 firecrawl = "1.2.3"
 tiktoken = "0.7.0"
+transformers = "4.44.2"
+torch = "2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
