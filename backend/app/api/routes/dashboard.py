@@ -21,10 +21,18 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
-# Set up logging
+# Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+# Create a custom formatter with timestamps
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Add a StreamHandler with the custom formatter
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 router = APIRouter()
 
@@ -89,16 +97,18 @@ async def create_item(request: Request):
     try:
         # Parse the JSON data from the request body
         data = await request.json()
-        print("\n\n\n DATA:", data)
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
+
+        embedding = get_embedding(data['content'])
+        data['embedding'] = embedding
+
+        print("\n\n\n DATA:", data)
 
         # Insert the data into Supabase
         new_item = supabase.table('knowledge_base').insert(data).execute()
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
         print("\n\n NEW ITEM:", new_item)
         
-        embedding = get_embedding(new_item.data[0].content)
-        print("\n\n Embedding:", embedding)
         # Return a success response
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
