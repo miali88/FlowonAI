@@ -722,7 +722,6 @@ function VoiceAgentContent() {
 
     script.onload = () => {
       const buttonConfig = {
-        position: "custom",
         container: "vapi-container",
         width: "200px",
         height: "50px",
@@ -769,13 +768,17 @@ function VoiceAgentContent() {
   }
 
   return (
-    <div className="p-6 flex flex-col items-center justify-center h-full">
+    <div className="p-6 flex flex-col items-center justify-center min-h-screen w-full">
       <h3 className="text-xl font-semibold mb-4">Voice Agent</h3>
       <p className="text-muted-foreground mb-6 text-center max-w-2xl">
         Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
       </p>
-      <div className="flex flex-col items-center w-full">
-        <div id="vapi-container" ref={containerRef} style={{ width: '200px', height: '50px' }}></div>
+      <div className="flex flex-col items-center justify-center w-full h-64 border border-red-500">
+        <div id="vapi-container" ref={containerRef} className="flex justify-center items-center w-[200px] h-[50px] border border-blue-500">
+          <div className="bg-gray-300 w-full h-full flex items-center justify-center">
+            Button Placeholder
+          </div>
+        </div>
         {callActive && (
           <p className="mt-4 text-sm text-muted-foreground">
             Call in progress. Speak into your microphone.
@@ -863,7 +866,7 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded && !userId) {
       router.push("/sign-in");
-    }
+    }ge
   }, [isLoaded, userId, router]);
 
   if (!isLoaded) {
