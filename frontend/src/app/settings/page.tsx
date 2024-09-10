@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStripe } from '@stripe/react-stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import BillingTab from './BillingTab';
+
+// Load your Stripe publishable key
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function SettingsPage() {
   const { user } = useUser();
-  const stripe = useStripe();
 
   if (!user) {
     return <div>Loading...</div>;
@@ -71,47 +75,9 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Settings</CardTitle>
-              <CardDescription>Manage your pay-as-you-use billing</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Current Usage</h3>
-                  <p>Your current usage: $X.XX</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Payment Method</h3>
-                  {/* Add logic to display current payment method or add a new one */}
-                  <Button onClick={() => {
-                    // Logic to open Stripe payment method dialog
-                    if (stripe) {
-                      stripe.createPaymentMethod({
-                        type: 'card',
-                        // Add more options as needed
-                      }).then((result) => {
-                        if (result.error) {
-                          // Handle error
-                          console.error(result.error);
-                        } else {
-                          // Send paymentMethod.id to your server
-                          // Update UI to show the new payment method
-                        }
-                      });
-                    }
-                  }}>
-                    Add Payment Method
-                  </Button>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Billing History</h3>
-                  {/* Add a table or list of recent transactions */}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Elements stripe={stripePromise}>
+            <BillingTab />
+          </Elements>
         </TabsContent>
       </Tabs>
     </div>
