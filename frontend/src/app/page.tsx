@@ -708,34 +708,36 @@ function VoiceAgentContent({ isActive }) {
   const [callActive, setCallActive] = useState(false);
   const containerRef = useRef(null);
   const vapiInstanceRef = useRef(null);
-  const [assistantId, setAssistantId] = useState(null);
-  const { user } = useUser();
-  const { getToken } = useAuth();
+  // const [assistantId, setAssistantId] = useState(null);
+  // const { user } = useUser();
+  // const { getToken } = useAuth();
 
   const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
+  const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
 
-  useEffect(() => {
-    if (!isActive || !apiKey || !user) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (!isActive || !apiKey || !user) {
+  //     return;
+  //   }
 
-    const fetchAssistantId = async () => {
-      try {
-        const token = await getToken();
-        const response = await axios.get(`${API_BASE_URL}/api/v1/vapi`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-User-ID': user.id,
-          },
-        });
-        setAssistantId(response.data.assistant_id);
-      } catch (error) {
-        console.error("Error fetching assistant ID:", error);
-      }
-    };
+  
+  //   const fetchAssistantId = async () => {
+  //     try {
+  //       const token = await getToken();
+  //       const response = await axios.get(`${API_BASE_URL}/api/v1/vapi`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           'X-User-ID': user.id,
+  //         },
+  //       });
+  //       setAssistantId(response.data.assistant_id);
+  //     } catch (error) {
+  //       console.error("Error fetching assistant ID:", error);
+  //     }
+  //   };
 
-    fetchAssistantId();
-  }, [isActive, apiKey, user, getToken]);
+  //   fetchAssistantId();
+  // }, [isActive, apiKey, user, getToken]);
 
   useEffect(() => {
     if (!isActive || !apiKey || !assistantId) {
