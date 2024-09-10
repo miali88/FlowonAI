@@ -99,6 +99,8 @@ async def create_item(request: Request):
         data = await request.json()
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
 
+        """ chunking function here """
+
         embedding = get_embedding(data['content'])
         data['embedding'] = embedding
 
