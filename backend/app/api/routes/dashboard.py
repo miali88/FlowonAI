@@ -95,14 +95,8 @@ async def create_item(request: Request):
     logger.debug(f"Request headers: {json.dumps(headers, indent=2)}")
 
     try:
-        # Parse the JSON data from the request body
         data = await request.json()
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
-
-        """ chunking function here """
-
-        embedding = get_embedding(data['content'])
-        data['embedding'] = embedding
 
         print("\n\n\n DATA:", data)
 
@@ -111,6 +105,9 @@ async def create_item(request: Request):
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
         print("\n\n NEW ITEM:", new_item)
         
+        """ PROCESS INTO CHUNKS AFTER SAVING TO KB, TAKE ITEM_ID AND ADD TO CHUNKS TABLE """
+
+
         # Return a success response
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
