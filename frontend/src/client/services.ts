@@ -151,14 +151,14 @@ export type TDataRegisterUser = {
   requestBody: UserRegister
 }
 export type TDataReadUserById = {
-  userId: number
+  userId: string
 }
 export type TDataUpdateUser = {
   requestBody: UserUpdate
-  userId: number
+  userId: string
 }
 export type TDataDeleteUser = {
-  userId: number
+  userId: string
 }
 
 export class UsersService {
@@ -396,14 +396,14 @@ export type TDataCreateItem = {
   requestBody: ItemCreate
 }
 export type TDataReadItem = {
-  id: number
+  id: string
 }
 export type TDataUpdateItem = {
-  id: number
+  id: string
   requestBody: ItemUpdate
 }
 export type TDataDeleteItem = {
-  id: number
+  id: string
 }
 
 export class ItemsService {

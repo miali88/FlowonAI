@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request
 from services import twilio
-from services.db_queries import db_case_locator
+from services.db_queries import db_case_locator, db_staff_locator
 from app.core.config import settings
 from typing import Dict, Any, Tuple, Optional
 
@@ -8,13 +8,13 @@ class CallRouting:
     def __init__(self, in_memory_cache: Any):
         self.in_memory_cache = in_memory_cache
 
-    async def caller_information(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    async def caller_information(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]: # Storing caller info
         print('\n caller information function...')
         self.in_memory_cache.set("AGENT_FIRST.ic_info", event['args'])
         print('ic_info:', self.in_memory_cache.get("AGENT_FIRST.ic_info"))
         return {"function_result": {"name": "callerInformation"}, "result": f"info noted"}
 
-    async def case_locator(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    async def case_locator(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]: # DB querying for case and admin
         print('\n case locator function...')
         case_name, admin_name = await db_case_locator(event)
         if case_name and admin_name:
@@ -23,14 +23,23 @@ class CallRouting:
         else:
             return {"function_result": {"name": "CaseLocator"}, "result": {"error": "Case or administrator not found"}}
 
-    async def call_admin(self, event: Dict[str, Any], request: Request) -> None:
+    async def staff_locator(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]: # DB querying for staff
+        print('\n staff locator function...')
+        admin_name = await db_staff_locator(event)
+        if admin_name:
+            print('\n\n in_memory_cache', self.in_memory_cache.get_all())
+            return {"function_result": {"name": "staffLocator"}, "result": { "staff-name": admin_name}}
+        else:
+            return {"function_result": {"name": "staffLocator"}, "result": {"error": "staff not found"}}
+
+    async def call_admin(self, event: Dict[str, Any], request: Request) -> None: # Twilio call to admin
         print('\ncall admin function...')
         hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'
         print('hold_url', hold_url)      
         print('twilio_callsid', self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"))
         await twilio.update_call(self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url, 'hold')
 
-    async def info_retrieve(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    async def info_retrieve(self, event: Dict[str, Any], request: Request) -> Dict[str, Any]: # Retrieving info from in_memory_cache
         print('\ninfo_retrieve function...')
         return {"function_result": {"name": "infoRetrieve"}, "result": \
                 {"callersName": self.in_memory_cache.get("AGENT_FIRST.ic_info.callersName"), \
@@ -39,7 +48,7 @@ class CallRouting:
                 "enquiry": self.in_memory_cache.get("AGENT_FIRST.ic_info.enquiry"),\
                 "administratorName": self.in_memory_cache.get("AGENT_FIRST.case_locator.admin_name")}}
 
-    async def admin_available(self, event: Dict[str, Any], request: Request) -> bool:
+    async def admin_available(self, event: Dict[str, Any], request: Request) -> bool: # Admin availability check
         print('\nadmin available function...')
         try:
             admin_available_bool: bool = event['args']['adminAvailable']

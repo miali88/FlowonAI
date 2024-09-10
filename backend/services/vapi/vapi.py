@@ -21,7 +21,8 @@ async def handle_vapi_webhook(request: Request) -> Response:
         return Response(status_code=200)
     
     if payload:
-        logger.info(f"Received VAPI webhook payload: {payload}")
+        logger.info(f"INFO: Received VAPI webhook payload: {payload}")
+        print(f"PRINT: Received VAPI webhook payload: {payload}")
         await supabase_ops.vapi.create(payload)
     else:
         logger.info("Received empty VAPI webhook payload")

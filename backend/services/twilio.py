@@ -23,8 +23,14 @@ from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
+# Add this near the top of the file, after imports
+logger = logging.getLogger(__name__)
+
 
 """ WEBHOOK HANDLER """
+# async def twilio_start_bot(request: Request) -> None:
+## dailyco dialin-chatbot here. 
+
 async def call_init_handler(twil_numb: str, request: Request) -> None:
     try:
         form = await request.form()
@@ -161,6 +167,9 @@ async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optio
 
 """ UTILS """
 def register_url():
+    """ This updates the webhook URL for a given Twilio number.
+        i.e settings.TWILIO_NUMBER, but can be any db of numbers.
+    """
     try:
         # Find the phone number object
         phone_number_objects = client.incoming_phone_numbers.list(phone_number=settings.TWILIO_NUMBER)
@@ -171,18 +180,22 @@ def register_url():
 
         # Get the first (and should be only) matching phone number
         phone_number_object = phone_number_objects[0]
-        
-        # Update the voice URL
-        updated_number = client.incoming_phone_numbers(phone_number_object.sid).update(
-            voice_url=f"https://internally-wise-spaniel.eu.ngrok.io/retell_handle/{settings.TWILIO_NUMBER}"
+        """ FlowonAI Infra """
+        voice_url = f"{settings.BASE_URL}/api/v1/twilio/call_init/{settings.TWILIO_NUMBER}"
+        client.incoming_phone_numbers(phone_number_object.sid).update(
+            voice_url=voice_url
         )
+
+        """ RetellAI Infra """
+        # agent_id = "agent_6fbcc967dde3c2e6c59a12d6dc"
+        # voice_url = f"{settings.BASE_URL}/api/v1/twilio/retell_handle/{agent_id}"
+        # client.incoming_phone_numbers(phone_number_object.sid).update(
+        #     voice_url=voice_url
+        # )
         
-        #print("Registered phone agent:", vars(updated_number))
-        return updated_number
+        return voice_url
     except Exception as err:
         print(f"Error in register_url: {err}")
-
-#register_inbound_agent(phone_number=settings.TWILIO_NUMBER, agent_id=settings.AGENT_FIRST)
 
 async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
     try:
@@ -196,12 +209,12 @@ async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
         print(f"Error in update_call: {e}")
 
 def cleanup() -> None:
-    print("Cleaning up before exit...")
+    print("\nCleaning up before exit...")
     ## Ensuring all prior calls are ended
     calls = client.calls.list(status='in-progress')
 
-    print("Registering twilio URL")
-    register_url()
+    print("Registering twilio URL:")
+    print(register_url())
     # Print and end each ongoing call
     if calls:
         for call in calls:

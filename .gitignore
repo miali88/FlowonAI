@@ -44,3 +44,4 @@ openapi.json
 *.sln
 *.sw?
 .env
+.next

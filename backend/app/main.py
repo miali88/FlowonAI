@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 from services.twilio import cleanup
+import uvicorn
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -11,7 +12,6 @@ from contextlib import asynccontextmanager
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
-
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
     sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)

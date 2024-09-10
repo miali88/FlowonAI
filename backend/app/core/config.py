@@ -59,12 +59,17 @@ class Settings(BaseSettings):
     RETELL_API_KEY: str = ""
     AGENT_FIRST: str = ""
     AGENT_SECOND: str = ""
+    AGENT_FF: str = ""
 
     VAPI_API_KEY: str = ""
 
     CAL_API_KEY: str = ""
 
-    BASE_URL: str = "https://internally-wise-spaniel.ap.ngrok.io"
+    WEAVIATE_URL: str = ""
+    WEAVIATE_API_KEY: str = ""
+
+    BASE_URL: str = "https://internally-wise-spaniel.eu.ngrok.io"
+    #BASE_URL: str = "http://localhost:8000"
 
     @computed_field  # type: ignore[misc]
     @property
@@ -80,8 +85,7 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
-
-
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
         # LLM service
     OPENAI_API_KEY: str = ""
