@@ -139,6 +139,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
 
 function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
   const router = useRouter();
+  const { user } = useUser();
 
   const renderTitle = () => {
     if (selectedFeature) {
@@ -176,7 +177,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
                 <AvatarImage src="https://github.com/polymet-ai.png" />
                 <AvatarFallback>AD</AvatarFallback>
               </Avatar>
-              <span>Admin User</span>
+              <span>{user?.fullName || "User"}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
