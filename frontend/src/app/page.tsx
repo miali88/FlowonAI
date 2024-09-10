@@ -174,8 +174,8 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="https://github.com/polymet-ai.png" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src="/assets/logo_no_white.png" alt="Flowon AI Logo" />
+                <AvatarFallback>FA</AvatarFallback>
               </Avatar>
               <span>{user?.fullName || "User"}</span>
             </Button>

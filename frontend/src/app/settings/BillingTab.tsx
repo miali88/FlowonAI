@@ -1,10 +1,21 @@
 import React from 'react';
-import { useStripe } from '@stripe/react-stripe-js';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BillingTab() {
-  const stripe = useStripe();
+  // Remove the useStripe hook as we won't be using it directly
+
+  const redirectToCustomerPortal = async () => {
+    try {
+      const response = await fetch('/api/create-customer-portal-session', {
+        method: 'POST',
+      });
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error redirecting to customer portal:', error);
+    }
+  };
 
   return (
     <Card>
@@ -20,21 +31,8 @@ export default function BillingTab() {
           </div>
           <div>
             <h3 className="text-lg font-semibold">Payment Method</h3>
-            <Button onClick={() => {
-              if (stripe) {
-                stripe.createPaymentMethod({
-                  type: 'card',
-                }).then((result) => {
-                  if (result.error) {
-                    console.error(result.error);
-                  } else {
-                    // Send paymentMethod.id to your server
-                    // Update UI to show the new payment method
-                  }
-                });
-              }
-            }}>
-              Add Payment Method
+            <Button onClick={redirectToCustomerPortal}>
+              Manage Billing
             </Button>
           </div>
           <div>
