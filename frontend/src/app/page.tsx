@@ -138,6 +138,8 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
 }
 
 function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
+  const router = useRouter();
+
   const renderTitle = () => {
     if (selectedFeature) {
       return (
@@ -184,7 +186,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
@@ -701,19 +703,20 @@ function AIAgentContent() {
   );
 }
 
-function VoiceAgentContent() {
+function VoiceAgentContent({ isActive }) {
   const [callActive, setCallActive] = useState(false);
   const containerRef = useRef(null);
+  const vapiInstanceRef = useRef(null);
 
-  // Use environment variables
   const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
   const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
 
   useEffect(() => {
-    if (!apiKey || !assistantId) {
-      console.error("VoiceAgentContent: API Key or Assistant ID is missing");
+    if (!isActive || !apiKey || !assistantId) {
       return;
     }
+
+    console.log("Initializing Vapi SDK");
 
     const script = document.createElement('script');
     script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@1.1.6/dist/assets/index.js";
@@ -721,6 +724,8 @@ function VoiceAgentContent() {
     document.body.appendChild(script);
 
     script.onload = () => {
+      console.log("Vapi SDK script loaded");
+
       const buttonConfig = {
         container: "vapi-container",
         width: "200px",
@@ -737,54 +742,64 @@ function VoiceAgentContent() {
         },
       };
 
-      const vapi = window.vapiSDK.run({
-        apiKey: apiKey,
-        assistant: assistantId,
-        config: buttonConfig,
-      });
-
-      if (vapi) {
-        vapi.on("call-start", () => {
-          console.log("Call has started");
-          setCallActive(true);
+      try {
+        const vapi = window.vapiSDK.run({
+          apiKey: apiKey,
+          assistant: assistantId,
+          config: buttonConfig,
         });
 
-        vapi.on("call-end", () => {
-          console.log("Call has stopped");
-          setCallActive(false);
-        });
+        vapiInstanceRef.current = vapi;
 
-        // Add other event listeners as needed
+        console.log("Vapi SDK initialized");
+
+        if (vapi) {
+          vapi.on("call-start", () => {
+            console.log("Call has started");
+            setCallActive(true);
+          });
+
+          vapi.on("call-end", () => {
+            console.log("Call has stopped");
+            setCallActive(false);
+          });
+        }
+      } catch (error) {
+        console.error("Error initializing Vapi SDK:", error);
       }
     };
 
     return () => {
-      document.body.removeChild(script);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      vapiInstanceRef.current = null;
     };
-  }, [apiKey, assistantId]);
+  }, [isActive, apiKey, assistantId]);
 
   if (!apiKey || !assistantId) {
-    return <div>Error: Missing API Key or Assistant ID</div>;
+    return null;
   }
 
   return (
-    <div className="p-6 flex flex-col items-center justify-center min-h-screen w-full">
+    <div className="p-6 flex flex-col items-center justify-center min-h-screen w-full relative overflow-hidden">
       <h3 className="text-xl font-semibold mb-4">Voice Agent</h3>
       <p className="text-muted-foreground mb-6 text-center max-w-2xl">
         Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
       </p>
-      <div className="flex flex-col items-center justify-center w-full h-64 border border-red-500">
-        <div id="vapi-container" ref={containerRef} className="flex justify-center items-center w-[200px] h-[50px] border border-blue-500">
-          <div className="bg-gray-300 w-full h-full flex items-center justify-center">
-            Button Placeholder
+      <div className="flex flex-col items-center justify-center w-full relative">
+        {isActive && (
+          <div id="vapi-container" ref={containerRef} className="vapi-container">
+            <div className="bg-gray-300 w-full h-full flex items-center justify-center">
+            </div>
           </div>
-        </div>
-        {callActive && (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Call in progress. Speak into your microphone.
-          </p>
         )}
       </div>
+      {callActive && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Call in progress. Speak into your microphone.
+        </p>
+      )}
     </div>
   );
 }
@@ -820,7 +835,7 @@ function AdminDashboard() {
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Voice Agent":
-        return <VoiceAgentContent />;
+        return <VoiceAgentContent isActive={activeItem === "Voice Agent"} />;
       case "AI Agent":
         return <AIAgentContent />;
       case "Features":
@@ -866,7 +881,7 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded && !userId) {
       router.push("/sign-in");
-    }ge
+    }
   }, [isLoaded, userId, router]);
 
   if (!isLoaded) {
