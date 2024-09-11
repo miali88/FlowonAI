@@ -527,7 +527,9 @@ function KnowledgeBaseContent() {
               onChange={(e) => setScrapeUrl(e.target.value)}
               className="mb-4"
             />
-            <Button onClick={handleScrape}>Scrape Web Content</Button>
+            <Button onClick={handleScrape} className="self-start px-4 py-2">
+              Scrape Web Content
+            </Button>
           </div>
         );
       case 'connect':

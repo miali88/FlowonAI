@@ -51,7 +51,6 @@ async def process_pdf(file: UploadFile) -> str:
 
     return content
 
-
 async def process_docx(file: UploadFile) -> str:
     logger.info("Processing DOCX file")
     docx_content = await file.read()
