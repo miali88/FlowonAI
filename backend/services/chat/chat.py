@@ -7,8 +7,11 @@ import json
 import logging
 import os 
 import requests
-
-load_dotenv()
+from supabase import create_client, Client
+from termcolor import colored
+import spacy
+from openai import OpenAI
+from tiktoken import encoding_for_model
 
 logger = logging.getLogger(__name__)
 
@@ -110,17 +113,14 @@ def llm_response(system_prompt, user_prompt, conversation_history):
     return full_response
 
 
+async def chat_process(user_message, user_id):
+    print("func chat_process...")
+    print("user_message", user_message)
+    print("user_id", user_id)
 
-user_query = "tell me a little about flowon"
-
-
-
-async def chat_process(request: Request):
-    
-    retrieved_docs = rag_response(user_query)
-    user_prompt = f""" {user_query}
-    retrieved docs {retrieved_docs} """
-
+    retrieved_docs = rag_response(user_message)
+    user_prompt = f""" {user_message}
+    # retrieved docs {retrieved_docs} """
 
     response_received = False
     for response_chunk in llm_response(system_prompt, user_prompt, conversation_history):

@@ -13,13 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 @router.api_route('/', methods=['POST', 'GET'])
-async def webhook(request: Request):
+async def chat_webhook(request: Request):
     user_query = await request.json()
 
     print(user_query)
 
-    chat_process(user_query['message'], user_query['user_id'])
-
+    await chat_process(user_query['message'], user_query['user_id'])
 
     response = {
                 "response": {
