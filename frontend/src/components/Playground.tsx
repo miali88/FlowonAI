@@ -46,7 +46,7 @@ export function Playground() {
 
     try {
       const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/chat`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -55,7 +55,8 @@ export function Playground() {
         },
         body: JSON.stringify({ 
           message: inputMessage,
-          user_id: user.id
+          user_id: user.id,
+          type: "playground",
         }),
       });
       const data = await response.json();

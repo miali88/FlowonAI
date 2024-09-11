@@ -2,16 +2,34 @@ from fastapi import Request, HTTPException, APIRouter, Response
 from fastapi.responses import JSONResponse
 import json
 import logging
+from openai import OpenAI
 
-# from services.chat.chat import handle_chat_webhook
+from services.chat.chat import chat_process
+
 # from services.db.supabase_ops import supabase_ops
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.api_route('/', methods=['POST', 'GET'])
 async def webhook(request: Request):
-    pass
+    user_query = await request.json()
+
+    print(user_query)
+
+    chat_process(user_query['message'], user_query['user_id'])
+
+
+    response = {
+                "response": {
+                    "answer": "The actual response text from the AI"
+                }
+            }
+
+    return response
+
+
     # try:
     #     logger.info("Received request at /chat")
     #     response = await handle_chat_webhook(request)
