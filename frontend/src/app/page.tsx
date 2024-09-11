@@ -219,6 +219,7 @@ function KnowledgeBaseContent() {
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scrapeError, setScrapeError] = useState("");
   const [totalTokens, setTotalTokens] = useState(0);
+  const [activeTab, setActiveTab] = useState('library');
 
   useEffect(() => {
     if (user) {
@@ -438,83 +439,100 @@ function KnowledgeBaseContent() {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Left section (1/3 width) */}
-      <div className="w-1/3 p-4 border-r">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Knowledge Library</h3>
-          <Button size="sm" onClick={() => { setSelectedItem(null); setIsEditing(false); }}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            New Item
-          </Button>
-        </div>
-        <div className="mb-4">
-          <Input 
-            placeholder="Search items..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="mb-4">
-          <p>Total Tokens: {totalTokens}</p>
-        </div>
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          {filteredItems.map((item) => (
-            <Card 
-              key={item.id} 
-              className={cn(
-                "mb-2 cursor-pointer relative group",
-                selectedItem?.id === item.id && "bg-secondary"
-              )}
-              onClick={() => { setSelectedItem(item); setIsEditing(false); }}
-            >
-              <CardHeader className="p-3">
-                <CardTitle className="text-sm">{item.title}</CardTitle>
-              </CardHeader>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteItem(item.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </Card>
-          ))}
-        </ScrollArea>
-      </div>
+    <div className="flex flex-col h-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full border-b">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="library" className="text-sm">Knowledge Library</TabsTrigger>
+          <TabsTrigger value="add" className="text-sm">Add to Knowledge Base</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      {/* Right section (2/3 width) */}
-      <div className="w-2/3 p-4">
-        {selectedItem ? (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">{selectedItem.title}</h3>
-              <Button onClick={handleEditItem} disabled={isEditing}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-            {isEditing ? (
-              <>
-                <Textarea 
-                  className="w-full h-[calc(100vh-250px)] p-4 bg-background border border-input mb-4"
-                  value={newItemContent}
-                  onChange={(e) => setNewItemContent(e.target.value)}
-                />
-                <Button onClick={handleSaveEdit}>Save Changes</Button>
-              </>
-            ) : (
-              <ScrollArea className="h-[calc(100vh-250px)]">
-                <p className="whitespace-pre-wrap">{selectedItem.content}</p>
-              </ScrollArea>
-            )}
-          </div>
-        ) : (
+      <div className="flex h-full">
+        {activeTab === 'library' ? (
           <>
+            {/* Left section (1/3 width) */}
+            <div className="w-1/3 p-4 border-r">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Knowledge Library</h3>
+                <Button size="sm" onClick={() => { setSelectedItem(null); setIsEditing(false); }}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  New Item
+                </Button>
+              </div>
+              <div className="mb-4">
+                <Input 
+                  placeholder="Search items..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="mb-4">
+                <p>Total Tokens: {totalTokens}</p>
+              </div>
+              <ScrollArea className="h-[calc(100vh-300px)]">
+                {filteredItems.map((item) => (
+                  <Card 
+                    key={item.id} 
+                    className={cn(
+                      "mb-2 cursor-pointer relative group",
+                      selectedItem?.id === item.id && "bg-secondary"
+                    )}
+                    onClick={() => { setSelectedItem(item); setIsEditing(false); }}
+                  >
+                    <CardHeader className="p-3">
+                      <CardTitle className="text-sm">{item.title}</CardTitle>
+                    </CardHeader>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteItem(item.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </Card>
+                ))}
+              </ScrollArea>
+            </div>
+
+            {/* Right section (2/3 width) */}
+            <div className="w-2/3 p-4">
+              {selectedItem ? (
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold">{selectedItem.title}</h3>
+                    <Button onClick={handleEditItem} disabled={isEditing}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </div>
+                  {isEditing ? (
+                    <>
+                      <Textarea 
+                        className="w-full h-[calc(100vh-250px)] p-4 bg-background border border-input mb-4"
+                        value={newItemContent}
+                        onChange={(e) => setNewItemContent(e.target.value)}
+                      />
+                      <Button onClick={handleSaveEdit}>Save Changes</Button>
+                    </>
+                  ) : (
+                    <ScrollArea className="h-[calc(100vh-250px)]">
+                      <p className="whitespace-pre-wrap">{selectedItem.content}</p>
+                    </ScrollArea>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Select an item to view or edit</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="w-full p-4">
             <h3 className="text-xl font-semibold mb-4">Add to Knowledge Base</h3>
             <div className="relative w-full mb-6">
               <Textarea 
@@ -551,9 +569,7 @@ function KnowledgeBaseContent() {
                     </span>
                   )}
                 </div>
-                <Button
-                  onClick={handleNewItem}
-                >
+                <Button onClick={handleNewItem}>
                   <SendIcon className="h-4 w-4 mr-2" />
                   Add Item
                 </Button>
@@ -572,21 +588,17 @@ function KnowledgeBaseContent() {
               )}
               {scrapeError && <p className="text-red-500 mt-2">{scrapeError}</p>}
             </div>
-          </>
-        )}
-        {alertMessage && (
-          <Alert variant={alertType === "error" ? "destructive" : "default"}>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{alertType === "error" ? "Error" : "Success"}</AlertTitle>
-            <AlertDescription>{alertMessage}</AlertDescription>
-          </Alert>
-        )}
-        {user && (
-          <div className="mb-4">
-            <p>Welcome, {user.firstName}!</p>
           </div>
         )}
       </div>
+
+      {alertMessage && (
+        <Alert variant={alertType === "error" ? "destructive" : "default"}>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{alertType === "error" ? "Error" : "Success"}</AlertTitle>
+          <AlertDescription>{alertMessage}</AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }
@@ -708,36 +720,9 @@ function VoiceAgentContent({ isActive }) {
   const [callActive, setCallActive] = useState(false);
   const containerRef = useRef(null);
   const vapiInstanceRef = useRef(null);
-  // const [assistantId, setAssistantId] = useState(null);
-  // const { user } = useUser();
-  // const { getToken } = useAuth();
 
   const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
   const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
-
-  // useEffect(() => {
-  //   if (!isActive || !apiKey || !user) {
-  //     return;
-  //   }
-
-  
-  //   const fetchAssistantId = async () => {
-  //     try {
-  //       const token = await getToken();
-  //       const response = await axios.get(`${API_BASE_URL}/api/v1/vapi`, {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           'X-User-ID': user.id,
-  //         },
-  //       });
-  //       setAssistantId(response.data.assistant_id);
-  //     } catch (error) {
-  //       console.error("Error fetching assistant ID:", error);
-  //     }
-  //   };
-
-  //   fetchAssistantId();
-  // }, [isActive, apiKey, user, getToken]);
 
   useEffect(() => {
     if (!isActive || !apiKey || !assistantId) {
