@@ -1,18 +1,28 @@
 from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 from fastapi.responses import JSONResponse
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import os 
+
+import logging
 from typing import List
 from pydantic import BaseModel, ValidationError
-import json
-from firecrawl import FirecrawlApp
 import tiktoken
+from termcolor import colored
+from dotenv import load_dotenv
+import json
+import os
+import requests
+from tiktoken import encoding_for_model
+
+import spacy
+from firecrawl import FirecrawlApp
+from supabase import create_client, Client
+from openai import AsyncOpenAI
+
 from app.core.config import settings
 
 load_dotenv()
+
+openai = AsyncOpenAI()
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -21,131 +31,67 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-router = APIRouter()
+nlp = spacy.load("en_core_web_md")
 
-class KnowledgeBaseItem(BaseModel):
-    id: int
-    title: str
-    content: str
-    user_id: str
+def clean_data(data):
+    doc = nlp(data)
+    cleaned_text = ' '.join([token.text for token in doc if not token.is_space and not token.is_punct])
+    return cleaned_text
 
-class KnowledgeBaseItemCreate(BaseModel):
-    title: str
-    content: str
-    user_id: str
+def count_tokens(text, model="gpt-4o"):
+    encoder = encoding_for_model(model)
+    tokens = encoder.encode(text)
+    return len(tokens)
 
-class ScrapeUrlRequest(BaseModel):
-    url: str
+def sliding_window_chunking(text, max_window_size=600, overlap=200):
+    encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
+    tokens = encoder.encode(text)
+    chunks = []
+    start = 0
+    while start < len(tokens):
+        end = start + max_window_size
+        chunk_tokens = tokens[start:end]
+        chunk = encoder.decode(chunk_tokens)
+        chunks.append(chunk)
+        start += max_window_size - overlap
+    return chunks
 
-async def get_current_user(authorization: str = Header(...), x_user_id: str = Header(...)):
-    if not authorization or not authorization.startswith('Bearer '):
-        raise HTTPException(status_code=401, detail="Invalid or missing token")
-    # Here you would typically validate the token with Clerk
-    # For now, we'll just return the user ID from the header
-    return x_user_id
+import asyncio
 
-async def get_items(current_user: str = Depends(get_current_user)):
-    try:
-        print(f"Fetching items for user: {current_user}")
-        items = supabase.table('knowledge_base').select('*').eq('user_id', current_user).execute()
-        print('Items loaded:', items)
-        return items.data
-    except Exception as e:
-        logger.error(f"Error fetching items: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+async def insert_chunk(parent_id, content, chunk_index, embedding):
+    print("func insert_chunk...")
+    # Run the synchronous Supabase operation in a separate thread
+    await asyncio.to_thread(
+        supabase.table('chunks').insert({
+            'parent_id': parent_id,
+            'content': content,
+            'chunk_index': chunk_index,
+            'embedding': embedding
+        }).execute
+    )
 
-async def create_item(request: Request):
-    logger.debug("Received POST request to /knowledge_base")
-    
-    # Log the raw request body
-    raw_body = await request.body()
-    logger.debug(f"Raw request body: {raw_body.decode()}")
-    
-    # Log headers
-    headers = dict(request.headers)
-    logger.debug(f"Request headers: {json.dumps(headers, indent=2)}")
+async def get_embedding(text):
+    response = await openai.embeddings.create(
+        input=text,
+        model="text-embedding-3-small"
+    )
+    return response.data[0].embedding
 
-    try:
-        # Parse the JSON data from the request body
-        data = await request.json()
-        logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
-
-        # Insert the data into Supabase
-        new_item = supabase.table('knowledge_base').insert(data).execute()
-        logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
-
-        # Return a success response
-        return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON: {str(e)}")
-        return JSONResponse(status_code=400, content={"detail": "Invalid JSON data"})
-    except Exception as e:
-        logger.error(f"Error creating item: {str(e)}", exc_info=True)
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
-
-async def delete_item(item_id: int, current_user: str = Depends(get_current_user)):
-    try:
-        result = supabase.table('knowledge_base').delete().eq('id', item_id).eq('user_id', current_user).execute()
-        if len(result.data) == 0:
-            raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
-        return {"message": "Item deleted successfully"}
-    except Exception as e:
-        logger.error(f"Error deleting item: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-async def chat(request: Request, current_user: str = Depends(get_current_user)):
-    try:
-        data = await request.json()
-        message = data.get('message', '')
-        # Here you would typically use the user's knowledge base and context to generate a response
-        # For now, we'll just return a placeholder response
-        return {"response": {"answer": "This is a placeholder response"}}
-    except Exception as e:
-        logger.error(f"Error in chat: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-def setup_exception_handlers(app: FastAPI):
-    @app.exception_handler(ValidationError)
-    async def validation_exception_handler(request: Request, exc: ValidationError):
-        logger.error(f"Validation error in request: {str(exc)}")
-        error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
-        logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
-        return JSONResponse(status_code=422, content={"detail": error_details})
+async def process_item(item_id, content):
+    print("func process_item...")
+    chunks = sliding_window_chunking(content) 
+    for index, chunk in enumerate(chunks):
+        embedding = await get_embedding(chunk)
+        print("index", index)
+        print("chunk", chunk)
+        print("embedding", embedding)
+        await insert_chunk(item_id, chunk, index, embedding)
 
 
-@router.post("/scrape_url")
-async def scrape_url(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
-    try:
-        crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
-        result = crawler.scrape_url(request.url)
+async def kb_item_to_chunks(data_id, data_content):
+    print("func kb_item_to_chunks...")
+    cleaned_text = clean_data(data_content)
+    if cleaned_text:
+        print("text cleaned")
+    await process_item(item_id=data_id, content=cleaned_text)
 
-        # Extract the markdown content from the result
-        markdown_content = result.get('markdown', '')
-        
-        # Limit content to a reasonable length (e.g., 5000 characters)
-        markdown_content = markdown_content[:5000] + '...' if len(markdown_content) > 5000 else markdown_content
-        
-        return {"content": markdown_content}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
-
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    """Returns the number of tokens in a text string."""
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
-@router.post("/calculate_tokens")
-async def calculate_tokens(request: Request, current_user: str = Depends(get_current_user)):
-    try:
-        data = await request.json()
-        content = data.get('content', '')
-        token_count = num_tokens_from_string(content, "cl100k_base")
-        return {"token_count": token_count}
-    except Exception as e:
-        logger.error(f"Error calculating tokens: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-    
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

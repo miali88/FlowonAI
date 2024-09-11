@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, APIRouter
+from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, APIRouter, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from fastapi.responses import JSONResponse
@@ -10,8 +10,10 @@ from pydantic import BaseModel, ValidationError
 import json
 from firecrawl import FirecrawlApp
 import tiktoken
-from app.core.config import settings
 from openai import OpenAI
+
+from app.core.config import settings
+from services.dashboard import kb_item_to_chunks
 
 load_dotenv()
 
@@ -57,22 +59,8 @@ async def get_current_user(authorization: str = Header(...), x_user_id: str = He
     # For now, we'll just return the user ID from the header
     return x_user_id
 
-def get_embedding(text: str) -> list:
-    openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    response = openai_client.embeddings.create(
-        input=text,
-        model="text-embedding-3-small"
-    )
-    return response.data[0].embedding
-
-def insert_into_supabase(content: str, embedding: list):
-    print(" func insert_into_supabase..")
-    data = supabase.table("knowledge_base").insert({"content": content, "embedding": embedding}).execute()
-    return data
-
-
 @router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
-async def get_items(current_user: str = Depends(get_current_user)):
+async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         print(f"Fetching items for user: {current_user}")
         items = supabase.table('knowledge_base').select('*').eq('user_id', current_user).execute()
@@ -83,14 +71,10 @@ async def get_items(current_user: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/knowledge_base")
-async def create_item(request: Request):
+async def create_item_handler(request: Request, background_tasks: BackgroundTasks):
     logger.debug("Received POST request to /knowledge_base")
-    
-    # Log the raw request body
     raw_body = await request.body()
     logger.debug(f"Raw request body: {raw_body.decode()}")
-    
-    # Log headers
     headers = dict(request.headers)
     logger.debug(f"Request headers: {json.dumps(headers, indent=2)}")
 
@@ -103,12 +87,11 @@ async def create_item(request: Request):
         # Insert the data into Supabase
         new_item = supabase.table('knowledge_base').insert(data).execute()
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
-        print("\n\n NEW ITEM:", new_item)
-        
-        """ PROCESS INTO CHUNKS AFTER SAVING TO KB, TAKE ITEM_ID AND ADD TO CHUNKS TABLE """
 
+        # Schedule the kb_item_to_chunks function to run in the background
+        background_tasks.add_task(kb_item_to_chunks, new_item.data[0]['id'], new_item.data[0]['content'])
 
-        # Return a success response
+        # Return a success response immediately
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON: {str(e)}")
@@ -118,7 +101,7 @@ async def create_item(request: Request):
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 @router.delete("/knowledge_base/{item_id}")
-async def delete_item(item_id: int, current_user: str = Depends(get_current_user)):
+async def delete_item_handler(item_id: int, current_user: str = Depends(get_current_user)):
     try:
         result = supabase.table('knowledge_base').delete().eq('id', item_id).eq('user_id', current_user).execute()
         if len(result.data) == 0:
@@ -128,30 +111,8 @@ async def delete_item(item_id: int, current_user: str = Depends(get_current_user
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-# @router.post("/chat")
-# async def chat(request: Request, current_user: str = Depends(get_current_user)):
-#     try:
-#         data = await request.json()
-#         message = data.get('message', '')
-#         # Here you would typically use the user's knowledge base and context to generate a response
-#         # For now, we'll just return a placeholder response
-#         return {"response": {"answer": "This is a placeholder response"}}
-#     except Exception as e:
-#         logger.error(f"Error in chat: {str(e)}")
-#         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-def setup_exception_handlers(app: FastAPI):
-    @app.exception_handler(ValidationError)
-    async def validation_exception_handler(request: Request, exc: ValidationError):
-        logger.error(f"Validation error in request: {str(exc)}")
-        error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
-        logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
-        return JSONResponse(status_code=422, content={"detail": error_details})
-
-
 @router.post("/scrape_url")
-async def scrape_url(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
+async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
         crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
         result = crawler.scrape_url(request.url)
@@ -166,14 +127,8 @@ async def scrape_url(request: ScrapeUrlRequest, current_user: str = Depends(get_
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
 
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    """Returns the number of tokens in a text string."""
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
 @router.post("/calculate_tokens")
-async def calculate_tokens(request: Request, current_user: str = Depends(get_current_user)):
+async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
         content = data.get('content', '')
@@ -182,10 +137,33 @@ async def calculate_tokens(request: Request, current_user: str = Depends(get_cur
     except Exception as e:
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
-@router.get("/")
-async def root():
-    return {"message": "Welcome to the FastAPI server"}
+
+def get_embedding(text: str) -> list:
+    openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response = openai_client.embeddings.create(
+        input=text,
+        model="text-embedding-3-small"
+    )
+    return response.data[0].embedding
+
+def insert_into_supabase(content: str, embedding: list):
+    print(" func insert_into_supabase..")
+    data = supabase.table("knowledge_base").insert({"content": content, "embedding": embedding}).execute()
+    return data
+
+def setup_exception_handlers(app: FastAPI):
+    @app.exception_handler(ValidationError)
+    async def validation_exception_handler(request: Request, exc: ValidationError):
+        logger.error(f"Validation error in request: {str(exc)}")
+        error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
+        logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
+        return JSONResponse(status_code=422, content={"detail": error_details})
+
+def num_tokens_from_string(string: str, encoding_name: str) -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
 
 if __name__ == "__main__":
     import uvicorn
