@@ -11,6 +11,11 @@ import json
 from firecrawl import FirecrawlApp
 import tiktoken
 from openai import OpenAI
+from fastapi import File, UploadFile
+from PyPDF2 import PdfReader
+from docx import Document
+from openpyxl import load_workbook
+import io
 
 from app.core.config import settings
 from services.dashboard import kb_item_to_chunks
@@ -58,6 +63,15 @@ async def get_current_user(authorization: str = Header(...), x_user_id: str = He
     # Here you would typically validate the token with Clerk
     # For now, we'll just return the user ID from the header
     return x_user_id
+
+@router.post("/uploaded_file")
+async def upload_file_handler(
+    file: UploadFile = File(...),
+    current_user: str = Depends(get_current_user)
+):
+
+
+
 
 @router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
 async def get_items_handler(current_user: str = Depends(get_current_user)):

@@ -276,47 +276,87 @@ function KnowledgeBaseContent() {
     }
   };
 
-  const handleNewItem = async () => {
-    if (newItemContent.trim() === "" || !user) {
-      setAlertMessage(newItemContent.trim() === "" ? "Cannot add empty item" : "User not authenticated");
+  // Add this new function to handle file uploads
+  const handleFileUpload = async () => {
+    if (!selectedFile || !user) {
+      setAlertMessage(selectedFile ? "User not authenticated" : "No file selected");
       setAlertType("error");
       return;
     }
 
     try {
       const token = await getToken();
-      const requestData = {
-        title: newItemContent.split('\n')[0].substring(0, 50),
-        content: newItemContent,
-        user_id: user.id,
-      };
-      console.log("Sending request data:", requestData);
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('user_id', user.id);
 
-      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, requestData, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/upload_file`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
 
       console.log("Server response:", response.data);
 
-      const newItem = response.data.data; // Assuming the server returns the newly created item
+      const newItem = response.data.data;
       setSavedItems(prevItems => [...prevItems, newItem]);
-      setNewItemContent("");
       setSelectedFile(null);
-      setAlertMessage("New item added successfully");
+      setAlertMessage("File processed and added to Knowledge Base successfully");
       setAlertType("success");
     } catch (error) {
-      console.error("Error sending data to server:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.message);
-        console.error("Response status:", error.response?.status);
-        console.error("Response data:", error.response?.data);
-        console.error("Request config:", error.config);
-      }
-      setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
+      console.error("Error uploading file:", error);
+      setAlertMessage("Failed to upload and process file: " + (error.response?.data?.detail || error.message));
       setAlertType("error");
+    }
+  };
+
+  // Modify the handleNewItem function
+  const handleNewItem = async () => {
+    if (activeAddTab === 'files') {
+      await handleFileUpload();
+    } else {
+      if (newItemContent.trim() === "" || !user) {
+        setAlertMessage(newItemContent.trim() === "" ? "Cannot add empty item" : "User not authenticated");
+        setAlertType("error");
+        return;
+      }
+
+      try {
+        const token = await getToken();
+        const requestData = {
+          title: newItemContent.split('\n')[0].substring(0, 50),
+          content: newItemContent,
+          user_id: user.id,
+        };
+        console.log("Sending request data:", requestData);
+
+        const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, requestData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log("Server response:", response.data);
+
+        const newItem = response.data.data; // Assuming the server returns the newly created item
+        setSavedItems(prevItems => [...prevItems, newItem]);
+        setNewItemContent("");
+        setSelectedFile(null);
+        setAlertMessage("New item added successfully");
+        setAlertType("success");
+      } catch (error) {
+        console.error("Error sending data to server:", error);
+        if (axios.isAxiosError(error)) {
+          console.error("Axios error:", error.message);
+          console.error("Response status:", error.response?.status);
+          console.error("Response data:", error.response?.data);
+          console.error("Request config:", error.config);
+        }
+        setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
+        setAlertType("error");
+      }
     }
   };
 
