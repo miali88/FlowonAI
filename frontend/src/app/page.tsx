@@ -575,11 +575,6 @@ function KnowledgeBaseContent() {
             {/* Left section (1/3 width) */}
             <div className="w-1/3 p-4 border-r">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Library</h3>
-                <Button size="sm" onClick={() => { setSelectedItem(null); setIsEditing(false); }}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  New Item
-                </Button>
               </div>
               <div className="mb-4">
                 <Input 

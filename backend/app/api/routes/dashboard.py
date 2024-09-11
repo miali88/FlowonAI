@@ -12,10 +12,7 @@ from firecrawl import FirecrawlApp
 import tiktoken
 from openai import OpenAI
 from fastapi import File, UploadFile
-from PyPDF2 import PdfReader
-from docx import Document
-from openpyxl import load_workbook
-import io
+from services.file_process import file_processing
 
 from app.core.config import settings
 from services.dashboard import kb_item_to_chunks
@@ -58,20 +55,51 @@ class ScrapeUrlRequest(BaseModel):
     url: str
 
 async def get_current_user(authorization: str = Header(...), x_user_id: str = Header(...)):
+    logger.info("Authenticating user")
+    logger.debug(f"Authorization header: {authorization}")
+    logger.debug(f"x_user_id header: {x_user_id}")
+    
     if not authorization or not authorization.startswith('Bearer '):
+        logger.error("Invalid or missing token")
         raise HTTPException(status_code=401, detail="Invalid or missing token")
+    
     # Here you would typically validate the token with Clerk
     # For now, we'll just return the user ID from the header
+    logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
 
-@router.post("/uploaded_file")
+@router.post("/upload_file")
 async def upload_file_handler(
-    file: UploadFile = File(...),
-    current_user: str = Depends(get_current_user)
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(default=None)
 ):
+    print("/upload_file endpoint..")
+    print(f"Received file: {file}")
+    # print(f"Current user: {current_user}")
+    
+    try:
+        logger.info(f"Received file: {file.filename}")
+        #logger.info(f"Current user: {current_user}")
+        content = await file_processing.process_file(file)
+        print("finished process_file")
 
+        # Insert the processed content into the knowledge base
+        new_item = supabase.table('knowledge_base').insert({
+            "title": file.filename,
+            "content": content
+            #"user_id": current_user
+        }).execute()
 
+        # Schedule the kb_item_to_chunks function to run in the background
+        background_tasks.add_task(kb_item_to_chunks, new_item.data[0]['id'], content)
 
+        return JSONResponse(status_code=200, content={
+            "message": "File processed and added to knowledge base successfully",
+            "data": new_item.data[0]
+        })
+    except Exception as e:
+        logger.error(f"Error processing file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 @router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
 async def get_items_handler(current_user: str = Depends(get_current_user)):
@@ -114,6 +142,7 @@ async def create_item_handler(request: Request, background_tasks: BackgroundTask
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
+
 @router.delete("/knowledge_base/{item_id}")
 async def delete_item_handler(item_id: int, current_user: str = Depends(get_current_user)):
     try:
@@ -124,6 +153,7 @@ async def delete_item_handler(item_id: int, current_user: str = Depends(get_curr
     except Exception as e:
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.post("/scrape_url")
 async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
@@ -140,6 +170,7 @@ async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depe
         return {"content": markdown_content}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
+
 
 @router.post("/calculate_tokens")
 async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):
