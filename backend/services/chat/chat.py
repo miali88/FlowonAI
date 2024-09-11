@@ -9,7 +9,6 @@ import os
 import requests
 from supabase import create_client, Client
 from termcolor import colored
-import spacy
 from openai import OpenAI
 from tiktoken import encoding_for_model
 
@@ -122,8 +121,13 @@ async def chat_process(user_message, user_id):
     user_prompt = f""" {user_message}
     # retrieved docs {retrieved_docs} """
 
+    full_response = ''
     response_received = False
     for response_chunk in llm_response(system_prompt, user_prompt, conversation_history):
         response_received = True
         print(response_chunk, end='', flush=True)
+        full_response += response_chunk
+
+    return full_response
+
 
