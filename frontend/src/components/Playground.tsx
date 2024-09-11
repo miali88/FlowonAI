@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { SendIcon, Bot } from 'lucide-react';
 import { useUser, useAuth } from "@clerk/nextjs";
+import ReactMarkdown from 'react-markdown';
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -84,9 +85,9 @@ export function Playground() {
           <Card key={index} className={`mb-4 ${message.type === 'outgoing' ? 'ml-auto bg-primary text-primary-foreground' : 'mr-auto bg-secondary'} max-w-[80%]`}>
             <CardContent className="p-3 flex items-start">
               {message.type === 'incoming' && <Bot className="mr-2 h-6 w-6" />}
-              <p className={`${message.type === 'outgoing' ? 'text-primary-foreground' : 'text-secondary-foreground'}`}>
-                {message.text}
-              </p>
+              <div className={`${message.type === 'outgoing' ? 'text-primary-foreground' : 'text-secondary-foreground'}`}>
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              </div>
             </CardContent>
           </Card>
         ))}

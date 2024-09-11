@@ -19,10 +19,29 @@ async def chat_webhook(request: Request):
 
     answer = await chat_process(user_query['message'], user_query['user_id'])
 
+    # Format the answer with headers and new lines
+    formatted_answer = format_answer(answer)
+
     response = {
-                "response": {
-                    "answer": answer
-                }
-            }
+        "response": {
+            "answer": formatted_answer
+        }
+    }
 
     return response
+
+def format_answer(answer):
+    # Split the answer into sections
+    sections = answer.split('\n\n')
+    formatted_sections = []
+
+    for section in sections:
+        if ':' in section:
+            # Add markdown header formatting
+            header, content = section.split(':', 1)
+            formatted_sections.append(f"### {header.strip()}\n{content.strip()}")
+        else:
+            formatted_sections.append(section.strip())
+
+    # Join sections with double newlines
+    return '\n\n'.join(formatted_sections)

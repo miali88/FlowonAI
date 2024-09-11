@@ -75,8 +75,15 @@ def rag_response(user_query):
 
 system_prompt = """
 You are a helpful assistant designed to search the company knowledge base, and find relevant information to answer questions from users.
-Where a question from the user appears to be specific to, you will use the <context> to augment your response to the user.
+
+Be conversational and friendly, while maintaining a dignified professional persona.
+
+Where a question from the user appears to be best answered by information from the knowledge base, you will use the <context> to augment your response to the user.
+
+Where your responses involved listing, or providing of information. Format them in markdown to allow for pretty displaying to the user to enable intuitive and quick understanding of the information you have kindly provided.
+
 """
+
 
 conversation_history = {
     "user_history": [],
@@ -93,23 +100,22 @@ def llm_response(system_prompt, user_prompt, conversation_history):
     response = openai.chat.completions.create(
         model="gpt-4o",
         messages=messages,
-        stream=True
+        stream=False
     )
 
-    full_response = ""
-    tool_calls = []
+    response = response.choices[0].message.content
 
-    for chunk in response:
-        delta = chunk.choices[0].delta
-        if delta.content:
-            yield delta.content
-            full_response += delta.content
-        if delta.tool_calls:
-            tool_calls.extend(delta.tool_calls)
+    print(response)
+    # full_response = ""
+    # for chunk in response:
+    #     delta = chunk.choices[0].delta
+    #     if delta.content:
+    #         yield delta.content
+    #         full_response += delta.content
 
     conversation_history["user_history"].append({"role": 'user', "content": user_prompt})
-    conversation_history["assistant_history"].append({"role": 'assistant', "content": full_response})
-    return full_response
+    conversation_history["assistant_history"].append({"role": 'assistant', "content": response})
+    return response
 
 
 async def chat_process(user_message, user_id):
@@ -121,13 +127,13 @@ async def chat_process(user_message, user_id):
     user_prompt = f""" {user_message}
     # retrieved docs {retrieved_docs} """
 
-    full_response = ''
-    response_received = False
-    for response_chunk in llm_response(system_prompt, user_prompt, conversation_history):
-        response_received = True
-        print(response_chunk, end='', flush=True)
-        full_response += response_chunk
+    # full_response = ''
+    # response_received = False
+    # for response_chunk in llm_response(system_prompt, user_prompt, conversation_history):
+    #     response_received = True
+    #     print(response_chunk, end='', flush=True)
+    #     full_response += response_chunk
 
-    return full_response
+    return llm_response(system_prompt, user_prompt, conversation_history)
 
 

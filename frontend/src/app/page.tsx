@@ -665,7 +665,7 @@ function FeatureDetailContent({ feature }) {
 }
 
 function AIAgentNavBar({ activeTab, setActiveTab }) {
-  const navItems = ["Playground", "Activity", "Analytics", "Sources", "Connect", "Settings"];
+  const navItems = ["Playground", "Activity", "Analytics", "Publish", "Settings"];
 
   return (
     <div className="border-b">
