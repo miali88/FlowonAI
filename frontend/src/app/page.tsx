@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser, useAuth } from "@clerk/nextjs";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from 'axios';
 
@@ -55,6 +55,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
+import { useDropzone } from 'react-dropzone';
+
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -431,6 +433,16 @@ function KnowledgeBaseContent() {
     }
   };
 
+
+  const onDrop = useCallback((acceptedFiles) => {
+    // Handle the dropped files here
+    console.log(acceptedFiles);
+    // You might want to update the state or process the files
+    setSelectedFile(acceptedFiles[0]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
   const renderAddContent = () => {
     switch (activeAddTab) {
       case 'text':
@@ -442,26 +454,37 @@ function KnowledgeBaseContent() {
             onChange={(e) => setNewItemContent(e.target.value)}
           />
         );
-      case 'files':
-        return (
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed border-gray-300 rounded-lg">
-            <Upload className="h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600">Drag and drop files here, or click to select files</p>
-            <Input
-              type="file"
-              id="file-upload"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => document.getElementById('file-upload').click()}
+
+        case 'files':
+          return (
+            <div 
+              {...getRootProps()} 
+              className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300`}
             >
-              Select Files
-            </Button>
-          </div>
-        );
+              <input {...getInputProps()} />
+              <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
+              <p className="text-sm text-gray-600">
+                {isDragActive ? "Drop the files here" : "Drag and drop, or select docx, txt, pdf files"}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  document.getElementById('file-upload').click();
+                }}
+              >
+                Select Files
+              </Button>
+              {selectedFile && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Selected file: {selectedFile.name}
+                </p>
+              )}
+            </div>
+          );
+
+
       case 'web':
         return (
           <div className="flex flex-col h-[calc(100vh-400px)]">
