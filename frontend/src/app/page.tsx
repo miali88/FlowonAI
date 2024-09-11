@@ -220,6 +220,7 @@ function KnowledgeBaseContent() {
   const [scrapeError, setScrapeError] = useState("");
   const [totalTokens, setTotalTokens] = useState(0);
   const [activeTab, setActiveTab] = useState('library');
+  const [activeAddTab, setActiveAddTab] = useState('text');
 
   useEffect(() => {
     if (user) {
@@ -430,6 +431,64 @@ function KnowledgeBaseContent() {
     }
   };
 
+  const renderAddContent = () => {
+    switch (activeAddTab) {
+      case 'text':
+        return (
+          <Textarea 
+            placeholder="Type or paste anything that will help Flowon learn more about your business"
+            className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
+            value={newItemContent}
+            onChange={(e) => setNewItemContent(e.target.value)}
+          />
+        );
+      case 'files':
+        return (
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed border-gray-300 rounded-lg">
+            <Upload className="h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-sm text-gray-600">Drag and drop files here, or click to select files</p>
+            <Input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => document.getElementById('file-upload').click()}
+            >
+              Select Files
+            </Button>
+          </div>
+        );
+      case 'web':
+        return (
+          <div className="flex flex-col h-[calc(100vh-400px)]">
+            <Input
+              type="url"
+              placeholder="Enter URL to scrape"
+              value={scrapeUrl}
+              onChange={(e) => setScrapeUrl(e.target.value)}
+              className="mb-4"
+            />
+            <Button onClick={handleScrape}>Scrape Web Content</Button>
+          </div>
+        );
+      case 'connect':
+        return (
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)]">
+            <Globe className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Connect to External Sources</h3>
+            <p className="text-sm text-gray-600 mb-4">Integrate with external platforms to import data</p>
+            <Button>Configure Connections</Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -442,8 +501,8 @@ function KnowledgeBaseContent() {
     <div className="flex flex-col h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full border-b">
         <TabsList className="w-full justify-start">
-          <TabsTrigger value="library" className="text-sm">Knowledge Library</TabsTrigger>
-          <TabsTrigger value="add" className="text-sm">Add to Knowledge Base</TabsTrigger>
+          <TabsTrigger value="library" className="text-sm">Library</TabsTrigger>
+          <TabsTrigger value="add" className="text-sm">Add to Library</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -453,7 +512,7 @@ function KnowledgeBaseContent() {
             {/* Left section (1/3 width) */}
             <div className="w-1/3 p-4 border-r">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Knowledge Library</h3>
+                <h3 className="text-xl font-semibold">Library</h3>
                 <Button size="sm" onClick={() => { setSelectedItem(null); setIsEditing(false); }}>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   New Item
@@ -533,60 +592,22 @@ function KnowledgeBaseContent() {
           </>
         ) : (
           <div className="w-full p-4">
-            <h3 className="text-xl font-semibold mb-4">Add to Knowledge Base</h3>
+            <Tabs value={activeAddTab} onValueChange={setActiveAddTab} className="w-full mb-4">
+              <TabsList>
+                <TabsTrigger value="text">Text</TabsTrigger>
+                <TabsTrigger value="files">Files</TabsTrigger>
+                <TabsTrigger value="web">Web</TabsTrigger>
+                <TabsTrigger value="connect">Connect</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <div className="relative w-full mb-6">
-              <Textarea 
-                placeholder="Type or paste anything that will help Flowon learn more about your business"
-                className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
-                value={newItemContent}
-                onChange={(e) => setNewItemContent(e.target.value)}
-              />
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById('file-upload').click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload File
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowScrapeInput(!showScrapeInput)}
-                  >
-                    <Globe className="h-4 w-4 mr-2" />
-                    Scrape Web
-                  </Button>
-                  {selectedFile && (
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {selectedFile.name}
-                    </span>
-                  )}
-                </div>
-                <Button onClick={handleNewItem}>
-                  <SendIcon className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
-              {showScrapeInput && (
-                <form onSubmit={handleScrape} className="mt-4 flex items-center space-x-2">
-                  <Input
-                    type="url"
-                    placeholder="Enter URL to scrape"
-                    value={scrapeUrl}
-                    onChange={(e) => setScrapeUrl(e.target.value)}
-                    className={scrapeError ? "border-red-500" : ""}
-                  />
-                  <Button type="submit">Scrape</Button>
-                </form>
-              )}
-              {scrapeError && <p className="text-red-500 mt-2">{scrapeError}</p>}
+              {renderAddContent()}
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={handleNewItem}>
+                <SendIcon className="h-4 w-4 mr-2" />
+                Add to Knowledge Base
+              </Button>
             </div>
           </div>
         )}
