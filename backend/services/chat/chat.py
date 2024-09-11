@@ -100,7 +100,7 @@ conversation_history = {
 }
 
 def llm_response(system_prompt, user_prompt, conversation_history):
-    print("\n\n\n system prompt", system_prompt)
+    #print("\n\n\n system prompt", system_prompt)
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
