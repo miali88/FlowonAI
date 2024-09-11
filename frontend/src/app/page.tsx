@@ -288,12 +288,12 @@ function KnowledgeBaseContent() {
       const token = await getToken();
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('user_id', user.id);
 
       const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/upload_file`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
+          'X-User-ID': user.id,
         },
       });
 

@@ -2,15 +2,13 @@ from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, API
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+import asyncio
+
 import logging
 from typing import List
 from pydantic import BaseModel, ValidationError
-import tiktoken
-from termcolor import colored
 from dotenv import load_dotenv
-import json
-import os
-import requests
+
 from tiktoken import encoding_for_model
 
 import spacy
@@ -56,9 +54,7 @@ def sliding_window_chunking(text, max_window_size=600, overlap=200):
         start += max_window_size - overlap
     return chunks
 
-import asyncio
-
-async def insert_chunk(parent_id, content, chunk_index, embedding):
+async def insert_chunk(parent_id, content, chunk_index, embedding, user_id):
     print("func insert_chunk...")
     # Run the synchronous Supabase operation in a separate thread
     await asyncio.to_thread(
@@ -66,7 +62,8 @@ async def insert_chunk(parent_id, content, chunk_index, embedding):
             'parent_id': parent_id,
             'content': content,
             'chunk_index': chunk_index,
-            'embedding': embedding
+            'embedding': embedding,
+            'user_id': user_id,
         }).execute
     )
 
@@ -77,21 +74,20 @@ async def get_embedding(text):
     )
     return response.data[0].embedding
 
-async def process_item(item_id, content):
+async def process_item(item_id, content, user_id):
     print("func process_item...")
     chunks = sliding_window_chunking(content) 
     for index, chunk in enumerate(chunks):
         embedding = await get_embedding(chunk)
         print("index", index)
         print("chunk", chunk)
-        print("embedding", embedding)
-        await insert_chunk(item_id, chunk, index, embedding)
+        #print("embedding", embedding)
+        await insert_chunk(item_id, chunk, index, embedding, user_id)
 
-
-async def kb_item_to_chunks(data_id, data_content):
+async def kb_item_to_chunks(data_id, data_content, user_id):
     print("func kb_item_to_chunks...")
     cleaned_text = clean_data(data_content)
     if cleaned_text:
         print("text cleaned")
-    await process_item(item_id=data_id, content=cleaned_text)
+    await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
 

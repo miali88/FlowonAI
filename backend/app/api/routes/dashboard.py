@@ -54,14 +54,14 @@ class KnowledgeBaseItemCreate(BaseModel):
 class ScrapeUrlRequest(BaseModel):
     url: str
 
-async def get_current_user(authorization: str = Header(...), x_user_id: str = Header(...)):
+async def get_current_user(x_user_id: str = Header(...)):
     logger.info("Authenticating user")
-    logger.debug(f"Authorization header: {authorization}")
+    #logger.debug(f"Authorization header: {authorization}")
     logger.debug(f"x_user_id header: {x_user_id}")
     
-    if not authorization or not authorization.startswith('Bearer '):
-        logger.error("Invalid or missing token")
-        raise HTTPException(status_code=401, detail="Invalid or missing token")
+    # if not authorization or not authorization.startswith('Bearer '):
+    #     logger.error("Invalid or missing token")
+    #     raise HTTPException(status_code=401, detail="Invalid or missing token")
     
     # Here you would typically validate the token with Clerk
     # For now, we'll just return the user ID from the header
@@ -71,23 +71,26 @@ async def get_current_user(authorization: str = Header(...), x_user_id: str = He
 @router.post("/upload_file")
 async def upload_file_handler(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(default=None)
+    file: UploadFile = File(...),
+    authorization: str = Header(...),
+    x_user_id: str = Header(..., alias="X-User-ID")
 ):
-    print("/upload_file endpoint..")
-    print(f"Received file: {file}")
-    # print(f"Current user: {current_user}")
-    
     try:
         logger.info(f"Received file: {file.filename}")
-        #logger.info(f"Current user: {current_user}")
+        logger.info(f"User ID from header: {x_user_id}")
+
+        # Validate the token (you may want to use your get_current_user function here)
+        if not authorization or not authorization.startswith('Bearer '):
+            raise HTTPException(status_code=401, detail="Invalid or missing token")
+
         content = await file_processing.process_file(file)
-        print("finished process_file")
+        logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
         new_item = supabase.table('knowledge_base').insert({
             "title": file.filename,
-            "content": content
-            #"user_id": current_user
+            "content": content,
+            "user_id": x_user_id  # Use the user ID from the header
         }).execute()
 
         # Schedule the kb_item_to_chunks function to run in the background
@@ -113,7 +116,9 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/knowledge_base")
-async def create_item_handler(request: Request, background_tasks: BackgroundTasks):
+async def create_item_handler(request: Request, 
+                            background_tasks: BackgroundTasks,
+                            ):
     logger.debug("Received POST request to /knowledge_base")
     raw_body = await request.body()
     logger.debug(f"Raw request body: {raw_body.decode()}")
@@ -131,7 +136,11 @@ async def create_item_handler(request: Request, background_tasks: BackgroundTask
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
 
         # Schedule the kb_item_to_chunks function to run in the background
-        background_tasks.add_task(kb_item_to_chunks, new_item.data[0]['id'], new_item.data[0]['content'])
+        background_tasks.add_task(kb_item_to_chunks, 
+        new_item.data[0]['id'], 
+        new_item.data[0]['content'],
+        new_item.data[0]['user_id'],
+        )
 
         # Return a success response immediately
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
@@ -141,7 +150,6 @@ async def create_item_handler(request: Request, background_tasks: BackgroundTask
     except Exception as e:
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
-
 
 @router.delete("/knowledge_base/{item_id}")
 async def delete_item_handler(item_id: int, current_user: str = Depends(get_current_user)):
@@ -153,7 +161,6 @@ async def delete_item_handler(item_id: int, current_user: str = Depends(get_curr
     except Exception as e:
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 @router.post("/scrape_url")
 async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
@@ -170,7 +177,6 @@ async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depe
         return {"content": markdown_content}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
-
 
 @router.post("/calculate_tokens")
 async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):
