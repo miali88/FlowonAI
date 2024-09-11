@@ -90,4 +90,4 @@ async def kb_item_to_chunks(data_id, data_content, user_id):
     if cleaned_text:
         print("text cleaned")
     await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
-
+    print("kb item embedded")

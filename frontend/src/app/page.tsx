@@ -499,25 +499,17 @@ function KnowledgeBaseContent() {
           return (
             <div 
               {...getRootProps()} 
-              className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300`}
+              className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
             >
               <input {...getInputProps()} />
               <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
-              <p className="text-sm text-gray-600">
-                {isDragActive ? "Drop the files here" : "Drag and drop, or select docx, txt, pdf files"}
+              <p className="text-sm text-gray-600 text-center">
+                {isDragActive 
+                  ? "Drop the files here" 
+                  : "Drag and drop files here, or click to select files"}
               </p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  document.getElementById('file-upload').click();
-                }}
-              >
-                Select Files
-              </Button>
               {selectedFile && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-4 text-sm text-gray-600">
                   Selected file: {selectedFile.name}
                 </p>
               )}

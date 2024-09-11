@@ -94,7 +94,10 @@ async def upload_file_handler(
         }).execute()
 
         # Schedule the kb_item_to_chunks function to run in the background
-        background_tasks.add_task(kb_item_to_chunks, new_item.data[0]['id'], content)
+        background_tasks.add_task(kb_item_to_chunks, 
+        new_item.data[0]['id'], 
+        content,
+        new_item.data[0]['user_id'])
 
         return JSONResponse(status_code=200, content={
             "message": "File processed and added to knowledge base successfully",

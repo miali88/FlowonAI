@@ -72,18 +72,26 @@ def rag_response(user_query):
 
     return reranked_docs
 
-
 system_prompt = """
-You are a helpful assistant designed to search the company knowledge base, and find relevant information to answer questions from users.
+You are a helpful assistant designed to be attentive to the user's queries, this may include conversing, and searching the knowledge base.
 
-Be conversational and friendly, while maintaining a dignified professional persona.
+Note that all user_prompts will be structured as:
 
-Where a question from the user appears to be best answered by information from the knowledge base, you will use the <context> to augment your response to the user.
+```markdown
+    # User Query:
+    <user_message>
+    # Retrieved Docs:
+    <retrieved_docs>
+```
 
-Where your responses involved listing, or providing of information. Format them in markdown to allow for pretty displaying to the user to enable intuitive and quick understanding of the information you have kindly provided.
+Your main priority will be to respond to <user_message>. Only consider retrieved docs when the user query appears to ask a question regarding the knowledge base.
 
+Where the <user_message> appears to be best answered by information from <retrieved_docs>, you will use <user_message> to augment your response to the user.
+
+Where your response involves <retrieved_docs>. Format the response in markdown to enable intuitive and quick understanding of the information.
+
+Be conversational and friendly, while maintaining a professional persona at all times.
 """
-
 
 conversation_history = {
     "user_history": [],
@@ -92,6 +100,7 @@ conversation_history = {
 }
 
 def llm_response(system_prompt, user_prompt, conversation_history):
+    print("\n\n\n system prompt", system_prompt)
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
@@ -117,15 +126,17 @@ def llm_response(system_prompt, user_prompt, conversation_history):
     conversation_history["assistant_history"].append({"role": 'assistant', "content": response})
     return response
 
-
 async def chat_process(user_message, user_id):
     print("func chat_process...")
     print("user_message", user_message)
     print("user_id", user_id)
 
     retrieved_docs = rag_response(user_message)
-    user_prompt = f""" {user_message}
-    # retrieved docs {retrieved_docs} """
+    user_prompt = f""" 
+    # User Query:
+    {user_message}
+    # Retrieved Docs:
+    {retrieved_docs} """
 
     # full_response = ''
     # response_received = False
