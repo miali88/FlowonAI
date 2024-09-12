@@ -6,8 +6,7 @@ import {
 } from '@livekit/components-react';
 import { useState } from "react";
 
-
-export default () => {
+export function LiveKitEntry() {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
 
@@ -44,3 +43,5 @@ const ActiveRoom = () => {
     </>
   );
 };
+
+export default LiveKitEntry;

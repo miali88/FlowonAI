@@ -56,6 +56,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
 import { useDropzone } from 'react-dropzone';
+import { LiveKitEntry } from "@/components/LiveKitEntry";
 
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
@@ -801,83 +802,12 @@ function AIAgentContent() {
   );
 }
 
-function VoiceAgentContent({ isActive }) {
-  const [callActive, setCallActive] = useState(false);
-  const containerRef = useRef(null);
-  const vapiInstanceRef = useRef(null);
+function VoiceAgentContent() {
+  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
 
-  const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
-  const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
-
-  useEffect(() => {
-    if (!isActive || !apiKey || !assistantId) {
-      return;
-    }
-
-    console.log("Initializing Vapi SDK");
-
-    const script = document.createElement('script');
-    script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@1.1.6/dist/assets/index.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      console.log("Vapi SDK script loaded");
-
-      const buttonConfig = {
-        container: "vapi-container",
-        width: "200px",
-        height: "50px",
-        zIndex: 2147483647,
-        idle: {
-          // Add idle configuration here
-        },
-        loading: {
-          // Add loading configuration here
-        },
-        active: {
-          // Add active configuration here
-        },
-      };
-
-      try {
-        const vapi = window.vapiSDK.run({
-          apiKey: apiKey,
-          assistant: assistantId,
-          config: buttonConfig,
-        });
-
-        vapiInstanceRef.current = vapi;
-
-        console.log("Vapi SDK initialized");
-
-        if (vapi) {
-          vapi.on("call-start", () => {
-            console.log("Call has started");
-            setCallActive(true);
-          });
-
-          vapi.on("call-end", () => {
-            console.log("Call has stopped");
-            setCallActive(false);
-          });
-        }
-      } catch (error) {
-        console.error("Error initializing Vapi SDK:", error);
-      }
-    };
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-      vapiInstanceRef.current = null;
-    };
-  }, [isActive, apiKey, assistantId]);
-
-  if (!apiKey || !assistantId) {
-    return <div>Loading...</div>;
-  }
+  const toggleLiveKit = () => {
+    setIsLiveKitActive(!isLiveKitActive);
+  };
 
   return (
     <div className="p-6 flex flex-col items-center justify-center min-h-screen w-full relative overflow-hidden">
@@ -885,18 +815,16 @@ function VoiceAgentContent({ isActive }) {
       <p className="text-muted-foreground mb-6 text-center max-w-2xl">
         Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
       </p>
-      <div className="flex flex-col items-center justify-center w-full relative">
-        {isActive && (
-          <div id="vapi-container" ref={containerRef} className="vapi-container">
-            <div className="bg-gray-300 w-full h-full flex items-center justify-center">
-            </div>
-          </div>
-        )}
-      </div>
-      {callActive && (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Call in progress. Speak into your microphone.
-        </p>
+      <Button onClick={toggleLiveKit}>
+        {isLiveKitActive ? "Stop Voice Agent" : "Start Voice Agent"}
+      </Button>
+      {isLiveKitActive && (
+        <div className="mt-6 w-full max-w-md">
+          <LiveKitEntry />
+          <p className="mt-4 text-sm text-muted-foreground text-center">
+            Voice agent is active. Speak into your microphone to interact with the AI.
+          </p>
+        </div>
       )}
     </div>
   );
@@ -933,7 +861,7 @@ function AdminDashboard() {
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Voice Agent":
-        return <VoiceAgentContent isActive={activeItem === "Voice Agent"} />;
+        return <VoiceAgentContent />;
       case "AI Agent":
         return <AIAgentContent />;
       case "Features":
