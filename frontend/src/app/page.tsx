@@ -68,6 +68,7 @@ interface SavedItem {
   id: number;
   title: string;
   content: string;
+  data_type: string;
   // Add other properties as needed
 }
 
@@ -256,6 +257,11 @@ function KnowledgeBaseContent() {
       
       // Ensure savedItems is always an array
       setSavedItems(Array.isArray(response.data) ? response.data : []);
+
+      // Log each item's data_type
+      response.data.forEach((item, index) => {
+        console.log(`Item ${index} data_type:`, item.data_type);
+      });
 
       // Calculate total tokens
       const aggregatedContent = response.data.map(item => item.content).join(' ');
@@ -538,31 +544,26 @@ function KnowledgeBaseContent() {
                 <p>Total Tokens: {totalTokens}</p>
               </div>
               <ScrollArea className="h-[calc(100vh-300px)]">
-                {filteredItems.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className={cn(
-                      "mb-2 cursor-pointer relative group",
-                      selectedItem?.id === item.id && "bg-secondary"
-                    )}
-                    onClick={() => { setSelectedItem(item); setIsEditing(false); }}
-                  >
-                    <CardHeader className="p-3">
-                      <CardTitle className="text-sm">{item.title}</CardTitle>
-                    </CardHeader>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteItem(item.id);
-                      }}
+                {filteredItems.map((item) => {
+                  console.log(`Rendering item ${item.id} with data_type:`, item.data_type);
+                  return (
+                    <Card 
+                      key={item.id} 
+                      className={cn(
+                        "mb-2 cursor-pointer",
+                        selectedItem?.id === item.id && "bg-secondary"
+                      )}
+                      onClick={() => { setSelectedItem(item); setIsEditing(false); }}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </Card>
-                ))}
+                      <CardHeader className="p-3 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm">{item.title}</CardTitle>
+                        <span className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full">
+                          {item.data_type || 'Unknown'}
+                        </span>
+                      </CardHeader>
+                    </Card>
+                  );
+                })}
               </ScrollArea>
             </div>
 
@@ -572,10 +573,18 @@ function KnowledgeBaseContent() {
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold">{selectedItem.title}</h3>
-                    <Button onClick={handleEditItem} disabled={isEditing}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button onClick={handleEditItem} disabled={isEditing}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleDeleteItem(selectedItem.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                      </Button>
+                    </div>
                   </div>
                   {isEditing ? (
                     <>
