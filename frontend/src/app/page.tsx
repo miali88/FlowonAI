@@ -57,7 +57,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Playground } from "@/components/Playground";
 import { useDropzone } from 'react-dropzone';
 
-
 // Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -176,7 +175,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/assets/logo_no_white.png" alt="Flowon AI Logo" />
+                <AvatarImage src="/assets/invert_waves.png" alt="Flowon AI Logo" />
                 <AvatarFallback>FA</AvatarFallback>
               </Avatar>
               <span>{user?.fullName || "User"}</span>
@@ -495,28 +494,26 @@ function KnowledgeBaseContent() {
           />
         );
 
-        case 'files':
-          return (
-            <div 
-              {...getRootProps()} 
-              className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
-            >
-              <input {...getInputProps()} />
-              <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
-              <p className="text-sm text-gray-600 text-center">
-                {isDragActive 
-                  ? "Drop the files here" 
-                  : "Drag and drop files here, or click to select files"}
+      case 'files':
+        return (
+          <div 
+            {...getRootProps()} 
+            className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
+          >
+            <input {...getInputProps()} />
+            <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
+            <p className="text-sm text-gray-600 text-center">
+              {isDragActive 
+                ? "Drop the files here" 
+                : "Drag and drop files here, or click to select files"}
+            </p>
+            {selectedFile && (
+              <p className="mt-4 text-sm text-gray-600">
+                Selected file: {selectedFile.name}
               </p>
-              {selectedFile && (
-                <p className="mt-4 text-sm text-gray-600">
-                  Selected file: {selectedFile.name}
-                </p>
-              )}
-            </div>
-          );
-
-
+            )}
+          </div>
+        );
       case 'web':
         return (
           <div className="flex flex-col h-[calc(100vh-400px)]">
@@ -539,6 +536,20 @@ function KnowledgeBaseContent() {
             <h3 className="text-lg font-semibold mb-2">Connect to External Sources</h3>
             <p className="text-sm text-gray-600 mb-4">Integrate with external platforms to import data</p>
             <Button>Configure Connections</Button>
+          </div>
+        );
+      case 'codebase':
+        return (
+          <div className="flex flex-col h-[calc(100vh-400px)]">
+            <Textarea 
+              placeholder="Paste your code here or provide a link to your repository"
+              className="w-full h-full p-4 bg-background border border-input mb-4"
+              value={newItemContent}
+              onChange={(e) => setNewItemContent(e.target.value)}
+            />
+            <Button className="self-start px-4 py-2">
+              Process Codebase
+            </Button>
           </div>
         );
       default:
@@ -650,6 +661,7 @@ function KnowledgeBaseContent() {
                 <TabsTrigger value="files">Files</TabsTrigger>
                 <TabsTrigger value="web">Web</TabsTrigger>
                 <TabsTrigger value="connect">Connect</TabsTrigger>
+                <TabsTrigger value="codebase">Codebase</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="relative w-full mb-6">

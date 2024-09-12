@@ -29,6 +29,5 @@ async def handle_vapi_webhook(request: Request) -> Response:
     return Response(status_code=200)
 
 
-
 async def create_assistant():
     pass

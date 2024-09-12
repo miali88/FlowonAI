@@ -46,11 +46,13 @@ def similarity_search(query, table_name, match_threshold=0.2, match_count=10):
 
     return response.data
 
+JINA_API_KEY = os.getenv("JINA_API_KEY")
+
 def rerank_documents(user_query, top_n, docs):
     url = 'https://api.jina.ai/v1/rerank'
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer jina_b716ce28cd1b49bc920e57a5bfb6de061z36vM3vogg6y-_2d5qcoXHe_rdo'
+        'Authorization': f'Bearer {JINA_API_KEY}'
     }
     data = {
         "model": "jina-reranker-v2-base-multilingual",
@@ -138,6 +140,7 @@ async def chat_process(user_message, user_id):
     # Retrieved Docs:
     {retrieved_docs} """
 
+    print("\n\n retrieved docs:... \n\n:",retrieved_docs)
     # full_response = ''
     # response_received = False
     # for response_chunk in llm_response(system_prompt, user_prompt, conversation_history):

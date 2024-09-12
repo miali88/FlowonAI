@@ -11,11 +11,16 @@ from services.db.supabase_ops import supabase_ops
 router = APIRouter()
 
 @router.api_route('/', methods=['POST', 'GET'])
-async def webhook(request: Request) -> Response:
-    try:
-        print('\n\n /vapi')
-        await handle_vapi_webhook(request)            
-        return Response(status_code=200)
-    except Exception as e:
-        print(f"Error in /vapi : {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def webhook(request: Request):
+
+    #try:
+    print('\n\n /vapi')
+    #data = await request.json()
+
+    print("\n data received:", request)
+
+    return "hi"
+    
+    # except Exception as e:
+    #     print(f"Error in /vapi : {e}")
+    #     raise HTTPException(status_code=500, detail=str(e))
