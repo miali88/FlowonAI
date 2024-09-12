@@ -54,11 +54,12 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Playground } from "@/components/Playground";
 import { useDropzone } from 'react-dropzone';
 import { LiveKitEntry } from "@/components/LiveKitEntry";
+import ChatAgent from '@/components/Dashboard/ChatAgent';
+import { Analytics } from "@/components/Dashboard/Analytics";
+import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
 
-// Add this constant at the top of your file, outside of any component
 const API_BASE_URL = 'http://localhost:8000';
 
 // Add this interface at the top of your file
@@ -96,7 +97,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
   const sidebarItems = [
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: Mic, label: "Voice Agent" },
-    { icon: Globe, label: "AI Agent" },
+    { icon: Globe, label: "Chat Agent" },
     { icon: MessageSquare, label: "Features" },
     { icon: BarChart3, label: "Analytics" },
   ];
@@ -311,53 +312,20 @@ function KnowledgeBaseContent() {
     }
   };
 
-  // Modify the handleNewItem function
-  const handleNewItem = async () => {
-    if (activeAddTab === 'files') {
-      await handleFileUpload();
-    } else {
-      if (newItemContent.trim() === "" || !user) {
-        setAlertMessage(newItemContent.trim() === "" ? "Cannot add empty item" : "User not authenticated");
-        setAlertType("error");
-        return;
-      }
-
-      try {
-        const token = await getToken();
-        const requestData = {
-          title: newItemContent.split('\n')[0].substring(0, 50),
-          content: newItemContent,
-          user_id: user.id,
-        };
-        console.log("Sending request data:", requestData);
-
-        const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, requestData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        console.log("Server response:", response.data);
-
-        const newItem = response.data.data; // Assuming the server returns the newly created item
-        setSavedItems(prevItems => [...prevItems, newItem]);
-        setNewItemContent("");
-        setSelectedFile(null);
-        setAlertMessage("New item added successfully");
-        setAlertType("success");
-      } catch (error) {
-        console.error("Error sending data to server:", error);
-        if (axios.isAxiosError(error)) {
-          console.error("Axios error:", error.message);
-          console.error("Response status:", error.response?.status);
-          console.error("Response data:", error.response?.data);
-          console.error("Request config:", error.config);
-        }
-        setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
-        setAlertType("error");
-      }
-    }
+  // Replace the existing handleNewItem function with this:
+  const handleNewItemWrapper = async () => {
+    await handleNewItem({
+      activeAddTab,
+      newItemContent,
+      user,
+      getToken,
+      handleFileUpload,
+      setSavedItems,
+      setNewItemContent,
+      setSelectedFile,
+      setAlertMessage,
+      setAlertType
+    });
   };
 
   const handleEditItem = () => {
@@ -472,7 +440,6 @@ function KnowledgeBaseContent() {
       setAlertType("error");
     }
   };
-
 
   const onDrop = useCallback((acceptedFiles) => {
     // Handle the dropped files here
@@ -669,7 +636,7 @@ function KnowledgeBaseContent() {
               {renderAddContent()}
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleNewItem}>
+              <Button onClick={handleNewItemWrapper}>
                 <SendIcon className="h-4 w-4 mr-2" />
                 Add to Knowledge Base
               </Button>
@@ -690,27 +657,7 @@ function KnowledgeBaseContent() {
 }
 
 function AnalyticsContent() {
-  return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Analytics</h3>
-      <p className="text-muted-foreground mb-6">
-        View and analyze your data here.
-      </p>
-      <Card className="w-full mb-6">
-        <CardHeader>
-          <CardTitle>Logs</CardTitle>
-          <CardDescription>Recent system logs and activities</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[200px]">
-            <p className="mb-2">2023-06-15 10:30:22 - User login: admin@example.com</p>
-            <p className="mb-2">2023-06-15 10:35:15 - New project created: Project X</p>
-            <p className="mb-2">2023-06-15 11:02:47 - Feature update: Analytics module v2.1</p>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <Analytics />;
 }
 
 function FeaturesContent({ setSelectedFeature }) {
@@ -758,46 +705,6 @@ function FeatureDetailContent({ feature }) {
       <p className="text-muted-foreground mb-6">
         Detailed settings and information for {feature}.
       </p>
-    </div>
-  );
-}
-
-function AIAgentNavBar({ activeTab, setActiveTab }) {
-  const navItems = ["Playground", "Activity", "Analytics", "Publish", "Settings"];
-
-  return (
-    <div className="border-b">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start">
-          {navItems.map((item) => (
-            <TabsTrigger key={item.toLowerCase()} value={item.toLowerCase()} className="text-sm">
-              {item}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-    </div>
-  );
-}
-
-function AIAgentContent() {
-  const [activeTab, setActiveTab] = useState('playground');
-
-  return (
-    <div className="flex flex-col h-full">
-      <AIAgentNavBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="p-6 flex-1">
-        {activeTab === 'playground' ? (
-          <Playground />
-        ) : (
-          <>
-            <h3 className="text-xl font-semibold mb-4">AI Agent - {activeTab}</h3>
-            <p className="text-muted-foreground mb-6">
-              Content for {activeTab} tab.
-            </p>
-          </>
-        )}
-      </div>
     </div>
   );
 }
@@ -862,8 +769,8 @@ function AdminDashboard() {
         return <KnowledgeBaseContent />;
       case "Voice Agent":
         return <VoiceAgentContent />;
-      case "AI Agent":
-        return <AIAgentContent />;
+      case "Chat Agent":
+        return <ChatAgent />;
       case "Features":
         return selectedFeature ? 
           <FeatureDetailContent feature={selectedFeature} /> : 
