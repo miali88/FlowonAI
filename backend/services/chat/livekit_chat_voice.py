@@ -2,7 +2,7 @@ import asyncio
 from typing import Annotated
 
 from livekit import agents, rtc
-from livekit.agents import JobContext, WorkerOptions, cli, tokenize, tts
+from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import (
     ChatContext,
     ChatImage,
@@ -20,7 +20,7 @@ class AssistantFunction(agents.llm.FunctionContext):
 
 async def entrypoint(ctx: JobContext):
 
-    await ctx.connect()
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) ### ADDED NEW, CONSIDER REMOVING IF ISSUE
     print(f"Room name: {ctx.room.name}")
 
     chat_context = ChatContext(
