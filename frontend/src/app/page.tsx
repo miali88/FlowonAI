@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useAuth } from "@clerk/nextjs";
+import { useUser, useAuth, useClerk } from "@clerk/nextjs";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from 'axios';
@@ -69,6 +69,7 @@ interface SavedItem {
   title: string;
   content: string;
   data_type: string;
+  meep: string
   // Add other properties as needed
 }
 
@@ -142,6 +143,22 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
   );
 }
 
+function LogoutMenuItem() {
+  const { signOut } = useClerk();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    signOut(() => router.push("/"));
+  };
+
+  return (
+    <DropdownMenuItem onClick={handleLogout}>
+      <LogOut className="mr-2 h-4 w-4" />
+      Log out
+    </DropdownMenuItem>
+  );
+}
+
 function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
   const router = useRouter();
   const { user } = useUser();
@@ -197,10 +214,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
-            </DropdownMenuItem>
+            <LogoutMenuItem />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -508,7 +522,7 @@ function KnowledgeBaseContent() {
         return null;
     }
   };
-
+  
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -545,7 +559,7 @@ function KnowledgeBaseContent() {
               </div>
               <ScrollArea className="h-[calc(100vh-300px)]">
                 {filteredItems.map((item) => {
-                  console.log(`Rendering item ${item.id} with data_type:`, item.data_type);
+                  console.log(`Rendering item ${item.id} with data_type:`, item.meep);
                   return (
                     <Card 
                       key={item.id} 
@@ -558,7 +572,10 @@ function KnowledgeBaseContent() {
                       <CardHeader className="p-3 flex flex-row items-center justify-between">
                         <CardTitle className="text-sm">{item.title}</CardTitle>
                         <span className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full">
-                          {item.data_type || 'Unknown'}
+                          {(() => {
+                            console.log(`Item ${item.id} data_type:`, item.data_type);
+                            return item.data_type || 'Unknown';
+                          })()}
                         </span>
                       </CardHeader>
                     </Card>
