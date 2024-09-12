@@ -19,10 +19,7 @@ class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
 
 async def entrypoint(ctx: JobContext):
-    import os
-    print("Environment variables:")
-    print(os.environ)
-    
+
     await ctx.connect()
     print(f"Room name: {ctx.room.name}")
 
