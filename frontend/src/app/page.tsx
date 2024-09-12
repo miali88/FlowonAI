@@ -60,6 +60,7 @@ import ChatAgent from '@/components/Dashboard/ChatAgent';
 import { Analytics } from "@/components/Dashboard/Analytics";
 import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
 import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
+import { Badge } from "@/components/ui/badge";
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -101,8 +102,8 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: Mic, label: "Voice Agent" },
     { icon: Globe, label: "Chat Agent" },
-    { icon: MessageSquare, label: "Features" },
-    { icon: BarChart3, label: "Analytics" },
+    // { icon: MessageSquare, label: "Features" },
+    // { icon: BarChart3, label: "Analytics" },
   ];
 
   return (
@@ -112,9 +113,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
     )}>
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
-          <Button variant="ghost" onClick={() => setActivePanel(activePanel === 'admin' ? 'items' : 'admin')}>
-            {activePanel === 'admin' ? 'Admin Panel' : 'Items'}
-          </Button>
+          <span className="text-sm font-medium">Admin Panel</span>
         )}
         <Button
           variant="ghost"
@@ -162,6 +161,30 @@ function LogoutMenuItem() {
 function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
   const router = useRouter();
   const { user } = useUser();
+  const { getToken } = useAuth();
+  const [userPlan, setUserPlan] = useState("Loading...");
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (user) {
+        try {
+          const token = await getToken();
+          const response = await axios.get(`${API_BASE_URL}/api/v1/users/data`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'X-User-ID': user.id,
+            },
+          });
+          setUserPlan(response.data.plan);
+        } catch (error) {
+          console.error("Error fetching user plan:", error);
+          setUserPlan("Error");
+        }
+      }
+    };
+
+    fetchUserPlan();
+  }, [user, getToken]);
 
   const renderTitle = () => {
     if (selectedFeature) {
@@ -200,15 +223,14 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
                 <AvatarFallback>FA</AvatarFallback>
               </Avatar>
               <span>{user?.fullName || "User"}</span>
+              <Badge variant="outline" className="ml-2">
+                {userPlan}
+              </Badge>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
@@ -574,7 +596,7 @@ function KnowledgeBaseContent() {
                         <span className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full">
                           {(() => {
                             console.log(`Item ${item.id} data_type:`, item.data_type);
-                            return item.data_type || 'Unknown';
+                            return item.data_type || '';
                           })()}
                         </span>
                       </CardHeader>
@@ -660,58 +682,58 @@ function KnowledgeBaseContent() {
   );
 }
 
-function AnalyticsContent() {
-  return <Analytics />;
-}
+// function AnalyticsContent() {
+//   return <Analytics />;
+// }
 
-function FeaturesContent({ setSelectedFeature }) {
-  const features = [
-    { title: "Call Routing", description: "Efficiently route incoming calls to the right department or agent.", icon: MessageSquare },
-    { title: "Appointment Booking", description: "Allow customers to book appointments directly through your system.", icon: MessageSquare },
-    { title: "Prospecting", description: "Identify and engage potential customers to grow your business.", icon: MessageSquare },
-    { title: "Interview", description: "Streamline your hiring process with integrated interview scheduling and management.", icon: MessageSquare },
-    { title: "Customer Support", description: "Provide excellent customer support with our integrated tools.", icon: MessageSquare },
-  ];
+// function FeaturesContent({ setSelectedFeature }) {
+//   const features = [
+//     { title: "Call Routing", description: "Efficiently route incoming calls to the right department or agent.", icon: MessageSquare },
+//     { title: "Appointment Booking", description: "Allow customers to book appointments directly through your system.", icon: MessageSquare },
+//     { title: "Prospecting", description: "Identify and engage potential customers to grow your business.", icon: MessageSquare },
+//     { title: "Interview", description: "Streamline your hiring process with integrated interview scheduling and management.", icon: MessageSquare },
+//     { title: "Customer Support", description: "Provide excellent customer support with our integrated tools.", icon: MessageSquare },
+//   ];
 
-  return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Features</h3>
-      <p className="text-muted-foreground mb-6">
-        Explore and manage the features available in your admin panel.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <feature.icon className="h-8 w-8 mb-2 text-primary" />
-              <CardTitle>{feature.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>{feature.description}</CardDescription>
-              <Button 
-                className="mt-4 w-8 h-8 rounded-full p-0" 
-                onClick={() => setSelectedFeature(feature.title)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
+//   return (
+//     <div className="p-6">
+//       <h3 className="text-xl font-semibold mb-4">Features</h3>
+//       <p className="text-muted-foreground mb-6">
+//         Explore and manage the features available in your admin panel.
+//       </p>
+//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+//         {features.map((feature, index) => (
+//           <Card key={index}>
+//             <CardHeader>
+//               <feature.icon className="h-8 w-8 mb-2 text-primary" />
+//               <CardTitle>{feature.title}</CardTitle>
+//             </CardHeader>
+//             <CardContent>
+//               <CardDescription>{feature.description}</CardDescription>
+//               <Button 
+//                 className="mt-4 w-8 h-8 rounded-full p-0" 
+//                 onClick={() => setSelectedFeature(feature.title)}
+//               >
+//                 <ChevronRight className="h-4 w-4" />
+//               </Button>
+//             </CardContent>
+//           </Card>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
 
-function FeatureDetailContent({ feature }) {
-  return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">{feature}</h3>
-      <p className="text-muted-foreground mb-6">
-        Detailed settings and information for {feature}.
-      </p>
-    </div>
-  );
-}
+// function FeatureDetailContent({ feature }) {
+//   return (
+//     <div className="p-6">
+//       <h3 className="text-xl font-semibold mb-4">{feature}</h3>
+//       <p className="text-muted-foreground mb-6">
+//         Detailed settings and information for {feature}.
+//       </p>
+//     </div>
+//   );
+// }
 
 function VoiceAgentContent() {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
@@ -742,7 +764,7 @@ function VoiceAgentContent() {
 }
 
 function AdminDashboard() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Knowledge Base");
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -775,12 +797,12 @@ function AdminDashboard() {
         return <VoiceAgentContent />;
       case "Chat Agent":
         return <ChatAgent />;
-      case "Features":
-        return selectedFeature ? 
-          <FeatureDetailContent feature={selectedFeature} /> : 
-          <FeaturesContent setSelectedFeature={setSelectedFeature} />;
-      case "Analytics":
-        return <AnalyticsContent />;
+      // case "Features":
+      //   return selectedFeature ? 
+      //     <FeatureDetailContent feature={selectedFeature} /> : 
+      //     <FeaturesContent setSelectedFeature={setSelectedFeature} />;
+      // case "Analytics":
+      //   return <AnalyticsContent />;
       default:
         return <KnowledgeBaseContent />;
     }
