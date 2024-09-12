@@ -59,6 +59,7 @@ import { LiveKitEntry } from "@/components/LiveKitEntry";
 import ChatAgent from '@/components/Dashboard/ChatAgent';
 import { Analytics } from "@/components/Dashboard/Analytics";
 import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
+import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -360,43 +361,20 @@ function KnowledgeBaseContent() {
     setSelectedFile(event.target.files[0]);
   };
 
-  const handleScrape = async (e: React.FormEvent) => {
+  const handleScrapeWrapper = async (e: React.FormEvent) => {
     e.preventDefault();
-    setScrapeError("");
-
-    // Basic URL validation
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    if (!urlPattern.test(scrapeUrl)) {
-      setScrapeError("Please enter a valid URL");
-      return;
-    }
-
-    try {
-      const token = await getToken();
-      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/scrape_url`, 
-        { url: scrapeUrl },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-User-ID': user.id,
-          },
-        }
-      );
-      
-      // Handle the scraped content (add it to newItemContent)
-      setNewItemContent(prevContent => {
-        const separator = prevContent ? '\n\n' : '';
-        return prevContent + separator + response.data.content;
-      });
-      setShowScrapeInput(false);
-      setScrapeUrl("");
-      setAlertMessage("Content scraped successfully");
-      setAlertType("success");
-    } catch (error) {
-      console.error("Error scraping URL:", error);
-      setAlertMessage("Failed to scrape URL: " + (error.response?.data?.detail || error.message));
-      setAlertType("error");
-    }
+    await handleScrape({
+      scrapeUrl,
+      setScrapeError,
+      getToken,
+      user,
+      API_BASE_URL,
+      setNewItemContent,
+      setShowScrapeInput,
+      setScrapeUrl,
+      setAlertMessage,
+      setAlertType
+    });
   };
 
   const filteredItems = savedItems.filter(item =>
@@ -492,7 +470,7 @@ function KnowledgeBaseContent() {
               onChange={(e) => setScrapeUrl(e.target.value)}
               className="mb-4"
             />
-            <Button onClick={handleScrape} className="self-start px-4 py-2">
+            <Button onClick={handleScrapeWrapper} className="self-start px-4 py-2">
               Scrape Web Content
             </Button>
           </div>
