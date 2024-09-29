@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MorphingStreamButton = () => {
-  const [isStreaming, setIsStreaming] = useState(false);
+interface MorphingStreamButtonProps {
+  onStreamToggle: () => void;
+  isStreaming: boolean;
+}
+
+const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamToggle, isStreaming }) => {
   const [conversation, setConversation] = useState([]);
 
   const toggleStreaming = () => {
-    setIsStreaming(!isStreaming);
+    onStreamToggle();
     if (!isStreaming) {
       const messages = [
         { role: "user", content: "Hello, how are you?" },

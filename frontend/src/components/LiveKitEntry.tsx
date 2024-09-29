@@ -1,45 +1,51 @@
 'use client';
+
 import {
   LiveKitRoom,
   RoomAudioRenderer,
   useLocalParticipant,
+  useConnectionState,
 } from '@livekit/components-react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export function LiveKitEntry() {
-  const [token, setToken] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
+interface LiveKitEntryProps {
+  token: string;
+  url: string;
+}
 
+export function LiveKitEntry({ token, url }: LiveKitEntryProps) {
   return (
-    <>
-      <main>
-        {token === null ? (<button onClick={async () => {
-          const {accessToken, url} = await fetch('/api/token').then(res => res.json());
-          setToken(accessToken);
-          setUrl(url);
-        }}>Connect</button>) : (
-          <LiveKitRoom
-            token={token}
-            serverUrl={url}
-            connectOptions={{autoSubscribe: true}}
-          >
-            <ActiveRoom />
-          </LiveKitRoom>
-        )}
-      </main>
-    </>
+    <LiveKitRoom
+      token={token}
+      serverUrl={url}
+      connectOptions={{autoSubscribe: true}}
+    >
+      <ActiveRoom />
+    </LiveKitRoom>
   );
-};
+}
 
 const ActiveRoom = () => {
-  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
+  const { localParticipant } = useLocalParticipant();
+  const connectionState = useConnectionState();
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (connectionState === 'connected') {
+      setIsConnected(true);
+    }
+  }, [connectionState]);
+
+  useEffect(() => {
+    if (isConnected && localParticipant) {
+      localParticipant.setMicrophoneEnabled(true);
+    }
+  }, [isConnected, localParticipant]);
+
   return (
     <>
       <RoomAudioRenderer />
-      <button onClick={() => {
-        localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled)
-      }}>Toggle Microphone</button>
-      <div>Audio Enabled: { isMicrophoneEnabled ? 'Unmuted' : 'Muted' }</div>
+      <div>Audio Enabled: {localParticipant?.isMicrophoneEnabled ? 'Unmuted' : 'Muted'}</div>
     </>
   );
 };
