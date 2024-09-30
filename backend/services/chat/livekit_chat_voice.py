@@ -8,12 +8,16 @@ from livekit.agents.llm import (
     ChatImage,
     ChatMessage,
 )
+
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import deepgram, openai, silero
 import os 
 from dotenv import load_dotenv
+import aiohttp
 
 load_dotenv()
+
+DOMAIN = "http://localhost:8000/api/v1"
 
 class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
@@ -100,16 +104,34 @@ async def entrypoint(ctx: JobContext):
 
     #         asyncio.create_task(_answer(for_msg, use_image=False))
 
+    async def send_transcript_to_backend(transcript: str):
+        """
+        Send the transcript to a backend API endpoint.
+        """
+        backend_url = f"{DOMAIN}/voice/transcript/commit"  # Replace with your actual backend URL
+        print("\n\n\n transcript:", transcript)
+        print("\n\n\n DOMAIN:", DOMAIN)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(backend_url, json={"transcript": transcript}) as response:
+                if response.status == 200:
+                    print(f"Transcript sent to backend successfully: {transcript}")
+                else:
+                    print(f"Failed to send transcript to backend. Status: {response.status}")
+
     @assistant.on("user_speech_committed")
     def on_transcription(transcript: rtc.ChatMessage):
         """This event triggers when voice input is transcribed."""
         print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
         if transcript.content:
+            # Send the transcript to the backend
+            asyncio.create_task(send_transcript_to_backend(transcript.content))
+
             for_msg = f""" 
             # User Query:
             {transcript.content}
-            # Retrieved Docs:
-            {"michael has one pet cat"} """
+            """
+            # # Retrieved Docs:
+            # {"michael has one pet cat"} """
 
             print("\n\n\n VOICE MSG:...", for_msg)
 

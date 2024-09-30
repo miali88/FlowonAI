@@ -1,0 +1,18 @@
+from fastapi import Request, HTTPException, APIRouter, Response
+from fastapi.responses import JSONResponse
+import logging
+
+from services.chat.chat import chat_process
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+@router.api_route('/transcript/commit', methods=['POST', 'GET'])
+async def voice_webhook(request: Request):
+    transcript = await request.json()
+
+    print(transcript)
+
+    return JSONResponse(content={"message": "Voice webhook received"})
+
+
