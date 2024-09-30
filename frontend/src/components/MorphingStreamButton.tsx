@@ -38,7 +38,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamTog
           transition={{ duration: 0.5 }}
         >
           <Button
-            className="w-full h-full rounded-full bg-indigo-500 text-white hover:bg-indigo-600 focus:ring-2 focus:ring-indigo-400 focus:outline-none overflow-hidden"
+            className="w-full h-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none overflow-hidden"
             onClick={toggleStreaming}
           >
             <AnimatePresence mode="wait">
@@ -79,7 +79,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamTog
                     animate={{ width: "auto" }}
                     transition={{ duration: 0.5 }}
                   >
-                    Streaming...
+                    Chatting...
                   </motion.span>
                 </motion.div>
               )}
@@ -97,7 +97,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamTog
                 transition={{ duration: 0.3 }}
                 className={`p-2 rounded-lg ${
                   message.role === "user"
-                    ? "bg-indigo-100 text-indigo-800"
+                    ? "bg-cyan-100 text-cyan-800"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >

@@ -62,6 +62,7 @@ import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewIte
 import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
 import { Badge } from "@/components/ui/badge";
 import MorphingStreamButton from '@/components/MorphingStreamButton';
+import VoiceAgent from '@/components/VoiceAgent';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -736,58 +737,6 @@ function KnowledgeBaseContent() {
 //   );
 // }
 
-function VoiceAgentContent() {
-  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  const handleConnect = useCallback(async () => {
-    setIsConnecting(true);
-    try {
-      const { accessToken, url } = await fetch('/api/token').then(res => res.json());
-      setToken(accessToken);
-      setUrl(url);
-      setIsLiveKitActive(true);
-    } catch (error) {
-      console.error('Failed to connect:', error);
-    } finally {
-      setIsConnecting(false);
-    }
-  }, []);
-
-  const toggleLiveKit = () => {
-    if (isLiveKitActive) {
-      setIsLiveKitActive(false);
-      setToken(null);
-      setUrl(null);
-    } else {
-      handleConnect();
-    }
-  };
-
-  return (
-    <div className="p-6 flex flex-col items-center justify-center min-h-screen w-full relative overflow-hidden">
-      <h3 className="text-xl font-semibold mb-4">Voice Agent</h3>
-      <p className="text-muted-foreground mb-6 text-center max-w-2xl">
-        Experience our Voice Agent feature. Click the button below to start a conversation with our AI assistant.
-      </p>
-      <MorphingStreamButton 
-        onStreamToggle={toggleLiveKit}
-        isStreaming={isLiveKitActive}
-      />
-      {isLiveKitActive && token && url && (
-        <div className="mt-6 w-full max-w-md">
-          <LiveKitEntry token={token} url={url} />
-          <p className="mt-4 text-sm text-muted-foreground text-center">
-            Voice agent is active. Speak into your microphone to interact with the AI.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Voice Agent");  // Changed this line
@@ -817,14 +766,14 @@ function AdminDashboard() {
   const renderContent = () => {
     switch (activeItem) {
       case "Voice Agent":
-        return <VoiceAgentContent />;
+        return <VoiceAgent />;
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Chat Agent":
         return <ChatAgent />;
       // ... other cases ...
       default:
-        return <VoiceAgentContent />;  // Changed this line
+        return <VoiceAgent />;  // Changed this line
     }
   };
 
