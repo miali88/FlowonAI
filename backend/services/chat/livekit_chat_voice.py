@@ -104,13 +104,12 @@ async def entrypoint(ctx: JobContext):
 
     #         asyncio.create_task(_answer(for_msg, use_image=False))
 
-    async def send_transcript_to_backend(transcript: str):
+    async def send_transcript_to_backend(transcript: str, endpoint: str):
         """
         Send the transcript to a backend API endpoint.
         """
-        backend_url = f"{DOMAIN}/voice/transcript/commit"  # Replace with your actual backend URL
-        print("\n\n\n transcript:", transcript)
-        print("\n\n\n DOMAIN:", DOMAIN)
+        backend_url = f"{DOMAIN}{endpoint}"
+        print(f"\n\n\n Sending to {endpoint}:", transcript)
         async with aiohttp.ClientSession() as session:
             async with session.post(backend_url, json={"transcript": transcript}) as response:
                 if response.status == 200:
@@ -124,7 +123,7 @@ async def entrypoint(ctx: JobContext):
         print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
         if transcript.content:
             # Send the transcript to the backend
-            asyncio.create_task(send_transcript_to_backend(transcript.content))
+            asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit"))
 
             for_msg = f""" 
             # User Query:
@@ -136,6 +135,21 @@ async def entrypoint(ctx: JobContext):
             print("\n\n\n VOICE MSG:...", for_msg)
 
             asyncio.create_task(_answer(for_msg, use_image=False))
+
+    @assistant.on("user_started_speaking")
+    # def on_user_started_speaking():
+        """This event triggers when the user starts speaking."""
+        # print("\n\n\n USER STARTED SPEAKING")
+        # Send a notification that the user started speaking
+        # asyncio.create_task(send_transcript_to_backend("User started speaking", "/voice/transcript/real_time"))
+
+    @assistant.on("user_speech_recognized")
+    def on_user_speech_recognized(transcript: rtc.ChatMessage):
+        """This event triggers when speech is recognized in real-time."""
+        if transcript and transcript.content:
+            # print("\n\n\n REAL-TIME TRANSCRIPT:", transcript.content)
+            # Send the real-time transcript to the backend
+            asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/real_time"))
 
     # @assistant.on("function_calls_finished")
     # def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):

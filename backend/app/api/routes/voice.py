@@ -11,8 +11,14 @@ logger = logging.getLogger(__name__)
 async def voice_webhook(request: Request):
     transcript = await request.json()
 
-    print(transcript)
+    print("\n\nCOMMIT TRANSCRIPT:", transcript)
 
     return JSONResponse(content={"message": "Voice webhook received"})
 
+@router.api_route('/transcript/real_time', methods=['POST', 'GET'])
+async def voice_webhook(request: Request):
+    transcript = await request.json()
 
+    print("\n\nREAL TIME TRANSCRIPT:", transcript)
+
+    return JSONResponse(content={"message": "Voice webhook received"})
