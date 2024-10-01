@@ -1,4 +1,6 @@
 import asyncio
+from typing import Annotated
+
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import (
@@ -20,6 +22,24 @@ DOMAIN = "http://localhost:8000/api/v1"
 
 class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
+
+    @agents.llm.ai_callable(
+        description=(
+            "Called when asked to evaluate something that would require vision capabilities,"
+            "for example, an image, video, or the webcam feed."
+        )
+    )
+    async def text_box(
+        self,
+        user_msg: Annotated[
+            str,
+            agents.llm.TypeInfo(
+                description="The user message that triggered this function"
+            ),
+        ],
+    ):
+        print(f"Message triggering vision capabilities: {user_msg}")
+        return None
 
 async def entrypoint(ctx: JobContext):
     print(f"Entrypoint called with job_id: {ctx.job.id}")

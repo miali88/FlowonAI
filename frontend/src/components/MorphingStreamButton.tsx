@@ -2,30 +2,25 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
+import { Input } from "@/components/ui/input";
 
 interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
   isStreaming: boolean;
+  showTextBox: boolean; // New prop to control text box visibility
 }
 
-const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamToggle, isStreaming }) => {
-  const [conversation, setConversation] = useState([]);
+const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
+  onStreamToggle, 
+  isStreaming, 
+  showTextBox 
+}) => {
+  const [userInput, setUserInput] = useState("");
 
   const toggleStreaming = () => {
     onStreamToggle();
-    if (!isStreaming) {
-      const messages = [
-        { role: "user", content: "Hello, how are you?" },
-        { role: "ai", content: "I'm just an AI, I don't have emotions. How can I assist you today?" },
-      ];
-      streamConversation(messages);
-    }
-  };
-
-  const streamConversation = async (messages) => {
-    for (let message of messages) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setConversation((prev) => [...prev, message]);
+    if (!isStreaming && userInput.trim() !== "") {
+      setUserInput("");
     }
   };
 
@@ -87,24 +82,17 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ onStreamTog
           </Button>
         </motion.div>
         <div className="w-full mt-4 space-y-2">
-          <AnimatePresence>
-            {conversation.map((message, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-                className={`p-2 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-cyan-100 text-cyan-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                <p className="text-sm">{message.content}</p>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <Input
+            type="text"
+            placeholder="Type your message..."
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && !isStreaming) {
+                toggleStreaming();
+              }
+            }}
+          />
         </div>
       </CardContent>
     </Card>
