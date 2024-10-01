@@ -2,8 +2,6 @@ from fastapi import Request, APIRouter
 from fastapi.responses import JSONResponse
 import logging
 
-from services.chat.chat import chat_process
-
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
