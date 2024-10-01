@@ -69,6 +69,23 @@ async def entrypoint(ctx: JobContext):
         stream = gpt.chat(chat_ctx=chat_context)
         await assistant.say(stream, allow_interruptions=True)
 
+    # @chat.on("message_received")
+    # def on_message_received(msg: rtc.ChatMessage):
+    #     """This event triggers whenever we get a new message from the user."""
+
+    #     if msg.message:
+    #         print("\n\n\n MESSAGE RECIEVED...:", msg)
+
+    #         for_msg = f""" 
+    #         # User Query:
+    #         {msg.message}
+    #         # Retrieved Docs:
+    #         {"michael has one pet cat"} """
+
+    #         print("\n\n\n FOR MSG:...", for_msg)
+
+    #         asyncio.create_task(_answer(for_msg, use_image=False))
+
     async def send_transcript_to_backend(transcript: str, endpoint: str):
         """
         Send the transcript to a backend API endpoint.
@@ -87,33 +104,45 @@ async def entrypoint(ctx: JobContext):
         """This event triggers when voice input is transcribed."""
         print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
         if transcript.content:
-            # Create a task for the asynchronous work
-            asyncio.create_task(process_transcription(transcript))
+            # Send the transcript to the backend
+            asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit"))
 
-    async def process_transcription(transcript: rtc.ChatMessage):
-        """Process the transcription asynchronously."""
-        # Send the transcript to the backend
-        await send_transcript_to_backend(transcript.content, "/voice/transcript/commit")
+            for_msg = f""" 
+            # User Query:
+            {transcript.content}
+            """
+            # # Retrieved Docs:
+            # {"michael has one pet cat"} """
 
-        for_msg = f""" 
-        # User Query:
-        {transcript.content}
-        """
-        # # Retrieved Docs:
-        # {"michael has one pet cat"} """
+            print("\n\n\n VOICE MSG:...", for_msg)
 
-        print("\n\n\n VOICE MSG:...", for_msg)
+            asyncio.create_task(_answer(for_msg, use_image=False))
 
-        # Await the _answer function
-        await _answer(for_msg, use_image=False)
+    # @assistant.on("user_started_speaking")
+    # def on_user_started_speaking():
+        # """This event triggers when the user starts speaking."""
+        # print("\n\n\n USER STARTED SPEAKING")
+        # Send a notification that the user started speaking
+        # asyncio.create_task(send_transcript_to_backend("User started speaking", "/voice/transcript/real_time"))
 
     @assistant.on("user_speech_recognized")
-    async def on_user_speech_recognized(transcript: rtc.ChatMessage):
+    def on_user_speech_recognized(transcript: rtc.ChatMessage):
         """This event triggers when speech is recognized in real-time."""
         if transcript and transcript.content:
             # print("\n\n\n REAL-TIME TRANSCRIPT:", transcript.content)
             # Send the real-time transcript to the backend
             asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/real_time"))
+
+    # @assistant.on("function_calls_finished")
+    # def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+    #     """This event triggers when an assistant's function call completes."""
+
+    #     if len(called_functions) == 0:
+    #         return
+
+    #     user_msg = called_functions[0].call_info.arguments.get("user_msg")
+    #     if user_msg:
+    #         asyncio.create_task(_answer(user_msg, use_image=True))
 
     user_biz_name = "PeriPeri"
     opening_line =  f"Hi, thanks for visiting {user_biz_name}, I'm here to answer any questions you may have, and to help you host a memorable event. The more information you can share, the better"
