@@ -5,9 +5,11 @@ import contextvars
 import time
 from dataclasses import dataclass
 from typing import Any, AsyncIterable, Awaitable, Callable, Literal, Optional, Union
+from enum import Enum
+import aiohttp
+import os
 
 from livekit import rtc
-import aiohttp
 
 from .. import stt, tokenize, tts, utils, vad
 from ..llm import LLM, ChatContext, ChatMessage, FunctionContext, LLMStream
@@ -124,6 +126,13 @@ class AssistantTranscriptionOptions:
     """A function that takes a string (word) as input and returns a list of strings,
     representing the hyphenated parts of the word."""
 
+class CallState(Enum):
+    INITIALIZING = "initializing"
+    WAITING_FOR_USER = "waiting_for_user"
+    USER_SPEAKING = "user_speaking"
+    PROCESSING_USER_INPUT = "processing_user_input"
+    AGENT_SPEAKING = "agent_speaking"
+    CALL_ENDED = "call_ended"
 
 class VoiceAssistant(utils.EventEmitter[EventTypes]):
     MIN_TIME_PLAYED_FOR_COMMIT = 1.5
@@ -251,6 +260,12 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
 
         self._update_state_task: asyncio.Task | None = None
 
+        self._call_state = CallState.INITIALIZING
+        self._job_id = None  # Add this line to store the job_id
+
+    def set_job_id(self, job_id):
+        self._job_id = job_id
+
     @property
     def fnc_ctx(self) -> FunctionContext | None:
         return self._fnc_ctx
@@ -352,8 +367,6 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
         self._add_speech_for_playout(new_handle)
 
     def _update_state(self, state: AgentState, delay: float = 0.0):
-        """Set the current state of the agent"""
-
         @utils.log_exceptions(logger=logger)
         async def _run_task(delay: float) -> None:
             await asyncio.sleep(delay)
@@ -362,6 +375,38 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
                 await self._room.local_participant.set_attributes(
                     {ATTR_AGENT_STATE: state}
                 )
+            
+            # Update the call state based on the agent state
+            if state == "listening":
+                self._call_state = CallState.WAITING_FOR_USER
+            elif state == "speaking":
+                self._call_state = CallState.AGENT_SPEAKING
+            elif state == "thinking":
+                self._call_state = CallState.PROCESSING_USER_INPUT
+            elif state == "initializing":
+                self._call_state = CallState.INITIALIZING
+
+            # Prepare state data
+            state_data = {
+                "job_id": self._job_id,
+                "pid": os.getpid(),
+                "call_state": self._call_state.value,
+                "agent_state": state
+            }
+
+            # Log the full state data
+            logger.info(f"Call state updated: {state_data}", extra={"job_id": self._job_id})
+
+            # Send state change to backend
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.post(f'{DOMAIN}/voice/state', json=state_data) as response:
+                        if response.status == 200:
+                            logger.debug("Successfully sent state change to backend", extra={"job_id": self._job_id})
+                        else:
+                            logger.warning(f"Failed to send state change to backend. Status: {response.status}", extra={"job_id": self._job_id})
+                except Exception as e:
+                    logger.error(f"Error sending state change to backend: {str(e)}", extra={"job_id": self._job_id})
 
         if self._update_state_task is not None:
             self._update_state_task.cancel()
@@ -401,6 +446,8 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
             self.emit("user_started_speaking")
             self._deferred_validation.on_human_start_of_speech(ev)
             self._update_state("listening")
+            self._call_state = CallState.USER_SPEAKING
+            logger.info(f"User started speaking", extra={"job_id": self._job_id})
 
         def _on_vad_updated(ev: vad.VADEvent) -> None:
             if not self._track_published_fut.done():
@@ -428,10 +475,10 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
             self._deferred_validation.on_human_end_of_speech(ev)
             self._last_end_of_speech_time = time.time()
 
-        def _on_interim_transcript(ev: stt.SpeechEvent) -> None:
+        async def _on_interim_transcript(ev: stt.SpeechEvent) -> None:
             self._transcribed_interim_text = ev.alternatives[0].text
 
-        def _on_final_transcript(ev: stt.SpeechEvent) -> None:
+        async def _on_final_transcript(ev: stt.SpeechEvent) -> None:
             new_transcript = ev.alternatives[0].text
             self._transcribed_text += (
                 " " if self._transcribed_text else ""
@@ -453,8 +500,8 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
         self._human_input.on("start_of_speech", _on_start_of_speech)
         self._human_input.on("vad_inference_done", _on_vad_updated)
         self._human_input.on("end_of_speech", _on_end_of_speech)
-        self._human_input.on("interim_transcript", _on_interim_transcript)
-        self._human_input.on("final_transcript", _on_final_transcript)
+        self._human_input.on("interim_transcript", lambda ev: asyncio.create_task(_on_interim_transcript(ev)))
+        self._human_input.on("final_transcript", lambda ev: asyncio.create_task(_on_final_transcript(ev)))
 
     @utils.log_exceptions(logger=logger)
     async def _main_task(self) -> None:
@@ -512,6 +559,8 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
 
         if self._human_input is not None and not self._human_input.speaking:
             self._update_state("thinking", 0.2)
+            self._call_state = CallState.PROCESSING_USER_INPUT
+            logger.info(f"Processing user input", extra={"job_id": self._job_id})
 
         self._pending_agent_reply = new_handle = SpeechHandle.create_assistant_reply(
             allow_interruptions=self._opts.allow_interruptions,
@@ -577,6 +626,8 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
             "user_transcript": handle.user_question,
             "speech_id": handle.id,
             "elapsed": elapsed,
+            "job_id": self._job_id,
+            "call_state": self._call_state.value
         }
 
         logger.debug(
@@ -589,11 +640,11 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
             try:
                 async with session.post(f'{DOMAIN}/voice/transcript/real_time', json=extra_data) as response:
                     if response.status == 200:
-                        logger.debug("Successfully sent transcript data to backend")
+                        logger.debug("Successfully sent transcript data to backend", extra={"job_id": self._job_id})
                     else:
-                        logger.warning(f"Failed to send transcript data to backend. Status: {response.status}")
+                        logger.warning(f"Failed to send transcript data to backend. Status: {response.status}", extra={"job_id": self._job_id})
             except Exception as e:
-                logger.error(f"Error sending transcript data to backend: {str(e)}")
+                logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
 
         # synthesis_handle = self._synthesize_agent_speech(handle.id, llm_stream)
         # handle.initialize(source=llm_stream, synthesis_handle=synthesis_handle)
@@ -641,7 +692,12 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
                 return
 
             logger.debug(
-                "committed user transcript", extra={"user_transcript": user_question}
+                "committed user transcript", 
+                extra={
+                    "user_transcript": user_question, 
+                    "job_id": self._job_id, 
+                    "call_state": self._call_state.value
+                }
             )
             user_msg = ChatMessage.create(text=user_question, role="user")
             self._chat_ctx.messages.append(user_msg)
@@ -824,7 +880,11 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
 
         logger.debug(
             "validated agent reply",
-            extra={"speech_id": self._pending_agent_reply.id},
+            extra={
+                "speech_id": self._pending_agent_reply.id, 
+                "job_id": self._job_id, 
+                "call_state": self._call_state.value
+            }
         )
 
         self._add_speech_for_playout(self._pending_agent_reply)
@@ -855,6 +915,13 @@ class VoiceAssistant(utils.EventEmitter[EventTypes]):
     def _add_speech_for_playout(self, speech_handle: SpeechHandle) -> None:
         self._speech_q.append(speech_handle)
         self._speech_q_changed.set()
+
+    def entrypoint(ctx):
+        job_id = ctx.job.id  # Correctly access the job ID
+        print(f"Entrypoint called with job_id: {job_id}")
+        # Initialize your VoiceAssistant instance
+        assistant = VoiceAssistant(...)
+        assistant.set_job_id(job_id)
 
 async def _llm_stream_to_str_iterable(
     speech_id: str, stream: LLMStream
