@@ -1,4 +1,4 @@
-from fastapi import Request, HTTPException, APIRouter, Response
+from fastapi import Request, APIRouter
 from fastapi.responses import JSONResponse
 import logging
 
@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 @router.api_route('/transcript/commit', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
-    transcript = await request.json()
+    # transcript = await request.json()
 
-    print("\n\nCOMMIT TRANSCRIPT:", transcript)
+    #print("\n\nCOMMIT TRANSCRIPT:", transcript)
 
     return JSONResponse(content={"message": "Voice webhook received"})
 
@@ -22,3 +22,4 @@ async def voice_webhook(request: Request):
     print("\n\nREAL TIME TRANSCRIPT:", transcript)
 
     return JSONResponse(content={"message": "Voice webhook received"})
+

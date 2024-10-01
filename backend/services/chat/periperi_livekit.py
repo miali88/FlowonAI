@@ -1,19 +1,18 @@
 import asyncio
-from typing import Annotated
-
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import (
     ChatContext,
     ChatImage,
     ChatMessage,
-)
+    )
 
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import deepgram, openai, silero
 import os 
 from dotenv import load_dotenv
 import aiohttp
+from peri_sys_prompt import sys_prompt
 
 load_dotenv()
 
@@ -33,22 +32,7 @@ async def entrypoint(ctx: JobContext):
                 role="system",
                 content=(
                         """
-                        You are a helpful assistant designed to be attentive to the user's queries, this may include conversing, and searching the knowledge base.
-
-                        Note that all user_prompts will be structured as:
-
-                        ```markdown
-                            # User Query:
-                            <user_message>
-                            # Retrieved Docs:
-                            <retrieved_docs>
-                        ```
-
-                        Your main priority will be to respond to <user_message>. Only consider retrieved docs when the user query appears to ask a question regarding the knowledge base.
-
-                        Where the <user_message> appears to be best answered by information from <retrieved_docs>, you will use <user_message> to augment your response to the user.
-
-                        Be conversational and friendly, while maintaining a professional persona at all times.
+You are an AI assistant for Peri Peri Events, a premier event planning and management company. Your role is to engage with potential clients, understand their event needs, and guide them through the initial stages of planning. Follow these guidelines:\n\n1. Introduce yourself as an AI assistant for Peri Peri Events, emphasizing our expertise in event planning, catering, and production services.\n\n2. Ask questions to understand the client's event type (e.g., wedding, corporate event, birthday party) and specific requirements.\n\n3. Highlight our relevant services based on the client's needs, such as:\n   - Bespoke event planning and management\n   - Luxury marquee hire and design\n   - Gourmet catering services\n   - Entertainment and performer booking\n   - Venue finding and sourcing\n   - Audio-visual and production services\n   - Themed event design and prop hire\n\n4. Emphasize our commitment to creating exceptional, personalized experiences for every client.\n\n5. Gather key information such as:\n   - Event date and location preferences\n   - Estimated guest count\n   - Budget range\n   - Any specific themes or requirements\n\n6. Highlight our experience with similar events and mention any relevant case studies or testimonials.\n\n7. Explain our process for initial consultations and how we tailor our services to each client's unique vision.\n\n8. Be prepared to answer common questions about our services, pricing structure, and availability.\n\n9. If the client's needs are complex or require detailed quotes, offer to arrange a call or meeting with one of our human event specialists.\n\n10. Always maintain a professional, friendly, and helpful tone, reflecting Peri Peri Events' commitment to exceptional service.\n\n11. Respect client privacy and confidentiality at all times.\n\n12. Do not make specific promises about availability or pricing without human verification.\n\n13. If asked about services we don't offer or topics outside your knowledge, politely explain your limitations and offer to connect the client with a human team member.\n\nRemember, your goal is to provide valuable information, build rapport, and qualify leads for our event planning services. Always prioritize understanding the client's unique needs and demonstrating how Peri Peri Events can bring their vision to life.
                         """
                 ),
             )
@@ -136,9 +120,9 @@ async def entrypoint(ctx: JobContext):
 
             asyncio.create_task(_answer(for_msg, use_image=False))
 
-    @assistant.on("user_started_speaking")
+    # @assistant.on("user_started_speaking")
     # def on_user_started_speaking():
-        """This event triggers when the user starts speaking."""
+        # """This event triggers when the user starts speaking."""
         # print("\n\n\n USER STARTED SPEAKING")
         # Send a notification that the user started speaking
         # asyncio.create_task(send_transcript_to_backend("User started speaking", "/voice/transcript/real_time"))
@@ -162,10 +146,13 @@ async def entrypoint(ctx: JobContext):
     #     if user_msg:
     #         asyncio.create_task(_answer(user_msg, use_image=True))
 
+    user_biz_name = "PeriPeri"
+    opening_line =  f"Hi, thanks for visiting {user_biz_name}, I'm here to answer any questions you may have, and to help you host a memorable event. The more information you can share, the better"
+
     assistant.start(ctx.room)
 
     await asyncio.sleep(0.2)
-    await assistant.say("Merp, the petrol is spicy", allow_interruptions=True)
+    await assistant.say(opening_line, allow_interruptions=True)
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
