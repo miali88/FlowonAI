@@ -22,8 +22,8 @@ class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
 
 async def entrypoint(ctx: JobContext):
-
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) ### ADDED NEW, CONSIDER REMOVING IF ISSUE
+    print(f"Entrypoint called with job_id: {ctx.job.id}")
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     print(f"Room name: {ctx.room.name}")
 
     chat_context = ChatContext(
@@ -48,12 +48,15 @@ async def entrypoint(ctx: JobContext):
 
     assistant = VoiceAssistant(
         vad=silero.VAD.load(),  # We'll use Silero's Voice Activity Detector (VAD)
-        stt=deepgram.STT(),  # We'll use Deepgram's Speech To Text (STT)
+        stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
         llm=gpt,
-        tts=openai_tts,  # We'll use OpenAI's Text To Speech (TTS)
+        tts=openai_tts,         # We'll use OpenAI's Text To Speech (TTS)
         fnc_ctx=AssistantFunction(),
         chat_ctx=chat_context,
     )
+
+    # Set the job_id using the new set_job_id method
+    assistant.set_job_id(ctx.job.id)
 
     #chat = rtc.ChatManager(ctx.room)
 

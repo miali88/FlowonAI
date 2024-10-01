@@ -21,3 +21,11 @@ async def voice_webhook(request: Request):
 
     return JSONResponse(content={"message": "Voice webhook received"})
 
+@router.api_route('/state', methods=['POST', 'GET'])
+async def voice_webhook(request: Request):
+    state = await request.json()
+
+    """ link the state to the user_id of clerk dashboard. """
+    print("\n\nSTATE:", state)
+
+    return JSONResponse(content={"message": "Voice webhook received"})
