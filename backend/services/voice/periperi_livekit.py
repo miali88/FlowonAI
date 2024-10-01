@@ -10,7 +10,7 @@ from livekit.agents.llm import (
     )
 
 from livekit.agents.voice_assistant import VoiceAssistant
-from livekit.plugins import deepgram, openai, silero
+from livekit.plugins import deepgram, openai, silero, elevenlabs
 import os 
 from dotenv import load_dotenv
 import aiohttp
@@ -61,8 +61,14 @@ async def entrypoint(ctx: JobContext):
 
     # Since OpenAI does not support streaming TTS, we'll use it with a StreamAdapter
     # to make it compatible with the VoiceAssistant
-    openai_tts = tts.StreamAdapter(
-        tts=openai.TTS(voice="alloy"),
+    ELEVENLABS_VOICE_ID = "HyRvE4YNE0T7VnHEFacJ"
+
+    eleven_tts = tts.StreamAdapter(
+        tts=elevenlabs.TTS(voice=elevenlabs.Voice(
+            id=ELEVENLABS_VOICE_ID,
+            name="Custom Voice",  # You can set a name for the voice
+            category="custom"  # You can set a category if needed
+        )),
         sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
     )
 
@@ -70,7 +76,7 @@ async def entrypoint(ctx: JobContext):
         vad=silero.VAD.load(),  # We'll use Silero's Voice Activity Detector (VAD)
         stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
         llm=gpt,
-        tts=openai_tts,         # We'll use OpenAI's Text To Speech (TTS)
+        tts=eleven_tts,         # We'll use OpenAI's Text To Speech (TTS)
         fnc_ctx=AssistantFunction(),
         chat_ctx=chat_context,
     )
