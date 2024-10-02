@@ -1,11 +1,12 @@
 import React from 'react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import ShineBorder from "@/components/ui/shine-border";
-import { AnimatedBeamMultipleOutputDemo } from "./animated-beam-multiple-outputs";
+import { AnimatedBeamMultipleOutputDemo } from "./animated-beam-multiple-inputs";
 import Meteors from "@/components/ui/meteors";
 import { BoxRevealDemo } from "./BoxReveal";
 // Add this import
 import GradualSpacing from "@/components/ui/gradual-spacing";
+import BlurIn from "@/components/ui/blur-in";
 
 const Welcome: React.FC = () => {
   return (
@@ -25,9 +26,15 @@ const Welcome: React.FC = () => {
 
       
       <CardContent>
-        {/* Add BoxRevealDemo here */}
-        <BoxRevealDemo />
-        <AnimatedBeamMultipleOutputDemo />
+        <div className="relative">
+          <div className="absolute top-12 left-0 right-0 z-10"> {/* Changed top-4 to top-8 */}
+            <BlurIn
+              word="Act with data, have more meaningful conversations. Your specialised agent will always be in sync with business expectation"
+              className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-center"
+            />
+          </div>
+          <AnimatedBeamMultipleOutputDemo />
+        </div>
       </CardContent>
     </Card>
   );

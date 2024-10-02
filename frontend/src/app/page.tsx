@@ -58,9 +58,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
-import { LiveKitEntry } from "@/components/LiveKitEntry";
-import ChatAgent from '@/components/Dashboard/ChatAgent';
-import { Analytics } from "@/components/Dashboard/Analytics";
 import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
 import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
 import ChatHistory from '@/components/Dashboard/ChatHistory';
@@ -69,7 +66,6 @@ import VoiceAgent from '@/components/VoiceAgent';
 import MorphingStreamButton from '@/components/MorphingStreamButton';
 import Welcome from '@/components/Dashboard/Welcome';
 import DockDemo from "@/components/Dashboard/Dock";  // Add this import
-
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -690,59 +686,6 @@ function KnowledgeBaseContent() {
     </div>
   );
 }
-
-// function AnalyticsContent() {
-//   return <Analytics />;
-// }
-
-// function FeaturesContent({ setSelectedFeature }) {
-//   const features = [
-//     { title: "Call Routing", description: "Efficiently route incoming calls to the right department or agent.", icon: MessageSquare },
-//     { title: "Appointment Booking", description: "Allow customers to book appointments directly through your system.", icon: MessageSquare },
-//     { title: "Prospecting", description: "Identify and engage potential customers to grow your business.", icon: MessageSquare },
-//     { title: "Interview", description: "Streamline your hiring process with integrated interview scheduling and management.", icon: MessageSquare },
-//     { title: "Customer Support", description: "Provide excellent customer support with our integrated tools.", icon: MessageSquare },
-//   ];
-
-//   return (
-//     <div className="p-6">
-//       <h3 className="text-xl font-semibold mb-4">Features</h3>
-//       <p className="text-muted-foreground mb-6">
-//         Explore and manage the features available in your admin panel.
-//       </p>
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//         {features.map((feature, index) => (
-//           <Card key={index}>
-//             <CardHeader>
-//               <feature.icon className="h-8 w-8 mb-2 text-primary" />
-//               <CardTitle>{feature.title}</CardTitle>
-//             </CardHeader>
-//             <CardContent>
-//               <CardDescription>{feature.description}</CardDescription>
-//               <Button 
-//                 className="mt-4 w-8 h-8 rounded-full p-0" 
-//                 onClick={() => setSelectedFeature(feature.title)}
-//               >
-//                 <ChevronRight className="h-4 w-4" />
-//               </Button>
-//             </CardContent>
-//           </Card>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function FeatureDetailContent({ feature }) {
-//   return (
-//     <div className="p-6">
-//       <h3 className="text-xl font-semibold mb-4">{feature}</h3>
-//       <p className="text-muted-foreground mb-6">
-//         Detailed settings and information for {feature}.
-//       </p>
-//     </div>
-//   );
-// }
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
