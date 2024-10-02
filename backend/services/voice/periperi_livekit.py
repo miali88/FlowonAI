@@ -8,6 +8,7 @@ from livekit.agents.llm import (
     ChatImage,
     ChatMessage,
     )
+
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents.voice_assistant.speech_handle import SpeechHandle  # Correct import
 from livekit.plugins import deepgram, openai, silero, elevenlabs
@@ -15,8 +16,6 @@ from livekit.agents.llm import LLMStream, ChatContext
 
 from dotenv import load_dotenv
 import aiohttp
-
-from services.voice.rag import llm_response
 from services.voice.prompt import sys_prompt
 
 load_dotenv()
@@ -47,39 +46,12 @@ class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.DOMAIN = "http://localhost:8000/api/v1"  # Or set this from environment variables
-        #self.rag_system = RAGSystem()  # Initialize your RAG system here
 
     async def _synthesize_answer_task(
         self, old_task: Optional[asyncio.Task[None]], handle: SpeechHandle
     ) -> None:
-        # Extract the user's question
-        user_question = handle.user_question
 
-        # Use RAG to retrieve relevant documents
-        #relevant_docs = await self.rag_system.retrieve(user_question)
-        print("\n\n\n USER QUESTION:", user_question)
-        print("\n\n\n RUNNING RAG...")
-        relevant_docs = await llm_response(user_question)
-
-        # Create a copy of the chat context
-        copied_ctx = self._chat_ctx.copy()
-
-        # Inject the retrieved documents into the chat context
-        rag_message = f"Relevant information:\n{' '.join(relevant_docs)}\n\nPlease use this information to help answer the user's question."
-        copied_ctx.messages.append(ChatMessage.create(text=rag_message, role="user"))
-
-        # Override the before_llm_cb to use our modified context
-        original_before_llm_cb = self._opts.before_llm_cb
-        async def rag_enhanced_before_llm_cb(assistant, _):
-            # Use the copied_ctx instead of the unused chat_ctx parameter
-            return await original_before_llm_cb(assistant, copied_ctx)
-        self._opts.before_llm_cb = rag_enhanced_before_llm_cb
-
-        # Call the parent class's method with our modifications
         await super()._synthesize_answer_task(old_task, handle)
-
-        # Restore the original before_llm_cb
-        self._opts.before_llm_cb = original_before_llm_cb
 
         extra_data = {
             "user_transcript": handle.user_question,
@@ -88,8 +60,6 @@ class CustomVoiceAssistant(VoiceAssistant):
             "job_id": self._job_id,
             "call_state": self._call_state.value if hasattr(self, '_call_state') else None
         }
-
-        print("\n\n\n COPIED CONTEXT:", copied_ctx)
 
         # Send extra_data to backend
         async with aiohttp.ClientSession() as session:
