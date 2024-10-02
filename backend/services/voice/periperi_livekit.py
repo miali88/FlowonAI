@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated
+from typing import Annotated, Optional
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
@@ -10,7 +10,10 @@ from livekit.agents.llm import (
     )
 
 from livekit.agents.voice_assistant import VoiceAssistant
+from livekit.agents.voice_assistant.speech_handle import SpeechHandle  # Correct import
 from livekit.plugins import deepgram, openai, silero, elevenlabs
+from livekit.agents.llm import LLMStream, ChatContext
+
 from dotenv import load_dotenv
 import aiohttp
 from prompt import sys_prompt
@@ -38,6 +41,38 @@ class AssistantFunction(agents.llm.FunctionContext):
     ):
         print(f"Message triggering transfer call: {user_msg}")
         return None
+
+class CustomVoiceAssistant(VoiceAssistant):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.DOMAIN = "http://localhost:8000/api/v1"  # Or set this from environment variables
+
+    async def _synthesize_answer_task(
+        self, old_task: Optional[asyncio.Task[None]], handle: SpeechHandle
+    ) -> None:
+        # Call the original method
+        await super()._synthesize_answer_task(old_task, handle)
+
+        # Add your custom code here
+        extra_data = {
+            "user_transcript": handle.user_question,
+            "speech_id": handle.id,
+            "elapsed": -1.0,  # You might want to calculate this
+            "job_id": self._job_id,
+            "call_state": self._call_state.value if hasattr(self, '_call_state') else None
+        }
+
+        # Send extra_data to backend
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(f'{self.DOMAIN}/voice/transcript/real_time', json=extra_data) as response:
+                    if response.status == 200:
+                        self.logger.debug("Successfully sent transcript data to backend", extra={"job_id": self._job_id})
+                    else:
+                        self.logger.warning(f"Failed to send transcript data to backend. Status: {response.status}", extra={"job_id": self._job_id})
+            except Exception as e:
+                self.logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
+
 
 async def entrypoint(ctx: JobContext):
     print(f"Entrypoint called with job_id: {ctx.job.id}")
@@ -69,7 +104,8 @@ async def entrypoint(ctx: JobContext):
         sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
     )
 
-    assistant = VoiceAssistant(
+    # Use CustomVoiceAssistant instead of VoiceAssistant
+    assistant = CustomVoiceAssistant(
         vad=silero.VAD.load(),  # We'll use Silero's Voice Activity Detector (VAD)
         stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
         llm=gpt,
