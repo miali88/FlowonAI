@@ -81,19 +81,6 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
             </AnimatePresence>
           </Button>
         </motion.div>
-        <div className="w-full mt-4 space-y-2">
-          <Input
-            type="text"
-            placeholder="Type your message..."
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === "Enter" && !isStreaming) {
-                toggleStreaming();
-              }
-            }}
-          />
-        </div>
       </CardContent>
     </Card>
   );
