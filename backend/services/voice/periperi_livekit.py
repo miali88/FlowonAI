@@ -25,22 +25,22 @@ DOMAIN = "http://localhost:8000/api/v1"
 class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
 
-    @agents.llm.ai_callable(
-        description=(
-            "Called when asked to transfer the call to a human, or when the client is qualified and wants to speak to a human."
-        )
-    )
-    async def transfer_call(
-        self,
-        user_msg: Annotated[
-            str,
-            agents.llm.TypeInfo(
-                description="The user message that triggered this function"
-            ),
-        ],
-    ):
-        print(f"Message triggering transfer call: {user_msg}")
-        return None
+    # @agents.llm.ai_callable(
+    #     description=(
+    #         "Called when asked to transfer the call to a human, or when the client is qualified and wants to speak to a human."
+    #     )
+    # )
+    # async def transfer_call(
+    #     self,
+    #     user_msg: Annotated[
+    #         str,
+    #         agents.llm.TypeInfo(
+    #             description="The user message that triggered this function"
+    #         ),
+    #     ],
+    # ):
+    #     print(f"Message triggering transfer call: {user_msg}")
+    #     return None
 
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
@@ -62,16 +62,34 @@ class CustomVoiceAssistant(VoiceAssistant):
             "call_state": self._call_state.value if hasattr(self, '_call_state') else None
         }
 
-        # Send extra_data to backend
         async with aiohttp.ClientSession() as session:
             try:
+                print(f"\n\nAbout to send POST request to {self.DOMAIN}/voice/transcript/real_time")
+                print(f"Request data: {extra_data}")
                 async with session.post(f'{self.DOMAIN}/voice/transcript/real_time', json=extra_data) as response:
+                    print(f"\n\nResponse status: {response.status}")
+                    print(f"Response headers: {response.headers}")
+                    response_text = await response.text()
+                    print(f"Raw response text: {response_text}")
+                    
                     if response.status == 200:
                         self.logger.debug("Successfully sent transcript data to backend", extra={"job_id": self._job_id})
+                        try:
+                            response_data = await response.json()
+                            print("\n\nParsed JSON response from /voice/transcript/real_time:", response_data)
+                        except aiohttp.ContentTypeError:
+                            print(f"\n\nFailed to parse JSON. Content-Type: {response.headers.get('Content-Type')}")
+                            print(f"Response text: {response_text}")
                     else:
                         self.logger.warning(f"Failed to send transcript data to backend. Status: {response.status}", extra={"job_id": self._job_id})
+                        print(f"\n\nFailed to get response. Status: {response.status}")
+                        print(f"Response text: {response_text}")
             except Exception as e:
                 self.logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
+                print(f"\n\nError sending transcript data to backend: {str(e)}")
+
+        print("\n\nFinished _synthesize_answer_task method")
+
 
 
 async def entrypoint(ctx: JobContext):

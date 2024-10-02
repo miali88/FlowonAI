@@ -182,7 +182,7 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
             else:
                 raise e 
 
-async def similarity_search(query: str, table_names: List[str], user_id: str = None, 
+async def similarity_search(query: str, table_names: List[str] = None, user_id: str = None, 
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 
                             embedding_column: str = "jina_embedding", max_results: int = 15):
     print("\n\nsimilarity_search...")
