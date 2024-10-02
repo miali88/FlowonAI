@@ -16,7 +16,6 @@ async def voice_webhook(request: Request):
 
     print("\n\nCOMMIT ENDPOINT:", data)
 
-
     return JSONResponse(content={"message": "Voice webhook received"})
 
 @router.api_route('/transcript/real_time', methods=['POST', 'GET'])
