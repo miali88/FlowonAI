@@ -205,7 +205,7 @@ async def similarity_search(query: str, table_names: List[str], user_id: str = N
             'max_results': max_results
         }
     ).execute()
-    results[""] = response.data
+    results = response.data
 
     return results
 

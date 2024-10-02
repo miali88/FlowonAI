@@ -51,8 +51,9 @@ class CustomVoiceAssistant(VoiceAssistant):
         self, old_task: Optional[asyncio.Task[None]], handle: SpeechHandle
     ) -> None:
 
+        copied_ctx = self._chat_ctx.copy()
+        print("\n\nCopied Chat Context:", copied_ctx)
         await super()._synthesize_answer_task(old_task, handle)
-
         extra_data = {
             "user_transcript": handle.user_question,
             "speech_id": handle.id,
@@ -176,7 +177,7 @@ async def entrypoint(ctx: JobContext):
 
 
     user_biz_name = "PeriPeri"
-    opening_line =  f"Hey there, you can ask me anything, and I can try and be of service. So, what kind of event are you planning on hosting?"
+    opening_line =  f"Hello there, you can ask me anything about how we host events, and ensure a memorable experience. So, what is the occasion?"
 
     assistant.start(ctx.room)
 

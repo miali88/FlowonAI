@@ -6,13 +6,18 @@ from twilio.twiml.voice_response import VoiceResponse
 
 import os
 import logging
+from typing import List, Dict
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Add this global variable to store the jobs
+jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
+
 @router.api_route('/transcript/commit', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
     data = await request.json()
+
 
     print("\n\nCOMMIT ENDPOINT:", data)
 
@@ -23,10 +28,28 @@ async def voice_webhook(request: Request):
     data = await request.json()
 
     print("\n\nReceived data:", data)
-    print("Transcript:", data.get('transcript'))
-    print("Chat Context:", data.get('chat_context'))
 
-    return JSONResponse(content={"message": "Voice webhook received"})
+    # Extract job_id and other relevant information
+    job_id = data.get('job_id')
+    user_transcript = data.get('user_transcript')
+    speech_id = data.get('speech_id')
+
+    # Find or create the job in the jobs dictionary
+    if job_id not in jobs:
+        jobs[job_id] = {
+            'job_id': job_id,
+            'transcript': []
+        }
+
+    # Append the new transcript entry
+    jobs[job_id]['transcript'].append({
+        'user_transcript': user_transcript,
+        'speech_id': speech_id
+    })
+
+    print("\n\nUpdated job:", jobs[job_id])
+
+    return JSONResponse(content={"message": "Voice webhook received and data stored"})
 
 @router.api_route('/state', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
