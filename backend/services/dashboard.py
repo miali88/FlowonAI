@@ -1,12 +1,7 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
 import asyncio
 
 import logging
 from typing import List
-from pydantic import BaseModel, ValidationError
 from dotenv import load_dotenv
 
 from tiktoken import encoding_for_model
@@ -91,3 +86,4 @@ async def kb_item_to_chunks(data_id, data_content, user_id):
         print("text cleaned")
     await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
     print("kb item embedded")
+

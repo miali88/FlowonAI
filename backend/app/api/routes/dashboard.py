@@ -1,21 +1,23 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, Query, Header, APIRouter, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-import logging
-from fastapi.responses import JSONResponse
-from supabase import create_client, Client
 from dotenv import load_dotenv
 import os 
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, ValidationError
 import json
-from firecrawl import FirecrawlApp
-import tiktoken
-from openai import OpenAI
+import logging
+from fastapi import FastAPI, Request, HTTPException, \
+    Depends, Query, Header, APIRouter, BackgroundTasks
+from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
-from services.file_process import file_processing
+
+from supabase import create_client, Client
+from firecrawl import FirecrawlApp
+from openai import OpenAI
+import tiktoken
 
 from app.core.config import settings
+from services.file_process import file_processing
 from services.dashboard import kb_item_to_chunks
+from services.kb import get_kb_items
 
 load_dotenv()
 
@@ -43,7 +45,9 @@ router = APIRouter()
 class KnowledgeBaseItem(BaseModel):
     id: int
     title: str
-    content: str
+    content: Optional[str]
+    url: Optional[str] = None      # Add 'url' if applicable
+    token_count: Optional[int] = None
     user_id: str
 
 class KnowledgeBaseItemCreate(BaseModel):
@@ -110,10 +114,9 @@ async def upload_file_handler(
 @router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
-        print(f"Fetching items for user: {current_user}")
-        items = supabase.table('knowledge_base').select('*').eq('user_id', current_user).execute()
-        print('Items loaded:', items)
-        return items.data
+        items = await get_kb_items(current_user)
+        print("\n\nitems:", items)
+        return items
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

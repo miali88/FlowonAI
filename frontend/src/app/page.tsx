@@ -44,10 +44,12 @@ import MorphingStreamButton from '@/components/MorphingStreamButton';
 import Welcome from '@/components/Dashboard/Welcome';
 import DockDemo from "@/components/Dashboard/Dock";  // Add this import
 import KnowledgeBaseContent from "@/components/Dashboard/KnowledgeBase";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CardWithForm } from "@/components/shadcn/CardDemo";  // Add this import
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Add this interface at the top of your file
+// Add this interface at the top of your file 
 interface SavedItem {
   id: number;
   title: string;
@@ -83,7 +85,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
     { icon: HomeIcon, label: "Welcome" },  // Use HomeIcon here
-    { icon: Mic, label: "Voice Agent" },
+    { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
     // { icon: BarChart3, label: "Analytics" },
@@ -257,8 +259,15 @@ function AdminDashboard() {
     switch (activeItem) {
       case "Welcome":
         return <Welcome />;
-      case "Voice Agent":
-        return <VoiceAgent />;
+      case "Agent Hub":
+        return (
+          <div className="flex flex-col h-full">
+            <VoiceAgent />
+            <div className="mt-auto flex justify-start pl-8 pb-8">
+              <CardWithForm />
+            </div>
+          </div>
+        );
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Conversation Logs":

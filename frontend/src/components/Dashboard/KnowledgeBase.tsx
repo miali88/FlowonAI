@@ -106,7 +106,7 @@ function KnowledgeBaseContent() {
   
       try {
         const token = await getToken();
-        const response = await axios.get(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, {
+        const response = await axios.get(`${API_BASE_URL}/dashboard/knowledge_base`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,
@@ -118,25 +118,15 @@ function KnowledgeBaseContent() {
         console.log("Is response.data an array?", Array.isArray(response.data));
         
         // Ensure savedItems is always an array
-        setSavedItems(Array.isArray(response.data) ? response.data : []);
+        setSavedItems(Array.isArray(response.data.items) ? response.data.items : []);
   
         // Log each item's data_type
-        response.data.forEach((item, index) => {
+        response.data.items.forEach((item, index) => {
           console.log(`Item ${index} data_type:`, item.data_type);
         });
   
-        // Calculate total tokens
-        const aggregatedContent = response.data.map(item => item.content).join(' ');
-        const tokenCountResponse = await axios.post(`${API_BASE_URL}/api/v1/dashboard/calculate_tokens`, 
-          { content: aggregatedContent },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'X-User-ID': user.id,
-            },
-          }
-        );
-        setTotalTokens(tokenCountResponse.data.token_count);
+        // Set total tokens from the response
+        setTotalTokens(response.data.total_tokens);
       } catch (error) {
         console.error("Error fetching user data:", error);
         setAlertMessage("Failed to fetch user data: " + (error.message || "Unknown error"));
@@ -159,7 +149,7 @@ function KnowledgeBaseContent() {
         const formData = new FormData();
         formData.append('file', selectedFile);
   
-        const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/upload_file`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/dashboard/upload_file`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -267,7 +257,7 @@ function KnowledgeBaseContent() {
   
       try {
         const token = await getToken();
-        await axios.delete(`${API_BASE_URL}/api/v1/dashboard/knowledge_base/${itemId}`, {
+        await axios.delete(`${API_BASE_URL}/dashboard/knowledge_base/${itemId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,

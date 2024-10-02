@@ -25,7 +25,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-[300px]">
+    <Card className="w-full max-w-[300px] bg-transparent border-none shadow-none">
       <CardContent className="p-6 flex flex-col items-center">
         <motion.div
           className="relative mb-4"

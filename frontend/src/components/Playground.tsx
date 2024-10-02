@@ -8,7 +8,7 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import ReactMarkdown from 'react-markdown';
 
 // Add this constant at the top of your file, outside of any component
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Message {
   text: string;
@@ -47,7 +47,7 @@ export function Playground() {
 
     try {
       const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
