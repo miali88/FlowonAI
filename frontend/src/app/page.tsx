@@ -68,6 +68,7 @@ import ChatHistory from '@/components/Dashboard/ChatHistory';
 import VoiceAgent from '@/components/VoiceAgent';
 import MorphingStreamButton from '@/components/MorphingStreamButton';
 import Welcome from '@/components/Dashboard/Welcome';
+import DockDemo from "@/components/Dashboard/Dock";  // Add this import
 
 
 const API_BASE_URL = 'http://localhost:8000';
