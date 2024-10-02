@@ -11,7 +11,7 @@ from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import deepgram, openai, silero
 from dotenv import load_dotenv
 import aiohttp
-from peri_sys_prompt import sys_prompt
+from backend.services.voice.prompt import sys_prompt
 
 load_dotenv()
 
