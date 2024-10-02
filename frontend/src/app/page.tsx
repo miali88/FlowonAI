@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
@@ -51,18 +52,23 @@ import {
   Upload,
   User,
   X,
+  Home as HomeIcon,  // Rename the Home icon import
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useDropzone } from 'react-dropzone';
 import { LiveKitEntry } from "@/components/LiveKitEntry";
 import ChatAgent from '@/components/Dashboard/ChatAgent';
 import { Analytics } from "@/components/Dashboard/Analytics";
 import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
 import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
-import { Badge } from "@/components/ui/badge";
-import MorphingStreamButton from '@/components/MorphingStreamButton';
+import ChatHistory from '@/components/Dashboard/ChatHistory';
+
 import VoiceAgent from '@/components/VoiceAgent';
+import MorphingStreamButton from '@/components/MorphingStreamButton';
+import Welcome from '@/components/Dashboard/Welcome';
+
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -101,10 +107,10 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
+    { icon: HomeIcon, label: "Welcome" },  // Use HomeIcon here
     { icon: Mic, label: "Voice Agent" },
     { icon: BookOpen, label: "Knowledge Base" },
-    { icon: Globe, label: "Chat Agent" },
-    // { icon: MessageSquare, label: "Features" },
+    { icon: MessageSquare, label: "Conversation Logs" },
     // { icon: BarChart3, label: "Analytics" },
   ];
 
@@ -739,7 +745,7 @@ function KnowledgeBaseContent() {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Voice Agent");  // Changed this line
+  const [activeItem, setActiveItem] = useState("Welcome");  // Set default to "Welcome"
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activePanel, setActivePanel] = useState('admin');
@@ -765,15 +771,16 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
+      case "Welcome":
+        return <Welcome />;
       case "Voice Agent":
         return <VoiceAgent />;
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
-      case "Chat Agent":
-        return <ChatAgent />;
-      // ... other cases ...
+      case "Conversation Logs":
+        return <ChatHistory />;
       default:
-        return <VoiceAgent />;  // Changed this line
+        return <Welcome />; // Change this to show Welcome by default
     }
   };
 
@@ -802,7 +809,8 @@ function AdminDashboard() {
   );
 }
 
-export default function Home() {
+// Rename this function to avoid conflict
+function HomePage() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
 
@@ -818,3 +826,5 @@ export default function Home() {
 
   return <AdminDashboard />;
 }
+
+export default HomePage;  // Export the renamed function

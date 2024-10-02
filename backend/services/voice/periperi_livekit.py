@@ -1,21 +1,16 @@
 import asyncio
-from typing import Annotated, Optional
+from typing import Optional, Annotated
+from dotenv import load_dotenv
+import aiohttp
+import json
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
-from livekit.agents.llm import (
-    ChatContext,
-    ChatImage,
-    ChatMessage,
-    )
-
+from livekit.agents.llm import ChatContext, ChatImage, ChatMessage
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents.voice_assistant.speech_handle import SpeechHandle  # Correct import
 from livekit.plugins import deepgram, openai, silero, elevenlabs
-from livekit.agents.llm import LLMStream, ChatContext
 
-from dotenv import load_dotenv
-import aiohttp
 from services.voice.prompt import sys_prompt
 
 load_dotenv()
@@ -41,6 +36,23 @@ class AssistantFunction(agents.llm.FunctionContext):
     # ):
     #     print(f"Message triggering transfer call: {user_msg}")
     #     return None
+
+    @agents.llm.ai_callable(
+        description=(
+            "Called when the conversation has concluded, and the assistant has said goodbye."))
+    async def end_call(
+        self,
+        user_msg: Annotated[
+            str,
+            agents.llm.TypeInfo(
+                description="The user message that triggered this function"
+            ),
+        ],
+    ):
+        print(f"Message triggering transfer call: {user_msg}")
+        return None
+
+
 
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
@@ -72,24 +84,31 @@ class CustomVoiceAssistant(VoiceAssistant):
                     response_text = await response.text()
                     print(f"Raw response text: {response_text}")
                     
-                    if response.status == 200:
-                        self.logger.debug("Successfully sent transcript data to backend", extra={"job_id": self._job_id})
-                        try:
-                            response_data = await response.json()
-                            print("\n\nParsed JSON response from /voice/transcript/real_time:", response_data)
-                        except aiohttp.ContentTypeError:
-                            print(f"\n\nFailed to parse JSON. Content-Type: {response.headers.get('Content-Type')}")
-                            print(f"Response text: {response_text}")
+                    print("\n\nabout to parse JSON!!!:", response_text)
+                    response_data = json.loads(response_text)
+
+                    print("\n\nParsed JSON response from /voice/transcript/real_time:", response_data)
+                    
+                    # Add the RAG results to the chat context
+                    rag_results = response_data.get('rag_results', [])
+                    if rag_results:
+                        rag_content = "\n".join([f"- {result}" for result in rag_results])
+                        print("\n\n adding RAG results to context:", rag_content)
+                        # self._chat_ctx.messages.append(ChatMessage(
+                        #     role="user",
+                        #     content=f"Here are some relevant pieces of information:\n{rag_content}"
+                        # ))
+                        # print("\n\nAdded RAG results to chat context")
                     else:
-                        self.logger.warning(f"Failed to send transcript data to backend. Status: {response.status}", extra={"job_id": self._job_id})
-                        print(f"\n\nFailed to get response. Status: {response.status}")
-                        print(f"Response text: {response_text}")
+                        print("\n\nNo RAG results to add to chat context")
+
+
+
             except Exception as e:
                 self.logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
                 print(f"\n\nError sending transcript data to backend: {str(e)}")
 
         print("\n\nFinished _synthesize_answer_task method")
-
 
 
 async def entrypoint(ctx: JobContext):
