@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Input } from "@/components/ui/input";
 
 interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
   isStreaming: boolean;
-  showTextBox: boolean; // New prop to control text box visibility
+  showTextBox: boolean;
 }
 
 const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
@@ -15,15 +14,6 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
   isStreaming, 
   showTextBox 
 }) => {
-  const [userInput, setUserInput] = useState("");
-
-  const toggleStreaming = () => {
-    onStreamToggle();
-    if (!isStreaming && userInput.trim() !== "") {
-      setUserInput("");
-    }
-  };
-
   return (
     <Card className="w-full max-w-[300px] bg-transparent border-none shadow-none">
       <CardContent className="p-6 flex flex-col items-center">
@@ -34,7 +24,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
         >
           <Button
             className="w-full h-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none overflow-hidden"
-            onClick={toggleStreaming}
+            onClick={onStreamToggle}
           >
             <AnimatePresence mode="wait">
               {!isStreaming ? (

@@ -94,6 +94,10 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching agents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+from fastapi import FastAPI, Request, HTTPException
+from livekit import api
+import os
+
 @router.post("/upload_file")
 async def upload_file_handler(
     background_tasks: BackgroundTasks,

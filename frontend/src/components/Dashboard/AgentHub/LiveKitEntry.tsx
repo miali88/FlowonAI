@@ -18,7 +18,7 @@ export function LiveKitEntry({ token, url }: LiveKitEntryProps) {
     <LiveKitRoom
       token={token}
       serverUrl={url}
-      connectOptions={{autoSubscribe: true}}
+      connectOptions={{ autoSubscribe: true }}
     >
       <ActiveRoom />
     </LiveKitRoom>

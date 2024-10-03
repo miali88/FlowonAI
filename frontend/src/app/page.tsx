@@ -39,7 +39,8 @@ import {
 } from "lucide-react";
 import ChatHistory from '@/components/Dashboard/ChatHistory';
 
-import AgentHub from '@/components/Dashboard/AgentHub/AgentHub';
+import { AgentHub } from '@/components/Dashboard/AgentHub/AgentHub';
+import { Agent } from '@/components/Dashboard/AgentHub/LibraryTable';
 import Welcome from '@/components/Dashboard/Welcome/Welcome';
 import DockDemo from "@/components/Dashboard/Dock";  // Add this import
 import KnowledgeBaseContent from "@/components/Dashboard/Knowledgebase/KnowledgeBase";
@@ -229,13 +230,14 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 }
 
 function AdminDashboard() {
-  const [isCollapsed, setIsCollapsed] = useState(true);  // Changed to true
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeItem, setActiveItem] = useState("Welcome");
-  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activePanel, setActivePanel] = useState('admin');
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null); // State for selected agent
 
-  const handleSetActiveItem = (item) => {
+  const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
     setSelectedFeature(null);
   };
@@ -264,9 +266,10 @@ function AdminDashboard() {
             <div className="mb-4 ml-8 mt-8">
               <DialogDemo />
             </div>
-            <AgentHub />
-            <DataTableDemo />  
+            <AgentHub selectedAgent={selectedAgent} /> {/* Passed selectedAgent as prop */}
+            <DataTableDemo setSelectedAgent={setSelectedAgent} /> {/* Passed setSelectedAgent as prop */}
             <div className="mt-auto flex justify-start pl-8 pb-8">
+              {/* Additional content if needed */}
             </div>
           </div>
         );

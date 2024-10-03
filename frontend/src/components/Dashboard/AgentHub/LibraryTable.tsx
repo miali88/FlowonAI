@@ -55,6 +55,10 @@ export type Agent = {
   dataSource: string
 }
 
+interface LibraryTableProps {
+  setSelectedAgent: (agent: Agent) => void;
+}
+
 export const columns: ColumnDef<Agent>[] = [
   {
     id: "select",
@@ -141,7 +145,7 @@ export const columns: ColumnDef<Agent>[] = [
   },
 ]
 
-export function DataTableDemo() {
+export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
   const { user } = useUser();
   const [data, setData] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
@@ -154,7 +158,7 @@ export function DataTableDemo() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [selectedAgentState, setSelectedAgentState] = useState<Agent | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -216,10 +220,10 @@ export function DataTableDemo() {
         </Button>
         <div className="flex items-center">
           <Input
-            placeholder="Filter emails..."
-            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter agent..."
+            value={(table.getColumn("agentName")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.target.value)
+              table.getColumn("agentName")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
