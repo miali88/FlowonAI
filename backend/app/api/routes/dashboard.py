@@ -18,7 +18,7 @@ from app.core.config import settings
 from services.file_process import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.kb import get_kb_items
-from services.voice.agents import create_agent
+from services.voice.agents import create_agent, get_agents
 
 load_dotenv()
 
@@ -74,7 +74,6 @@ async def get_current_user(x_user_id: str = Header(...)):
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
 
-
 @router.post("/new_agent")
 async def new_agent_handler(request: Request):
     try:
@@ -84,6 +83,15 @@ async def new_agent_handler(request: Request):
         return new_agent
     except Exception as e:
         logger.error(f"Error creating agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/agents")
+async def get_agents_handler(current_user: str = Depends(get_current_user)):
+    try:
+        agents = await get_agents(current_user)
+        return agents
+    except Exception as e:
+        logger.error(f"Error fetching agents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/upload_file")
@@ -129,7 +137,7 @@ async def upload_file_handler(
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
-        print("\n\nitems:", items)
+        #print("\n\nitems:", items)
         print("\n\ntotal_tokens:", total_tokens)
         return items
     except Exception as e:

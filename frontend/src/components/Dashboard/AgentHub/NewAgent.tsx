@@ -75,7 +75,7 @@ export function DialogDemo() {
       });
 
       if (response.ok) {
-        setResponseMessage('Agent created successfully');
+        setResponseMessage('Agent created successfully. Please refresh the page.');
         // Close the dialog after a short delay
         setTimeout(() => {
           setIsOpen(false);

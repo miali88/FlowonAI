@@ -25,7 +25,9 @@ logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 async def create_agent(data):
-    
-    
     new_agent = supabase.table('agents').insert(data).execute()
     return new_agent
+
+async def get_agents(user_id: str):
+    agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
+    return agents

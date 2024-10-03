@@ -39,48 +39,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import { useUser } from "@clerk/nextjs";
 
-const data: Payment[] = [
-  {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@yahoo.com",
-  },
-  {
-    id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@gmail.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@gmail.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@gmail.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@hotmail.com",
-  },
-]
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export type Payment = {
+export type Agent = {
   id: string
-  amount: number
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
+  agentPurpose: string
+  agentName: string
+  voice: string
+  dataSource: string
 }
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<Agent>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -104,41 +77,36 @@ export const columns: ColumnDef<Payment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "agentPurpose",
+    header: "Purpose",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
+      <div>{row.getValue("agentPurpose")}</div>
     ),
   },
   {
-    accessorKey: "email",
+    accessorKey: "agentName",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Email
+          Agent Name
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    cell: ({ row }) => <div>{row.getValue("agentName")}</div>,
   },
   {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"))
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount)
-
-      return <div className="text-right font-medium">{formatted}</div>
-    },
+    accessorKey: "voice",
+    header: "Voice",
+    cell: ({ row }) => <div>{row.getValue("voice")}</div>,
+  },
+  {
+    accessorKey: "dataSource",
+    header: "Data Source",
+    cell: ({ row }) => <div>{row.getValue("dataSource")}</div>,
   },
   {
     id: "actions",
@@ -172,16 +140,46 @@ export const columns: ColumnDef<Payment>[] = [
 ]
 
 export function DataTableDemo() {
+  const { user } = useUser();
+  const [data, setData] = useState<Agent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    []  
   )
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!user) {
+          setError('User not authenticated');
+          setLoading(false);
+          return;   
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/dashboard/agents`, {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+        setData(response.data.data); // Update this line to access the 'data' property
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch data');
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user])
+
   const table = useReactTable({
-    data,
+    data, // Use the fetched data here
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -198,6 +196,9 @@ export function DataTableDemo() {
       rowSelection,
     },
   })
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
 
   return (
     <div className="w-full">

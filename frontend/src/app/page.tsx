@@ -45,7 +45,7 @@ import DockDemo from "@/components/Dashboard/Dock";  // Add this import
 import KnowledgeBaseContent from "@/components/Dashboard/Knowledgebase/KnowledgeBase";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { CardWithForm } from "@/components/shadcn/CardDemo";  // Add this import
-import { DataTableDemo } from '@/components/Dashboard/Knowledgebase/LibraryTable';  // Add this import
+import { DataTableDemo } from '@/components/Dashboard/AgentHub/LibraryTable';  // Add this import
 
 import {
   Dialog,
@@ -57,8 +57,6 @@ import {
 } from "@/components/ui/dialog";
 
 import { DialogDemo } from '@/components/Dashboard/AgentHub/NewAgent';  // Add this import
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Add this interface at the top of your file 
 interface SavedItem {
