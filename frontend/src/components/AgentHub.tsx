@@ -5,7 +5,7 @@ import { MagicCardDemo } from '@/components/magicui/MagicCardDemo'; // Added imp
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern'; // Added import
 import { CarouselSpacing } from '@/components/shadcn/Carousel'; // Added import
 
-export function VoiceAgent() {
+export function AgentHub() {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -64,5 +64,4 @@ export function VoiceAgent() {
     </div>
   );
 }
-
-export default VoiceAgent;
+export default AgentHub;

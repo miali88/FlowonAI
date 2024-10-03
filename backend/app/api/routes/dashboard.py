@@ -112,11 +112,12 @@ async def upload_file_handler(
         logger.error(f"Error processing file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-@router.get("/knowledge_base", response_model=List[KnowledgeBaseItem])
+@router.get("/knowledge_base")
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
-        items = await get_kb_items(current_user)
+        items, total_tokens = await get_kb_items(current_user)
         print("\n\nitems:", items)
+        print("\n\ntotal_tokens:", total_tokens)
         return items
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")

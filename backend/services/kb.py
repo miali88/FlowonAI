@@ -69,4 +69,4 @@ async def get_kb_items(current_user):
             all_items.extend(formatted_items)
             total_tokens += (item.get('token_count', 0))
 
-    return all_items
+    return all_items, total_tokens
