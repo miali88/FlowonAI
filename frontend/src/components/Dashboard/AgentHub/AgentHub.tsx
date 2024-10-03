@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import MorphingStreamButton from '@/components/MorphingStreamButton';
-import LiveKitEntry from '@/components/LiveKitEntry';
+import MorphingStreamButton from '@/components/Dashboard/AgentHub/MorphingStreamButton';
+import LiveKitEntry from '@/components/Dashboard/AgentHub/LiveKitEntry';
 import { MagicCardDemo } from '@/components/magicui/MagicCardDemo'; // Added import
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern'; // Added import
 import { CarouselSpacing } from '@/components/shadcn/Carousel'; // Added import

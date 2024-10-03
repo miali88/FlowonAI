@@ -39,10 +39,10 @@ import {
 } from "lucide-react";
 import ChatHistory from '@/components/Dashboard/ChatHistory';
 
-import AgentHub from '@/components/AgentHub';
-import Welcome from '@/components/Dashboard/Welcome';
+import AgentHub from '@/components/Dashboard/AgentHub/AgentHub';
+import Welcome from '@/components/Dashboard/Welcome/Welcome';
 import DockDemo from "@/components/Dashboard/Dock";  // Add this import
-import KnowledgeBaseContent from "@/components/Dashboard/KnowledgeBase";
+import KnowledgeBaseContent from "@/components/Dashboard/Knowledgebase/KnowledgeBase";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { CardWithForm } from "@/components/shadcn/CardDemo";  // Add this import
 import { DataTableDemo } from '@/components/Dashboard/Knowledgebase/LibraryTable';  // Add this import
@@ -55,6 +55,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+import { DialogDemo } from '@/components/Dashboard/AgentHub/NewAgent';  // Add this import
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -271,10 +273,12 @@ function AdminDashboard() {
       case "Agent Hub":
         return (
           <div className="flex flex-col h-full">
+            <div className="mb-4 ml-8 mt-8">
+              <DialogDemo />
+            </div>
             <AgentHub />
             <DataTableDemo />  
             <div className="mt-auto flex justify-start pl-8 pb-8">
-              <CardWithForm />
             </div>
           </div>
         );
