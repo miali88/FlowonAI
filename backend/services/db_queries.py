@@ -44,7 +44,6 @@ async def db_case_locator(event) -> tuple[str, str]:
     in_memory_cache.set("AGENT_FIRST.case_locator", {'admin_name': admin_name, 'case': best_match[0]})
     return best_match[0], admin_name
 
-
 async def db_staff_locator(event):
     try:
         print('_*_ DB STAFF LOCATOR FUNCTION _*_')
@@ -68,7 +67,6 @@ async def db_staff_locator(event):
     except Exception as e:
         logging.error(f"Error in db_staff_locator: {str(e)}")
         return "An error occurred while locating staff."
-
 
 async def get_admin_tel_number(admin_name: str) -> str:
     result = df[df["Administrator Names:"] == admin_name]["Administrator's Tel Number:"]

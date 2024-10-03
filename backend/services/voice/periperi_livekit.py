@@ -52,8 +52,6 @@ class AssistantFunction(agents.llm.FunctionContext):
         print(f"Message triggering transfer call: {user_msg}")
         return None
 
-
-
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,7 +107,6 @@ class CustomVoiceAssistant(VoiceAssistant):
                 print(f"\n\nError sending transcript data to backend: {str(e)}")
 
         print("\n\nFinished _synthesize_answer_task method")
-
 
 async def entrypoint(ctx: JobContext):
     print(f"Entrypoint called with job_id: {ctx.job.id}")
