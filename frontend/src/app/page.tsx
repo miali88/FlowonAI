@@ -46,16 +46,6 @@ import KnowledgeBaseContent from "@/components/Dashboard/Knowledgebase/Knowledge
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { CardWithForm } from "@/components/shadcn/CardDemo";  // Add this import
 import { DataTableDemo } from '@/components/Dashboard/AgentHub/LibraryTable';  // Add this import
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
 import { DialogDemo } from '@/components/Dashboard/AgentHub/NewAgent';  // Add this import
 
 // Add this interface at the top of your file 
@@ -239,8 +229,8 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 }
 
 function AdminDashboard() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Welcome");  // Set default to "Welcome"
+  const [isCollapsed, setIsCollapsed] = useState(true);  // Changed to true
+  const [activeItem, setActiveItem] = useState("Welcome");
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activePanel, setActivePanel] = useState('admin');

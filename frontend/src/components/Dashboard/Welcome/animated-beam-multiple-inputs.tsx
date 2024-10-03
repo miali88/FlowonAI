@@ -42,6 +42,7 @@ export function AnimatedBeamMultipleOutputDemo({
     <div
       className={cn(
         "relative flex h-[500px] w-full items-center justify-center overflow-hidden rounded-lg border bg-background p-10 md:shadow-xl",
+        "mt-8", // Added margin-top
         className,
       )}
       ref={containerRef}

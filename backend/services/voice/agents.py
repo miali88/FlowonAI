@@ -25,6 +25,9 @@ logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 async def create_agent(data):
+    if data.get('dataSource') == 'tagged' and 'tag' in data:
+        data['dataSource'] = data['tag']
+        del data['tag']  # Remove the 'tag' key from the data
     new_agent = supabase.table('agents').insert(data).execute()
     return new_agent
 

@@ -23,14 +23,19 @@ const Welcome: React.FC = () => {
           />
         </ShineBorder>
       </CardHeader>
-
       
       <CardContent>
         <div className="relative">
-          <div className="absolute top-12 left-0 right-0 z-10"> {/* Changed top-4 to top-8 */}
+          <div className="absolute top-12 left-0 right-0 z-10">
             <BlurIn
-              word="Act with data, have more meaningful conversations. Your specialised agent will always be in sync with business expectation"
-              className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-center"
+              word={
+                <>
+                  Act with data, have more meaningful conversations.
+                  <br />
+                  Your specialised agent will always be in sync with business expectation
+                </>
+              }
+              className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-center mb-32" // Added mb-32 here
             />
           </div>
           <AnimatedBeamMultipleOutputDemo />
