@@ -65,7 +65,6 @@ interface SavedItem {
   title: string;
   content: string;
   data_type: string;
-  meep: string
   // Add other properties as needed
 }
 
@@ -112,21 +111,31 @@ function KnowledgeBaseContent() {
             'X-User-ID': user.id,
           },
         });
-        console.log("Fetched items:", response.data);
         console.log("API response:", response);
-        console.log("Response data type:", typeof response.data);
-        console.log("Is response.data an array?", Array.isArray(response.data));
         
-        // Ensure savedItems is always an array
-        setSavedItems(Array.isArray(response.data.items) ? response.data.items : []);
-  
-        // Log each item's data_type
-        response.data.items.forEach((item, index) => {
-          console.log(`Item ${index} data_type:`, item.data_type);
-        });
-  
-        // Set total tokens from the response
-        setTotalTokens(response.data.total_tokens);
+        if (response.data && Array.isArray(response.data)) {
+          console.log("Fetched items:", response.data);
+          const formattedItems = response.data.map(item => ({
+            id: item.id,
+            title: item.title,
+            content: item.content || "Content not available",
+            data_type: item.data_type, // Add this line
+          }));
+          setSavedItems(formattedItems);
+          
+          // Log each item's title and data_type
+          formattedItems.forEach((item, index) => {
+            console.log(`Item ${index} title:`, item.title, `data_type:`, item.data_type);
+          });
+
+          // Note: total_tokens is not present in the current response
+          // If you need to calculate total tokens, you might need to do it on the frontend
+          // or request the backend to provide this information
+        } else {
+          console.error("Unexpected response structure:", response.data);
+          setAlertMessage("Unexpected data structure received from server");
+          setAlertType("error");
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
         setAlertMessage("Failed to fetch user data: " + (error.message || "Unknown error"));
@@ -386,7 +395,7 @@ function KnowledgeBaseContent() {
                 </div>
                 <ScrollArea className="h-[calc(100vh-300px)]">
                   {filteredItems.map((item) => {
-                    console.log(`Rendering item ${item.id} with data_type:`, item.meep);
+                    console.log(`Rendering item ${item.id} with data_type:`, item.data_type);
                     return (
                       <Card 
                         key={item.id} 
@@ -399,10 +408,7 @@ function KnowledgeBaseContent() {
                         <CardHeader className="p-3 flex flex-row items-center justify-between">
                           <CardTitle className="text-sm">{item.title}</CardTitle>
                           <span className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full">
-                            {(() => {
-                              console.log(`Item ${item.id} data_type:`, item.data_type);
-                              return item.data_type || '';
-                            })()}
+                            {item.data_type || ''}
                           </span>
                         </CardHeader>
                       </Card>

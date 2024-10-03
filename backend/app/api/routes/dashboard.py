@@ -49,6 +49,7 @@ class KnowledgeBaseItem(BaseModel):
     url: Optional[str] = None      # Add 'url' if applicable
     token_count: Optional[int] = None
     user_id: str
+    data_type: Optional[str] = None
 
 class KnowledgeBaseItemCreate(BaseModel):
     title: str

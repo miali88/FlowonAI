@@ -29,24 +29,27 @@ async def get_kb_items(current_user):
     kb_tables = ["user_web_data", "user_text_files"]
     print(f"Fetching items for user: {current_user}")
     all_items = []
+    seen_titles = set()  # To keep track of unique titles
+
     for table in kb_tables:
         if table == "user_web_data":
             results = supabase.table("user_web_data") \
                               .select('*') \
                               .eq('user_id', current_user) \
-                              .limit(5) \
                               .execute()
+            
             # Map 'url' to 'title' and provide a 'content' placeholder if appropriate
-            formatted_results = [
-                {
-                    'id': item['id'],
-                    'title': item.get('url', 'No Title'),
-                    'content': 'Content not available',  # Adjust as needed
-                    'user_id': current_user
-                }
-                for item in results.data
-            ]
-            all_items.extend(formatted_results)
+            for item in results.data:
+                title = item.get('url', 'No Title')
+                if title not in seen_titles:
+                    seen_titles.add(title)
+                    all_items.append({
+                        'id': item['id'],
+                        'title': title,
+                        'content': 'Content not available',  # Adjust as needed
+                        'user_id': current_user,
+                        'data_type': 'web'
+                    })
         
         # elif table == "user_text_files":
         #     items = supabase.table(table).select('*').eq('user_id', current_user).execute()
