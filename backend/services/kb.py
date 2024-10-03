@@ -31,6 +31,8 @@ async def get_kb_items(current_user):
     all_items = []
     seen_titles = set()  # To keep track of unique titles
 
+    total_tokens = 0
+
     for table in kb_tables:
         if table == "user_web_data":
             results = supabase.table("user_web_data") \
@@ -50,18 +52,21 @@ async def get_kb_items(current_user):
                         'user_id': current_user,
                         'data_type': 'web'
                     })
-        
-        # elif table == "user_text_files":
-        #     items = supabase.table(table).select('*').eq('user_id', current_user).execute()
-        #     formatted_items = [
-        #         {
-        #             'id': item['id'],
-        #             'title': item.get('title', 'No Title'),
-        #             'content': item.get('content', ''),
-        #             'user_id': current_user
-        #         }
-        #         for item in items.data
-        #     ]
-        #     all_items.extend(formatted_items)
+                total_tokens += (item.get('token_count', 0))
+
+        elif table == "user_text_files":
+            items = supabase.table(table).select('*').eq('user_id', current_user).execute()
+            formatted_items = [
+                {
+                    'id': item['id'],
+                    'title': item.get('heading', 'No Title'),
+                    'content': item.get('content', ''),
+                    'user_id': current_user,
+                    'data_type': item.get('data_type')
+                }
+                for item in items.data
+            ]
+            all_items.extend(formatted_items)
+            total_tokens += (item.get('token_count', 0))
 
     return all_items
