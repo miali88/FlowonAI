@@ -1,5 +1,3 @@
-from app.utils import generate_new_account_email, send_email
-
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import Response, JSONResponse, HTMLResponse
 
