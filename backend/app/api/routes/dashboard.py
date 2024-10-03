@@ -18,6 +18,7 @@ from app.core.config import settings
 from services.file_process import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.kb import get_kb_items
+from services.voice.agents import create_agent
 
 load_dotenv()
 
@@ -72,6 +73,18 @@ async def get_current_user(x_user_id: str = Header(...)):
     # For now, we'll just return the user ID from the header
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
+
+
+@router.post("/new_agent")
+async def new_agent_handler(request: Request):
+    try:
+        data = await request.json()
+        logger.debug(f"Received data: {data}")
+        new_agent = await create_agent(data)
+        return new_agent
+    except Exception as e:
+        logger.error(f"Error creating agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/upload_file")
 async def upload_file_handler(
