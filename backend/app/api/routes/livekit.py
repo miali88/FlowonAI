@@ -9,6 +9,9 @@ from app.core.config import settings
 
 from supabase import create_client, Client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+from asyncio import Lock
+
+agent_creation_locks = {}
 
 router = APIRouter()
 
@@ -73,38 +76,57 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 
 async def create_agent_request(room_name: str, agent_id: str):
     print(f"Starting create_agent_request for room: {room_name}")
-    try:
-        temperature = "0.6"  # Added temperature parameter
+    
+    # Use a lock to prevent multiple agent creations for the same room
+    if room_name not in agent_creation_locks:
+        agent_creation_locks[room_name] = Lock()
+    
+    async with agent_creation_locks[room_name]:
+        # Check if an agent process is already running for this room
+        if await is_agent_running(room_name):
+            print(f"Agent already running for room: {room_name}")
+            return
 
-        agent = await get_agent(agent_id)
+        try:
+            temperature = "0.6"
 
-        instructions = agent['instructions']
-        voice_id = agent['voice']
-        functions = agent['functions']
-        opening_line = agent['openingLine']
+            agent = await get_agent(agent_id)
 
-        # Construct the command
-        command = [
-            "python", 
-            "services/voice/run_open.py",
-            "--instructions", instructions,
-            "--voice", voice_id,
-            "--temperature", temperature,
-            "--room", room_name,
-            "--opening_line", opening_line,
-            "--agent_id", agent_id  # Add agent_id as a parameter
-        ]
+            instructions = agent['instructions']
+            voice_id = agent['voice']
+            functions = agent['functions']
+            opening_line = agent['openingLine']
 
-        # Print the command being executed
-        print(f"Executing command: {' '.join(command)}")
+            # Construct the command
+            command = [
+                "python", 
+                "services/voice/run_open.py",
+                "--instructions", instructions,
+                "--voice", voice_id,
+                "--temperature", temperature,
+                "--room", room_name,
+                "--opening_line", opening_line,
+                "--agent_id", agent_id
+            ]
 
-        # Run run_open.py as a subprocess with arguments
-        subprocess.Popen(command)
-        print(f"Agent process started for room: {room_name}")
-    except Exception as e:
-        print(f"Error starting agent process for room {room_name}: {str(e)}")
-        print(traceback.format_exc())
+            print(f"Executing command: {' '.join(command)}")
 
+            # Run run_open.py as a subprocess with arguments
+            subprocess.Popen(command)
+            print(f"Agent process started for room: {room_name}")
+        except Exception as e:
+            print(f"Error starting agent process for room {room_name}: {str(e)}")
+            print(traceback.format_exc())
+
+async def is_agent_running(room_name: str) -> bool:
+    lock_file = f"/tmp/agent_lock_{room_name}"
+    if os.path.exists(lock_file):
+        return True
+    else:
+        # Create the lock file
+        with open(lock_file, 'w') as f:
+            f.write("1")
+        return False
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \

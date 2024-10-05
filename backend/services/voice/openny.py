@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import aiohttp
 import json
 import os
+import sys
+import aiofiles
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
@@ -15,7 +17,7 @@ load_dotenv()
 
 # Use environment variables with defaults
 INSTRUCTIONS = os.getenv('AGENT_INSTRUCTIONS')
-VOICE_ID = os.getenv('AGENT_VOICE_ID', "HyRvE4YNE0T7VnHEFacJ")
+VOICE_ID = os.getenv('AGENT_VOICE_ID')
 TEMPERATURE = float(os.getenv('AGENT_TEMPERATURE', "0.6"))
 OPENING_LINE = os.getenv('AGENT_OPENING_LINE', "Hello there. How can I help you today?")
 DOMAIN = os.getenv('BACKEND_DOMAIN', "http://localhost:8000/api/v1")
@@ -112,103 +114,137 @@ class CustomVoiceAssistant(VoiceAssistant):
 
         print("\n\nFinished _synthesize_answer_task method")
 
+# Global lock for room management
+room_locks = {}
+
+async def acquire_room_lock(room_name):
+    if room_name not in room_locks:
+        room_locks[room_name] = asyncio.Lock()
+    
+    async with room_locks[room_name]:
+        lock_file = f"/tmp/room_lock_{room_name}"
+        if os.path.exists(lock_file):
+            # Room is already locked, exit
+            print(f"Room {room_name} is already in use. Exiting.")
+            sys.exit(0)
+        
+        # Create lock file
+        async with aiofiles.open(lock_file, 'w') as f:
+            await f.write(str(os.getpid()))
+
+async def release_room_lock(room_name):
+    lock_file = f"/tmp/room_lock_{room_name}"
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
+
 async def entrypoint(ctx: JobContext):
-    print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {ctx.room.name}")
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
-    print(f"Room name: {ctx.room.name}")
-
-    chat_context = ChatContext(
-        messages=[
-            ChatMessage(
-                role="system",
-                content=INSTRUCTIONS,
-            )
-        ]
-    )
-
-    gpt = openai.LLM(model="gpt-4o", temperature=TEMPERATURE)
-
-    eleven_tts = tts.StreamAdapter(
-        tts=elevenlabs.TTS(voice=elevenlabs.Voice(
-            id=VOICE_ID,
-            name="Custom Voice",
-            category="custom"
-        )),
-        sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
-    )
-
-    # Use CustomVoiceAssistant instead of VoiceAssistant
-    assistant = CustomVoiceAssistant(
-        vad=silero.VAD.load(),  # This line is causing an issue
-        stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
-        llm=gpt,
-        tts=eleven_tts,         # We'll use OpenAI's Text To Speech (TTS)
-        fnc_ctx=AssistantFunction(),
-        chat_ctx=chat_context,
-    )
-
-    #chat = rtc.ChatManager(ctx.room)
-
-    async def _answer(text: str):
-        """
-        Answer the user's message with the given text and optionally the latest
-        image captured from the video track.
-        """
-        content: list[str | ChatImage] = [text]
-
-        chat_context.messages.append(ChatMessage(role="user", content=content))
-
-        stream = gpt.chat(chat_ctx=chat_context)
-        await assistant.say(stream, allow_interruptions=True)
-
-    async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext):
-        """
-        Send the transcript and chat context to a backend API endpoint asynchronously.
-        """
-        backend_url = f"{DOMAIN}{endpoint}"
-        #print(f"\n\n\n Sending to {endpoint}:", transcript)
+    room_name = ctx.room.name
+    try:
+        await acquire_room_lock(room_name)
         
-        # Prepare the data to be sent
-        data = {"" : ""}
+        print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
+        await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+        print(f"Room name: {room_name}")
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(backend_url, json=data) as response:
-                    if response.status == 200:
-                        print(f"Transcript and chat context sent to backend successfully")
-                        return await response.json()  # Return the response data if needed
-                    else:
-                        print(f"Failed to send data to backend. Status: {response.status}")
-                        return None
-        except aiohttp.ClientError as e:
-            print(f"Error sending data to backend: {str(e)}")
-            return None
-        
-    @assistant.on("user_speech_committed")
-    def on_transcription(transcript: rtc.ChatMessage):
-        """This event triggers when voice input is transcribed."""
-        #print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+        chat_context = ChatContext(
+            messages=[
+                ChatMessage(
+                    role="system",
+                    content=INSTRUCTIONS)
+            ])
 
-        if transcript.content:
-            # Send the transcript and chat context to the backend
-            asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit", chat_context))
+        gpt = openai.LLM(model="gpt-4o", temperature=TEMPERATURE)
 
-            for_msg = f""" 
-            # User Query:
-            {transcript.content}
+        eleven_tts = tts.StreamAdapter(
+            tts=elevenlabs.TTS(voice=elevenlabs.Voice(
+                id=VOICE_ID,
+                name="Custom Voice",
+                category="custom"
+            )),
+            sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
+        )
+
+        # Use CustomVoiceAssistant instead of VoiceAssistant
+        assistant = CustomVoiceAssistant(
+            vad=silero.VAD.load(),  # This line is causing an issue
+            stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
+            llm=gpt,
+            tts=eleven_tts,         # We'll use OpenAI's Text To Speech (TTS)
+            fnc_ctx=AssistantFunction(),
+            chat_ctx=chat_context,
+        )
+
+        #chat = rtc.ChatManager(ctx.room)
+
+        async def _answer(text: str):
             """
-            # # Retrieved Docs:
-            # {"michael has one pet cat"} """
+            Answer the user's message with the given text and optionally the latest
+            image captured from the video track.
+            """
+            content: list[str | ChatImage] = [text]
 
-            #print("\n\n\n VOICE MSG:...", for_msg)
+            chat_context.messages.append(ChatMessage(role="user", content=content))
 
-            # Await the _answer function directly
-            #await _answer(for_msg, use_image=False)
+            stream = gpt.chat(chat_ctx=chat_context)
+            await assistant.say(stream, allow_interruptions=True)
 
-    assistant.start(ctx.room)
+        async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext):
+            """
+            Send the transcript and chat context to a backend API endpoint asynchronously.
+            """
+            backend_url = f"{DOMAIN}{endpoint}"
+            #print(f"\n\n\n Sending to {endpoint}:", transcript)
+            
+            # Prepare the data to be sent
+            data = {"" : ""}
 
-    await asyncio.sleep(0.2)
-    await assistant.say(OPENING_LINE, allow_interruptions=False)
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(backend_url, json=data) as response:
+                        if response.status == 200:
+                            print(f"Transcript and chat context sent to backend successfully")
+                            return await response.json()  # Return the response data if needed
+                        else:
+                            print(f"Failed to send data to backend. Status: {response.status}")
+                            return None
+            except aiohttp.ClientError as e:
+                print(f"Error sending data to backend: {str(e)}")
+                return None
+            
+        @assistant.on("user_speech_committed")
+        def on_transcription(transcript: rtc.ChatMessage):
+            """This event triggers when voice input is transcribed."""
+            #print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+
+            if transcript.content:
+                # Send the transcript and chat context to the backend
+                asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit", chat_context))
+
+                for_msg = f""" 
+                # User Query:
+                {transcript.content}
+                """
+                # # Retrieved Docs:
+                # {"michael has one pet cat"} """
+
+                #print("\n\n\n VOICE MSG:...", for_msg)
+
+                # Await the _answer function directly
+                #await _answer(for_msg, use_image=False)
+
+        assistant.start(ctx.room)
+
+        await asyncio.sleep(0.2)
+        await assistant.say(OPENING_LINE, allow_interruptions=False)
+
+        # Keep the process running
+        while True:
+            await asyncio.sleep(1)
+
+    except Exception as e:
+        print(f"Error in entrypoint: {str(e)}")
+    finally:
+        await release_room_lock(room_name)
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))

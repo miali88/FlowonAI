@@ -35,14 +35,12 @@ def main():
         else:
             i += 1
 
-
     # Set environment variables
     os.environ['AGENT_INSTRUCTIONS'] = instructions
     os.environ['AGENT_VOICE_ID'] = voice
     os.environ['AGENT_TEMPERATURE'] = temperature
     os.environ['AGENT_OPENING_LINE'] = opening_line
     os.environ['AGENT_ID'] = agent_id
-
 
     # Construct the command to run open.py
     command = ["python", "services/voice/openny.py", "connect"]
