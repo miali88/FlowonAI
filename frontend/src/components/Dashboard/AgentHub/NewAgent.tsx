@@ -34,6 +34,7 @@ export function DialogDemo() {
     tag: "",
     openingLine: "", // Ensure openingLine is in the initial state
     voice: "", // Add voice to the initial state
+    instructions: "", // Add instructions to the initial state
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
@@ -190,6 +191,18 @@ export function DialogDemo() {
                 placeholder="Enter voice style"
                 className="col-span-3"
                 value={formData.voice}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="instructions" className="text-right">
+                Instructions
+              </Label>
+              <Input
+                id="instructions"
+                placeholder="Enter instructions for the agent"
+                className="col-span-3"
+                value={formData.instructions}
                 onChange={handleInputChange}
               />
             </div>

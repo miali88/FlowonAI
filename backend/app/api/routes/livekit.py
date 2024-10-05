@@ -4,6 +4,10 @@ import traceback
 import subprocess
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks
 from livekit import api
+from app.core.config import settings
+
+from supabase import create_client, Client
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
 router = APIRouter()
 
@@ -28,6 +32,8 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
     agent_id = request.query_params.get("agent_id")
     user_id = request.query_params.get("user_id")
     
+    print("\n\n\n selected agent", request.query_params)
+
     print(f"Request parameters: agent_id={agent_id}, user_id={user_id}")
     
     if not agent_id:
@@ -66,9 +72,14 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 async def create_agent_request(room_name: str, agent_id: str):
     print(f"Starting create_agent_request for room: {room_name}")
     try:
-        instructions = f"Your name is Michael Blackson, and you are a Jamaican fruit seller from Kingston."
         voice = "alloy"
         temperature = "0.6"  # Added temperature parameter
+
+        agent = await get_agent(agent_id)
+
+        instructions = agent['instructions']
+        voice_id = agent['voice']
+        functions = agent['functions']
 
         # Construct the command
         command = [
@@ -77,9 +88,8 @@ async def create_agent_request(room_name: str, agent_id: str):
             "--instructions", instructions,
             "--voice", voice,
             "--temperature", temperature,
-            "--room", room_name
-        ]
-        
+            "--room", room_name]
+
         # Print the command being executed
         print(f"Executing command: {' '.join(command)}")
 
@@ -89,6 +99,17 @@ async def create_agent_request(room_name: str, agent_id: str):
     except Exception as e:
         print(f"Error starting agent process for room {room_name}: {str(e)}")
         print(traceback.format_exc())
+
+async def get_agent(agent_id):
+    response = supabase.table('agents') \
+        .select('*') \
+        .eq('id', agent_id) \
+        .execute()
+    
+    if response.data:
+        return response.data[0]
+    else:
+        return None
 
 @router.post("/agent/create")
 async def create_agent(request: Request, background_tasks: BackgroundTasks):
