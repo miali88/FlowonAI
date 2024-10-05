@@ -38,7 +38,7 @@ def main():
 
     # Set environment variables
     os.environ['AGENT_INSTRUCTIONS'] = instructions
-    os.environ['AGENT_VOICE'] = voice
+    os.environ['AGENT_VOICE_ID'] = voice
     os.environ['AGENT_TEMPERATURE'] = temperature
     os.environ['AGENT_OPENING_LINE'] = opening_line
     os.environ['AGENT_ID'] = agent_id
