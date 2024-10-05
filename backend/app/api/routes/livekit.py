@@ -72,7 +72,6 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 async def create_agent_request(room_name: str, agent_id: str):
     print(f"Starting create_agent_request for room: {room_name}")
     try:
-        voice = "alloy"
         temperature = "0.6"  # Added temperature parameter
 
         agent = await get_agent(agent_id)
@@ -80,15 +79,18 @@ async def create_agent_request(room_name: str, agent_id: str):
         instructions = agent['instructions']
         voice_id = agent['voice']
         functions = agent['functions']
+        opening_line = agent['openingLine']
 
         # Construct the command
         command = [
             "python", 
             "services/voice/run_open.py",
             "--instructions", instructions,
-            "--voice", voice,
+            "--voice", voice_id,
             "--temperature", temperature,
-            "--room", room_name]
+            "--room", room_name,
+            "--opening_line", opening_line
+        ]
 
         # Print the command being executed
         print(f"Executing command: {' '.join(command)}")

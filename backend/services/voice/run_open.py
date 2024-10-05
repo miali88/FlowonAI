@@ -4,11 +4,11 @@ import os
 
 def main():
     # Default values
-    instructions = "Your name is Jody, and you are a librarian."
-    voice = "alloy"
-    temperature = "0.4"
+    instructions = None
+    voice = None
+    temperature = None
     room = None
-
+    opening_line = None
     # Parse command line arguments
     args = sys.argv[1:]
     i = 0
@@ -25,6 +25,9 @@ def main():
         elif args[i] == "--room":
             room = args[i+1]
             i += 2
+        elif args[i] == "--opening_line":
+            opening_line = args[i+1]
+            i += 2
         else:
             i += 1
 
@@ -32,9 +35,10 @@ def main():
     os.environ['AGENT_INSTRUCTIONS'] = instructions
     os.environ['AGENT_VOICE'] = voice
     os.environ['AGENT_TEMPERATURE'] = temperature
+    os.environ['AGENT_OPENING_LINE'] = opening_line
 
     # Construct the command to run open.py
-    command = ["python", "services/voice/open.py", "connect"]
+    command = ["python", "services/voice/openny.py", "connect"]
     if room:
         command.extend(["--room", room])
 
