@@ -78,23 +78,23 @@ class CustomVoiceAssistant(VoiceAssistant):
         async with aiohttp.ClientSession() as session:
             try:
                 print(f"\n\nAbout to send POST request to {self.DOMAIN}/voice/transcript/real_time")
-                print(f"Request data: {extra_data}")
+                #print(f"Request data: {extra_data}")
                 async with session.post(f'{self.DOMAIN}/voice/transcript/real_time', json=extra_data) as response:
-                    print(f"\n\nResponse status: {response.status}")
-                    print(f"Response headers: {response.headers}")
+                    #print(f"\n\nResponse status: {response.status}")
+                    #print(f"Response headers: {response.headers}")
                     response_text = await response.text()
-                    print(f"Raw response text: {response_text}")
+                    #print(f"Raw response text: {response_text}")
                     
-                    print("\n\nabout to parse JSON!!!:", response_text)
+                    #print("\n\nabout to parse JSON!!!:", response_text)
                     response_data = json.loads(response_text)
 
-                    print("\n\nParsed JSON response from /voice/transcript/real_time:", response_data)
+                    #print("\n\nParsed JSON response from /voice/transcript/real_time:", response_data)
                     
                     # Add the RAG results to the chat context
                     rag_results = response_data.get('rag_results', [])
                     if rag_results:
                         rag_content = "\n".join([f"- {result}" for result in rag_results])
-                        print("\n\n adding RAG results to context:", rag_content)
+                        #print("\n\n adding RAG results to context:", rag_content)
                         # self._chat_ctx.messages.append(ChatMessage(
                         #     role="user",
                         #     content=f"Here are some relevant pieces of information:\n{rag_content}"
@@ -165,7 +165,7 @@ async def entrypoint(ctx: JobContext):
         Send the transcript and chat context to a backend API endpoint asynchronously.
         """
         backend_url = f"{DOMAIN}{endpoint}"
-        print(f"\n\n\n Sending to {endpoint}:", transcript)
+        #print(f"\n\n\n Sending to {endpoint}:", transcript)
         
         # Prepare the data to be sent
         data = {"" : ""}

@@ -40,10 +40,6 @@ class Settings(BaseSettings):
             return f"http://{self.DOMAIN}"
         return f"https://{self.DOMAIN}"
 
-    BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = []
-
     PROJECT_NAME: str = "FlowOn AI"
     SENTRY_DSN: HttpUrl | None = None
     POSTGRES_SERVER: str = "localhost"
