@@ -1,12 +1,13 @@
-import logging
 import os
-
-from fastapi import Request, HTTPException, APIRouter
+import logging
+import traceback
+import subprocess
+from fastapi import Request, HTTPException, APIRouter, BackgroundTasks
 from livekit import api
 
-from services.voice.periperi_livekit import CustomVoiceAssistant
-
 router = APIRouter()
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 AGENT_REGISTRY = {
@@ -19,21 +20,21 @@ AGENT_REGISTRY = {
         "voice_id": "AnotherVoiceID",
     },
     # Add more agents as needed
-}
+    }
 
 @router.get("/token")
-async def get_token(request: Request):
-    logger.info("Token request received")
+async def get_token(request: Request, background_tasks: BackgroundTasks):
+    print("Token request received")
     agent_id = request.query_params.get("agent_id")
     user_id = request.query_params.get("user_id")
     
-    logger.debug(f"Request parameters: agent_id={agent_id}, user_id={user_id}")
+    print(f"Request parameters: agent_id={agent_id}, user_id={user_id}")
     
     if not agent_id:
-        logger.warning("Missing agent_id in request")
+        print("Missing agent_id in request")
         raise HTTPException(status_code=400, detail="Missing agent_id")
     if not user_id:
-        logger.warning("Missing user_id in request")
+        print("Missing user_id in request")
         raise HTTPException(status_code=400, detail="Missing user_id")
 
     room_name = f"agent_{agent_id}_room"
@@ -42,10 +43,10 @@ async def get_token(request: Request):
     livekit_server_url = os.getenv("LIVEKIT_URL")
     
     if not api_key or not api_secret or not livekit_server_url:
-        logger.error("LiveKit credentials not configured")
+        print("LiveKit credentials not configured")
         raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
 
-    logger.debug(f"Generating token for room: {room_name}")
+    print(f"Generating token for room: {room_name}")
     token = api.AccessToken(api_key, api_secret)\
         .with_identity(user_id)\
         .with_name(f"User {user_id}")\
@@ -54,17 +55,68 @@ async def get_token(request: Request):
             room=room_name,
         ))
 
-    # # Initialize your custom voice assistant if needed
-    # voice_assistant = CustomVoiceAssistant()
-    # # voice_assistant.create_agent(
-    # #     agent_id=agent_id,
-    # #     agent_name=AGENT_REGISTRY[agent_id]["name"],
-    # #     voice_id=AGENT_REGISTRY[agent_id]["voice_id"],
-    # # )
-
-    logger.info(f"Token generated successfully for user {user_id} in room {room_name}")
+    print(f"Adding create_agent_request task for room {room_name}")
+    background_tasks.add_task(create_agent_request, room_name, agent_id)
 
     return {
         "accessToken": token.to_jwt(),
-        "url": livekit_server_url
+        "url": livekit_server_url}
+
+
+async def create_agent_request(room_name: str, agent_id: str):
+    print(f"Starting create_agent_request for room: {room_name}")
+    try:
+        instructions = f"Your name is Michael Blackson, and you are a Jamaican fruit seller from Kingston."
+        voice = "alloy"
+        temperature = "0.6"  # Added temperature parameter
+
+        # Construct the command
+        command = [
+            "python", 
+            "services/voice/run_open.py",
+            "--instructions", instructions,
+            "--voice", voice,
+            "--temperature", temperature,
+            "--room", room_name
+        ]
+        
+        # Print the command being executed
+        print(f"Executing command: {' '.join(command)}")
+
+        # Run run_open.py as a subprocess with arguments
+        subprocess.Popen(command)
+        print(f"Agent process started for room: {room_name}")
+    except Exception as e:
+        print(f"Error starting agent process for room {room_name}: {str(e)}")
+        print(traceback.format_exc())
+
+@router.post("/agent/create")
+async def create_agent(request: Request, background_tasks: BackgroundTasks):
+    # data = await request.json()
+    # system_prompt = data.get("system_prompt")
+    # opening_line = data.get("opening_line")
+    # voice = data.get("voice")
+    # functions = data.get("functions", [])
+    # user_biz_name = data.get("user_biz_name")
+
+    # if not all([system_prompt, opening_line, voice, user_biz_name]):
+    #     raise HTTPException(status_code=400, detail="Missing required parameters.")
+
+    # Schedule the agent creation as a background task
+
+    print("\n\n\n ENDPOINT AGENT CREATE RECEIVED")
+    background_tasks.add_task(
+        CustomVoiceAssistant.create_agent,
+        system_prompt = "You are a helpful assistant",
+        opening_line = "Hello, how can I help you today?",
+        voice = "HyRvE4YNE0T7VnHEFacJ",
+        functions = [],
+        user_biz_name = "Periperi"
+    )
+
+    print("\n\n\n AGENT CREATION INITIATED\n\n\n")
+
+    return {
+        "message": "Agent creation initiated.",
+        "status": "processing"
     }

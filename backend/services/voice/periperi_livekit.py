@@ -3,8 +3,9 @@ from typing import Optional, Annotated
 from dotenv import load_dotenv
 import aiohttp
 import json
+import time
 
-from livekit import agents, rtc
+from livekit import agents, rtc, api
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import ChatContext, ChatImage, ChatMessage
 from livekit.agents.voice_assistant import VoiceAssistant
@@ -39,7 +40,9 @@ class AssistantFunction(agents.llm.FunctionContext):
 
     @agents.llm.ai_callable(
         description=(
-            "Called when the conversation has concluded, and the assistant has said goodbye."))
+            "Called when the conversation has concluded, and the assistant has said goodbye."
+        )
+    )
     async def end_call(
         self,
         user_msg: Annotated[
@@ -49,18 +52,95 @@ class AssistantFunction(agents.llm.FunctionContext):
             ),
         ],
     ):
-        print(f"Message triggering transfer call: {user_msg}")
+        print(f"Message triggering end call: {user_msg}")
         return None
 
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.DOMAIN = "http://localhost:8000/api/v1"  # Or set this from environment variables
+        self.DOMAIN = DOMAIN  # Or set this from environment variables
+        self.user_biz_name = None
+        self.opening_line = None
+
+    @classmethod
+    async def create_agent(cls, system_prompt, opening_line, voice, functions, user_biz_name):
+        print("Starting create_agent method")
+        
+        print(f"Creating ChatContext with system prompt: {system_prompt[:50]}...")
+        chat_context = ChatContext(
+            messages=[
+                ChatMessage(
+                    role="system",
+                    content=system_prompt,
+                ),
+            ]
+        )
+
+        print("Initializing GPT-4 model")
+        gpt = openai.LLM(model="gpt-4")
+
+        print(f"Setting up ElevenLabs TTS with voice ID: {voice}")
+        eleven_tts = tts.StreamAdapter(
+            tts=elevenlabs.TTS(
+                voice=elevenlabs.Voice(
+                    id=voice,
+                    name="Custom Voice",
+                    category="custom"
+                )
+            ),
+            sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
+        )
+
+        print("Creating AssistantFunction and adding functions")
+        function_context = AssistantFunction()
+        for func in functions:
+            print(f"Adding function: {func['name']}")
+            setattr(function_context, func['name'], func['function'])
+
+        print("Initializing CustomVoiceAssistant")
+        assistant = cls(
+            vad=silero.VAD.load(),
+            stt=deepgram.STT(),
+            llm=gpt,
+            tts=eleven_tts,
+            fnc_ctx=function_context,
+            chat_ctx=chat_context,
+        )
+
+        print(f"Setting user_biz_name: {user_biz_name}")
+        assistant.user_biz_name = user_biz_name
+        print(f"Setting opening_line: {opening_line[:50]}...")
+        assistant.opening_line = opening_line
+
+        print("Starting assistant in background task")
+        asyncio.create_task(cls.run_assistant_background(assistant))
+
+        print("create_agent method completed")
+        return assistant
+
+    @staticmethod
+    async def run_assistant_background(assistant: 'CustomVoiceAssistant'):
+        job_context = await create_job_context_for_assistant(assistant)
+        if job_context is None:
+            print("Failed to create JobContext. Exiting run_assistant_background.")
+            return
+
+        try:
+            await job_context.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+            print(f"Room name: {job_context.room.name}")
+
+            assistant.set_job_id(job_context.job.id)
+            assistant.start(job_context.room)
+
+            await asyncio.sleep(0.2)
+            await assistant.say(assistant.opening_line, allow_interruptions=True)
+        except Exception as e:
+            print(f"Error in run_assistant_background: {str(e)}")
 
     async def _synthesize_answer_task(
         self, old_task: Optional[asyncio.Task[None]], handle: SpeechHandle
     ) -> None:
-
+        # Existing implementation...
         copied_ctx = self._chat_ctx.copy()
         print("\n\nCopied Chat Context:", copied_ctx)
         await super()._synthesize_answer_task(old_task, handle)
@@ -101,122 +181,18 @@ class CustomVoiceAssistant(VoiceAssistant):
                         print("\n\nNo RAG results to add to chat context")
 
 
-
             except Exception as e:
                 self.logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
                 print(f"\n\nError sending transcript data to backend: {str(e)}")
 
         print("\n\nFinished _synthesize_answer_task method")
 
-async def entrypoint(ctx: JobContext):
-    print(f"Entrypoint called with job_id: {ctx.job.id}")
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
-    print(f"Room name: {ctx.room.name}")
-
-    chat_context = ChatContext(
-        messages=[
-            ChatMessage(
-                role="system",
-                content=(
-                    sys_prompt
-                ),
-            )
-        ]
-    )
-
-    gpt = openai.LLM(model="gpt-4o")
-
-    # Since OpenAI does not support streaming TTS, we'll use it with a StreamAdapter
-    # to make it compatible with the VoiceAssistant
-    ELEVENLABS_VOICE_ID = "HyRvE4YNE0T7VnHEFacJ"
-    eleven_tts = tts.StreamAdapter(
-        tts=elevenlabs.TTS(voice=elevenlabs.Voice(
-            id=ELEVENLABS_VOICE_ID,
-            name="Custom Voice",  # You can set a name for the voice
-            category="custom"  # You can set a category if needed
-        )),
-        sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
-    )
-
-    # Use CustomVoiceAssistant instead of VoiceAssistant
-    assistant = CustomVoiceAssistant(
-        vad=silero.VAD.load(),  # We'll use Silero's Voice Activity Detector (VAD)
-        stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
-        llm=gpt,
-        tts=eleven_tts,         # We'll use OpenAI's Text To Speech (TTS)
-        fnc_ctx=AssistantFunction(),
-        chat_ctx=chat_context,
-    )
-
-    # Set the job_id using the new set_job_id method
-    assistant.set_job_id(ctx.job.id)
-
-    #chat = rtc.ChatManager(ctx.room)
-
-    async def _answer(text: str, use_image: bool = False):
-        """
-        Answer the user's message with the given text and optionally the latest
-        image captured from the video track.
-        """
-        content: list[str | ChatImage] = [text]
-
-        chat_context.messages.append(ChatMessage(role="user", content=content))
-
-        stream = gpt.chat(chat_ctx=chat_context)
-        await assistant.say(stream, allow_interruptions=True)
-
-    async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext):
-        """
-        Send the transcript and chat context to a backend API endpoint asynchronously.
-        """
-        backend_url = f"{DOMAIN}{endpoint}"
-        print(f"\n\n\n Sending to {endpoint}:", transcript)
-        
-        # Prepare the data to be sent
-        data = {"": ""}
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(backend_url, json=data) as response:
-                    if response.status == 200:
-                        print(f"Transcript and chat context sent to backend successfully")
-                        return await response.json()  # Return the response data if needed
-                    else:
-                        print(f"Failed to send data to backend. Status: {response.status}")
-                        return None
-        except aiohttp.ClientError as e:
-            print(f"Error sending data to backend: {str(e)}")
-            return None
-        
-    @assistant.on("user_speech_committed")
-    def on_transcription(transcript: rtc.ChatMessage):
-        """This event triggers when voice input is transcribed."""
-        print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
-
-        if transcript.content:
-            # Send the transcript and chat context to the backend
-            asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit", chat_context))
-
-            for_msg = f""" 
-            # User Query:
-            {transcript.content}
-            """
-            # # Retrieved Docs:
-            # {"michael has one pet cat"} """
-
-            print("\n\n\n VOICE MSG:...", for_msg)
-
-            # Await the _answer function directly
-            #await _answer(for_msg, use_image=False)
-
-
-    user_biz_name = "PeriPeri"
-    opening_line =  f"Hello there, you can ask me anything about how we host events, and ensure a memorable experience. So, what is the occasion?"
-
-    assistant.start(ctx.room)
-
-    await asyncio.sleep(0.2)
-    await assistant.say(opening_line, allow_interruptions=True)
-
-if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+async def create_job_context_for_assistant(assistant: 'CustomVoiceAssistant') -> JobContext:
+    try:
+        room_name = f"room_{assistant.user_biz_name}_{int(time.time())}"
+        room = await rtc.Room.create(name=room_name)
+        job = await rtc.Job.create(room=room)
+        return JobContext(job=job, room=room)
+    except Exception as e:
+        print(f"Error creating JobContext: {str(e)}")
+        return None
