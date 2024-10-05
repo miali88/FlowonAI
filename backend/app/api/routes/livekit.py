@@ -2,6 +2,7 @@ import os
 import logging
 import traceback
 import subprocess
+import random
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks
 from livekit import api
 from app.core.config import settings
@@ -43,7 +44,8 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
         print("Missing user_id in request")
         raise HTTPException(status_code=400, detail="Missing user_id")
 
-    room_name = f"agent_{agent_id}_room"
+    random_digits = f"{random.randint(1000, 9999):04d}"
+    room_name = f"agent_{agent_id}_room_{random_digits}"
     api_key = os.getenv("LIVEKIT_API_KEY")
     api_secret = os.getenv("LIVEKIT_API_SECRET")
     livekit_server_url = os.getenv("LIVEKIT_URL")
@@ -89,7 +91,8 @@ async def create_agent_request(room_name: str, agent_id: str):
             "--voice", voice_id,
             "--temperature", temperature,
             "--room", room_name,
-            "--opening_line", opening_line
+            "--opening_line", opening_line,
+            "--agent_id", agent_id  # Add agent_id as a parameter
         ]
 
         # Print the command being executed
@@ -102,6 +105,7 @@ async def create_agent_request(room_name: str, agent_id: str):
         print(f"Error starting agent process for room {room_name}: {str(e)}")
         print(traceback.format_exc())
 
+
 async def get_agent(agent_id):
     response = supabase.table('agents') \
         .select('*') \
@@ -112,6 +116,7 @@ async def get_agent(agent_id):
         return response.data[0]
     else:
         return None
+
 
 @router.post("/agent/create")
 async def create_agent(request: Request, background_tasks: BackgroundTasks):

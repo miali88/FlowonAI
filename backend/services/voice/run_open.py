@@ -9,6 +9,7 @@ def main():
     temperature = None
     room = None
     opening_line = None
+    agent_id = None
     # Parse command line arguments
     args = sys.argv[1:]
     i = 0
@@ -28,14 +29,20 @@ def main():
         elif args[i] == "--opening_line":
             opening_line = args[i+1]
             i += 2
+        elif args[i] == "--agent_id":
+            agent_id = args[i+1]
+            i += 2
         else:
             i += 1
+
 
     # Set environment variables
     os.environ['AGENT_INSTRUCTIONS'] = instructions
     os.environ['AGENT_VOICE'] = voice
     os.environ['AGENT_TEMPERATURE'] = temperature
     os.environ['AGENT_OPENING_LINE'] = opening_line
+    os.environ['AGENT_ID'] = agent_id
+
 
     # Construct the command to run open.py
     command = ["python", "services/voice/openny.py", "connect"]

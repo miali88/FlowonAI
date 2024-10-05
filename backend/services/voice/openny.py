@@ -52,32 +52,34 @@ class AssistantFunction(agents.llm.FunctionContext):
             ),
         ],
     ):
-        print(f"Message triggering transfer call: {user_msg}")
+        #print(f"Message triggering transfer call: {user_msg}")
         return None
 
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.DOMAIN = "http://localhost:8000/api/v1"  # Or set this from environment variables
+        self.DOMAIN = "http://localhost:8000/api/v1"
+        self.agent_id = os.getenv('AGENT_ID')
 
     async def _synthesize_answer_task(
         self, old_task: Optional[asyncio.Task[None]], handle
     ) -> None:
 
         copied_ctx = self._chat_ctx.copy()
-        print("\n\nCopied Chat Context:", copied_ctx)
+        #print("\n\nCopied Chat Context:", copied_ctx)
         await super()._synthesize_answer_task(old_task, handle)
         extra_data = {
             "user_transcript": handle.user_question,
             "speech_id": handle.id,
             "elapsed": -1.0,  # You might want to calculate this
             "job_id": self._job_id,
-            "call_state": self._call_state.value if hasattr(self, '_call_state') else None
+            "call_state": self._call_state.value if hasattr(self, '_call_state') else None,
+            "agent_id": self.agent_id
         }
 
         async with aiohttp.ClientSession() as session:
             try:
-                print(f"\n\nAbout to send POST request to {self.DOMAIN}/voice/transcript/real_time")
+                #print(f"\n\nAbout to send POST request to {self.DOMAIN}/voice/transcript/real_time")
                 #print(f"Request data: {extra_data}")
                 async with session.post(f'{self.DOMAIN}/voice/transcript/real_time', json=extra_data) as response:
                     #print(f"\n\nResponse status: {response.status}")
@@ -101,9 +103,8 @@ class CustomVoiceAssistant(VoiceAssistant):
                         # ))
                         # print("\n\nAdded RAG results to chat context")
                     else:
-                        print("\n\nNo RAG results to add to chat context")
-
-
+                        pass
+                        #print("\n\nNo RAG results to add to chat context")
 
             except Exception as e:
                 self.logger.error(f"Error sending transcript data to backend: {str(e)}", extra={"job_id": self._job_id})
@@ -112,7 +113,7 @@ class CustomVoiceAssistant(VoiceAssistant):
         print("\n\nFinished _synthesize_answer_task method")
 
 async def entrypoint(ctx: JobContext):
-    print(f"Entrypoint called with job_id: {ctx.job.id}")
+    print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     print(f"Room name: {ctx.room.name}")
 
@@ -186,7 +187,7 @@ async def entrypoint(ctx: JobContext):
     @assistant.on("user_speech_committed")
     def on_transcription(transcript: rtc.ChatMessage):
         """This event triggers when voice input is transcribed."""
-        print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+        #print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
 
         if transcript.content:
             # Send the transcript and chat context to the backend
@@ -199,7 +200,7 @@ async def entrypoint(ctx: JobContext):
             # # Retrieved Docs:
             # {"michael has one pet cat"} """
 
-            print("\n\n\n VOICE MSG:...", for_msg)
+            #print("\n\n\n VOICE MSG:...", for_msg)
 
             # Await the _answer function directly
             #await _answer(for_msg, use_image=False)
