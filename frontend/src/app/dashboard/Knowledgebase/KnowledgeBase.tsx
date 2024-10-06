@@ -58,8 +58,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
-import { handleNewItem } from '@/components/Dashboard/Knowledgebase/HandleNewItem';
-import { handleScrape } from '@/components/Dashboard/Knowledgebase/HandleScrape';
+import { handleNewItem } from '@/app/dashboard/Knowledgebase/HandleNewItem';
+import { handleScrape } from '@/app/dashboard/Knowledgebase/HandleScrape';
 interface SavedItem {
   id: number;
   title: string;

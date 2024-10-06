@@ -43,7 +43,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs";
 import { FlaskConical } from "lucide-react"  // Add this import at the top of the file
-import AgentHub from './AgentHub';
+import { AgentHub } from './AgentHub';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

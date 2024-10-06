@@ -3,7 +3,6 @@
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import axios from 'axios';
 
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,17 +36,13 @@ import {
   X,
   Home as HomeIcon,  // Rename the Home icon import
 } from "lucide-react";
-import ChatHistory from '@/components/Dashboard/ChatHistory';
+import ChatHistory from '@/app/dashboard/ChatHistory';
 
-import { AgentHub } from '@/components/Dashboard/AgentHub/AgentHub';
-import { Agent } from '@/components/Dashboard/AgentHub/LibraryTable';
-import Welcome from '@/components/Dashboard/Welcome/Welcome';
-import DockDemo from "@/components/Dashboard/Dock";  // Add this import
-import KnowledgeBaseContent from "@/components/Dashboard/Knowledgebase/KnowledgeBase";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { CardWithForm } from "@/components/shadcn/CardDemo";  // Add this import
-import { DataTableDemo } from '@/components/Dashboard/AgentHub/LibraryTable';  // Add this import
-import { DialogDemo } from '@/components/Dashboard/AgentHub/NewAgent';  // Add this import
+import { AgentHub } from '@/app/dashboard/AgentHub/AgentHub';
+import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
+import KnowledgeBaseContent from "@/app/dashboard/Knowledgebase/KnowledgeBase";
+import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add this import
+import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -84,7 +79,6 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
-    { icon: HomeIcon, label: "Welcome" },  // Use HomeIcon here
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
@@ -231,7 +225,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [activeItem, setActiveItem] = useState("Welcome");
+  const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activePanel, setActivePanel] = useState('admin');
@@ -258,16 +252,14 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
-      case "Welcome":
-        return <Welcome />;
       case "Agent Hub":
         return (
           <div className="flex flex-col h-full">
             <div className="mb-4 ml-8 mt-8">
               <DialogDemo />
             </div>
-            <AgentHub selectedAgent={selectedAgent} /> {/* Passed selectedAgent as prop */}
-            <DataTableDemo setSelectedAgent={setSelectedAgent} /> {/* Passed setSelectedAgent as prop */}
+            <AgentHub selectedAgent={selectedAgent} />
+            <DataTableDemo setSelectedAgent={setSelectedAgent} />
             <div className="mt-auto flex justify-start pl-8 pb-8">
               {/* Additional content if needed */}
             </div>
@@ -278,7 +270,18 @@ function AdminDashboard() {
       case "Conversation Logs":
         return <ChatHistory />;
       default:
-        return <Welcome />;
+        return (
+          <div className="flex flex-col h-full">
+            <div className="mb-4 ml-8 mt-8">
+              <DialogDemo />
+            </div>
+            <AgentHub selectedAgent={selectedAgent} />
+            <DataTableDemo setSelectedAgent={setSelectedAgent} />
+            <div className="mt-auto flex justify-start pl-8 pb-8">
+              {/* Additional content if needed */}
+            </div>
+          </div>
+        );
     }
   };
 

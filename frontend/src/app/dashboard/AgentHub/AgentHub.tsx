@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import LiveKitEntry from '@/components/Dashboard/AgentHub/LiveKitEntry';
+import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import MorphingStreamButton from '@/components/Dashboard/AgentHub/MorphingStreamButton';
+import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
 import { MagicCardDemo } from '@/components/magicui/MagicCardDemo';
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { CarouselSpacing } from '@/components/shadcn/Carousel';
