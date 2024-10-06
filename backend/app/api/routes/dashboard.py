@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os 
-from typing import List, Optional
-from pydantic import BaseModel, ValidationError
+from typing import Optional
+from pydantic import BaseModel
 import json
 import logging
 from fastapi import FastAPI, Request, HTTPException, \
@@ -11,14 +11,12 @@ from fastapi import File, UploadFile
 
 from supabase import create_client, Client
 from firecrawl import FirecrawlApp
-from openai import OpenAI
 import tiktoken
 
 from app.core.config import settings
 from services.file_process import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.kb import get_kb_items
-from services.voice.agents import create_agent, get_agents
 
 load_dotenv()
 
@@ -73,30 +71,6 @@ async def get_current_user(x_user_id: str = Header(...)):
     # For now, we'll just return the user ID from the header
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
-
-@router.post("/new_agent")
-async def new_agent_handler(request: Request):
-    try:
-        data = await request.json()
-        logger.debug(f"Received data: {data}")
-        new_agent = await create_agent(data)
-        return new_agent
-    except Exception as e:
-        logger.error(f"Error creating agent: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-@router.get("/agents")
-async def get_agents_handler(current_user: str = Depends(get_current_user)):
-    try:
-        agents = await get_agents(current_user)
-        return agents
-    except Exception as e:
-        logger.error(f"Error fetching agents: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-from fastapi import FastAPI, Request, HTTPException
-from livekit import api
-import os
 
 @router.post("/upload_file")
 async def upload_file_handler(
@@ -222,33 +196,8 @@ async def calculate_tokens_handler(request: Request, current_user: str = Depends
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_embedding(text: str) -> list:
-    openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    response = openai_client.embeddings.create(
-        input=text,
-        model="text-embedding-3-small"
-    )
-    return response.data[0].embedding
-
-def insert_into_supabase(content: str, embedding: list):
-    print(" func insert_into_supabase..")
-    data = supabase.table("knowledge_base").insert({"content": content, "embedding": embedding}).execute()
-    return data
-
-def setup_exception_handlers(app: FastAPI):
-    @app.exception_handler(ValidationError)
-    async def validation_exception_handler(request: Request, exc: ValidationError):
-        logger.error(f"Validation error in request: {str(exc)}")
-        error_details = [{"loc": err["loc"], "msg": err["msg"], "type": err["type"]} for err in exc.errors()]
-        logger.error(f"Validation error details: {json.dumps(error_details, indent=2)}")
-        return JSONResponse(status_code=422, content={"detail": error_details})
-
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

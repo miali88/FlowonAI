@@ -174,6 +174,26 @@ async def entrypoint(ctx: JobContext):
 
         #chat = rtc.ChatManager(ctx.room)
 
+        # @chat.on("message_received")
+        # def on_message_received(msg: rtc.ChatMessage):
+        #     """This event triggers whenever we get a new message from the user."""
+
+        #     if msg.message:
+        #         print("\n\n\n MESSAGE RECIEVED...:", msg)
+
+        #         for_msg = f""" 
+        #         # User Query:
+        #         {msg.message}
+        #         # Retrieved Docs:
+        #         {"michael has one pet cat"} """
+
+        #         print("\n\n\n FOR MSG:...", for_msg)
+
+        #         asyncio.create_task(_answer(for_msg, use_image=False))
+
+
+
+
         # async def _answer(text: str):
         #     """
         #     Answer the user's message with the given text and optionally the latest
@@ -227,8 +247,22 @@ async def entrypoint(ctx: JobContext):
 
         #         #print("\n\n\n VOICE MSG:...", for_msg)
 
-        #         # Await the _answer function directly
+        #         # Await the _answer directly
         #         #await _answer(for_msg, use_image=False)
+
+
+        # @assistant.on("function_calls_finished")
+        # def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+        #     """This event triggers when an assistant's function call completes."""
+
+        #     if len(called_functions) == 0:
+        #         return
+
+        #     user_msg = called_functions[0].call_info.arguments.get("user_msg")
+        #     if user_msg:
+        #         asyncio.create_task(_answer(user_msg, use_image=True))
+
+
 
         assistant.start(ctx.room)
 

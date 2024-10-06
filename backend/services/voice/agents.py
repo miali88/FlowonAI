@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os 
-from typing import List, Optional
-import json
+
+
 import logging
 
 from supabase import create_client, Client
