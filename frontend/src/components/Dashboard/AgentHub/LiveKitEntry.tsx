@@ -31,12 +31,14 @@ const ActiveRoom = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    console.log('connectionState:', connectionState);
     if (connectionState === 'connected') {
       setIsConnected(true);
     }
   }, [connectionState]);
 
   useEffect(() => {
+    console.log('localParticipant:', localParticipant);
     if (isConnected && localParticipant) {
       localParticipant.setMicrophoneEnabled(true);
     }

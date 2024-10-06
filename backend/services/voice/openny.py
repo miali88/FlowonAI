@@ -174,61 +174,61 @@ async def entrypoint(ctx: JobContext):
 
         #chat = rtc.ChatManager(ctx.room)
 
-        async def _answer(text: str):
-            """
-            Answer the user's message with the given text and optionally the latest
-            image captured from the video track.
-            """
-            content: list[str | ChatImage] = [text]
+        # async def _answer(text: str):
+        #     """
+        #     Answer the user's message with the given text and optionally the latest
+        #     image captured from the video track.
+        #     """
+        #     content: list[str | ChatImage] = [text]
 
-            chat_context.messages.append(ChatMessage(role="user", content=content))
+        #     chat_context.messages.append(ChatMessage(role="user", content=content))
 
-            stream = gpt.chat(chat_ctx=chat_context)
-            await assistant.say(stream, allow_interruptions=True)
+        #     stream = gpt.chat(chat_ctx=chat_context)
+        #     await assistant.say(stream, allow_interruptions=True)
 
-        async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext):
-            """
-            Send the transcript and chat context to a backend API endpoint asynchronously.
-            """
-            backend_url = f"{DOMAIN}{endpoint}"
-            #print(f"\n\n\n Sending to {endpoint}:", transcript)
+        # async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext):
+        #     """
+        #     Send the transcript and chat context to a backend API endpoint asynchronously.
+        #     """
+        #     backend_url = f"{DOMAIN}{endpoint}"
+        #     #print(f"\n\n\n Sending to {endpoint}:", transcript)
             
-            # Prepare the data to be sent
-            data = {"" : ""}
+        #     # Prepare the data to be sent
+        #     data = {"" : ""}
 
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(backend_url, json=data) as response:
-                        if response.status == 200:
-                            print(f"Transcript and chat context sent to backend successfully")
-                            return await response.json()  # Return the response data if needed
-                        else:
-                            print(f"Failed to send data to backend. Status: {response.status}")
-                            return None
-            except aiohttp.ClientError as e:
-                print(f"Error sending data to backend: {str(e)}")
-                return None
+        #     try:
+        #         async with aiohttp.ClientSession() as session:
+        #             async with session.post(backend_url, json=data) as response:
+        #                 if response.status == 200:
+        #                     print(f"Transcript and chat context sent to backend successfully")
+        #                     return await response.json()  # Return the response data if needed
+        #                 else:
+        #                     print(f"Failed to send data to backend. Status: {response.status}")
+        #                     return None
+        #     except aiohttp.ClientError as e:
+        #         print(f"Error sending data to backend: {str(e)}")
+        #         return None
             
-        @assistant.on("user_speech_committed")
-        def on_transcription(transcript: rtc.ChatMessage):
-            """This event triggers when voice input is transcribed."""
-            #print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+        # @assistant.on("user_speech_committed")
+        # def on_transcription(transcript: rtc.ChatMessage):
+        #     """This event triggers when voice input is transcribed."""
+        #     #print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
 
-            if transcript.content:
-                # Send the transcript and chat context to the backend
-                asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit", chat_context))
+        #     if transcript.content:
+        #         # Send the transcript and chat context to the backend
+        #         asyncio.create_task(send_transcript_to_backend(transcript.content, "/voice/transcript/commit", chat_context))
 
-                for_msg = f""" 
-                # User Query:
-                {transcript.content}
-                """
-                # # Retrieved Docs:
-                # {"michael has one pet cat"} """
+        #         for_msg = f""" 
+        #         # User Query:
+        #         {transcript.content}
+        #         """
+        #         # # Retrieved Docs:
+        #         # {"michael has one pet cat"} """
 
-                #print("\n\n\n VOICE MSG:...", for_msg)
+        #         #print("\n\n\n VOICE MSG:...", for_msg)
 
-                # Await the _answer function directly
-                #await _answer(for_msg, use_image=False)
+        #         # Await the _answer function directly
+        #         #await _answer(for_msg, use_image=False)
 
         assistant.start(ctx.room)
 

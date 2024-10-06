@@ -3,19 +3,16 @@ import logging
 import traceback
 import subprocess
 import random
-import asyncio
-from asyncio import Lock
-
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks
-from supabase import create_client, Client
 from livekit import api
-
 from app.core.config import settings
-from services.voice.pipe import agent
-from livekit import rtc
 
+from supabase import create_client, Client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
+from asyncio import Lock
+
+# Add this global variable
 agent_creation_locks = {}
 
 router = APIRouter()
@@ -71,77 +68,70 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
             room=room_name,
         ))
 
-    loopy = asyncio.new_event_loop()
-    print("new event loop", loopy)
-
-    room_instance = rtc.Room(loop=loopy)
-    print("\n\nnewroom instance", room_instance)
-    #await room.connect(ws_url, token)
-
-    print(f"Starting agent for room {room_instance}")
-    agent.start(room_instance)
-
-    # print(f"Adding create_agent_request task for room {room_name}")
-    # background_tasks.add_task(create_agent_request, room_name, agent_id)
+    print(f"Adding create_agent_request task for room {room_name}")
+    background_tasks.add_task(create_agent_request, room_name, agent_id)
 
     return {
         "accessToken": token.to_jwt(),
         "url": livekit_server_url}
 
 
-# async def create_agent_request(room_name: str, agent_id: str):
-#     print(f"Starting create_agent_request for room: {room_name}")
+async def create_agent_request(room_name: str, agent_id: str):
+    print(f"Starting create_agent_request for room: {room_name}")
     
-#     # Use a lock to prevent multiple agent creations for the same room
-#     if room_name not in agent_creation_locks:
-#         agent_creation_locks[room_name] = Lock()
+    # Use a lock to prevent multiple agent creations for the same room
+    if room_name not in agent_creation_locks:
+        agent_creation_locks[room_name] = Lock()
     
-#     async with agent_creation_locks[room_name]:
-#         # Check if an agent process is already running for this room
-#         if await is_agent_running(room_name):
-#             print(f"Agent already running for room: {room_name}")
-#             return
+    async with agent_creation_locks[room_name]:
+        # Check if an agent process is already running for this room
+        if await is_agent_running(room_name):
+            print(f"Agent already running for room: {room_name}")
+            return
 
-#         try:
-#             temperature = "0.6"
+        try:
+            temperature = "0.6"
 
-#             agent = await get_agent(agent_id)
+            agent = await get_agent(agent_id)
 
-#             instructions = agent['instructions']
-#             voice_id = agent['voice']
-#             functions = agent['functions']
-#             opening_line = agent['openingLine']
+            instructions = agent['instructions']
+            voice_id = agent['voice']
+            functions = agent['functions']
+            opening_line = agent['openingLine']
 
-#             # Construct the command
-#             command = [
-#                 "python", 
-#                 "services/voice/run_open.py",
-#                 "--instructions", instructions,
-#                 "--voice", voice_id,
-#                 "--temperature", temperature,
-#                 "--room", room_name,
-#                 "--opening_line", opening_line,
-#                 "--agent_id", agent_id
-#             ]
+            # Construct the command
+            command = [
+                "python", 
+                "services/voice/run_open.py",
+                "--instructions", instructions,
+                "--voice", voice_id,
+                "--temperature", temperature,
+                "--room", room_name,
+                "--opening_line", opening_line,
+                "--agent_id", agent_id
+            ]
 
-#             print(f"Executing command: {' '.join(command)}")
+            print(f"Executing command: {' '.join(command)}")
 
-#             # Run run_open.py as a subprocess with arguments
-#             subprocess.Popen(command)
-#             print(f"Agent process started for room: {room_name}")
-#         except Exception as e:
-#             print(f"Error starting agent process for room {room_name}: {str(e)}")
-#             print(traceback.format_exc())
+            # Run run_open.py as a subprocess with arguments
+            subprocess.Popen(command)
+            print(f"Agent process started for room: {room_name}")
+        except Exception as e:
+            print(f"Error starting agent process for room {room_name}: {str(e)}")
+            print(traceback.format_exc())
 
-# async def is_agent_running(room_name: str) -> bool:
-#     lock_file = f"/tmp/agent_lock_{room_name}"
-#     if os.path.exists(lock_file):
-#         return True
-#     else:
-#         # Create the lock file
-#         with open(lock_file, 'w') as f:
-#             f.write("1")
-#         return False
+async def is_agent_running(room_name: str) -> bool:
+    # Implement a check to see if an agent is already running for this room
+    # This could involve checking a database, a file, or a shared memory structure
+    # For now, we'll use a simple file-based approach
+    lock_file = f"/tmp/agent_lock_{room_name}"
+    if os.path.exists(lock_file):
+        return True
+    else:
+        # Create the lock file
+        with open(lock_file, 'w') as f:
+            f.write("1")
+        return False
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \
