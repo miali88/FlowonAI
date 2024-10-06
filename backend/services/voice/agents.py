@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
 import os 
-
-
 import logging
 
 from supabase import create_client, Client

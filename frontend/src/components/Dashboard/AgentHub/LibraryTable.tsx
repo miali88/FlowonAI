@@ -169,7 +169,7 @@ export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
           return;   
         }
 
-        const response = await axios.get(`${API_BASE_URL}/dashboard/agents`, {
+        const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
           headers: {
             'x-user-id': user.id
           }

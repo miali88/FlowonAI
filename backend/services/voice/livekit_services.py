@@ -1,10 +1,8 @@
 import os
-import logging
-import traceback
 import subprocess
 import random
-from fastapi import Request, HTTPException, APIRouter, BackgroundTasks
-from livekit import api
+from fastapi import HTTPException, BackgroundTasks
+from livekit import api as livekit_api
 from app.core.config import settings
 
 from supabase import create_client, Client
@@ -14,7 +12,6 @@ from asyncio import Lock
 
 # Add this global variable
 agent_creation_locks = {}
-
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
     print("Token request received")
@@ -38,10 +35,10 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
 
     print(f"Generating token for room: {room_name}")
-    token = api.AccessToken(api_key, api_secret)\
+    token = livekit_api.AccessToken(api_key, api_secret)\
         .with_identity(user_id)\
         .with_name(f"User {user_id}")\
-        .with_grants(api.VideoGrants(
+        .with_grants(livekit_api.VideoGrants(
             room_join=True,
             room=room_name))
 

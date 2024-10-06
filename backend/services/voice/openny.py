@@ -7,9 +7,9 @@ import os
 import sys
 import aiofiles
 
-from livekit import agents, rtc
+from livekit import agents
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
-from livekit.agents.llm import ChatContext, ChatImage, ChatMessage
+from livekit.agents.llm import ChatContext, ChatMessage
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import deepgram, openai, silero, elevenlabs
 

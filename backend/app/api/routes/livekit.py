@@ -2,10 +2,9 @@ import logging
 from asyncio import Lock
 
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends, Header
-from livekit import api
 
 from app.core.config import settings
-from services.voice.livekit import token_gen, start_agent_request
+from services.voice.livekit_services import token_gen, start_agent_request
 from services.voice.agents import create_agent, get_agents
 
 from supabase import create_client, Client
@@ -39,7 +38,7 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 
     agent_id = request.query_params.get("agent_id")
     user_id = request.query_params.get("user_id")
-    access_token, livekit_url, room_name = await token_gen(agent_id, user_id)
+    access_token, livekit_url, room_name = await token_gen(agent_id, user_id, background_tasks)
 
     print(f"Adding create_agent_request task for room {room_name}")
     background_tasks.add_task(start_agent_request, room_name, agent_id)
