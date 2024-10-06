@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { BorderBeam } from "@/components/ui/border-beam";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -24,6 +25,12 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
+  const handleAgentSelect = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setSelectedAgentId(agent.id);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,21 +75,29 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAgents.map((agent) => (
-          <Card key={agent.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedAgent(agent)}>
-            <CardHeader>
-              <CardTitle>{agent.agentName}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-2">{agent.agentPurpose}</p>
-              <Badge variant="secondary" className="mr-2">
-                {agent.voice}
-              </Badge>
-              <Badge variant="outline">{agent.dataSource}</Badge>
-            </CardContent>
-            <CardFooter className="text-sm text-gray-500">
-              ID: {agent.id}
-            </CardFooter>
-          </Card>
+          <div key={agent.id} className="relative">
+            <Card 
+              className={`cursor-pointer hover:shadow-md transition-shadow ${
+                selectedAgentId === agent.id ? 'border-transparent' : ''
+              }`} 
+              onClick={() => handleAgentSelect(agent)}
+            >
+              <CardHeader>
+                <CardTitle>{agent.agentName}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-2">{agent.agentPurpose}</p>
+                <Badge variant="secondary" className="mr-2">
+                  {agent.voice}
+                </Badge>
+                <Badge variant="outline">{agent.dataSource}</Badge>
+              </CardContent>
+              <CardFooter className="text-sm text-gray-500">
+                ID: {agent.id}
+              </CardFooter>
+            </Card>
+            {selectedAgentId === agent.id && <BorderBeam />}
+          </div>
         ))}
       </div>
     </div>

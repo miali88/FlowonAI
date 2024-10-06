@@ -68,15 +68,26 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
   };
 
   return (
-    <div>
-      <MorphingStreamButton 
-        onStreamToggle={toggleLiveKit} 
-        isStreaming={isLiveKitActive} 
-        showTextBox={false} 
-      />
-      {isLiveKitActive && token && url && (
-        <LiveKitEntry token={token} url={url} />
-      )}
+    <div className="flex flex-col h-full">
+      <div className="flex-grow relative">
+        <AnimatedGridPatternDemo className="absolute inset-0" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <MorphingStreamButton 
+            onStreamToggle={toggleLiveKit} 
+            isStreaming={isLiveKitActive} 
+            showTextBox={false} 
+          />
+        </div>
+        {isLiveKitActive && token && url && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <LiveKitEntry token={token} url={url} />
+          </div>
+        )}
+      </div>
+      {/* Space for other content like "Create New Agent" and agent cards */}
+      <div className="mt-4">
+        {/* Add your additional content here */}
+      </div>
     </div>
   );
 }
