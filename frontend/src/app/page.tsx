@@ -43,6 +43,7 @@ import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
 import KnowledgeBaseContent from "@/app/dashboard/Knowledgebase/KnowledgeBase";
 import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add this import
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
+import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -259,7 +260,7 @@ function AdminDashboard() {
               <DialogDemo />
             </div>
             <AgentHub selectedAgent={selectedAgent} />
-            <DataTableDemo setSelectedAgent={setSelectedAgent} />
+            <AgentCards setSelectedAgent={setSelectedAgent} />
             <div className="mt-auto flex justify-start pl-8 pb-8">
               {/* Additional content if needed */}
             </div>

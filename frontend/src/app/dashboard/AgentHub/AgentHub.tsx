@@ -4,13 +4,17 @@ import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
 import { MagicCardDemo } from '@/components/magicui/MagicCardDemo';
-import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { CarouselSpacing } from '@/components/shadcn/Carousel';
 import { Agent } from './LibraryTable';
+//import { Agent } from './LibraryTable';
+import { AgentCards } from './AgentCards';
+
+//add the below :)
+import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
+
 
 interface AgentHubProps {
-  selectedAgent: Agent | null;
-}
+  selectedAgent: Agent | null;}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

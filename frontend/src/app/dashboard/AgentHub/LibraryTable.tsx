@@ -42,8 +42,6 @@ import {
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs";
-import { FlaskConical } from "lucide-react"  // Add this import at the top of the file
-import { AgentHub } from './AgentHub';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -214,10 +212,6 @@ export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
-        <Button variant="outline" size="sm">
-          <FlaskConical className="mr-2 h-4 w-4" />
-          Lab
-        </Button>
         <div className="flex items-center">
           <Input
             placeholder="Filter agent..."
