@@ -15,7 +15,6 @@ from livekit.plugins import deepgram, openai, silero, elevenlabs
 
 load_dotenv()
 
-# Use environment variables with defaults
 INSTRUCTIONS = os.getenv('AGENT_INSTRUCTIONS')
 VOICE_ID = os.getenv('AGENT_VOICE_ID')
 TEMPERATURE = float(os.getenv('AGENT_TEMPERATURE', "0.6"))
@@ -161,8 +160,7 @@ async def entrypoint(ctx: JobContext):
                 name="Custom Voice",
                 category="custom"
             )),
-            sentence_tokenizer=tokenize.basic.SentenceTokenizer(),
-        )
+            sentence_tokenizer=tokenize.basic.SentenceTokenizer())
 
         # Use CustomVoiceAssistant instead of VoiceAssistant
         assistant = CustomVoiceAssistant(
