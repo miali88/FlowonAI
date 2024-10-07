@@ -35,7 +35,8 @@ import {
   Sun,
   X,
   Home as HomeIcon,  // Rename the Home icon import
-  Beaker,  // Add this import
+  Beaker,
+  Plug,  // Add this import
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
@@ -86,6 +87,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
     { icon: Beaker, label: "Lab" },  // Moved this item here
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
+    { icon: Plug, label: "Connect" },
     // { icon: BarChart3, label: "Analytics" },
   ];
 

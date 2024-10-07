@@ -97,36 +97,36 @@ export function DialogDemo() {
       <DialogTrigger asChild>
         <Button variant="outline" onClick={() => setIsOpen(true)}>Create New Agent</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-background text-foreground dark:bg-gray-800 dark:text-gray-200">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Agent</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-foreground dark:text-gray-200">Create New Agent</DialogTitle>
+            <DialogDescription className="text-muted-foreground dark:text-gray-400">
               Fill in the details to create a new agent. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="agentName" className="text-right">
+              <Label htmlFor="agentName" className="text-right text-foreground dark:text-gray-200">
                 Agent Name
               </Label>
               <Input
                 id="agentName"
                 placeholder="Enter agent name"
-                className="col-span-3"
+                className="col-span-3 bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input"
                 value={formData.agentName}
                 onChange={handleInputChange}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="agentPurpose" className="text-right">
+              <Label htmlFor="agentPurpose" className="text-right text-foreground dark:text-gray-200">
                 Agent Purpose
               </Label>
               <Select onValueChange={(value) => handleSelectChange("agentPurpose", value)}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-3 bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input">
                   <SelectValue placeholder="Select agent purpose" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
                   <SelectItem value="prospecting">Prospecting</SelectItem>
                   <SelectItem value="question-answer">Question & Answer</SelectItem>
                   <SelectItem value="customer-service">Customer Service</SelectItem>
@@ -135,14 +135,14 @@ export function DialogDemo() {
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dataSource" className="text-right">
+              <Label htmlFor="dataSource" className="text-right text-foreground">
                 Data Source
               </Label>
               <Select onValueChange={(value) => handleSelectChange("dataSource", value)}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-3 bg-background text-foreground border-muted-foreground">
                   <SelectValue placeholder="Select data source" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background text-foreground">
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="tagged">Items with tag...</SelectItem>
                   <SelectItem value="natural-language">Describe using natural language</SelectItem>
@@ -151,13 +151,13 @@ export function DialogDemo() {
             </div>
             {dataSource === "tagged" && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tag" className="text-right">
+                <Label htmlFor="tag" className="text-right text-foreground">
                   Tag
                 </Label>
                 <Input
                   id="tag"
                   placeholder="Enter tag"
-                  className="col-span-3"
+                  className="col-span-3 bg-background text-foreground border-muted-foreground"
                   value={formData.tag}
                   onChange={handleInputChange}
                 />
@@ -165,50 +165,50 @@ export function DialogDemo() {
             )}
             {dataSource === "natural-language" && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <div className="col-span-4 text-sm text-gray-500 italic">
+                <div className="col-span-4 text-sm text-muted-foreground italic">
                   You can tag items using natural language in the knowledge base. Please tag, then select them here.
                 </div>
               </div>
             )}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="openingLine" className="text-right">
+              <Label htmlFor="openingLine" className="text-right text-foreground">
                 Opening Line
               </Label>
               <Input
                 id="openingLine"
                 placeholder="Enter opening line"
-                className="col-span-3"
+                className="col-span-3 bg-background text-foreground border-muted-foreground"
                 value={formData.openingLine}
                 onChange={handleInputChange}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="voice" className="text-right">
+              <Label htmlFor="voice" className="text-right text-foreground">
                 Voice
               </Label>
               <Input
                 id="voice"
                 placeholder="Enter voice style"
-                className="col-span-3"
+                className="col-span-3 bg-background text-foreground border-muted-foreground"
                 value={formData.voice}
                 onChange={handleInputChange}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="instructions" className="text-right">
+              <Label htmlFor="instructions" className="text-right text-foreground">
                 Instructions
               </Label>
               <Input
                 id="instructions"
                 placeholder="Enter instructions for the agent"
-                className="col-span-3"
+                className="col-span-3 bg-background text-foreground border-input"
                 value={formData.instructions}
                 onChange={handleInputChange}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -221,7 +221,7 @@ export function DialogDemo() {
           </DialogFooter>
           {responseMessage && (
             <div className={`mt-4 text-center ${
-              responseMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'
+              responseMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}>
               {responseMessage}
             </div>
