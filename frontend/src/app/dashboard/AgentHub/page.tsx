@@ -9,9 +9,7 @@ import { Agent } from './LibraryTable';
 //import { Agent } from './LibraryTable';
 import { AgentCards } from './AgentCards';
 
-//add the below :)
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
-
 
 interface AgentHubProps {
   selectedAgent: Agent | null;}
