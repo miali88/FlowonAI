@@ -35,6 +35,7 @@ import {
   Sun,
   X,
   Home as HomeIcon,  // Rename the Home icon import
+  Beaker,  // Add this import
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
@@ -44,6 +45,7 @@ import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
 import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add this import
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
+import Lab from '@/app/dashboard/Lab/page';  // Add this import
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -83,6 +85,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
+    { icon: Beaker, label: "Lab" },  // Add this new item
     // { icon: BarChart3, label: "Analytics" },
   ];
 
@@ -270,6 +273,8 @@ function AdminDashboard() {
         return <KnowledgeBaseContent />;
       case "Conversation Logs":
         return <ChatHistory />;
+      case "Lab":
+        return <Lab />;
       default:
         return (
           <div className="flex flex-col h-full">
