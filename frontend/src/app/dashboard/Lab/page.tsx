@@ -17,7 +17,8 @@ import { useAuth } from "@clerk/nextjs";
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const { toast } = useToast();
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertDialogMessage, setAlertDialogMessage] = useState('');
   const { userId } = useAuth();
 
   const handleAgentSelect = (agent: Agent) => {
@@ -46,10 +47,7 @@ const Lab = () => {
       });
 
       if (response.ok) {
-        toast({
-          title: "Agent deleted",
-          description: `${selectedAgent.agentName} has been successfully deleted.`,
-        });
+        setAlertDialogMessage(`${selectedAgent.agentName} has been successfully deleted. Refresh the page to see the change.`);
         setSelectedAgent(null);
         // Optionally, refresh the agent list here
       } else {
@@ -58,11 +56,9 @@ const Lab = () => {
       }
     } catch (error) {
       console.error('Error deleting agent:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete the agent. Please try again.",
-        variant: "destructive",
-      });
+      setAlertDialogMessage(error instanceof Error ? error.message : "Failed to delete the agent. Please try again.");
+    } finally {
+      setAlertDialogOpen(true);
     }
   };
 
@@ -203,6 +199,19 @@ const Lab = () => {
           <p>Select an agent to edit its settings.</p>
         )}
       </div>
+      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notification</AlertDialogTitle>
+            <AlertDialogDescription>
+              {alertDialogMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setAlertDialogOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
