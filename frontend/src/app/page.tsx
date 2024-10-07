@@ -194,12 +194,12 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8 w-64" />
         </div>
-        <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+        {/* <Button variant="outline" size="icon" onClick={toggleDarkMode}>
           {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-        <Button variant="outline" size="icon">
+        </Button> */}
+        {/* <Button variant="outline" size="icon">
           <Bell className="h-4 w-4" />
-        </Button>
+        </Button> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
@@ -233,7 +233,7 @@ function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);  // Changed to false
   const [activePanel, setActivePanel] = useState('admin');
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null); // State for selected agent
 
