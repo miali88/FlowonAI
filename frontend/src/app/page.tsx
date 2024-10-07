@@ -36,11 +36,11 @@ import {
   X,
   Home as HomeIcon,  // Rename the Home icon import
 } from "lucide-react";
-import ChatHistory from '@/app/dashboard/ChatHistory';
+import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
-import { AgentHub } from '@/app/dashboard/AgentHub/AgentHub';
+import { AgentHub } from '@/app/dashboard/AgentHub/page';
 import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
-import KnowledgeBaseContent from "@/app/dashboard/Knowledgebase/KnowledgeBase";
+import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
 import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add this import
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
