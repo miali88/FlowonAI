@@ -83,9 +83,9 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
     { icon: Mic, label: "Agent Hub" },
+    { icon: Beaker, label: "Lab" },  // Moved this item here
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
-    { icon: Beaker, label: "Lab" },  // Add this new item
     // { icon: BarChart3, label: "Analytics" },
   ];
 
