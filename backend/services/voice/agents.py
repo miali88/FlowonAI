@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os 
 import logging
+from fastapi import HTTPException
 
 from supabase import create_client, Client
 
@@ -32,3 +33,12 @@ async def create_agent(data):
 async def get_agents(user_id: str):
     agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
     return agents
+
+async def delete_agent(agent_id: int, user_id: str):
+    try:
+        # Delete the agent from the database
+        response = supabase.table('agents').delete().eq('id', agent_id).execute()
+        return response
+    except Exception as e:
+        logger.error(f"Error deleting agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

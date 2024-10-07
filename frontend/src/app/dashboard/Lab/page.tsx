@@ -9,9 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import MorphingStreamButton from '../AgentHub/MorphingStreamButton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from "@clerk/nextjs";
 
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const { toast } = useToast();
+  const { userId } = useAuth();
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -22,19 +29,56 @@ const Lab = () => {
     console.log("Saving changes for agent:", selectedAgent);
   };
 
+  const handleStreamToggle = () => {
+    setIsStreaming(!isStreaming);
+  };
+
+  const handleDeleteAgent = async () => {
+    if (!selectedAgent || !userId) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Agent deleted",
+          description: `${selectedAgent.agentName} has been successfully deleted.`,
+        });
+        setSelectedAgent(null);
+        // Optionally, refresh the agent list here
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete agent');
+      }
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete the agent. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-6">
-      <h1 className="text-2xl font-bold mb-6">Agent Lab</h1>
       <div className="flex flex-col space-y-6">
         <div className="w-full">
           <h2 className="text-xl font-semibold mb-4">Select an Agent</h2>
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
         {selectedAgent && (
-          <Tabs defaultValue="edit" className="w-full">
+          <Tabs defaultValue="preview" className="w-full">
             <TabsList>
-              <TabsTrigger value="edit">Settings</TabsTrigger>
               <TabsTrigger value="preview">Preview Agent</TabsTrigger>
+              <TabsTrigger value="edit">Settings</TabsTrigger>
+              <TabsTrigger value="ui">UI</TabsTrigger>
             </TabsList>
             <TabsContent value="edit">
               <div className="space-y-4">
@@ -113,11 +157,45 @@ const Lab = () => {
                     onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
                   />
                 </div>
-                <Button onClick={handleSaveChanges}>Save Changes</Button>
+                <div className="flex space-x-2">
+                  <Button onClick={handleSaveChanges}>Save Changes</Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete Agent</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the agent
+                          and remove all of its data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAgent}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="ui">
+              <div className="space-y-4">
+                <p>UI customization options for the agent will be shown here.</p>
+                {/* Add UI customization fields here */}
               </div>
             </TabsContent>
             <TabsContent value="preview">
-              <p>Preview of the agent will be shown here.</p>
+              <div className="space-y-4">
+                <MorphingStreamButton
+                  onStreamToggle={handleStreamToggle}
+                  isStreaming={isStreaming}
+                  showTextBox={false}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         )}

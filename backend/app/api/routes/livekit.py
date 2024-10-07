@@ -2,15 +2,14 @@ import logging
 from asyncio import Lock
 
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends, Header
+from supabase import create_client, Client
 
 from app.core.config import settings
 from services.voice.livekit_services import token_gen, start_agent_request
-from services.voice.agents import create_agent, get_agents
+from services.voice.agents import create_agent, get_agents, delete_agent
 
-from supabase import create_client, Client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
-# Add this global variable
 agent_creation_locks = {}
 
 router = APIRouter()
@@ -67,4 +66,13 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Error fetching agents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
+@router.delete("/agents/{agent_id}")
+async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_current_user)):
+    try:
+        await delete_agent(agent_id, current_user)
+        return {"message": "Agent deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
