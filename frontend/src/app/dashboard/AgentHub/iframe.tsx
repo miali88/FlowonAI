@@ -38,7 +38,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
     setIframeLoading(true);
     setIframeError(null);
     try {
-      const url = `/api/agent-content?agentId=${agentId}&userId=${userId}`;
+      const url = `${BASE_URL}/agent-voice/${agentId}`;
       setIframeUrl(url);
     } catch (error) {
       console.error('Error setting agent content URL:', error);
@@ -120,7 +120,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
                   setIframeLoading(false);
                   setIframeError('Failed to load agent content');
                 }}
-                sandbox="allow-scripts allow-same-origin"
+                allow="microphone; camera"
               />
             </>
           ) : (
