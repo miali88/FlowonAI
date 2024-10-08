@@ -1,65 +1,35 @@
 'use client';
 
-import { useUser, useAuth, useClerk } from "@clerk/nextjs";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useUser, useAuth } from "@clerk/nextjs";
+import { useEffect, useState, useCallback } from "react";
 import axios from 'axios';
 
 import React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
-  BarChart3,
-  Bell,
-  BookOpen,
-  ChevronRight,
   Edit,
   Globe,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Mic,
-  Moon,
-  PlusCircle,
-  Search,
   SendIcon,
-  Settings,
-  Sun,
   Trash2,
   Upload,
-  User,
-  X,
   Home as HomeIcon,  // Rename the Home icon import
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
-import { handleNewItem } from '@/app/dashboard/Knowledgebase/HandleNewItem';
-import { handleScrape } from '@/app/dashboard/Knowledgebase/HandleScrape';
+import { handleNewItem } from './HandleNewItem';
+import { handleScrape } from './HandleScrape';
 interface SavedItem {
   id: number;
   title: string;

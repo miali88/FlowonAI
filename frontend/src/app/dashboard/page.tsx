@@ -47,6 +47,7 @@ import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add t
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
 import Lab from '@/app/dashboard/Lab/page';  // Add this import
+import ConnectPage from "@/app/dashboard/Connect/page";
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -277,6 +278,8 @@ function AdminDashboard() {
         return <ChatHistory />;
       case "Lab":
         return <Lab />;
+      case "Connect":
+        return <ConnectPage />;
       default:
         return (
           <div className="flex flex-col h-full">
