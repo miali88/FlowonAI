@@ -10,6 +10,7 @@ import { Agent } from './LibraryTable';
 import { AgentCards } from './AgentCards';
 
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
+import { Spinner } from '@/components/ui/spinner'; // Assuming you have a Spinner component
 
 interface AgentHubProps {
   selectedAgent: Agent | null;}
@@ -26,12 +27,45 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
   const { user } = useUser(); // Get user information
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [iframeError, setIframeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedAgent) {
-      setIframeUrl(`${BASE_URL}/agents/${selectedAgent.id}`);
+    if (selectedAgent && user) {
+      fetchAgentContent(selectedAgent.id, user.id);
     }
-  }, [selectedAgent]);
+  }, [selectedAgent, user]);
+
+  const fetchAgentContent = async (agentId: string, userId: string) => {
+    setIframeLoading(true);
+    setIframeError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/agents/${agentId}/content?user_id=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any necessary authentication headers
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch agent content');
+      }
+
+      const htmlContent = await response.text();
+      
+      // Create a blob with the HTML content
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      setIframeUrl(url);
+    } catch (error) {
+      console.error('Error fetching agent content:', error);
+      setIframeError('Failed to load agent content');
+    } finally {
+      setIframeLoading(false);
+    }
+  };
 
   const handleConnect = useCallback(async () => {
     if (!selectedAgent) {
@@ -81,12 +115,21 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
         <AnimatedGridPatternDemo className="absolute inset-0" />
         <div className="absolute inset-0 flex items-center justify-center">
           {iframeUrl ? (
-            <iframe
-              ref={iframeRef}
-              src={iframeUrl}
-              className="w-full h-full border-0"
-              title="Agent Content"
-            />
+            <>
+              {iframeLoading && <Spinner />}
+              {iframeError && <div className="text-red-500">{iframeError}</div>}
+              <iframe
+                ref={iframeRef}
+                src={iframeUrl}
+                className={`w-full h-full border-0 ${iframeLoading ? 'hidden' : ''}`}
+                title="Agent Content"
+                onLoad={() => setIframeLoading(false)}
+                onError={() => {
+                  setIframeLoading(false);
+                  setIframeError('Failed to load agent content');
+                }}
+              />
+            </>
           ) : (
             <MorphingStreamButton 
               onStreamToggle={toggleLiveKit} 
