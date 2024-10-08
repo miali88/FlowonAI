@@ -44,6 +44,34 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
 
     return token.to_jwt(), livekit_server_url, room_name
 
+async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
+    print("Token request received")
+    print(f"Request parameters: agent_id={agent_id}")
+    
+    if not agent_id:
+        print("Missing agent_id in request")
+        raise HTTPException(status_code=400, detail="Missing agent_id")
+
+    visitor_id = f"{random.randint(100000000000, 999999999999):012d}"
+    room_name = f"agent_{agent_id}_room_{visitor_id}"
+    api_key = os.getenv("LIVEKIT_API_KEY")
+    api_secret = os.getenv("LIVEKIT_API_SECRET")
+    livekit_server_url = os.getenv("LIVEKIT_URL")
+    
+    if not api_key or not api_secret or not livekit_server_url:
+        print("LiveKit credentials not configured")
+        raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
+
+    print(f"Generating token for room: {room_name}")
+    token = livekit_api.AccessToken(api_key, api_secret)\
+        .with_identity(visitor_id)\
+        .with_name(f"Visitor {visitor_id}")\
+        .with_grants(livekit_api.VideoGrants(
+            room_join=True,
+            room=room_name))
+
+    return token.to_jwt(), livekit_server_url, room_name
+
 async def start_agent_request(room_name: str, agent_id: str):
     print(f"Starting create_agent_request for room: {room_name}")
     

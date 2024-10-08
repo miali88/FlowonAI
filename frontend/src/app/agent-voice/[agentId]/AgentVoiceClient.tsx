@@ -3,13 +3,14 @@
 import { AgentHub } from '@/app/dashboard/AgentHub/iframe';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export default function AgentVoiceClient() {
   const params = useParams();
   const agentId = params.agentId as string;
-  const [agent, setAgent] = useState(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
 
   useEffect(() => {
     if (agentId) {
@@ -24,7 +25,7 @@ export default function AgentVoiceClient() {
         throw new Error('Failed to fetch agent data');
       }
       const data = await response.json();
-      setAgent(data);
+      setAgent({ id, ...data });  // Ensure the id is included in the agent object
     } catch (error) {
       console.error('Error fetching agent data:', error);
     }
@@ -34,5 +35,5 @@ export default function AgentVoiceClient() {
     return <div>Loading...</div>;
   }
 
-  return <AgentHub selectedAgent={agent} />;
+  return <AgentHub selectedAgent={agent} embedMode={true} />;
 }

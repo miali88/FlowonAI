@@ -42,6 +42,6 @@ async def delete_agent(agent_id: int, user_id: str):
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-async def get_agent_content(agent_id: int):
+async def get_agent_content(agent_id: str):
     content = supabase.table('agents').select('*').eq('id', agent_id).execute()
     return content

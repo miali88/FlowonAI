@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
-import { useUser } from "@clerk/nextjs";
 import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
 import { Agent } from './LibraryTable';
 
@@ -11,30 +10,30 @@ import { Loader2, AlertCircle } from 'lucide-react';
 
 interface AgentHubProps {
   selectedAgent: Agent | null;
+  embedMode?: boolean;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const DEV_MODE = process.env.NODE_ENV === 'development';
 const BASE_URL = DEV_MODE ? 'https://localhost:3000' : 'https://flowon.ai';
 
-export function AgentHub({ selectedAgent }: AgentHubProps) {
+export function AgentHub({ selectedAgent, embedMode = false }: AgentHubProps) {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { user } = useUser();
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedAgent && user) {
-      fetchAgentContent(selectedAgent.id, user.id);
+    if (selectedAgent) {
+      fetchAgentContent(selectedAgent.id);
     }
-  }, [selectedAgent, user]);
+  }, [selectedAgent]);
 
-  const fetchAgentContent = async (agentId: string, userId: string) => {
+  const fetchAgentContent = async (agentId: string) => {
     setIframeLoading(true);
     setIframeError(null);
     try {
@@ -53,14 +52,10 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
       console.error('No agent selected');
       return;
     }
-    if (!user) {
-      console.error('User not authenticated');
-      return;
-    }
 
     setIsConnecting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${selectedAgent.id}&user_id=${user.id}`, { 
+      const response = await fetch(`${API_BASE_URL}/livekit/token_embed?agent_id=${selectedAgent.id}`, { 
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +73,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
     } finally {
       setIsConnecting(false);
     }
-  }, [selectedAgent, user]);
+  }, [selectedAgent]);
 
   const toggleLiveKit = () => {
     if (isLiveKitActive) {
@@ -91,7 +86,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col ${embedMode ? 'h-full' : 'h-screen'}`}>
       <div className="flex-grow relative">
         <AnimatedGridPatternDemo className="absolute inset-0" />
         <div className="absolute inset-0 flex items-center justify-center">

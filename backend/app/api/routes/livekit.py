@@ -5,7 +5,7 @@ from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends,
 from supabase import create_client, Client
 
 from app.core.config import settings
-from services.voice.livekit_services import token_gen, start_agent_request
+from services.voice.livekit_services import token_gen, token_embed_gen, start_agent_request
 from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
@@ -47,6 +47,23 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
         "url": livekit_url
     }
 
+
+@router.get("/token_embed")
+async def get_token_embed(request: Request, background_tasks: BackgroundTasks):
+    """ Create a token for a user to join a room & starts the agent """
+
+    agent_id = request.query_params.get("agent_id")
+    access_token, livekit_url, room_name = await token_embed_gen(agent_id, background_tasks)
+
+    print(f"Adding create_agent_request task for room {room_name}")
+    background_tasks.add_task(start_agent_request, room_name, agent_id)
+
+    return {
+        "accessToken": access_token,
+        "url": livekit_url
+    }
+
+
 @router.post("/new_agent")
 async def new_agent_handler(request: Request):
     try:
@@ -71,6 +88,7 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
 async def get_agent_content_handler(agent_id: str):
     try:
         logger.info(f"Fetching agent content for agent_id: {agent_id}")
+        print(f"\n\nFetching agent content for agent_id: {agent_id}")
         agent_content = await get_agent_content(agent_id)
         logger.info(f"Successfully fetched agent content: {agent_content}")
         return agent_content
