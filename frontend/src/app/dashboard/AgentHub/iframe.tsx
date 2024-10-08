@@ -1,19 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
 import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
-import { MagicCardDemo } from '@/components/magicui/MagicCardDemo';
-import { CarouselSpacing } from '@/components/shadcn/Carousel';
 import { Agent } from './LibraryTable';
-//import { Agent } from './LibraryTable';
-import { AgentCards } from './AgentCards';
 
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
-import { Spinner } from '@/components/ui/spinner'; // Assuming you have a Spinner component
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface AgentHubProps {
-  selectedAgent: Agent | null;}
+  selectedAgent: Agent | null;
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const DEV_MODE = process.env.NODE_ENV === 'development';
@@ -24,7 +20,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { user } = useUser(); // Get user information
+  const { user } = useUser();
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
@@ -40,27 +36,10 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
     setIframeLoading(true);
     setIframeError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/agents/${agentId}/content?user_id=${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add any necessary authentication headers
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch agent content');
-      }
-
-      const htmlContent = await response.text();
-      
-      // Create a blob with the HTML content
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      
+      const url = `/api/agent-content?agentId=${agentId}&userId=${userId}`;
       setIframeUrl(url);
     } catch (error) {
-      console.error('Error fetching agent content:', error);
+      console.error('Error setting agent content URL:', error);
       setIframeError('Failed to load agent content');
     } finally {
       setIframeLoading(false);
@@ -116,8 +95,19 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
         <div className="absolute inset-0 flex items-center justify-center">
           {iframeUrl ? (
             <>
-              {iframeLoading && <Spinner />}
-              {iframeError && <div className="text-red-500">{iframeError}</div>}
+              {iframeLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75">
+                  <Loader2 className="h-8 w-8 animate-spin" /> {/* Spinner */}
+                </div>
+              )}
+              {iframeError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-red-100 bg-opacity-75">
+                  <div className="text-red-500 text-center">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                    {iframeError}
+                  </div>
+                </div>
+              )}
               <iframe
                 ref={iframeRef}
                 src={iframeUrl}
@@ -128,6 +118,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
                   setIframeLoading(false);
                   setIframeError('Failed to load agent content');
                 }}
+                sandbox="allow-scripts allow-same-origin"
               />
             </>
           ) : (
@@ -144,7 +135,7 @@ export function AgentHub({ selectedAgent }: AgentHubProps) {
           </div>
         )}
       </div>
-      {/* Space for other content like "Create New Agent" and agent cards */}
+      {/* Additional Content */}
       <div className="mt-4">
         {/* Add your additional content here */}
       </div>

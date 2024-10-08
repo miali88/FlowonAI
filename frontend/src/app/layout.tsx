@@ -28,6 +28,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+          <meta
+            httpEquiv="Content-Security-Policy"
+            content="frame-src 'self' http://localhost:3000;"
+          />
+        </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         >
