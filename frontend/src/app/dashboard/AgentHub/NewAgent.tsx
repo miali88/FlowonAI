@@ -47,7 +47,7 @@ export function DialogDemo() {
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<string>("");
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +66,17 @@ export function DialogDemo() {
     handleSelectChange("voice", value);
   };
 
-  const playVoiceSample = (file: string) => {
+  const playVoiceSample = (voiceId: string, file: string) => {
+    if (playingVoiceId === voiceId) {
+      // If the clicked voice is currently playing, stop it
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setPlayingVoiceId(null);
+      return;
+    }
+
     console.log("Attempting to play:", file);
     
     // If there's already an audio playing, stop it
@@ -84,17 +94,17 @@ export function DialogDemo() {
     audioRef.current.play()
       .then(() => {
         console.log("Audio started playing");
-        setIsPlaying(true);
+        setPlayingVoiceId(voiceId);
       })
       .catch(error => {
         console.error("Error playing audio:", error);
-        setIsPlaying(false);
+        setPlayingVoiceId(null);
       });
 
     // Add an event listener for when the audio finishes playing
     audioRef.current.onended = () => {
       console.log("Audio finished playing");
-      setIsPlaying(false);
+      setPlayingVoiceId(null);
     };
   };
 
@@ -269,13 +279,12 @@ export function DialogDemo() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => playVoiceSample(voice.file)}
+                  onClick={() => playVoiceSample(voice.id, voice.file)}
                   className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
-                    isPlaying && audioRef.current?.src.endsWith(voice.file) ? "bg-primary text-primary-foreground" : ""
+                    playingVoiceId === voice.id ? "bg-primary text-primary-foreground" : ""
                   }`}
-                  disabled={isPlaying && audioRef.current?.src.endsWith(voice.file)}
                 >
-                  {isPlaying && audioRef.current?.src.endsWith(voice.file) ? "Playing..." : `Play ${voice.name}`}
+                  {playingVoiceId === voice.id ? "Stop" : `Play ${voice.name}`}
                 </Button>
               ))}
             </div>
