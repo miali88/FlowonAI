@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -47,6 +47,8 @@ export function DialogDemo() {
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -66,14 +68,34 @@ export function DialogDemo() {
 
   const playVoiceSample = (file: string) => {
     console.log("Attempting to play:", file);
-    const audio = new Audio(file);
-    audio.play()
+    
+    // If there's already an audio playing, stop it
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    // Create a new Audio instance or reuse the existing one
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+
+    audioRef.current.src = file;
+    audioRef.current.play()
       .then(() => {
         console.log("Audio started playing");
+        setIsPlaying(true);
       })
       .catch(error => {
         console.error("Error playing audio:", error);
+        setIsPlaying(false);
       });
+
+    // Add an event listener for when the audio finishes playing
+    audioRef.current.onended = () => {
+      console.log("Audio finished playing");
+      setIsPlaying(false);
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -248,9 +270,12 @@ export function DialogDemo() {
                   variant="outline"
                   size="sm"
                   onClick={() => playVoiceSample(voice.file)}
-                  className={selectedVoice === voice.id ? "border-primary" : ""}
+                  className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
+                    isPlaying && audioRef.current?.src.endsWith(voice.file) ? "bg-primary text-primary-foreground" : ""
+                  }`}
+                  disabled={isPlaying && audioRef.current?.src.endsWith(voice.file)}
                 >
-                  Play {voice.name}
+                  {isPlaying && audioRef.current?.src.endsWith(voice.file) ? "Playing..." : `Play ${voice.name}`}
                 </Button>
               ))}
             </div>
@@ -275,9 +300,6 @@ export function DialogDemo() {
             </div>
           )}
         </form>
-        <p className="text-sm text-muted-foreground mt-2">
-          Current audio: {selectedVoice || "None selected"}
-        </p>
       </DialogContent>
     </Dialog>
   )
