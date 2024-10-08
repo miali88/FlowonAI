@@ -16,7 +16,7 @@ interface AgentHubProps {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const DEV_MODE = process.env.NODE_ENV === 'development';
-const BASE_URL = DEV_MODE ? 'https://localhost:3000' : 'https://your-production-url.com';
+const BASE_URL = DEV_MODE ? 'https://localhost:3000' : 'https://flowon.ai';
 
 export function AgentHub({ selectedAgent }: AgentHubProps) {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
