@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { AgentCards } from '../AgentHub/AgentCards';
 import { Agent } from '../AgentHub/LibraryTable';
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import MorphingStreamButton from '../AgentHub/MorphingStreamButton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { DialogDemo } from '../AgentHub/NewAgent';
+import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -23,6 +26,11 @@ const Lab = () => {
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
   const { userId } = useAuth();
   const [activeTab, setActiveTab] = useState('preview');
+  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { user } = useUser();
 
   const iframeCode = `<iframe
 src="https://www.flowon.ai/embed/${selectedAgent?.id}"
@@ -82,6 +90,44 @@ defer
       setAlertDialogMessage(error instanceof Error ? error.message : "Failed to delete the agent. Please try again.");
     } finally {
       setAlertDialogOpen(true);
+    }
+  };
+
+  const handleConnect = useCallback(async () => {
+    if (!selectedAgent || !user) {
+      console.error('No agent selected or user not authenticated');
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${selectedAgent.id}&user_id=${user.id}`, { 
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch token');
+      }
+      const { accessToken, url } = await response.json();
+      setToken(accessToken);
+      setUrl(url);
+      setIsLiveKitActive(true);
+    } catch (error) {
+      console.error('Failed to connect:', error);
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [selectedAgent, user]);
+
+  const toggleLiveKit = () => {
+    if (isLiveKitActive) {
+      setIsLiveKitActive(false);
+      setToken(null);
+      setUrl(null);
+    } else {
+      handleConnect();
     }
   };
 
@@ -240,15 +286,20 @@ defer
               </Card>
             </TabsContent>
             <TabsContent value="preview">
-              <div className="relative h-[600px]"> {/* Adjust height as needed */}
+              <div className="relative h-[600px]">
                 <AnimatedGridPatternDemo className="absolute inset-0" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <MorphingStreamButton
-                    onStreamToggle={handleStreamToggle}
-                    isStreaming={isStreaming}
+                    onStreamToggle={toggleLiveKit}
+                    isStreaming={isLiveKitActive}
                     showTextBox={false}
                   />
                 </div>
+                {isLiveKitActive && token && url && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <LiveKitEntry token={token} url={url} />
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
