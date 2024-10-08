@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
 import { useUser } from "@clerk/nextjs";

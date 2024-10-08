@@ -6,7 +6,7 @@ from supabase import create_client, Client
 
 from app.core.config import settings
 from services.voice.livekit_services import token_gen, start_agent_request
-from services.voice.agents import create_agent, get_agents, delete_agent
+from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -66,6 +66,17 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Error fetching agents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/agent_content/{agent_id}")
+async def get_agent_content_handler(agent_id: str):
+    try:
+        logger.info(f"Fetching agent content for agent_id: {agent_id}")
+        agent_content = await get_agent_content(agent_id)
+        logger.info(f"Successfully fetched agent content: {agent_content}")
+        return agent_content
+    except Exception as e:
+        logger.error(f"Error fetching agent content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.delete("/agents/{agent_id}")
 async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_current_user)):

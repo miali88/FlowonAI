@@ -36,9 +36,12 @@ async def get_agents(user_id: str):
 
 async def delete_agent(agent_id: int, user_id: str):
     try:
-        # Delete the agent from the database
         response = supabase.table('agents').delete().eq('id', agent_id).execute()
         return response
     except Exception as e:
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+async def get_agent_content(agent_id: int):
+    content = supabase.table('agents').select('*').eq('id', agent_id).execute()
+    return content
