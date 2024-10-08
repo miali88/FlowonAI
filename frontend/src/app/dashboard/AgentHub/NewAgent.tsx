@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,15 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useUser } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react"; // Import Loader2 icon
+import { Loader2 } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Add this constant at the top of your file, outside the component
+// Updated VOICE_OPTIONS with no spaces in file names
 const VOICE_OPTIONS = [
-  { id: "voice1", name: "Alex K", file: "/voices/Alex K.mp3" },
-  { id: "voice2", name: "Beatrice W", file: "/voices/Beatrice W.mp3" },
-  { id: "voice3", name: "Felicity A", file: "/voices/Felicity A.mp3" },
+  { id: "voice1", name: "Alex K", file: "/voices/AlexK.mp3" },
+  { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.mp3" },
+  { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.mp3" },
   // Add more voice options as needed
 ];
 
@@ -40,15 +40,13 @@ export function DialogDemo() {
     agentPurpose: "",
     dataSource: "",
     tag: "",
-    openingLine: "", // Ensure openingLine is in the initial state
-    voice: "", // Add voice to the initial state
-    instructions: "", // Add instructions to the initial state
+    openingLine: "",
+    voice: "",
+    instructions: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
-  const [audioSrc, setAudioSrc] = useState<string>("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -68,18 +66,15 @@ export function DialogDemo() {
 
   const playVoiceSample = (file: string) => {
     console.log("Attempting to play:", file);
-    setAudioSrc(file);
-  };
-
-  useEffect(() => {
-    if (audioSrc && audioRef.current) {
-      console.log("Playing audio:", audioSrc);
-      audioRef.current.load(); // Ensure the audio is loaded before playing
-      audioRef.current.play().catch(error => {
+    const audio = new Audio(file);
+    audio.play()
+      .then(() => {
+        console.log("Audio started playing");
+      })
+      .catch(error => {
         console.error("Error playing audio:", error);
       });
-    }
-  }, [audioSrc]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +132,7 @@ export function DialogDemo() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {/* Agent Name */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="agentName" className="text-right text-foreground dark:text-gray-200">
                 Agent Name
@@ -149,6 +145,7 @@ export function DialogDemo() {
                 onChange={handleInputChange}
               />
             </div>
+            {/* Agent Purpose */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="agentPurpose" className="text-right text-foreground dark:text-gray-200">
                 Agent Purpose
@@ -165,6 +162,7 @@ export function DialogDemo() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Data Source */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dataSource" className="text-right text-foreground">
                 Data Source
@@ -180,6 +178,7 @@ export function DialogDemo() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Conditional Tag Input */}
             {dataSource === "tagged" && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="tag" className="text-right text-foreground">
@@ -194,13 +193,20 @@ export function DialogDemo() {
                 />
               </div>
             )}
-            {dataSource === "natural-language" && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <div className="col-span-4 text-sm text-muted-foreground italic">
-                  You can tag items using natural language in the knowledge base. Please tag, then select them here.
-                </div>
-              </div>
-            )}
+            {/* Instructions */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="instructions" className="text-right text-foreground">
+                Instructions
+              </Label>
+              <Input
+                id="instructions"
+                placeholder="Enter instructions for the agent"
+                className="col-span-3 bg-background text-foreground border-input"
+                value={formData.instructions}
+                onChange={handleInputChange}
+              />
+            </div>
+            {/* Opening Line */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="openingLine" className="text-right text-foreground">
                 Opening Line
@@ -213,6 +219,7 @@ export function DialogDemo() {
                 onChange={handleInputChange}
               />
             </div>
+            {/* Voice Selection */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="voice" className="text-right text-foreground">
                 Voice
@@ -232,17 +239,20 @@ export function DialogDemo() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="instructions" className="text-right text-foreground">
-                Instructions
-              </Label>
-              <Input
-                id="instructions"
-                placeholder="Enter instructions for the agent"
-                className="col-span-3 bg-background text-foreground border-input"
-                value={formData.instructions}
-                onChange={handleInputChange}
-              />
+            {/* Voice Sample Buttons */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {VOICE_OPTIONS.map((voice) => (
+                <Button
+                  key={voice.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playVoiceSample(voice.file)}
+                  className={selectedVoice === voice.id ? "border-primary" : ""}
+                >
+                  Play {voice.name}
+                </Button>
+              ))}
             </div>
           </div>
           <DialogFooter>
@@ -265,25 +275,10 @@ export function DialogDemo() {
             </div>
           )}
         </form>
-        <audio ref={audioRef} src={audioSrc} />
         <p className="text-sm text-muted-foreground mt-2">
-          Current audio: {audioSrc || "None selected"}
+          Current audio: {selectedVoice || "None selected"}
         </p>
       </DialogContent>
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {VOICE_OPTIONS.map((voice) => (
-          <Button
-            key={voice.id}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => playVoiceSample(voice.file)}
-            className={selectedVoice === voice.id ? "border-primary" : ""}
-          >
-            Play {voice.name}
-          </Button>
-        ))}
-      </div>
     </Dialog>
   )
 }
