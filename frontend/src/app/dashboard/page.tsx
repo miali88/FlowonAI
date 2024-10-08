@@ -22,17 +22,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-  Bell,
   BookOpen,
   ChevronRight,
   LogOut,
   Menu,
   MessageSquare,
   Mic,
-  Moon,
   Search,
   Settings,
-  Sun,
   X,
   Home as HomeIcon,  // Rename the Home icon import
   Beaker,

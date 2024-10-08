@@ -1,15 +1,8 @@
 import { useState, useCallback } from 'react';
 import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
 import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
-import { MagicCardDemo } from '@/components/magicui/MagicCardDemo';
-import { CarouselSpacing } from '@/components/shadcn/Carousel';
-
 import { Agent } from './LibraryTable';
-//import { Agent } from './LibraryTable';
-import { AgentCards } from './AgentCards';
-
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 
 interface AgentHubProps {

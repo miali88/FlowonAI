@@ -11,9 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import MorphingStreamButton from '../AgentHub/MorphingStreamButton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
+import { DialogDemo } from '../AgentHub/NewAgent';
 
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -87,13 +88,14 @@ defer
   return (
     <div className="flex flex-col h-full p-6">
       <div className="flex flex-col space-y-6">
-        <div className="w-full">
+        <div className="w-full flex flex-col items-start space-y-4">
+          <DialogDemo />
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
         {selectedAgent && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList>
-              <TabsTrigger value="preview">Preview Agent</TabsTrigger>
+              <TabsTrigger value="preview">Playground</TabsTrigger>
               <TabsTrigger value="edit">Settings</TabsTrigger>
               <TabsTrigger value="ui">UI</TabsTrigger>
               <TabsTrigger value="embed">Embed</TabsTrigger>
@@ -238,12 +240,15 @@ defer
               </Card>
             </TabsContent>
             <TabsContent value="preview">
-              <div className="space-y-4">
-                <MorphingStreamButton
-                  onStreamToggle={handleStreamToggle}
-                  isStreaming={isStreaming}
-                  showTextBox={false}
-                />
+              <div className="relative h-[600px]"> {/* Adjust height as needed */}
+                <AnimatedGridPatternDemo className="absolute inset-0" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <MorphingStreamButton
+                    onStreamToggle={handleStreamToggle}
+                    isStreaming={isStreaming}
+                    showTextBox={false}
+                  />
+                </div>
               </div>
             </TabsContent>
           </Tabs>
