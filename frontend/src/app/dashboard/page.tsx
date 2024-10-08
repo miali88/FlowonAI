@@ -231,7 +231,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 }
 
 function AdminDashboard() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);  // Changed to false
   const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);  // Changed to false

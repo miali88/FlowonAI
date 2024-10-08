@@ -13,6 +13,7 @@ import MorphingStreamButton from '../AgentHub/MorphingStreamButton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@clerk/nextjs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -20,6 +21,27 @@ const Lab = () => {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
   const { userId } = useAuth();
+  const [activeTab, setActiveTab] = useState('preview');
+
+  const iframeCode = `<iframe
+src="https://www.flowon.ai/embed/${selectedAgent?.id}"
+width="100%"
+style="height: 100%; min-height: 700px"
+frameborder="0"
+></iframe>`;
+
+  const scriptCode = `<script>
+window.embeddedAgentConfig = {
+  agentId: "${selectedAgent?.id}",
+  domain: "www.flowon.ai"
+}
+</script>
+<script
+src="https://flowon.ai/embed.min.js"
+agentId="${selectedAgent?.id}"
+domain="www.flowon.ai"
+defer
+></script>`;
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -66,15 +88,16 @@ const Lab = () => {
     <div className="flex flex-col h-full p-6">
       <div className="flex flex-col space-y-6">
         <div className="w-full">
-          <h2 className="text-xl font-semibold mb-4">Select an Agent</h2>
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
         {selectedAgent && (
-          <Tabs defaultValue="preview" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList>
               <TabsTrigger value="preview">Preview Agent</TabsTrigger>
               <TabsTrigger value="edit">Settings</TabsTrigger>
               <TabsTrigger value="ui">UI</TabsTrigger>
+              <TabsTrigger value="embed">Embed</TabsTrigger>
+              <TabsTrigger value="share">Share</TabsTrigger>
             </TabsList>
             <TabsContent value="edit">
               <div className="space-y-4">
@@ -183,6 +206,36 @@ const Lab = () => {
                 <p>UI customization options for the agent will be shown here.</p>
                 {/* Add UI customization fields here */}
               </div>
+            </TabsContent>
+            <TabsContent value="embed">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Embed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>To add the agent anywhere on your website, add this iframe to your HTML code:</p>
+                  <div className="bg-gray-100 p-4 rounded-md my-2">
+                    <pre className="whitespace-pre-wrap break-all">{iframeCode}</pre>
+                  </div>
+                  <Button onClick={() => navigator.clipboard.writeText(iframeCode)}>Copy Iframe</Button>
+                  <p className="mt-4">To add a chat bubble to the bottom right of your website, add this script tag to your HTML:</p>
+                  <div className="bg-gray-100 p-4 rounded-md my-2">
+                    <pre className="whitespace-pre-wrap break-all">{scriptCode}</pre>
+                  </div>
+                  <Button onClick={() => navigator.clipboard.writeText(scriptCode)}>Copy Script</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="share">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Share</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Share options for your agent will be shown here.</p>
+                  {/* Add share options here */}
+                </CardContent>
+              </Card>
             </TabsContent>
             <TabsContent value="preview">
               <div className="space-y-4">
