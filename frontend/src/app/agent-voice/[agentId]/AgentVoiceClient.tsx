@@ -3,7 +3,7 @@
 import { AgentHub } from '@/app/dashboard/AgentHub/iframe';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
+import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 

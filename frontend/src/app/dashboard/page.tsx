@@ -25,6 +25,7 @@ import {
   BookOpen,
   ChevronRight,
   LogOut,
+  BarChart3,
   Menu,
   MessageSquare,
   Mic,
@@ -33,17 +34,18 @@ import {
   X,
   Home as HomeIcon,  // Rename the Home icon import
   Beaker,
-  Plug,  // Add this import
+  Plug,
+  Mic2,  // Add this import
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
-import { AgentHub } from '@/app/dashboard/AgentHub/page';
-import { Agent } from '@/app/dashboard/AgentHub/LibraryTable';
+import { AgentHub } from '@/app/dashboard/naAgentHub/page';
+import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';
 import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
-import { DataTableDemo } from '@/app/dashboard/AgentHub/LibraryTable';  // Add this import
+import { DataTableDemo } from '@/app/dashboard/naAgentHub/LibraryTable';  // Add this import
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
-import Lab from '@/app/dashboard/Lab/page';  // Add this import
+import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import ConnectPage from "@/app/dashboard/Integrations/page";
 
 // Add this interface at the top of your file 
@@ -82,11 +84,10 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
     { icon: Mic, label: "Agent Hub" },
-    { icon: Beaker, label: "Lab" },  // Moved this item here
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
-    { icon: Plug, label: "Connect" },
-    // { icon: BarChart3, label: "Analytics" },
+    { icon: Plug, label: "Integrations" },
+    { icon: BarChart3, label: "Analytics" },
   ];
 
   return (
@@ -256,24 +257,11 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
-      case "Agent Hub":
-        return (
-          <div className="flex flex-col h-full">
-            <div className="mb-4 ml-8 mt-8">
-              <DialogDemo />
-            </div>
-            <AgentHub selectedAgent={selectedAgent} />
-            <AgentCards setSelectedAgent={setSelectedAgent} />
-            <div className="mt-auto flex justify-start pl-8 pb-8">
-              {/* Additional content if needed */}
-            </div>
-          </div>
-        );
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Conversation Logs":
         return <ChatHistory />;
-      case "Lab":
+      case "Agent Hub":
         return <Lab />;
       case "Connect":
         return <ConnectPage />;

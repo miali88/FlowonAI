@@ -11,7 +11,7 @@ from livekit import agents
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import ChatContext, ChatMessage
 from livekit.agents.voice_assistant import VoiceAssistant
-from livekit.plugins import deepgram, openai, silero, elevenlabs
+from livekit.plugins import deepgram, openai, silero, elevenlabs, cartesia
 
 load_dotenv()
 
@@ -154,20 +154,17 @@ async def entrypoint(ctx: JobContext):
 
         gpt = openai.LLM(model="gpt-4o", temperature=TEMPERATURE)
 
-        eleven_tts = tts.StreamAdapter(
-            tts=elevenlabs.TTS(voice=elevenlabs.Voice(
-                id=VOICE_ID,
-                name="Custom Voice",
-                category="custom"
-            )),
-            sentence_tokenizer=tokenize.basic.SentenceTokenizer())
+        cartesia_tts = tts.StreamAdapter(
+            tts=cartesia.TTS(voice=VOICE_ID),
+            sentence_tokenizer=tokenize.basic.SentenceTokenizer()
+        )
 
         # Use CustomVoiceAssistant instead of VoiceAssistant
         assistant = CustomVoiceAssistant(
             vad=silero.VAD.load(),  # This line is causing an issue
             stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
             llm=gpt,
-            tts=eleven_tts,         # We'll use OpenAI's Text To Speech (TTS)
+            tts=cartesia_tts,         # We'll use OpenAI's Text To Speech (TTS)
             fnc_ctx=AssistantFunction(),
             chat_ctx=chat_context,
         )

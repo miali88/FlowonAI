@@ -1,10 +1,9 @@
-"use client";
 
 import * as React from "react"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs"
-import { Agent } from "./LibraryTable"
+import { Agent } from "../naAgentHub/LibraryTable"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BorderBeam } from "@/components/ui/border-beam";

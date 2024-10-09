@@ -25,9 +25,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Updated VOICE_OPTIONS with no spaces in file names
 const VOICE_OPTIONS = [
-  { id: "voice1", name: "Alex K", file: "/voices/AlexK.mp3" },
-  { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.mp3" },
-  { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.mp3" },
+  { id: "voice1", name: "Alex K", file: "/voices/AlexK.wav" },
+  { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
+  { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.wav" },
   // Add more voice options as needed
 ];
 
