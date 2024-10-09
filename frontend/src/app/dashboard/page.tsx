@@ -39,14 +39,11 @@ import {
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
-import { AgentHub } from '@/app/dashboard/naAgentHub/page';
 import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';
 import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
-import { DataTableDemo } from '@/app/dashboard/naAgentHub/LibraryTable';  // Add this import
-import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
-import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import Integrations from "@/app/dashboard/Integrations/page";
+import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -83,6 +80,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
+    { icon: HomeIcon, label: "Dashboard" }, // Add this line
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
@@ -97,7 +95,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activ
     )}>
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
-          <span className="text-sm font-medium">Admin Panel</span>
+          <span className="text-sm font-medium">Flowon AI</span>
         )}
         <Button
           variant="ghost"
@@ -206,12 +204,12 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 }
 
 function AdminDashboard() {
-  const [isCollapsed, setIsCollapsed] = useState(false);  // Changed to false
-  const [activeItem, setActiveItem] = useState("Agent Hub");
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeItem, setActiveItem] = useState("Dashboard"); // Change this line
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);  // Changed to false
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null); // State for selected agent
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
@@ -234,6 +232,8 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
+      case "Dashboard":
+        return <DashboardContent />;
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Conversation Logs":
@@ -243,18 +243,7 @@ function AdminDashboard() {
       case "Integrations":
         return <Integrations />;
       default:
-        return (
-          <div className="flex flex-col h-full">
-            <div className="mb-4 ml-8 mt-8">
-              <DialogDemo />
-            </div>
-            <AgentHub selectedAgent={selectedAgent} />
-            <DataTableDemo setSelectedAgent={setSelectedAgent} />
-            <div className="mt-auto flex justify-start pl-8 pb-8">
-              {/* Additional content if needed */}
-            </div>
-          </div>
-        );
+        return <DashboardContent />;
     }
   };
 
@@ -301,4 +290,4 @@ function HomePage() {
   return <AdminDashboard />;
 }
 
-export default HomePage;  // Export the renamed function
+export default HomePage;
