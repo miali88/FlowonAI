@@ -79,7 +79,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
-    { icon: HomeIcon, label: "Dashboard" }, // Add this line
+    //{ icon: HomeIcon, label: "Dashboard" }, // Add this line
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
