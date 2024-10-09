@@ -251,6 +251,7 @@ defer
                     id="instructions"
                     value={selectedAgent.instructions || ''} 
                     onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+                    className="min-h-[400px]"
                   />
                 </div>
                 <div className="flex space-x-2">
