@@ -14,7 +14,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { DialogDemo } from './NewAgent';
-import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
+import LiveKitEntry from '@/app/dashboard/agenthub/LiveKitEntry';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { AgentHub } from '@/app/dashboard/AgentHub/iframe';
+import { AgentHub } from '@/app/dashboard/agenthub/iframe';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';

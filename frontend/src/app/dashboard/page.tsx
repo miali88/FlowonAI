@@ -40,7 +40,7 @@ import {
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
 import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
-import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
+import Lab from '@/app/dashboard/agenthub/page';  // Add this import
 import Integrations from "@/app/dashboard/Integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
@@ -204,18 +204,30 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Dashboard"); // Change this line
+  const [activeItem, setActiveItem] = useState("Dashboard");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
+  const router = useRouter();
 
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
     setSelectedFeature(null);
+    
+    switch (item) {
+      case "Agent Hub":
+        router.push('/dashboard/agenthub');
+        break;
+      // Add other cases for other items if needed
+      default:
+        // Optionally handle other cases or do nothing
+        break;
+    }
   };
 
+  // Add this function
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(prevMode => !prevMode);
   };
 
   useEffect(() => {
@@ -251,7 +263,7 @@ function AdminDashboard() {
         isCollapsed={isCollapsed} 
         setIsCollapsed={setIsCollapsed} 
         activeItem={activeItem}
-        setActiveItem={handleSetActiveItem}
+        setActiveItem={handleSetActiveItem}  // Make sure this prop is passed
         activePanel={activePanel}
         setActivePanel={setActivePanel}
       />

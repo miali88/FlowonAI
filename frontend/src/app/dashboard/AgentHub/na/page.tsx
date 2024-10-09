@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntry';
+import LiveKitEntry from '@/app/dashboard/agenthub/LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
-import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButton';
+import MorphingStreamButton from '@/app/dashboard/agenthub/MorphingStreamButton';
 import { Agent } from './LibraryTable';
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 
