@@ -37,11 +37,11 @@ import {
   Plug,
   Mic2,  // Add this import
 } from "lucide-react";
-import ChatHistory from '@/app/dashboard/ConversationLogs/page';
+import ChatHistory from '@/app/dashboard/conversationlogs/page';
 
-import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
+import KnowledgeBaseContent from "@/app/dashboard/knowledgebase/page";
 import Lab from '@/app/dashboard/agenthub/page';  // Add this import
-import Integrations from "@/app/dashboard/Integrations/page";
+import Integrations from "@/app/dashboard/integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
 // Add this interface at the top of your file 
@@ -213,16 +213,7 @@ function AdminDashboard() {
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
     setSelectedFeature(null);
-    
-    switch (item) {
-      case "Agent Hub":
-        router.push('/dashboard/agenthub');
-        break;
-      // Add other cases for other items if needed
-      default:
-        // Optionally handle other cases or do nothing
-        break;
-    }
+    // Remove the switch statement that was navigating to different URLs
   };
 
   // Add this function
@@ -249,7 +240,7 @@ function AdminDashboard() {
       case "Conversation Logs":
         return <ChatHistory />;
       case "Agent Hub":
-        return <Lab />;
+        return <Lab />;  // This will render the Lab component directly
       case "Integrations":
         return <Integrations />;
       default:
