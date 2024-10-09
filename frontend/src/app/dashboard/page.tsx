@@ -46,7 +46,7 @@ import { DataTableDemo } from '@/app/dashboard/naAgentHub/LibraryTable';  // Add
 import { DialogDemo } from '@/app/dashboard/AgentHub/NewAgent';  // Add this import
 import { AgentCards } from '@/app/dashboard/AgentHub/AgentCards';  // Add this import
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
-import ConnectPage from "@/app/dashboard/Integrations/page";
+import Integrations from "@/app/dashboard/Integrations/page";
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -147,29 +147,6 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
   const { user } = useUser();
   const { getToken } = useAuth();
   const [userPlan, setUserPlan] = useState("Loading...");
-
-  // useEffect(() => {
-  //   const fetchUserPlan = async () => {
-  //     if (user) {
-  //       try {
-  //         const token = await getToken();
-  //         const response = await axios.get(`${API_BASE_URL}/api/v1/users/data`, {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             'X-User-ID': user.id,
-  //           },
-  //         });
-  //         setUserPlan(response.data.plan);
-  //       } catch (error) {
-  //         console.error("Error fetching user plan:", error);
-  //         setUserPlan("Error");
-  //       }
-  //     }
-  //   };
-
-  //   fetchUserPlan();
-  // }, [user, getToken]);
-
   const renderTitle = () => {
     if (selectedFeature) {
       return (
@@ -263,8 +240,8 @@ function AdminDashboard() {
         return <ChatHistory />;
       case "Agent Hub":
         return <Lab />;
-      case "Connect":
-        return <ConnectPage />;
+      case "Integrations":
+        return <Integrations />;
       default:
         return (
           <div className="flex flex-col h-full">
