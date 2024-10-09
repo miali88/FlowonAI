@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
-import { AgentCards } from './AgentCards';
-import { Agent } from '../naAgentHub/LibraryTable';
+import { AgentCards, Agent } from './AgentCards';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

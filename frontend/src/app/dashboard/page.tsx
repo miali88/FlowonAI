@@ -39,7 +39,6 @@ import {
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
-import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';
 import KnowledgeBaseContent from "@/app/dashboard/KnowledgeBase/page";
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import Integrations from "@/app/dashboard/Integrations/page";
@@ -209,7 +208,6 @@ function AdminDashboard() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);

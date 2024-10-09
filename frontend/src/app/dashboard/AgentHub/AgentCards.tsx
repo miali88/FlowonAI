@@ -1,14 +1,21 @@
-
 import * as React from "react"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs"
-import { Agent } from "../naAgentHub/LibraryTable"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BorderBeam } from "@/components/ui/border-beam";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+
+// Move the Agent type definition here
+export type Agent = {
+  id: string
+  agentPurpose: string
+  agentName: string
+  voice: string
+  dataSource: string
+}
 
 interface AgentCardsProps {
   setSelectedAgent: (agent: Agent) => void
