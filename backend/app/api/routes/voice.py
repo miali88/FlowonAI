@@ -100,6 +100,28 @@ async def voice_webhook(request: Request):
 
     return JSONResponse(content={"message": "Full transcript received"})
 
+@router.post('/transcript/end')
+async def end_call(request: Request):
+    data = await request.json()
+    job_id = data.get('job_id')
+
+    if job_id not in jobs:
+        return JSONResponse(content={"message": "Job not found"}, status_code=404)
+
+    # Process and save the accumulated transcript
+    full_transcript = jobs[job_id]['transcript']
+    
+    # Here, you would typically save the full transcript to your database
+    # For this example, we'll just print it
+    print(f"\nFull transcript for job {job_id}:")
+    for entry in full_transcript:
+        print(entry)
+
+    # Remove the job from the jobs dictionary
+    del jobs[job_id]
+
+    return JSONResponse(content={"message": "Call ended and transcript saved"})
+
 
 
 
