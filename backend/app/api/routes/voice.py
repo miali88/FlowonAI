@@ -5,6 +5,7 @@ from fastapi import Request, APIRouter, WebSocket
 from fastapi.responses import JSONResponse
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
+from supabase import create_client, Client
 
 from services.voice.rag import similarity_search
 
@@ -14,18 +15,17 @@ logger = logging.getLogger(__name__)
 # global variable to store the jobs
 jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 
+# Initialize Supabase client
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
+
 @router.api_route('/transcript/commit', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
-
     data = await request.json()
-
     print("\n\nCOMMIT ENDPOINT:", data)
-
-    # Extract the first field from the JSON
     role, msg = next(iter(data.items()))
-    print(f"First field: {role} = {msg}")
 
-    # Extract job_id and other relevant information
     job_id = data.get('job_id')
 
     # Find or create the job in the jobs dictionary.
@@ -33,6 +33,8 @@ async def voice_webhook(request: Request):
     if job_id not in jobs:
         jobs[job_id] = {
             'job_id': job_id,
+            'room_sid': data.get('room_sid'),
+            'room_name': data.get('room_name'),
             'transcript': []}
 
     # Append the new transcript entry
@@ -42,6 +44,8 @@ async def voice_webhook(request: Request):
     print("\n\nUpdated job:", jobs[job_id])
 
     return JSONResponse(content={"message": "Voice webhook received"})
+
+
 
 @router.api_route('/transcript/real_time', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
@@ -122,17 +126,37 @@ async def end_call(request: Request):
 
     return JSONResponse(content={"message": "Call ended and transcript saved"})
 
-
-
-
-
-
-# Twilio credentials
-account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
-auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
-twilio_number = os.environ.get('TWILIO_PHONE_NUMBER')
-
-client = Client(account_sid, auth_token)
+@router.post("/wh")
+async def livekit_room_webhook(request: Request):
+    data = await request.json()
+    print(f"\n /wh Received webhook data: {data}")
+    
+    event = data.get('event')
+    room_sid = data.get('room', {}).get('sid')
+    
+    if event == 'participant_left':
+        # Find the job with the corresponding room_sid
+        matching_job = next((job for job in jobs.values() if job['room_sid'] == room_sid), None)
+        
+        if matching_job:
+            # Save the job data to Supabase
+            try:
+                result = supabase.table("conversation_logs").insert({
+                    "job_id": matching_job['job_id'],
+                    "room_sid": matching_job['room_sid'],
+                    "room_name": matching_job['room_name'],
+                    "transcript": matching_job['transcript']
+                }).execute()
+                
+                print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
+                
+                # Remove the job from the jobs dictionary
+                del jobs[matching_job['job_id']]
+            except Exception as e:
+                logger.error(f"Error saving to Supabase: {str(e)}")
+    
+    logger.info(f"Received webhook data: {data}")
+    return {"message": "Webhook received successfully"}
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -156,3 +180,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json({"event": "callStarted", "callSid": call.sid})
             except Exception as e:
                 await websocket.send_json({"event": "callError", "message": str(e)})
+
+# # Twilio credentials
+# account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+# auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+# twilio_number = os.environ.get('TWILIO_PHONE_NUMBER')
+
+# client = Client(account_sid, auth_token)

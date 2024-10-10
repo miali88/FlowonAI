@@ -114,10 +114,3 @@ async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_cu
     except Exception as e:
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-@router.post("/wh")
-async def livekit_room_webhook(request: Request):
-    data = await request.json()
-    print(f"\n /wh Received webhook data: {data}")
-    logger.info(f"Received webhook data: {data}")
-    return {"message": "Webhook received successfully"}

@@ -52,12 +52,12 @@ class AssistantFunction(agents.llm.FunctionContext):
         #print(f"Message triggering transfer call: {user_msg}")
         return None
 
+
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.DOMAIN = "http://localhost:8000/api/v1"
         self.agent_id = os.getenv('AGENT_ID')
-        self.job_id = None  # Add this line to store the job_id
 
     async def _synthesize_answer_task(
         self, old_task: Optional[asyncio.Task[None]], handle
@@ -164,7 +164,6 @@ async def entrypoint(ctx: JobContext):
             fnc_ctx=AssistantFunction(),
             chat_ctx=chat_context,
         )
-        assistant.job_id = ctx.job.id  # Set the job_id
 
         #chat = rtc.ChatManager(ctx.room)
 
@@ -197,8 +196,6 @@ async def entrypoint(ctx: JobContext):
         #     stream = gpt.chat(chat_ctx=chat_context)
         #     await assistant.say(stream, allow_interruptions=True)
 
-        ctx.room.on("disconnected", lambda: asyncio.create_task(on_room_disconnected(assistant)))
-
         async def send_transcript_to_backend(transcript: dict, endpoint: str, chat_context: ChatContext, room: rtc.Room):
             """
             Send the transcript and chat context to a backend API endpoint asynchronously.
@@ -208,6 +205,7 @@ async def entrypoint(ctx: JobContext):
 
             transcript["job_id"] = ctx.job.id
             transcript["room_name"] = room.name
+            transcript["room_sid"] = await room.sid
 
             try:
                 async with aiohttp.ClientSession() as session:
@@ -230,7 +228,8 @@ async def entrypoint(ctx: JobContext):
             user_transcript = {"user_message": transcript.content}
 
             if transcript.content:
-                asyncio.create_task(send_transcript_to_backend(user_transcript, "/voice/transcript/commit", chat_context, ctx.room))
+                asyncio.create_task(send_transcript_to_backend(user_transcript, \
+                                    "/voice/transcript/commit", chat_context, ctx.room))
 
         @assistant.on("agent_speech_committed")
         def on_transcription(transcript: rtc.ChatMessage):
@@ -240,7 +239,8 @@ async def entrypoint(ctx: JobContext):
             assistant_transcript = {"assistant_message": transcript.content}
 
             if transcript.content:
-                asyncio.create_task(send_transcript_to_backend(assistant_transcript, "/voice/transcript/commit", chat_context, ctx.room))
+                asyncio.create_task(send_transcript_to_backend(assistant_transcript, \
+                                    "/voice/transcript/commit", chat_context, ctx.room))
 
                 for_msg = f""" 
                 # User Query:
@@ -271,22 +271,6 @@ async def entrypoint(ctx: JobContext):
         print(f"Error in entrypoint: {str(e)}")
     finally:
         await release_room_lock(room_name)
-
-async def on_room_disconnected(assistant: CustomVoiceAssistant):
-    print(f"Room disconnected for job_id: {assistant.job_id}")
-    
-    # Notify the backend that the call has ended
-    async with aiohttp.ClientSession() as session:
-        try:
-            url = f"{assistant.DOMAIN}/voice/transcript/end"
-            payload = {"job_id": assistant.job_id}
-            async with session.post(url, json=payload) as response:
-                if response.status == 200:
-                    print(f"Successfully notified backend of call end for job_id: {assistant.job_id}")
-                else:
-                    print(f"Failed to notify backend of call end. Status: {response.status}")
-        except Exception as e:
-            print(f"Error notifying backend of call end: {str(e)}")
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
