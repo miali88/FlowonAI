@@ -21,11 +21,15 @@ async def voice_webhook(request: Request):
 
     print("\n\nCOMMIT ENDPOINT:", data)
 
+    # Extract the first field from the JSON
+    role, msg = next(iter(data.items()))
+    print(f"First field: {role} = {msg}")
+
     # Extract job_id and other relevant information
     job_id = data.get('job_id')
-    user_transcript = data.get('transcript')
 
-    # Find or create the job in the jobs dictionary
+    # Find or create the job in the jobs dictionary.
+    # Instantiate transcript list. 
     if job_id not in jobs:
         jobs[job_id] = {
             'job_id': job_id,
@@ -33,7 +37,7 @@ async def voice_webhook(request: Request):
 
     # Append the new transcript entry
     jobs[job_id]['transcript'].append({
-        'user_transcript': user_transcript,})
+        role: msg,})
 
     print("\n\nUpdated job:", jobs[job_id])
 
@@ -41,29 +45,30 @@ async def voice_webhook(request: Request):
 
 @router.api_route('/transcript/real_time', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
-    data = await request.json()
+    pass
+    # data = await request.json()
 
-    print("\n\nReceived data:", data)
+    # print("\n\nReceived data:", data)
 
-    # Extract job_id and other relevant information
-    job_id = data.get('job_id')
-    user_transcript = data.get('user_transcript')
-    speech_id = data.get('speech_id')
+    # # Extract job_id and other relevant information
+    # job_id = data.get('job_id')
+    # user_transcript = data.get('user_transcript')
+    # speech_id = data.get('speech_id')
 
-    # Find or create the job in the jobs dictionary
-    if job_id not in jobs:
-        jobs[job_id] = {
-            'job_id': job_id,
-            'transcript': []
-        }
+    # # Find or create the job in the jobs dictionary
+    # if job_id not in jobs:
+    #     jobs[job_id] = {
+    #         'job_id': job_id,
+    #         'transcript': []
+    #     }
 
-    # Append the new transcript entry
-    jobs[job_id]['transcript'].append({
-        'user_transcript': user_transcript,
-        'speech_id': speech_id
-    })
+    # # Append the new transcript entry
+    # jobs[job_id]['transcript'].append({
+    #     'user_transcript': user_transcript,
+    #     'speech_id': speech_id
+    # })
 
-    print("\n\nUpdated job:", jobs[job_id])
+    # print("\n\nUpdated job:", jobs[job_id])
 
     # # Get the last two user transcripts
     # last_two_transcripts = [entry['user_transcript'] for entry in jobs[job_id]['transcript'][-2:]]

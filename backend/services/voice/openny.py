@@ -195,19 +195,19 @@ async def entrypoint(ctx: JobContext):
         #     stream = gpt.chat(chat_ctx=chat_context)
         #     await assistant.say(stream, allow_interruptions=True)
 
-        async def send_transcript_to_backend(transcript: str, endpoint: str, chat_context: ChatContext, room: rtc.Room):
+        async def send_transcript_to_backend(transcript: dict, endpoint: str, chat_context: ChatContext, room: rtc.Room):
             """
             Send the transcript and chat context to a backend API endpoint asynchronously.
             """
             backend_url = f"{DOMAIN}{endpoint}"
             print(f"\n\n\n Sending to {endpoint}:", transcript)
 
-            # Prepare the data to be sent
-            data = {"transcript": transcript, "job_id": ctx.job.id, "room_name": room.name}
+            transcript["job_id"] = ctx.job.id
+            transcript["room_name"] = room.name
 
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.post(backend_url, json=data) as response:
+                    async with session.post(backend_url, json=transcript) as response:
                         if response.status == 200:
                             print(f"Transcript and chat context sent to backend successfully")
                             return await response.json()  # Return the response data if needed
