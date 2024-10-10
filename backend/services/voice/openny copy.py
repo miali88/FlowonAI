@@ -7,15 +7,11 @@ import os
 import sys
 import aiofiles
 
-from livekit import agents
+from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, tokenize, tts
 from livekit.agents.llm import ChatContext, ChatMessage
 from livekit.agents.voice_assistant import VoiceAssistant
-from livekit.plugins import deepgram, openai, silero, cartesia
-
-# Add these imports for LiveKit recording
-from livekit import api, rtc
-from livekit.api import EgressClient
+from livekit.plugins import deepgram, openai, silero, elevenlabs, cartesia
 
 load_dotenv()
 
@@ -149,6 +145,22 @@ async def entrypoint(ctx: JobContext):
         await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
         print(f"Room name: {room_name}")
 
+        # Add this near the beginning of the function, after connecting to the room
+        egress_client = rtc.EgressClient(ctx.room)
+        
+        # Start recording
+        recording_info = await egress_client.start_room_composite_egress(
+            room_name=ctx.room.name,
+            output_type=rtc.EncodedFileType.MP4,
+            options=rtc.RoomCompositeEgressRequest(
+                audio_only=True,  # Set to False if you want video as well
+                file=rtc.EncodedFileOutput(
+                    filepath=f"/services/recordings/{ctx.room.name}_{ctx.job.id}.mp4"
+                )
+            )
+        )
+        print(f"Started recording: {recording_info.egress_id}")
+
         chat_context = ChatContext(
             messages=[
                 ChatMessage(
@@ -267,18 +279,20 @@ async def entrypoint(ctx: JobContext):
 
         assistant.start(ctx.room)
 
-        #await asyncio.sleep(0.5)
+        await asyncio.sleep(0.2)
         await assistant.say(OPENING_LINE, allow_interruptions=False)
 
         # Keep the process running
         while True:
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1)
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
     finally:
+        # Stop recording
+        await egress_client.stop_egress(recording_info.egress_id)
+        print(f"Stopped recording: {recording_info.egress_id}")
         await release_room_lock(room_name)
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
-

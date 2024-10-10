@@ -46,7 +46,7 @@ export const handleNewItem = async ({
       };
       console.log("Sending request data:", requestData);
 
-      const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/knowledge_base`, requestData, {
+      const response = await axios.post(`${API_BASE_URL}/dashboard/knowledge_base`, requestData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

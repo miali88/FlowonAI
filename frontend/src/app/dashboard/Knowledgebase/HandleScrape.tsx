@@ -36,7 +36,7 @@ export const handleScrape = async ({
 
   try {
     const token = await getToken();
-    const response = await axios.post(`${API_BASE_URL}/api/v1/dashboard/scrape_url`, 
+    const response = await axios.post(`${API_BASE_URL}/dashboard/scrape_url`, 
       { url: scrapeUrl },
       {
         headers: {

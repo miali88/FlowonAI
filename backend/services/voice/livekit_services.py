@@ -114,6 +114,7 @@ async def start_agent_request(room_name: str, agent_id: str):
     #     except Exception as e:
     #         print(f"Error starting agent process for room {room_name}: {str(e)}")
     #         print(traceback.format_exc())
+    return 
 
 # async def is_agent_running(room_name: str) -> bool:
 #     # Implement a check to see if an agent is already running for this room

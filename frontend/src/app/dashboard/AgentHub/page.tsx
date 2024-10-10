@@ -90,10 +90,6 @@ defer
     }
   };
 
-  const handleStreamToggle = () => {
-    setIsStreaming(!isStreaming);
-  };
-
   const handleDeleteAgent = async () => {
     if (!selectedAgent || !userId) return;
 
@@ -143,22 +139,50 @@ defer
       setToken(accessToken);
       setUrl(url);
       setIsLiveKitActive(true);
+      setIsStreaming(true);
     } catch (error) {
       console.error('Failed to connect:', error);
+      setAlertDialogMessage('Failed to connect to the stream. Please try again.');
+      setAlertDialogOpen(true);
     } finally {
       setIsConnecting(false);
     }
   }, [selectedAgent, user]);
 
-  const toggleLiveKit = () => {
-    if (isLiveKitActive) {
+  const handleStreamToggle = useCallback(async () => {
+    if (isStreaming) {
+      // If currently streaming, initiate disconnection
+      setIsConnecting(true);
+      setIsStreaming(false);
       setIsLiveKitActive(false);
-      setToken(null);
-      setUrl(null);
     } else {
-      handleConnect();
+      // If not streaming, initiate connection
+      setIsConnecting(true);
+      try {
+        await handleConnect();
+        setIsStreaming(true);
+        setIsLiveKitActive(true);
+      } catch (error) {
+        console.error('Failed to connect:', error);
+        setAlertDialogMessage('Failed to connect to the stream. Please try again.');
+        setAlertDialogOpen(true);
+      } finally {
+        setIsConnecting(false);
+      }
     }
-  };
+  }, [isStreaming, handleConnect]);
+
+  const handleStreamEnd = useCallback(() => {
+    setIsStreaming(false);
+    setIsConnecting(false);
+    setIsLiveKitActive(false);
+    setToken(null);
+    setUrl(null);
+  }, []);
+
+  const handleStreamStart = useCallback(() => {
+    setIsConnecting(false);
+  }, []);
 
   return (
     <div className="flex flex-col h-full p-6">
@@ -320,14 +344,21 @@ defer
                 <AnimatedGridPatternDemo className="absolute inset-0" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <MorphingStreamButton
-                    onStreamToggle={toggleLiveKit}
-                    isStreaming={isLiveKitActive}
+                    onStreamToggle={handleStreamToggle}
+                    isStreaming={isStreaming}
                     showTextBox={false}
+                    isConnecting={isConnecting}
                   />
                 </div>
                 {isLiveKitActive && token && url && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <LiveKitEntry token={token} url={url} />
+                    <LiveKitEntry 
+                      token={token} 
+                      url={url} 
+                      isStreaming={isStreaming} 
+                      onStreamEnd={handleStreamEnd} 
+                      onStreamStart={handleStreamStart} 
+                    />
                   </div>
                 )}
               </div>
@@ -335,7 +366,7 @@ defer
           </Tabs>
         )}
         {!selectedAgent && (
-          <p>Select an agent to edit its settings.</p>
+          <p>Select or create an agent to get started.</p>
         )}
       </div>
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>

@@ -4,8 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 import json
 import logging
-from fastapi import FastAPI, Request, HTTPException, \
-    Depends, Query, Header, APIRouter, BackgroundTasks
+from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
@@ -115,7 +114,6 @@ async def upload_file_handler(
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
-        #print("\n\nitems:", items)
         print("\n\ntotal_tokens:", total_tokens)
         return items
     except Exception as e:
@@ -139,7 +137,7 @@ async def create_item_handler(request: Request,
         print("\n\n\n DATA:", data)
 
         # Insert the data into Supabase
-        new_item = supabase.table('knowledge_base').insert(data).execute()
+        new_item = supabase.table('user_web_data').insert(data).execute()
         logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
 
         # Schedule the kb_item_to_chunks function to run in the background
@@ -172,6 +170,7 @@ async def delete_item_handler(item_id: int, current_user: str = Depends(get_curr
 @router.post("/scrape_url")
 async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
+
         crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
         result = crawler.scrape_url(request.url)
 

@@ -7,13 +7,19 @@ interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
   isStreaming: boolean;
   showTextBox: boolean;
+  isConnecting: boolean; // Add new prop for loading state
 }
 
 const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
   onStreamToggle, 
   isStreaming, 
-  showTextBox 
+  showTextBox,
+  isConnecting,
 }) => {
+  const handleClick = () => {
+    onStreamToggle();
+  };
+
   return (
     <Card className="w-full max-w-[300px] bg-transparent border-none shadow-none">
       <CardContent className="p-6 flex flex-col items-center">
@@ -24,10 +30,35 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
         >
           <Button
             className="w-full h-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none overflow-hidden"
-            onClick={onStreamToggle}
+            onClick={handleClick}
+            disabled={isConnecting} // Disable the button while connecting or disconnecting
           >
             <AnimatePresence mode="wait">
-              {!isStreaming ? (
+              {isConnecting ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                </motion.div>
+              ) : !isStreaming ? (
                 <motion.div
                   key="idle"
                   initial={{ opacity: 0 }}
