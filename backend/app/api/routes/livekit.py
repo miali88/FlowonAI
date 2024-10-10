@@ -47,7 +47,6 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
         "url": livekit_url
     }
 
-
 @router.get("/token_embed")
 async def get_token_embed(request: Request, background_tasks: BackgroundTasks):
     """ Create a token for a user to join a room & starts the agent """

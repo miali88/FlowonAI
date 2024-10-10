@@ -1,5 +1,4 @@
-import os
-import logging
+import os, logging
 from typing import List, Dict
 
 from fastapi import Request, APIRouter, WebSocket
@@ -17,10 +16,26 @@ jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 
 @router.api_route('/transcript/commit', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
+
     data = await request.json()
 
-
     print("\n\nCOMMIT ENDPOINT:", data)
+
+    # Extract job_id and other relevant information
+    job_id = data.get('job_id')
+    user_transcript = data.get('transcript')
+
+    # Find or create the job in the jobs dictionary
+    if job_id not in jobs:
+        jobs[job_id] = {
+            'job_id': job_id,
+            'transcript': []}
+
+    # Append the new transcript entry
+    jobs[job_id]['transcript'].append({
+        'user_transcript': user_transcript,})
+
+    print("\n\nUpdated job:", jobs[job_id])
 
     return JSONResponse(content={"message": "Voice webhook received"})
 
@@ -50,18 +65,18 @@ async def voice_webhook(request: Request):
 
     print("\n\nUpdated job:", jobs[job_id])
 
-    # Get the last two user transcripts
-    last_two_transcripts = [entry['user_transcript'] for entry in jobs[job_id]['transcript'][-2:]]
+    # # Get the last two user transcripts
+    # last_two_transcripts = [entry['user_transcript'] for entry in jobs[job_id]['transcript'][-2:]]
     
-    # Pass the last two transcripts to similarity_search
-    rag_results = await similarity_search(" ".join(last_two_transcripts))
+    # # Pass the last two transcripts to similarity_search
+    # rag_results = await similarity_search(" ".join(last_two_transcripts))
 
-    print("\n\nRAG RESULTS:", rag_results)
+    # print("\n\nRAG RESULTS:", rag_results)
 
-    if rag_results:
-        return JSONResponse(content={"rag_results": rag_results})
-    else:
-        return JSONResponse(content={"message": "No RAG results found"})
+    # if rag_results:
+    #     return JSONResponse(content={"rag_results": rag_results})
+    # else:
+    #     return JSONResponse(content={"message": "No RAG results found"})
 
 @router.api_route('/state', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
@@ -71,6 +86,19 @@ async def voice_webhook(request: Request):
     #print("\n\nSTATE:", state)
 
     return JSONResponse(content={"message": "Voice webhook received"})
+
+@router.post('/transcript/full')
+async def voice_webhook(request: Request):
+    data = await request.json()
+
+    print("\n\nFULL TRANSCRIPT:", data)
+
+    return JSONResponse(content={"message": "Full transcript received"})
+
+
+
+
+
 
 # Twilio credentials
 account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
