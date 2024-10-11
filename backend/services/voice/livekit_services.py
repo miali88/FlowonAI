@@ -72,20 +72,8 @@ async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
 
     return token.to_jwt(), livekit_server_url, room_name
 
-async def start_agent_request(room_name: str, agent_id: str):
+async def start_agent_request(room_name: str, agent_id: str, user_id: str):
     print(f"Starting create_agent_request for room: {room_name}")
-    
-    # # Use a lock to prevent multiple agent creations for the same room
-    # if room_name not in agent_creation_locks:
-    #     agent_creation_locks[room_name] = Lock()
-    
-    # async with agent_creation_locks[room_name]:
-    #     # Check if an agent process is already running for this room
-    #     if await is_agent_running(room_name):
-    #         print(f"Agent already running for room: {room_name}")
-    #         return
-
-    #     try:
     temperature = "0.6"
 
     agent = await get_agent(agent_id)
@@ -104,30 +92,15 @@ async def start_agent_request(room_name: str, agent_id: str):
         "--temperature", temperature,
         "--room", room_name,
         "--opening_line", opening_line,
-        "--agent_id", agent_id]
+        "--agent_id", agent_id,
+        "--user_id", user_id]
 
     print(f"Executing command: {' '.join(command)}")
 
     # Run run_open.py as a subprocess with arguments
     subprocess.Popen(command)
-    # print(f"Agent process started for room: {room_name}")
-    #     except Exception as e:
-    #         print(f"Error starting agent process for room {room_name}: {str(e)}")
-    #         print(traceback.format_exc())
-    return 
 
-# async def is_agent_running(room_name: str) -> bool:
-#     # Implement a check to see if an agent is already running for this room
-#     # This could involve checking a database, a file, or a shared memory structure
-#     # For now, we'll use a simple file-based approach
-#     lock_file = f"/tmp/agent_lock_{room_name}"
-#     if os.path.exists(lock_file):
-#         return True
-#     else:
-#         # Create the lock file
-#         with open(lock_file, 'w') as f:
-#             f.write("1")
-#         return False
+    return 
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \

@@ -32,6 +32,9 @@ def main():
         elif args[i] == "--agent_id":
             agent_id = args[i+1]
             i += 2
+        elif args[i] == "--user_id":
+            user_id = args[i+1]
+            i += 2
         else:
             i += 1
 
@@ -41,6 +44,7 @@ def main():
     os.environ['AGENT_TEMPERATURE'] = temperature
     os.environ['AGENT_OPENING_LINE'] = opening_line
     os.environ['AGENT_ID'] = agent_id
+    os.environ['USER_ID'] = user_id
 
     # Construct the command to run open.py
     command = ["python", "services/voice/openny.py", "connect"]

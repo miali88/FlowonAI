@@ -20,8 +20,7 @@ interface ChatSession {
   };
   created_at: string;
   user_id: string;
-  user_query: string;
-}
+  user_query: string;}
 
 const ChatHistory: React.FC = () => {
   const { user } = useUser();
@@ -43,7 +42,7 @@ const ChatHistory: React.FC = () => {
     setIsLoading(true);
     try {
       const token = await getToken();
-      const response = await axios.get(`${API_BASE_URL}/chat/history`, {
+      const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-User-ID': user.id,

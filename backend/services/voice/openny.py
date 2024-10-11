@@ -16,6 +16,7 @@ VOICE_ID = os.getenv('AGENT_VOICE_ID')
 TEMPERATURE = float(os.getenv('AGENT_TEMPERATURE', "0.6"))
 OPENING_LINE = os.getenv('AGENT_OPENING_LINE', "Hello there. How can I help you today?")
 DOMAIN = os.getenv('BACKEND_DOMAIN', "http://localhost:8000/api/v1")
+USER_ID = os.getenv('USER_ID')
 
 class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
@@ -52,7 +53,6 @@ class AssistantFunction(agents.llm.FunctionContext):
         #print(f"Message triggering transfer call: {user_msg}")
         return None
 
-
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,7 +64,6 @@ class CustomVoiceAssistant(VoiceAssistant):
     ) -> None:
 
         copied_ctx = self._chat_ctx.copy()
-        #print("\n\nCopied Chat Context:", copied_ctx)
         await super()._synthesize_answer_task(old_task, handle)
         extra_data = {
             "user_transcript": handle.user_question,
@@ -203,6 +202,7 @@ async def entrypoint(ctx: JobContext):
             backend_url = f"{DOMAIN}{endpoint}"
             print(f"\n\n\n Sending to {endpoint}:", transcript)
 
+            transcript["user_id"] = USER_ID
             transcript["job_id"] = ctx.job.id
             transcript["room_name"] = room.name
             transcript["room_sid"] = await room.sid

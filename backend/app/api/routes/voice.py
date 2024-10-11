@@ -34,6 +34,7 @@ async def voice_webhook(request: Request):
     # Instantiate transcript list. 
     if job_id not in jobs:
         jobs[job_id] = {
+            'user_id': data.get('user_id'),
             'job_id': job_id,
             'room_sid': data.get('room_sid'),
             'room_name': data.get('room_name'),
@@ -149,6 +150,7 @@ async def process_participant_left(room_sid: str):
         # Save the job data to Supabase
         try:
             result = supabase.table("conversation_logs").insert({
+                "user_id": matching_job['user_id'],
                 "job_id": matching_job['job_id'],
                 "room_sid": matching_job['room_sid'],
                 "room_name": matching_job['room_name'],
