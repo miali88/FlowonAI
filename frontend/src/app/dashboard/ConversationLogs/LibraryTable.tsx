@@ -55,7 +55,7 @@ export type ConversationLog = {
 
 // Update the component props
 interface LibraryTableProps {
-  setSelectedConversation: (conversation: ConversationLog) => void;
+  setSelectedConversation: (conversation: ConversationLog | null) => void;
 }
 
 // Update the column definitions
