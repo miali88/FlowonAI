@@ -35,7 +35,6 @@ origins = ["http://localhost:3000",
            "http://internally-wise-spaniel.ngrok.io",
            "https://internally-wise-spaniel.ngrok.io"]
 
-
 if origins:
     app.add_middleware(
         CORSMiddleware,

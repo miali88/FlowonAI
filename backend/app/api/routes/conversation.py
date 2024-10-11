@@ -1,14 +1,30 @@
-from fastapi import FastAPI, Request, HTTPException, APIRouter
-from fastapi.responses import Response, JSONResponse
-
-from services.retellai.retellai import handle_form_webhook
-import logging
-import traceback
+from fastapi import Request, HTTPException, APIRouter, Depends
+from fastapi.responses import JSONResponse
+from supabase import create_client, Client
+from typing import Annotated
+import os
 
 router = APIRouter()
 
-router.get("/history")
-async def get_conversation_history(request: Request):
-    
+# Initialize Supabase client
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
 
-    pass
+async def get_user_id(request: Request) -> str:
+    user_id = request.headers.get("X-User-ID")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header is missing")
+    return user_id
+
+
+@router.get("/history")
+async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
+    try:
+        response = supabase.table("conversation_logs").select("*").eq("user_id", user_id).execute()
+        if response.data:
+            return JSONResponse(content=response.data)
+        else:
+            return JSONResponse(content=[], status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
