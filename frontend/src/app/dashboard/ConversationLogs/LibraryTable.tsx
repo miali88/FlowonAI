@@ -42,7 +42,7 @@ import { useUser } from "@clerk/nextjs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Update the type definition to match the new data structure
+// Update the type definition to include agentPurpose and summary
 export type ConversationLog = {
   id: string
   created_at: string
@@ -51,6 +51,8 @@ export type ConversationLog = {
   room_sid: string
   transcript: string
   user_id: string
+  agentPurpose: string
+  summary: string | null
 }
 
 // Update the component props
@@ -61,41 +63,19 @@ interface LibraryTableProps {
 // Update the column definitions
 export const columns: ColumnDef<ConversationLog>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: "created_at",
     header: "Created At",
     cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
   },
   {
-    accessorKey: "job_id",
-    header: "Job ID",
-    cell: ({ row }) => <div>{row.getValue("job_id")}</div>,
+    accessorKey: "agentPurpose",
+    header: "Agent Purpose",
+    cell: ({ row }) => <div>{row.getValue("agentPurpose")}</div>,
   },
   {
-    accessorKey: "room_name",
-    header: "Room Name",
-    cell: ({ row }) => <div>{row.getValue("room_name")}</div>,
+    accessorKey: "summary",
+    header: "Summary",
+    cell: ({ row }) => <div>{row.getValue("summary") || "N/A"}</div>,
   },
   {
     id: "actions",
@@ -153,15 +133,35 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           return;   
         }
 
-        const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
-          headers: {
-            'x-user-id': user.id
-          }
+        const [conversationResponse, agentsResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/conversation/history`, {
+            headers: {
+              'x-user-id': user.id
+            }
+          }),
+          axios.get(`${API_BASE_URL}/livekit/agents`, {
+            headers: {
+              'x-user-id': user.id
+            }
+          })
+        ]);
+
+        const conversations = conversationResponse.data;
+        const agents = agentsResponse.data;
+
+        const updatedData = conversations.map((conversation: ConversationLog) => {
+          const agent = agents.find((a: any) => a.id === conversation.job_id);
+          return {
+            ...conversation,
+            agentPurpose: agent ? agent.agentPurpose : 'Unknown',
+            summary: null // Set to null for now
+          };
         });
-        setData(response.data);
+
+        setData(updatedData);
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch conversation history');
+        setError('Failed to fetch data');
         setLoading(false);
       }
     }
