@@ -16,7 +16,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -43,19 +42,24 @@ import { useUser } from "@clerk/nextjs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export type Agent = {
+// Update the type definition to match the new data structure
+export type ConversationLog = {
   id: string
-  agentPurpose: string
-  agentName: string
-  voice: string
-  dataSource: string
+  created_at: string
+  job_id: string
+  room_name: string
+  room_sid: string
+  transcript: string
+  user_id: string
 }
 
+// Update the component props
 interface LibraryTableProps {
-  setSelectedAgent: (agent: Agent) => void;
+  setSelectedConversation: (conversation: ConversationLog) => void;
 }
 
-export const columns: ColumnDef<Agent>[] = [
+// Update the column definitions
+export const columns: ColumnDef<ConversationLog>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -79,36 +83,19 @@ export const columns: ColumnDef<Agent>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "agentPurpose",
-    header: "Purpose",
-    cell: ({ row }) => (
-      <div>{row.getValue("agentPurpose")}</div>
-    ),
+    accessorKey: "created_at",
+    header: "Created At",
+    cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
   },
   {
-    accessorKey: "agentName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Agent Name
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div>{row.getValue("agentName")}</div>,
+    accessorKey: "job_id",
+    header: "Job ID",
+    cell: ({ row }) => <div>{row.getValue("job_id")}</div>,
   },
   {
-    accessorKey: "voice",
-    header: "Voice",
-    cell: ({ row }) => <div>{row.getValue("voice")}</div>,
-  },
-  {
-    accessorKey: "dataSource",
-    header: "Data Source",
-    cell: ({ row }) => <div>{row.getValue("dataSource")}</div>,
+    accessorKey: "room_name",
+    header: "Room Name",
+    cell: ({ row }) => <div>{row.getValue("room_name")}</div>,
   },
   {
     id: "actions",
@@ -141,12 +128,12 @@ export const columns: ColumnDef<Agent>[] = [
   },
 ]
 
-export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
+// Update the main component
+export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const { user } = useUser();
-  const [data, setData] = useState<Agent[]>([])
+  const [data, setData] = useState<ConversationLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []  
@@ -165,15 +152,15 @@ export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
           return;   
         }
 
-        const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+        const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
           headers: {
             'x-user-id': user.id
           }
         });
-        setData(response.data.data); // Update this line to access the 'data' property
+        setData(response.data);
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch data');
+        setError('Failed to fetch conversation history');
         setLoading(false);
       }
     }
@@ -200,8 +187,8 @@ export function DataTableDemo({ setSelectedAgent }: LibraryTableProps) {
     },
   })
 
-  const handleRowClick = (agent: Agent) => {
-    setSelectedAgent(agent);
+  const handleRowClick = (conversation: ConversationLog) => {
+    setSelectedConversation(conversation);
   };
 
   if (loading) return <div>Loading...</div>
