@@ -114,13 +114,14 @@ export const columns: ColumnDef<ConversationLog>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
+              onClick={() => navigator.clipboard.writeText(row.original.transcript)}
             >
-              Copy payment ID
+              Copy chat
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDeleteChat(row.original.id)}>
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -189,6 +190,11 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
 
   const handleRowClick = (conversation: ConversationLog) => {
     setSelectedConversation(conversation);
+  };
+
+  const handleDeleteChat = (id: string) => {
+    // Implement delete logic here
+    console.log(`Deleting chat with id: ${id}`);
   };
 
   if (loading) return <div>Loading...</div>

@@ -7,16 +7,17 @@ interface ChatUIProps {
   selectedConversation: ConversationLog | null;
 }
 
-const renderChatBubble = (message: { role: string; content: string }, index: number) => {
-  const isUser = message.role === 'user_message';
+const renderChatBubble = (message: { [key: string]: string }, index: number) => {
+  const isUser = 'user_message' in message;
+  const content = isUser ? message.user_message : message.assistant_message;
   return (
     <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`flex items-end ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         <Avatar className="w-8 h-8">
-          {isUser ? '👤' : '🤖'}
+          {isUser ? '👤' : <img src="/assets/flowon.png" alt="Flowon" className="w-full h-full object-cover" />}
         </Avatar>
         <div className={`mx-2 py-2 px-4 rounded-lg ${isUser ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
-          {message.content}
+          {content}
         </div>
       </div>
     </div>
@@ -44,7 +45,8 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedConversation }) => {
                 const messages = JSON.parse(selectedConversation.transcript);
                 return messages.map((message: any, index: number) => renderChatBubble(message, index));
               } catch (error) {
-                return <p className="text-red-500">Invalid transcript data.</p>;
+                console.error("Error parsing transcript:", error);
+                return <p className="text-red-500">Error parsing transcript data.</p>;
               }
             })()}
           </ScrollArea>
