@@ -1,5 +1,7 @@
 import os, logging
 from typing import List, Dict
+import subprocess
+import asyncio
 
 from fastapi import Request, APIRouter, WebSocket
 from fastapi.responses import JSONResponse
@@ -17,7 +19,7 @@ jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 
 # Initialize Supabase client
 supabase_url = os.environ.get("SUPABASE_URL")
-supabase_key = os.environ.get("SUPABASE_KEY")
+supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
 @router.api_route('/transcript/commit', methods=['POST', 'GET'])
@@ -44,8 +46,6 @@ async def voice_webhook(request: Request):
     print("\n\nUpdated job:", jobs[job_id])
 
     return JSONResponse(content={"message": "Voice webhook received"})
-
-
 
 @router.api_route('/transcript/real_time', methods=['POST', 'GET'])
 async def voice_webhook(request: Request):
@@ -135,28 +135,38 @@ async def livekit_room_webhook(request: Request):
     room_sid = data.get('room', {}).get('sid')
     
     if event == 'participant_left':
-        # Find the job with the corresponding room_sid
-        matching_job = next((job for job in jobs.values() if job['room_sid'] == room_sid), None)
-        
-        if matching_job:
-            # Save the job data to Supabase
-            try:
-                result = supabase.table("conversation_logs").insert({
-                    "job_id": matching_job['job_id'],
-                    "room_sid": matching_job['room_sid'],
-                    "room_name": matching_job['room_name'],
-                    "transcript": matching_job['transcript']
-                }).execute()
-                
-                print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
-                
-                # Remove the job from the jobs dictionary
-                del jobs[matching_job['job_id']]
-            except Exception as e:
-                logger.error(f"Error saving to Supabase: {str(e)}")
+        asyncio.create_task(process_participant_left(room_sid))
     
     logger.info(f"Received webhook data: {data}")
     return {"message": "Webhook received successfully"}
+
+async def process_participant_left(room_sid: str):
+    await asyncio.sleep(10)
+    
+    matching_job = next((job for job in jobs.values() if job['room_sid'] == room_sid), None)
+    
+    if matching_job:
+        # Save the job data to Supabase
+        try:
+            result = supabase.table("conversation_logs").insert({
+                "job_id": matching_job['job_id'],
+                "room_sid": matching_job['room_sid'],
+                "room_name": matching_job['room_name'],
+                "transcript": matching_job['transcript']
+            }).execute()
+            
+            print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
+            
+            room_name = matching_job['room_name']
+            try:
+                subprocess.run(['lk', 'room', 'delete', room_name], check=True)
+                print(f"Deleted room: {room_name}")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Error deleting room {room_name}: {str(e)}")
+
+            del jobs[matching_job['job_id']]
+        except Exception as e:
+            logger.error(f"Error saving to Supabase: {str(e)}")
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
