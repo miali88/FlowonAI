@@ -36,6 +36,7 @@ import {
   Beaker,
   Plug,
   Mic2,  // Add this import
+  MessageCircle, // Add this import for the Widget icon
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/conversationlogs/page';
 
@@ -43,6 +44,7 @@ import KnowledgeBaseContent from "@/app/dashboard/knowledgebase/page";
 import Lab from '@/app/dashboard/agenthub/page';  // Add this import
 import Integrations from "@/app/dashboard/integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
+import ChatBot from "@/app/widget/ChatBot";
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -79,7 +81,8 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
-    //{ icon: HomeIcon, label: "Dashboard" }, // Add this line
+    { icon: MessageCircle, label: "Widget" }, // Add this line
+    //{ icon: HomeIcon, label: "Dashboard" },
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
@@ -204,7 +207,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Dashboard");
+  const [activeItem, setActiveItem] = useState("Widget"); // Change default to "Widget"
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
@@ -233,6 +236,8 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
+      case "Widget":
+        return <ChatBot />;
       case "Dashboard":
         return <DashboardContent />;
       case "Knowledge Base":
@@ -240,11 +245,11 @@ function AdminDashboard() {
       case "Conversation Logs":
         return <ChatHistory />;
       case "Agent Hub":
-        return <Lab />;  // This will render the Lab component directly
+        return <Lab />;
       case "Integrations":
         return <Integrations />;
       default:
-        return <DashboardContent />;
+        return <ChatBot />; // Change default to ChatBot
     }
   };
 

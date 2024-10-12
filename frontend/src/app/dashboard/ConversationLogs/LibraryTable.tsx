@@ -136,7 +136,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
                 Copy chat
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleDeleteChat(row.original.id)}>
+              <DropdownMenuItem 
+                onClick={() => handleDeleteChat(row.original.id)}
+                className="text-red-600 focus:text-red-600"
+              >
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
