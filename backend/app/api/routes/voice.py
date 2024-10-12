@@ -36,6 +36,7 @@ async def voice_webhook(request: Request):
     if job_id not in jobs:
         jobs[job_id] = {
             'user_id': data.get('user_id'),
+            'agent_id': data.get('agent_id'),
             'job_id': job_id,
             'room_sid': data.get('room_sid'),
             'room_name': data.get('room_name'),
@@ -143,7 +144,6 @@ async def livekit_room_webhook(request: Request):
     return {"message": "Webhook received successfully"}
 
 
-
 async def process_participant_left(room_sid: str):
     await asyncio.sleep(10)
     
@@ -154,10 +154,11 @@ async def process_participant_left(room_sid: str):
         try:
             supabase.table("conversation_logs").insert({
                 "user_id": matching_job['user_id'],
+                "agent_id": matching_job['agent_id'],
                 "job_id": matching_job['job_id'],
                 "room_sid": matching_job['room_sid'],
                 "room_name": matching_job['room_name'],
-                "transcript": matching_job['transcript']
+                "transcript": matching_job['transcript'],
             }).execute()
             
             print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
