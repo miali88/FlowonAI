@@ -35,9 +35,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -61,77 +61,19 @@ interface LibraryTableProps {
   setSelectedConversation: (conversation: ConversationLog | null) => void;
 }
 
-// Update the column definitions
-export const columns: ColumnDef<ConversationLog>[] = [
-  {
-    accessorKey: "created_at",
-    header: "Created At",
-    cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
-  },
-  {
-    accessorKey: "agentName",
-    header: "Agent Name",
-    cell: ({ row }) => <div>{(row.getValue("agentName") as string) || "N/A"}</div>,
-  },
-  {
-    accessorKey: "agentPurpose",
-    header: "Agent Purpose",
-    cell: ({ row }) => {
-      const agentPurpose = row.getValue("agentPurpose");
-      console.log('Agent Purpose:', agentPurpose); // Log the agent purpose for each row
-      return <div>{agentPurpose as string || "N/A"}</div>;
-    },
-  },
-  {
-    accessorKey: "summary",
-    header: "Summary",
-    cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(row.original.transcript)}
-            >
-              Copy chat
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDeleteChat(row.original.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
-
-// Update the main component
 export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const { user } = useUser();
   const [data, setData] = useState<ConversationLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []  
-  )
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [selectedAgentState, setSelectedAgentState] = useState<Agent | null>(null);
 
+  // Define handleDeleteChat inside the component
   const handleDeleteChat = async (id: string) => {
     try {
       await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
@@ -147,6 +89,62 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       // Optionally, show an error message to the user
     }
   };
+
+  // Define columns inside the component using useMemo
+  const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
+    },
+    {
+      accessorKey: "agentName",
+      header: "Agent Name",
+      cell: ({ row }) => <div>{(row.getValue("agentName") as string) || "N/A"}</div>,
+    },
+    {
+      accessorKey: "agentPurpose",
+      header: "Agent Purpose",
+      cell: ({ row }) => {
+        const agentPurpose = row.getValue("agentPurpose");
+        console.log('Agent Purpose:', agentPurpose); // Log the agent purpose for each row
+        return <div>{agentPurpose as string || "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "summary",
+      header: "Summary",
+      cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <DotsHorizontalIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => handleDeleteChat(row.original.id)}
+              >
+                Copy chat
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDeleteChat(row.original.id)}>
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ], [handleDeleteChat]) // Add handleDeleteChat to dependencies
 
   useEffect(() => {
     const fetchData = async () => {

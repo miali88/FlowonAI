@@ -17,7 +17,6 @@ async def get_user_id(request: Request) -> str:
         raise HTTPException(status_code=400, detail="X-User-ID header is missing")
     return user_id
 
-
 @router.get("/history")
 async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
     try:
@@ -26,5 +25,13 @@ async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]
             return JSONResponse(content=response.data)
         else:
             return JSONResponse(content=[], status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.delete("/{conversation_id}")
+async def delete_conversation_history(conversation_id: str, user_id: Annotated[str, Depends(get_user_id)]):
+    try:
+        supabase.table("conversation_logs").delete().eq("id", conversation_id).eq("user_id", user_id).execute()
+        return JSONResponse(content={}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
