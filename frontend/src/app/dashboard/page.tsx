@@ -44,7 +44,6 @@ import KnowledgeBaseContent from "@/app/dashboard/knowledgebase/page";
 import Lab from '@/app/dashboard/agenthub/page';  // Add this import
 import Integrations from "@/app/dashboard/integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
-import ChatBot from "@/app/widget/ChatBot";
 
 // Add this interface at the top of your file 
 interface SavedItem {
@@ -81,7 +80,6 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
   const sidebarItems = [
-    { icon: MessageCircle, label: "Widget" }, // Add this line
     //{ icon: HomeIcon, label: "Dashboard" },
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
@@ -236,8 +234,6 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
-      case "Widget":
-        return <ChatBot />;
       case "Dashboard":
         return <DashboardContent />;
       case "Knowledge Base":
@@ -249,7 +245,7 @@ function AdminDashboard() {
       case "Integrations":
         return <Integrations />;
       default:
-        return <ChatBot />; // Change default to ChatBot
+        return <DashboardContent />; // Change default to ChatBot
     }
   };
 
