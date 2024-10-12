@@ -337,7 +337,23 @@ defer
             <TabsContent value="preview">
               <div className="relative h-[600px] w-full">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ChatBotMini />
+                  {selectedAgent && (
+                    <ChatBotMini 
+                      agentId={selectedAgent.id}
+                      isStreaming={isStreaming}
+                      setIsStreaming={setIsStreaming}
+                      isLiveKitActive={isLiveKitActive}
+                      setIsLiveKitActive={setIsLiveKitActive}
+                      token={token}
+                      setToken={setToken}
+                      url={url}
+                      setUrl={setUrl}
+                      isConnecting={isConnecting}
+                      setIsConnecting={setIsConnecting}
+                      onStreamEnd={handleStreamEnd}
+                      onStreamStart={handleStreamStart}
+                    />
+                  )}
                 </div>
               </div>
             </TabsContent>

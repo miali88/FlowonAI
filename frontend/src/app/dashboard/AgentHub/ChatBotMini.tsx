@@ -1,22 +1,46 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import styles from './ChatBotMini.module.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const ChatBotMini: React.FC = () => {
+interface ChatBotMiniProps {
+  agentId: string;
+  isStreaming: boolean;
+  setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
+  isLiveKitActive: boolean;
+  setIsLiveKitActive: React.Dispatch<React.SetStateAction<boolean>>;
+  token: string | null;
+  setToken: React.Dispatch<React.SetStateAction<string | null>>;
+  url: string | null;
+  setUrl: React.Dispatch<React.SetStateAction<string | null>>;
+  isConnecting: boolean;
+  setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
+  onStreamEnd: () => void;
+  onStreamStart: () => void;
+}
+
+const ChatBotMini: React.FC<ChatBotMiniProps> = ({
+  agentId,
+  isStreaming,
+  setIsStreaming,
+  isLiveKitActive,
+  setIsLiveKitActive,
+  token,
+  setToken,
+  url,
+  setUrl,
+  isConnecting,
+  setIsConnecting,
+  onStreamEnd,
+  onStreamStart
+}) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const sendBtnRef = useRef<HTMLSpanElement>(null);
 
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  const { userId } = useAuth();
   const { user } = useUser();
 
   const handleStreamToggle = useCallback(async () => {
@@ -29,7 +53,7 @@ const ChatBotMini: React.FC = () => {
         if (!user) {
           throw new Error('User not authenticated');
         }
-        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=YOUR_AGENT_ID&user_id=${user.id}`, {
+        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${user.id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -38,9 +62,9 @@ const ChatBotMini: React.FC = () => {
         if (!response.ok) {
           throw new Error('Failed to fetch token');
         }
-        const { accessToken, url } = await response.json();
+        const { accessToken, url: liveKitUrl } = await response.json();
         setToken(accessToken);
-        setUrl(url);
+        setUrl(liveKitUrl);
         setIsLiveKitActive(true);
         setIsStreaming(true);
       } catch (error) {
@@ -50,37 +74,7 @@ const ChatBotMini: React.FC = () => {
         setIsConnecting(false);
       }
     }
-  }, [isStreaming, user]);
-
-  const handleStreamEnd = useCallback(() => {
-    setIsStreaming(false);
-    setIsLiveKitActive(false);
-  }, []);
-
-  const handleStreamStart = useCallback(() => {
-    setIsStreaming(true);
-  }, []);
-
-  useEffect(() => {
-    // This effect will run once the component is mounted
-    const chatInput = chatInputRef.current;
-    const sendChatBtn = sendBtnRef.current;
-    const chatbox = chatboxRef.current;
-
-    if (chatInput && sendChatBtn && chatbox) {
-      // Here, you can add the logic from script.js
-      // For example:
-      // const handleChat = () => { ... };
-      // chatInput.addEventListener("input", () => { ... });
-      // sendChatBtn.addEventListener("click", handleChat);
-      // ... other event listeners and functions
-    }
-
-    // Clean up function
-    return () => {
-      // Remove event listeners if needed
-    };
-  }, []);
+  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, user]);
 
   return (
     <div className={styles.chatbot}>
@@ -99,8 +93,8 @@ const ChatBotMini: React.FC = () => {
             token={token} 
             url={url} 
             isStreaming={isStreaming} 
-            onStreamEnd={handleStreamEnd} 
-            onStreamStart={handleStreamStart} 
+            onStreamEnd={onStreamEnd} 
+            onStreamStart={onStreamStart} 
           />
         )}
       </div>

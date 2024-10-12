@@ -143,7 +143,6 @@ async def livekit_room_webhook(request: Request):
     logger.info(f"Received webhook data: {data}")
     return {"message": "Webhook received successfully"}
 
-
 async def process_participant_left(room_sid: str):
     await asyncio.sleep(10)
     
@@ -177,7 +176,6 @@ async def process_participant_left(room_sid: str):
             logger.error(f"Error saving to Supabase: {str(e)}")
     return JSONResponse(content={"message": "Participant left and job saved"})
 
-
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     system_prompt = f"""
     you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
@@ -205,7 +203,6 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     except Exception as e:
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
-
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
