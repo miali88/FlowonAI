@@ -91,8 +91,6 @@ export const columns: ColumnDef<ConversationLog>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -133,6 +131,22 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [selectedAgentState, setSelectedAgentState] = useState<Agent | null>(null);
+
+  const handleDeleteChat = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
+        headers: {
+          'x-user-id': user?.id
+        }
+      });
+      // Remove the deleted conversation from the local state
+      setData(prevData => prevData.filter(conversation => conversation.id !== id));
+      console.log(`Chat with id: ${id} deleted successfully`);
+    } catch (error) {
+      console.error(`Error deleting chat with id: ${id}`, error);
+      // Optionally, show an error message to the user
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -204,11 +218,6 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
 
   const handleRowClick = (conversation: ConversationLog) => {
     setSelectedConversation(conversation);
-  };
-
-  const handleDeleteChat = (id: string) => {
-    // Implement delete logic here
-    console.log(`Deleting chat with id: ${id}`);
   };
 
   if (loading) return <div>Loading...</div>
