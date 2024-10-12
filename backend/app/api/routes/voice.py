@@ -176,6 +176,7 @@ async def process_participant_left(room_sid: str):
             logger.error(f"Error saving to Supabase: {str(e)}")
     return JSONResponse(content={"message": "Participant left and job saved"})
 
+
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     system_prompt = f"""
     you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
@@ -190,14 +191,11 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
         summary = await llm_response(user_prompt=transcript_str, system_prompt=system_prompt)
         logger.info(f"Transcript summary generated successfully")
 
-        print("\n\n SUMMARY:", summary, "type:", type(summary))
-        print("\n\n JOB ID:", job_id, "type:", type(job_id))
-        # Insert the summary into the summary table
         try:
-            supabase.table("conversation_logs").insert({
-                "job_id": job_id,
+            supabase.table("conversation_logs").update({
                 "summary": summary
-            }).execute()
+            }).eq("job_id", job_id).execute()
+
             logger.info(f"Summary inserted into summary table for job_id: {job_id}")
         except Exception as e:
             logger.error(f"Error inserting summary to Supabase: {str(e)}")
