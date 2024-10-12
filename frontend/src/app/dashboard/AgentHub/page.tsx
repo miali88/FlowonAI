@@ -8,13 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import MorphingStreamButton from './MorphingStreamButton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { DialogDemo } from './NewAgent';
-import LiveKitEntry from '@/app/dashboard/agenthub/LiveKitEntry';
+import ChatBotMini from './ChatBotMini';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -337,27 +335,10 @@ defer
               </Card>
             </TabsContent>
             <TabsContent value="preview">
-              <div className="relative h-[600px]">
-                <AnimatedGridPatternDemo className="absolute inset-0" />
+              <div className="relative h-[600px] w-full">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <MorphingStreamButton
-                    onStreamToggle={handleStreamToggle}
-                    isStreaming={isStreaming}
-                    showTextBox={false}
-                    isConnecting={isConnecting}
-                  />
+                  <ChatBotMini />
                 </div>
-                {isLiveKitActive && token && url && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <LiveKitEntry 
-                      token={token} 
-                      url={url} 
-                      isStreaming={isStreaming} 
-                      onStreamEnd={handleStreamEnd} 
-                      onStreamStart={handleStreamStart} 
-                    />
-                  </div>
-                )}
               </div>
             </TabsContent>
           </Tabs>
