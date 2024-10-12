@@ -1,6 +1,5 @@
 import * as React from "react"
 import {
-  CaretSortIcon,
   ChevronDownIcon,
   DotsHorizontalIcon,
 } from "@radix-ui/react-icons"
@@ -51,7 +50,9 @@ export type ConversationLog = {
   room_sid: string
   transcript: string
   user_id: string
-  agentPurpose: string
+  agent_id: string
+  agentPurpose: string | null // Change to allow null
+  agentName: string | null
   summary: string | null
 }
 
@@ -68,14 +69,23 @@ export const columns: ColumnDef<ConversationLog>[] = [
     cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
   },
   {
+    accessorKey: "agentName",
+    header: "Agent Name",
+    cell: ({ row }) => <div>{(row.getValue("agentName") as string) || "N/A"}</div>,
+  },
+  {
     accessorKey: "agentPurpose",
     header: "Agent Purpose",
-    cell: ({ row }) => <div>{row.getValue("agentPurpose")}</div>,
+    cell: ({ row }) => {
+      const agentPurpose = row.getValue("agentPurpose");
+      console.log('Agent Purpose:', agentPurpose); // Log the agent purpose for each row
+      return <div>{agentPurpose as string || "N/A"}</div>;
+    },
   },
   {
     accessorKey: "summary",
     header: "Summary",
-    cell: ({ row }) => <div>{row.getValue("summary") || "N/A"}</div>,
+    cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
   },
   {
     id: "actions",
@@ -133,34 +143,38 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           return;   
         }
 
-        const [conversationResponse, agentsResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/conversation/history`, {
-            headers: {
-              'x-user-id': user.id
-            }
-          }),
-          axios.get(`${API_BASE_URL}/livekit/agents`, {
-            headers: {
-              'x-user-id': user.id
-            }
-          })
-        ]);
+        const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
 
-        const conversations = conversationResponse.data;
-        const agents = agentsResponse.data;
+        const conversations = response.data;
+        console.log('Fetched conversations:', conversations);
+
+        // Fetch agent data
+        const agentResponse = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+        const agents = agentResponse.data.data;
 
         const updatedData = conversations.map((conversation: ConversationLog) => {
-          const agent = agents.find((a: any) => a.id === conversation.job_id);
+          const agent = agents.find((a: any) => a.id === conversation.agent_id);
           return {
             ...conversation,
-            agentPurpose: agent ? agent.agentPurpose : 'Unknown',
-            summary: null // Set to null for now
+            agentName: agent ? agent.agentName : null,
+            agentPurpose: agent ? agent.agentPurpose : null,
+            summary: conversation.summary || null
           };
         });
 
+        console.log('Updated data:', updatedData);
         setData(updatedData);
         setLoading(false);
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Failed to fetch data');
         setLoading(false);
       }
@@ -205,10 +219,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center">
           <Input
-            placeholder="Filter agent..."
-            value={(table.getColumn("agentName")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter agent purpose..."
+            value={(table.getColumn("agentPurpose")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("agentName")?.setFilterValue(event.target.value)
+              table.getColumn("agentPurpose")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />

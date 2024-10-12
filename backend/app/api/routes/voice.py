@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
 from supabase import create_client, Client
+from services.chat.chat import llm_response
 
 from services.voice.rag import similarity_search
 
@@ -141,6 +142,8 @@ async def livekit_room_webhook(request: Request):
     logger.info(f"Received webhook data: {data}")
     return {"message": "Webhook received successfully"}
 
+
+
 async def process_participant_left(room_sid: str):
     await asyncio.sleep(10)
     
@@ -149,7 +152,7 @@ async def process_participant_left(room_sid: str):
     if matching_job:
         # Save the job data to Supabase
         try:
-            result = supabase.table("conversation_logs").insert({
+            supabase.table("conversation_logs").insert({
                 "user_id": matching_job['user_id'],
                 "job_id": matching_job['job_id'],
                 "room_sid": matching_job['room_sid'],
@@ -166,9 +169,44 @@ async def process_participant_left(room_sid: str):
             except subprocess.CalledProcessError as e:
                 logger.error(f"Error deleting room {room_name}: {str(e)}")
 
+            await transcript_summary(matching_job['transcript'], matching_job['job_id'])
+
             del jobs[matching_job['job_id']]
         except Exception as e:
             logger.error(f"Error saving to Supabase: {str(e)}")
+    return JSONResponse(content={"message": "Participant left and job saved"})
+
+async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
+    system_prompt = f"""
+    you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
+
+    You will be as concise as possible, and only respond with the outcome of the conversation and facts related to the caller's responses.
+    Do not assume anything, not even the currency of any amounts or monies mentioned.
+
+    Your output will be in bullet points, with no prefix like "the calller is" or "the caller asks"
+    """
+    transcript_str = str(transcript)
+    try:
+        summary = await llm_response(user_prompt=transcript_str, system_prompt=system_prompt)
+        logger.info(f"Transcript summary generated successfully")
+
+        print("\n\n SUMMARY:", summary, "type:", type(summary))
+        print("\n\n JOB ID:", job_id, "type:", type(job_id))
+        # Insert the summary into the summary table
+        try:
+            supabase.table("conversation_logs").insert({
+                "job_id": job_id,
+                "summary": summary
+            }).execute()
+            logger.info(f"Summary inserted into summary table for job_id: {job_id}")
+        except Exception as e:
+            logger.error(f"Error inserting summary to Supabase: {str(e)}")
+
+        return summary
+    except Exception as e:
+        logger.error(f"Error generating transcript summary: {str(e)}")
+        return None
+
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

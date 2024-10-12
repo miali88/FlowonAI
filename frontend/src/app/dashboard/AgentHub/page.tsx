@@ -175,9 +175,6 @@ defer
   const handleStreamEnd = useCallback(() => {
     setIsStreaming(false);
     setIsConnecting(false);
-    setIsLiveKitActive(false);
-    setToken(null);
-    setUrl(null);
   }, []);
 
   const handleStreamStart = useCallback(() => {

@@ -17,6 +17,7 @@ TEMPERATURE = float(os.getenv('AGENT_TEMPERATURE', "0.6"))
 OPENING_LINE = os.getenv('AGENT_OPENING_LINE', "Hello there. How can I help you today?")
 DOMAIN = os.getenv('BACKEND_DOMAIN', "http://localhost:8000/api/v1")
 USER_ID = os.getenv('USER_ID')
+AGENT_ID = os.getenv('AGENT_ID')
 
 class AssistantFunction(agents.llm.FunctionContext):
     """This class is used to define functions that will be called by the assistant."""
@@ -206,6 +207,7 @@ async def entrypoint(ctx: JobContext):
             transcript["job_id"] = ctx.job.id
             transcript["room_name"] = room.name
             transcript["room_sid"] = await room.sid
+            transcript['agent_id'] = AGENT_ID
 
             try:
                 async with aiohttp.ClientSession() as session:
