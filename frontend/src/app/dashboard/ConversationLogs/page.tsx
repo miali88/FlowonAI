@@ -19,7 +19,7 @@ const ChatHistory: React.FC = () => {
     <div className="flex flex-col h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Left section (resizable) */}
-        <ResizablePanel defaultSize={65} minSize={20}>
+        <ResizablePanel defaultSize={70} minSize={20}>
           <div className="p-4">
             <div className="mb-4">
               <Input 
@@ -37,7 +37,7 @@ const ChatHistory: React.FC = () => {
         <ResizableHandle withHandle />
 
         {/* Right section (resizable) */}
-        <ResizablePanel defaultSize={35} minSize={30}>
+        <ResizablePanel defaultSize={30} minSize={30}>
           <ChatUI selectedConversation={selectedConversation} />
         </ResizablePanel>
       </ResizablePanelGroup>

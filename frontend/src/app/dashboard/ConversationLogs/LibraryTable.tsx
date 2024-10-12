@@ -2,6 +2,7 @@ import * as React from "react"
 import {
   ChevronDownIcon,
   DotsHorizontalIcon,
+  CaretSortIcon,
 } from "@radix-ui/react-icons"
 import {
   ColumnDef,
@@ -66,7 +67,9 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const [data, setData] = useState<ConversationLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "created_at", desc: true }
+  ])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -94,26 +97,67 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Created At
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => <div>{new Date(row.getValue("created_at")).toLocaleString()}</div>,
+      sortingFn: "datetime",
     },
     {
       accessorKey: "agentName",
-      header: "Agent Name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Agent Name
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => <div>{(row.getValue("agentName") as string) || "N/A"}</div>,
     },
     {
       accessorKey: "agentPurpose",
-      header: "Agent Purpose",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Agent Purpose
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         const agentPurpose = row.getValue("agentPurpose");
-        console.log('Agent Purpose:', agentPurpose); // Log the agent purpose for each row
+        console.log('Agent Purpose:', agentPurpose);
         return <div>{agentPurpose as string || "N/A"}</div>;
       },
     },
     {
       accessorKey: "summary",
-      header: "Summary",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Summary
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
     },
     {
