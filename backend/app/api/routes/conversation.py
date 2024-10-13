@@ -5,6 +5,12 @@ from supabase import create_client, Client
 from typing import Annotated
 import os
 import asyncio
+import logging
+from starlette.concurrency import run_in_threadpool
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -33,7 +39,6 @@ async def post_chat_message(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-
 @router.get("/history")
 async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
     try:
@@ -44,7 +49,6 @@ async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]
             return JSONResponse(content=[], status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 @router.delete("/{conversation_id}")
 async def delete_conversation_history(conversation_id: str, user_id: Annotated[str, Depends(get_user_id)]):
@@ -77,32 +81,41 @@ event_broadcasters = {}
 
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):
-    print("\n\n\n trigger_show_chat_input endpoint called")
     data = await request.json()
+    room_name = data.get('room_name')
     job_id = data.get('job_id')
-    if not job_id:
-        raise HTTPException(status_code=400, detail="job_id is required")
+    if not room_name:
+        raise HTTPException(status_code=400, detail="room_name is required")
     
-    if job_id in event_broadcasters:
-        event_broadcasters[job_id].set()
+    logger.info(f"Triggering show_chat_input for room: {room_name}")
+    if room_name in event_broadcasters:
+        await run_in_threadpool(event_broadcasters[room_name].set)
+        logger.info(f"Event set for room: {room_name}")
+    else:
+        logger.warning(f"No event broadcaster found for room: {room_name}")
     
     return JSONResponse(content={"status": "success"})
 
-
-
 @router.get("/events/{room_name}")
 async def events(room_name: str):
+    logger.info(f"SSE connection established for room: {room_name}")
+    
     async def event_generator():
-        event_broadcasters[room_name] = asyncio.Event()
+        if room_name not in event_broadcasters:
+            event_broadcasters[room_name] = asyncio.Event()
         try:
             while True:
+                logger.info(f"Waiting for event in room: {room_name}")
                 await event_broadcasters[room_name].wait()
+                logger.info(f"Event triggered for room: {room_name}")
                 yield {
                     "event": "message",
                     "data": '{"type": "show_chat_input"}'
                 }
                 event_broadcasters[room_name].clear()
         finally:
-            del event_broadcasters[room_name]
+            if room_name in event_broadcasters:
+                del event_broadcasters[room_name]
+            logger.info(f"SSE connection closed for room: {room_name}")
 
     return EventSourceResponse(event_generator())

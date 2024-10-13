@@ -143,14 +143,13 @@ class CustomVoiceAssistant(VoiceAssistant):
                     # Synthesize and play the new response
                     await self._tts.synthesize(new_handle.content, self._audio_stream)
 
-
-    async def trigger_show_chat_input(self, job_id: str):
+    async def trigger_show_chat_input(self, room_name: str, job_id: str):
         print("\n\n\n trigger_show_chat_input method called", job_id)
         async with aiohttp.ClientSession() as session:
             try:
-                await session.post(f'{self.DOMAIN}/conversation/trigger_show_chat_input', json={'job_id': job_id})
+                await session.post(f'{self.DOMAIN}/conversation/trigger_show_chat_input', json={'room_name': room_name, 'job_id': job_id})
             except Exception as e:
-                self.logger.error(f"Error triggering show_chat_input: {str(e)}", extra={"job_id": job_id})
+                self.logger.error(f"Error triggering show_chat_input: {str(e)}", extra={'room_name': room_name, 'job_id': job_id})
 
 # Global lock for room management
 room_locks = {}
@@ -297,7 +296,7 @@ async def entrypoint(ctx: JobContext):
                 if function_name == "request_personal_data":
                     print("Triggering show_chat_input")
                     # Create a background task to run the async function
-                    asyncio.create_task(assistant.trigger_show_chat_input(ctx.job.id))
+                    asyncio.create_task(assistant.trigger_show_chat_input(ctx.room.name, ctx.job.id))
 
         assistant.start(ctx.room)
 
