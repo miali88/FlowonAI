@@ -31,7 +31,7 @@ const VOICE_OPTIONS = [
   // Add more voice options as needed
 ];
 
-export function DialogDemo() {
+export function NewAgent() {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [dataSource, setDataSource] = useState<string>("");

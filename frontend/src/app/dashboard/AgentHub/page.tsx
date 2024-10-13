@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { AgentCards, Agent } from './AgentCards';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { DialogDemo } from './NewAgent';
+import { NewAgent } from './NewAgent';
 import Workspace from './Workspace';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -176,7 +176,7 @@ defer
     <div className="flex flex-col h-full p-6">
       <div className="flex flex-col space-y-6">
         <div className="w-full flex flex-col items-start space-y-4">
-          <DialogDemo />
+          <NewAgent />
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
         {selectedAgent ? (

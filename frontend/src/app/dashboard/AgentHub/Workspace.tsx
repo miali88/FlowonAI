@@ -79,106 +79,106 @@ defer
         <TabsTrigger value="share">Share</TabsTrigger>
       </TabsList>
       <TabsContent value="edit">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
-                  <Input 
-                    id="agentName"
-                    value={selectedAgent.agentName} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
-                  <Select 
-                    value={selectedAgent.agentPurpose}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, agentPurpose: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select agent purpose" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="prospecting">Prospecting</SelectItem>
-                      <SelectItem value="question-answer">Question & Answer</SelectItem>
-                      <SelectItem value="customer-service">Customer Service</SelectItem>
-                      <SelectItem value="product-recommendation">Product Recommendation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
-                  <Select 
-                    value={selectedAgent.dataSource}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select data source" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="tagged">Items with tag...</SelectItem>
-                      <SelectItem value="natural-language">Describe using natural language</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {selectedAgent.dataSource === "tagged" && (
-                  <div>
-                    <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
-                    <Input 
-                      id="tag"
-                      value={selectedAgent.tag || ''} 
-                      onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
-                    />
-                  </div>
-                )}
-                <div>
-                  <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
-                  <Input 
-                    id="openingLine"
-                    value={selectedAgent.openingLine || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-                  <Input 
-                    id="voice"
-                    value={selectedAgent.voice || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, voice: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-                  <Textarea 
-                    id="instructions"
-                    value={selectedAgent.instructions || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
-                    className="min-h-[400px]"
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveChanges}>Save Changes</Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Delete Agent</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the agent
-                          and remove all of its data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAgent}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+        <div className="space-y-4">
+        <div>
+        <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
+            <Input 
+            id="agentName"
+            value={selectedAgent?.agentName || ''} 
+            onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
+            />
+        </div>
+        <div>
+            <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
+            <Select 
+            value={selectedAgent?.agentPurpose}
+            onValueChange={(value) => setSelectedAgent({...selectedAgent, agentPurpose: value})}
+            >
+            <SelectTrigger>
+                <SelectValue placeholder="Select agent purpose" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="prospecting">Prospecting</SelectItem>
+                <SelectItem value="question-answer">Question & Answer</SelectItem>
+                <SelectItem value="customer-service">Customer Service</SelectItem>
+                <SelectItem value="product-recommendation">Product Recommendation</SelectItem>
+            </SelectContent>
+            </Select>
+        </div>
+        <div>
+            <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
+            <Select 
+            value={selectedAgent?.dataSource}
+            onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
+            >
+            <SelectTrigger>
+                <SelectValue placeholder="Select data source" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="tagged">Items with tag...</SelectItem>
+                <SelectItem value="natural-language">Describe using natural language</SelectItem>
+            </SelectContent>
+            </Select>
+        </div>
+        {selectedAgent?.dataSource === "tagged" && (
+            <div>
+            <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
+            <Input 
+                id="tag"
+                value={selectedAgent.tag || ''} 
+                onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
+            />
             </div>
+        )}
+        <div>
+            <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
+            <Input 
+            id="openingLine"
+            value={selectedAgent?.openingLine || ''} 
+            onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
+            />
+        </div>
+        <div>
+            <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
+            <Input 
+            id="voice"
+            value={selectedAgent?.voice || ''} 
+            onChange={(e) => setSelectedAgent({...selectedAgent, voice: e.target.value})}
+            />
+        </div>
+        <div>
+            <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
+            <Textarea 
+            id="instructions"
+            value={selectedAgent?.instructions || ''} 
+            onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+            className="min-h-[400px]"
+            />
+        </div>
+        <div className="flex space-x-2">
+            <Button onClick={handleSaveChanges}>Save Changes</Button>
+            <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="destructive">Delete Agent</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the agent
+                    and remove all of its data from our servers.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAgent}>
+                Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </div>
         </div>
       </TabsContent>
       <TabsContent value="ui">
