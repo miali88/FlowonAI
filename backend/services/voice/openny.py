@@ -41,6 +41,17 @@ class AssistantFunction(agents.llm.FunctionContext):
 
     @agents.llm.ai_callable(
         description=(
+            "Called when the agent requests personal data from the user (e.g. name, email, etc.)"))
+    async def request_personal_data(
+        self,
+        message: str
+    ):
+        print(f"Triggering request personal data: {message}")
+        return None
+
+
+    @agents.llm.ai_callable(
+        description=(
             "Called when the conversation has concluded, and the assistant has said goodbye."))
     async def end_call(
         self,
@@ -51,8 +62,11 @@ class AssistantFunction(agents.llm.FunctionContext):
             ),
         ],
     ):
-        #print(f"Message triggering transfer call: {user_msg}")
+        print(f"Triggering end call: {user_msg}")
         return None
+
+
+
 
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):

@@ -97,7 +97,11 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ message, user_id: user?.id }),
+          body: JSON.stringify({
+            message,
+            user_id: user?.id,
+            room_name: roomName,
+          }),
         });
 
         if (!response.ok) {
@@ -116,7 +120,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     } else {
       alert('Please enter a message before sending');
     }
-  }, [user]);
+  }, [user, roomName, liveKitRoom]);
 
   return (
     <div className={styles.chatbot}>
