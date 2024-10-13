@@ -148,6 +148,11 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     // Add your submit logic here
     console.log('Submitted:', { fullName, email, contactNumber });
     // You may want to send this data to your backend or perform other actions
+
+    // Clear form fields after submission
+    setFullName('');
+    setEmail('');
+    setContactNumber('');
   }, [fullName, email, contactNumber]);
 
   return (
@@ -174,34 +179,35 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           />
         )}
       </div>
-      <div className={styles.chatInput}>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full Name"
-            required
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email Address"
-            required
-          />
-          <input
-            type="tel"
-            value={contactNumber}
-            onChange={(e) => setContactNumber(e.target.value)}
-            placeholder="Contact Number"
-            required
-          />
-          <button type="submit" className={styles.submitBtn}>
-            Submit
-          </button>
-        </form>
-      </div>
+      {showChatInput && (
+        <div className={styles.chatInput}>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              required
+            />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email Address"
+              required
+            />
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              placeholder="Contact Number (optional)"
+            />
+            <button type="submit" className={styles.submitBtn}>
+              Submit
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
