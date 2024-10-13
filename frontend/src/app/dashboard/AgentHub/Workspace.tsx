@@ -71,7 +71,7 @@ defer
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList>
+      <TabsList className="mb-4 h-12">
         <TabsTrigger value="preview">Playground</TabsTrigger>
         <TabsTrigger value="edit">Settings</TabsTrigger>
         <TabsTrigger value="ui">UI</TabsTrigger>
@@ -210,23 +210,25 @@ defer
       </TabsContent>
       <TabsContent value="preview">
         <div className="relative h-[600px] w-full">
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             {selectedAgent && (
-              <ChatBotMini 
-                agentId={selectedAgent.id}
-                isStreaming={isStreaming}
-                setIsStreaming={setIsStreaming}
-                isLiveKitActive={isLiveKitActive}
-                setIsLiveKitActive={setIsLiveKitActive}
-                token={token}
-                setToken={setToken}
-                url={url}
-                setUrl={setUrl}
-                isConnecting={isConnecting}
-                setIsConnecting={setIsConnecting}
-                onStreamEnd={handleStreamEnd}
-                onStreamStart={handleStreamStart}
-              />
+              <div className="w-full max-w-md">
+                <ChatBotMini 
+                  agentId={selectedAgent.id}
+                  isStreaming={isStreaming}
+                  setIsStreaming={setIsStreaming}
+                  isLiveKitActive={isLiveKitActive}
+                  setIsLiveKitActive={setIsLiveKitActive}
+                  token={token}
+                  setToken={setToken}
+                  url={url}
+                  setUrl={setUrl}
+                  isConnecting={isConnecting}
+                  setIsConnecting={setIsConnecting}
+                  onStreamEnd={handleStreamEnd}
+                  onStreamStart={handleStreamStart}
+                />
+              </div>
             )}
           </div>
         </div>

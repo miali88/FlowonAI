@@ -25,20 +25,6 @@ async def get_user_id(request: Request) -> str:
         raise HTTPException(status_code=400, detail="X-User-ID header is missing")
     return user_id
 
-@router.post("/chat_message")
-async def post_chat_message(request: Request):
-    try:
-        # response = supabase.table("chat_logs").select("*").eq("user_id", user_id).execute()
-        # if response.data:
-        #     return JSONResponse(content=response.data)
-        # else:
-        #     return JSONResponse(content=[], status_code=200)
-        print("\n\n endpoint: post_chat_message")
-        print(await request.json())
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 @router.get("/history")
 async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
     try:
@@ -58,29 +44,48 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.get("/events")
-async def events(request: Request):
-    async def event_generator():
-        while True:
-            # Check if client is still connected
-            if await request.is_disconnected():
-                break
 
-            # Here you would typically check some condition or wait for a trigger
-            # For now, we'll just send an event after a delay
-            await asyncio.sleep(5)
-            yield {
-                "event": "message",
-                "data": '{"type": "show_chat_input"}'
-            }
+""" if function call works without this, then delete endpoint"""
+# @router.get("/events")
+# async def events(request: Request):
+#     async def event_generator():
+#         while True:
+#             # Check if client is still connected
+#             if await request.is_disconnected():
+#                 break
 
-    return EventSourceResponse(event_generator())
+#             # Here you would typically check some condition or wait for a trigger
+#             # For now, we'll just send an event after a delay
+#             await asyncio.sleep(5)
+#             yield {
+#                 "event": "message",
+#                 "data": '{"type": "show_chat_input"}'
+#             }
+#     return EventSourceResponse(event_generator())
+
+
+@router.post("/chat_message")
+async def post_chat_message(request: Request):
+    try:
+        # response = supabase.table("chat_logs").select("*").eq("user_id", user_id).execute()
+        # if response.data:
+        #     return JSONResponse(content=response.data)
+        # else:
+        #     return JSONResponse(content=[], status_code=200)
+        print("\n\n endpoint: post_chat_message")
+        print(await request.json())
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # Add this at the module level
 event_broadcasters = {}
 
+
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):
+    """ Triggered by livekit AI agent @openny.py """
+
     data = await request.json()
     room_name = data.get('room_name')
     job_id = data.get('job_id')
@@ -98,6 +103,8 @@ async def trigger_show_chat_input(request: Request):
 
 @router.get("/events/{room_name}")
 async def events(room_name: str):
+    """ SSE with frontend ChatBotMini.tsx """
+
     logger.info(f"SSE connection established for room: {room_name}")
     
     async def event_generator():

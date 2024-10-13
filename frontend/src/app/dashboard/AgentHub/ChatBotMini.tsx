@@ -109,51 +109,38 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, user]);
 
-  const handleSendMessage = useCallback(async () => {
-    const message = chatInputRef.current?.value.trim();
-    if (message) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message,
-            user_id: user?.id,
-            room_name: roomName,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to send message');
-        }
-
-        // Clear the input field after successful send
-        if (chatInputRef.current) {
-          chatInputRef.current.value = '';
-        }
-        console.log('Message sent successfully:', message);
-      } catch (error) {
-        console.error('Failed to send message:', error);
-        alert('Failed to send message. Please try again.');
-      }
-    } else {
-      alert('Please enter a message before sending');
-    }
-  }, [user, roomName, liveKitRoom]);
-
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your submit logic here
-    console.log('Submitted:', { fullName, email, contactNumber });
-    // You may want to send this data to your backend or perform other actions
+    try {
+      const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          email,
+          contactNumber,
+          user_id: user?.id,
+          room_name: roomName,
+        }),
+      });
 
-    // Clear form fields after submission
-    setFullName('');
-    setEmail('');
-    setContactNumber('');
-  }, [fullName, email, contactNumber]);
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      console.log('Form submitted successfully:', { fullName, email, contactNumber });
+
+      // Clear form fields after submission
+      setFullName('');
+      setEmail('');
+      setContactNumber('');
+    } catch (error) {
+      console.error('Failed to submit form:', error);
+      alert('Failed to submit form. Please try again.');
+    }
+  }, [fullName, email, contactNumber, user, roomName]);
 
   return (
     <div className={styles.chatbot}>
