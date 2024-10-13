@@ -55,7 +55,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   useEffect(() => {
     if (roomName) {
-      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events?room=${roomName}`);
+      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events/${roomName}`);
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);

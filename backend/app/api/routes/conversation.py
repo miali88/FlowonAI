@@ -72,16 +72,37 @@ async def events(request: Request):
 
     return EventSourceResponse(event_generator())
 
+# Add this at the module level
+event_broadcasters = {}
+
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):
+    print("\n\n\n trigger_show_chat_input endpoint called")
     data = await request.json()
     job_id = data.get('job_id')
     if not job_id:
         raise HTTPException(status_code=400, detail="job_id is required")
     
-    # Here you would typically use some form of pub/sub or in-memory store
-    # to signal that the chat input should be shown for this job_id
-    # For simplicity, we'll just log it for now
-    print(f"Triggered show_chat_input for job_id: {job_id}")
+    if job_id in event_broadcasters:
+        event_broadcasters[job_id].set()
     
     return JSONResponse(content={"status": "success"})
+
+
+
+@router.get("/events/{room_name}")
+async def events(room_name: str):
+    async def event_generator():
+        event_broadcasters[room_name] = asyncio.Event()
+        try:
+            while True:
+                await event_broadcasters[room_name].wait()
+                yield {
+                    "event": "message",
+                    "data": '{"type": "show_chat_input"}'
+                }
+                event_broadcasters[room_name].clear()
+        finally:
+            del event_broadcasters[room_name]
+
+    return EventSourceResponse(event_generator())
