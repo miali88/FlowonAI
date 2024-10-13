@@ -44,7 +44,8 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 
     return {
         "accessToken": access_token,
-        "url": livekit_url
+        "url": livekit_url,
+        "roomName": room_name
     }
 
 @router.get("/token_embed")

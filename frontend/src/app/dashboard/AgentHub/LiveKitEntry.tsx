@@ -12,33 +12,38 @@ import { useState, useEffect, useCallback } from "react";
 interface LiveKitEntryProps {
   token: string;
   url: string;
+  roomName: string;
   isStreaming: boolean;
   onStreamEnd: () => void;
   onStreamStart: () => void;
+  setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
 }
 
-export function LiveKitEntry({ token, url, isStreaming, onStreamEnd, onStreamStart }: LiveKitEntryProps) {
-  const [room, setRoom] = useState<Room | null>(null);
+export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom }: LiveKitEntryProps) {
+  const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
   const handleConnected = useCallback((room: Room) => {
-    setRoom(room);
+    setLocalRoom(room);
+    setRoom(room);  // Update the room in the parent component
     onStreamStart(); // Notify parent that streaming has started
-  }, [onStreamStart]);
-//
+  }, [onStreamStart, setRoom]);
+
   const handleDisconnected = useCallback(() => {
-    setRoom(null);
+    setLocalRoom(null);
+    setRoom(null);  // Update the room in the parent component
     onStreamEnd(); // Notify parent that streaming has ended
-  }, [onStreamEnd]);
+  }, [onStreamEnd, setRoom]);
 
   return (
     <LiveKitRoom
       token={token}
       serverUrl={url}
+      roomName={roomName}
       connectOptions={{ autoSubscribe: true }}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
-      <ActiveRoom room={room} isStreaming={isStreaming} onStreamEnd={onStreamEnd} />
+      <ActiveRoom room={localRoom} isStreaming={isStreaming} onStreamEnd={onStreamEnd} />
     </LiveKitRoom>
   );
 }

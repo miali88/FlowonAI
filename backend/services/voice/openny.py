@@ -165,36 +165,23 @@ async def entrypoint(ctx: JobContext):
             chat_ctx=chat_context,
         )
 
-        #chat = rtc.ChatManager(ctx.room)
+        chat = rtc.ChatManager(ctx.room)
 
-        # @chat.on("message_received")
-        # def on_message_received(msg: rtc.ChatMessage):
-        #     """This event triggers whenever we get a new message from the user."""
-
-        #     if msg.message:
-        #         print("\n\n\n MESSAGE RECIEVED...:", msg)
-
-        #         for_msg = f""" 
-        #         # User Query:
-        #         {msg.message}
-        #         # Retrieved Docs:
-        #         {"michael has one pet cat"} """
-
-        #         print("\n\n\n FOR MSG:...", for_msg)
-
-        #         asyncio.create_task(_answer(for_msg, use_image=False))
-
-        # async def _answer(text: str):
-        #     """
-        #     Answer the user's message with the given text and optionally the latest
-        #     image captured from the video track.
-        #     """
-        #     content: list[str | ChatImage] = [text]
-
-        #     chat_context.messages.append(ChatMessage(role="user", content=content))
-
-        #     stream = gpt.chat(chat_ctx=chat_context)
-        #     await assistant.say(stream, allow_interruptions=True)
+        @chat.on("message_received")
+        def on_message_received(msg: rtc.ChatMessage):
+            """This event triggers whenever we get a new message from the user."""
+            if msg.message:
+                try:
+                    data = json.loads(msg.message)
+                    if data['type'] == 'chat':
+                        print(f"Received chat message: {data['message']}")
+                        # Here you can process the chat message as needed
+                        # For example, you might want to add it to the chat context:
+                        chat_context.messages.append(ChatMessage(role="user", content=data['message']))
+                        # You might also want to trigger the assistant to respond:
+                        asyncio.create_task(assistant.say(data['message'], allow_interruptions=True))
+                except json.JSONDecodeError:
+                    print(f"Received non-JSON message: {msg.message}")
 
         async def send_transcript_to_backend(transcript: dict, endpoint: str, chat_context: ChatContext, room: rtc.Room):
             """
@@ -276,4 +263,3 @@ async def entrypoint(ctx: JobContext):
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
-
