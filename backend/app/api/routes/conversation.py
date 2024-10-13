@@ -1,8 +1,10 @@
 from fastapi import Request, HTTPException, APIRouter, Depends
 from fastapi.responses import JSONResponse
+from sse_starlette.sse import EventSourceResponse
 from supabase import create_client, Client
 from typing import Annotated
 import os
+import asyncio
 
 router = APIRouter()
 
@@ -31,6 +33,7 @@ async def post_chat_message(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 @router.get("/history")
 async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
     try:
@@ -42,6 +45,7 @@ async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 @router.delete("/{conversation_id}")
 async def delete_conversation_history(conversation_id: str, user_id: Annotated[str, Depends(get_user_id)]):
     try:
@@ -49,3 +53,35 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
         return JSONResponse(content={}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.get("/events")
+async def events(request: Request):
+    async def event_generator():
+        while True:
+            # Check if client is still connected
+            if await request.is_disconnected():
+                break
+
+            # Here you would typically check some condition or wait for a trigger
+            # For now, we'll just send an event after a delay
+            await asyncio.sleep(5)
+            yield {
+                "event": "message",
+                "data": '{"type": "show_chat_input"}'
+            }
+
+    return EventSourceResponse(event_generator())
+
+@router.post("/trigger_show_chat_input")
+async def trigger_show_chat_input(request: Request):
+    data = await request.json()
+    job_id = data.get('job_id')
+    if not job_id:
+        raise HTTPException(status_code=400, detail="job_id is required")
+    
+    # Here you would typically use some form of pub/sub or in-memory store
+    # to signal that the chat input should be shown for this job_id
+    # For simplicity, we'll just log it for now
+    print(f"Triggered show_chat_input for job_id: {job_id}")
+    
+    return JSONResponse(content={"status": "success"})

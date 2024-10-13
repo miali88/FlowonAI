@@ -43,6 +43,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const sendBtnRef = useRef<HTMLSpanElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [showChatInput, setShowChatInput] = useState(false);
 
   const { user } = useUser();
 
@@ -51,6 +52,23 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.log('LiveKit room set in ChatBotMini:', liveKitRoom.name);
     }
   }, [liveKitRoom]);
+
+  useEffect(() => {
+    if (roomName) {
+      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events?room=${roomName}`);
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'show_chat_input') {
+          setShowChatInput(true);
+        }
+      };
+
+      return () => {
+        eventSource.close();
+      };
+    }
+  }, [roomName]);
 
   const handleStreamToggle = useCallback(async () => {
     if (isStreaming) {
@@ -146,22 +164,24 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           />
         )}
       </div>
-      <div className={styles.chatInput}>
-        <textarea
-          ref={chatInputRef}
-          placeholder="Send a Message"
-          spellCheck="false"
-          required
-        ></textarea>
-        <span 
-          ref={sendBtnRef} 
-          id="send-btn" 
-          className={`${styles.materialSymbolsOutlined} material-symbols-outlined`}
-          onClick={handleSendMessage}
-        >
-          send
-        </span>
-      </div>
+      {showChatInput && (
+        <div className={styles.chatInput}>
+          <textarea
+            ref={chatInputRef}
+            placeholder="Send a Message"
+            spellCheck="false"
+            required
+          ></textarea>
+          <span 
+            ref={sendBtnRef} 
+            id="send-btn" 
+            className={`${styles.materialSymbolsOutlined} material-symbols-outlined`}
+            onClick={handleSendMessage}
+          >
+            send
+          </span>
+        </div>
+      )}
     </div>
   );
 };

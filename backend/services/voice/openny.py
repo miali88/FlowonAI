@@ -49,7 +49,6 @@ class AssistantFunction(agents.llm.FunctionContext):
         print(f"Triggering request personal data: {message}")
         return None
 
-
     @agents.llm.ai_callable(
         description=(
             "Called when the conversation has concluded, and the assistant has said goodbye."))
@@ -123,6 +122,16 @@ class CustomVoiceAssistant(VoiceAssistant):
                 print(f"\n\nError sending transcript data to backend: {str(e)}")
 
         print("\n\nFinished _synthesize_answer_task method")
+
+        # After processing the response, trigger the show_chat_input event
+        await self.trigger_show_chat_input(self._job_id)
+
+    async def trigger_show_chat_input(self, job_id: str):
+        async with aiohttp.ClientSession() as session:
+            try:
+                await session.post(f'{self.DOMAIN}/conversation/trigger_show_chat_input', json={'job_id': job_id})
+            except Exception as e:
+                self.logger.error(f"Error triggering show_chat_input: {str(e)}", extra={"job_id": job_id})
 
 # Global lock for room management
 room_locks = {}
