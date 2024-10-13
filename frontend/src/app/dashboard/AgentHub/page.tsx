@@ -2,17 +2,10 @@
 
 import React, { useState, useCallback } from 'react';
 import { AgentCards, Agent } from './AgentCards';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogDemo } from './NewAgent';
-import ChatBotMini from './ChatBotMini';
+import Workspace from './Workspace';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -186,180 +179,26 @@ defer
           <DialogDemo />
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
-        {selectedAgent && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList>
-              <TabsTrigger value="preview">Playground</TabsTrigger>
-              <TabsTrigger value="edit">Settings</TabsTrigger>
-              <TabsTrigger value="ui">UI</TabsTrigger>
-              <TabsTrigger value="embed">Embed</TabsTrigger>
-              <TabsTrigger value="share">Share</TabsTrigger>
-            </TabsList>
-            <TabsContent value="edit">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
-                  <Input 
-                    id="agentName"
-                    value={selectedAgent.agentName} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
-                  <Select 
-                    value={selectedAgent.agentPurpose}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, agentPurpose: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select agent purpose" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="prospecting">Prospecting</SelectItem>
-                      <SelectItem value="question-answer">Question & Answer</SelectItem>
-                      <SelectItem value="customer-service">Customer Service</SelectItem>
-                      <SelectItem value="product-recommendation">Product Recommendation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
-                  <Select 
-                    value={selectedAgent.dataSource}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select data source" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="tagged">Items with tag...</SelectItem>
-                      <SelectItem value="natural-language">Describe using natural language</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {selectedAgent.dataSource === "tagged" && (
-                  <div>
-                    <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
-                    <Input 
-                      id="tag"
-                      value={selectedAgent.tag || ''} 
-                      onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
-                    />
-                  </div>
-                )}
-                <div>
-                  <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
-                  <Input 
-                    id="openingLine"
-                    value={selectedAgent.openingLine || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-                  <Input 
-                    id="voice"
-                    value={selectedAgent.voice || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, voice: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-                  <Textarea 
-                    id="instructions"
-                    value={selectedAgent.instructions || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
-                    className="min-h-[400px]"
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveChanges}>Save Changes</Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Delete Agent</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the agent
-                          and remove all of its data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAgent}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="ui">
-              <div className="space-y-4">
-                <p>UI customization options for the agent will be shown here.</p>
-                {/* Add UI customization fields here */}
-              </div>
-            </TabsContent>
-            <TabsContent value="embed">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Embed</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>To add the agent anywhere on your website, add this iframe to your HTML code:</p>
-                  <div className="bg-gray-100 p-4 rounded-md my-2">
-                    <pre className="whitespace-pre-wrap break-all">{iframeCode}</pre>
-                  </div>
-                  <Button onClick={() => navigator.clipboard.writeText(iframeCode)}>Copy Iframe</Button>
-                  <p className="mt-4">To add a chat bubble to the bottom right of your website, add this script tag to your HTML:</p>
-                  <div className="bg-gray-100 p-4 rounded-md my-2">
-                    <pre className="whitespace-pre-wrap break-all">{scriptCode}</pre>
-                  </div>
-                  <Button onClick={() => navigator.clipboard.writeText(scriptCode)}>Copy Script</Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="share">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Share</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>Share options for your agent will be shown here.</p>
-                  {/* Add share options here */}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="preview">
-              <div className="relative h-[600px] w-full">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {selectedAgent && (
-                    <ChatBotMini 
-                      agentId={selectedAgent.id}
-                      isStreaming={isStreaming}
-                      setIsStreaming={setIsStreaming}
-                      isLiveKitActive={isLiveKitActive}
-                      setIsLiveKitActive={setIsLiveKitActive}
-                      token={token}
-                      setToken={setToken}
-                      url={url}
-                      setUrl={setUrl}
-                      isConnecting={isConnecting}
-                      setIsConnecting={setIsConnecting}
-                      onStreamEnd={handleStreamEnd}
-                      onStreamStart={handleStreamStart}
-                    />
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
-        {!selectedAgent && (
+        {selectedAgent ? (
+          <Workspace
+            selectedAgent={selectedAgent}
+            setSelectedAgent={setSelectedAgent}
+            handleSaveChanges={handleSaveChanges}
+            handleDeleteAgent={handleDeleteAgent}
+            isStreaming={isStreaming}
+            setIsStreaming={setIsStreaming}
+            isLiveKitActive={isLiveKitActive}
+            setIsLiveKitActive={setIsLiveKitActive}
+            token={token}
+            setToken={setToken}
+            url={url}
+            setUrl={setUrl}
+            isConnecting={isConnecting}
+            setIsConnecting={setIsConnecting}
+            handleStreamEnd={handleStreamEnd}
+            handleStreamStart={handleStreamStart}
+          />
+        ) : (
           <p>Select or create an agent to get started.</p>
         )}
       </div>
