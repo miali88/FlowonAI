@@ -44,6 +44,9 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [showChatInput, setShowChatInput] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
 
   const { user } = useUser();
 
@@ -140,6 +143,13 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [user, roomName, liveKitRoom]);
 
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Add your submit logic here
+    console.log('Submitted:', { fullName, email, contactNumber });
+    // You may want to send this data to your backend or perform other actions
+  }, [fullName, email, contactNumber]);
+
   return (
     <div className={styles.chatbot}>
       <header className={styles.header}>
@@ -164,24 +174,34 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           />
         )}
       </div>
-      {showChatInput && (
-        <div className={styles.chatInput}>
-          <textarea
-            ref={chatInputRef}
-            placeholder="Send a Message"
-            spellCheck="false"
+      <div className={styles.chatInput}>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Full Name"
             required
-          ></textarea>
-          <span 
-            ref={sendBtnRef} 
-            id="send-btn" 
-            className={`${styles.materialSymbolsOutlined} material-symbols-outlined`}
-            onClick={handleSendMessage}
-          >
-            send
-          </span>
-        </div>
-      )}
+          />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email Address"
+            required
+          />
+          <input
+            type="tel"
+            value={contactNumber}
+            onChange={(e) => setContactNumber(e.target.value)}
+            placeholder="Contact Number"
+            required
+          />
+          <button type="submit" className={styles.submitBtn}>
+            Submit
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
