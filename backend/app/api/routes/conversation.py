@@ -17,6 +17,20 @@ async def get_user_id(request: Request) -> str:
         raise HTTPException(status_code=400, detail="X-User-ID header is missing")
     return user_id
 
+@router.post("/chat_message")
+async def post_chat_message(request: Request):
+    try:
+        # response = supabase.table("chat_logs").select("*").eq("user_id", user_id).execute()
+        # if response.data:
+        #     return JSONResponse(content=response.data)
+        # else:
+        #     return JSONResponse(content=[], status_code=200)
+        print("\n\n endpoint: post_chat_message")
+        print(await request.json())
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @router.get("/history")
 async def get_conversation_history(user_id: Annotated[str, Depends(get_user_id)]):
     try:

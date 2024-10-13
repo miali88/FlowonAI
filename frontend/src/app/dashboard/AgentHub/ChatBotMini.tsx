@@ -88,18 +88,23 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, user]);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     const message = chatInputRef.current?.value.trim();
-    if (message && liveKitRoom && liveKitRoom.state === 'connected') {
+    if (message) {
       try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(JSON.stringify({ type: 'chat', message }));
-        
-        liveKitRoom.localParticipant.publishData(data, {
-          topic: 'chat',
-          reliability: DataPacket_Kind.RELIABLE,
+        const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message, user_id: user?.id }),
         });
-        
+
+        if (!response.ok) {
+          throw new Error('Failed to send message');
+        }
+
+        // Clear the input field after successful send
         if (chatInputRef.current) {
           chatInputRef.current.value = '';
         }
@@ -109,14 +114,9 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         alert('Failed to send message. Please try again.');
       }
     } else {
-      console.warn('Cannot send message: Room not connected or message is empty');
-      if (!liveKitRoom || liveKitRoom.state !== 'connected') {
-        alert('Cannot send message: Not connected to a room');
-      } else if (!message) {
-        alert('Please enter a message before sending');
-      }
+      alert('Please enter a message before sending');
     }
-  }, [liveKitRoom]);
+  }, [user]);
 
   return (
     <div className={styles.chatbot}>
