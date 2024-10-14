@@ -21,6 +21,7 @@ interface ChatBotMiniProps {
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
   onStreamEnd: () => void;
   onStreamStart: () => void;
+  bypassShowChatInputCondition?: boolean;
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
@@ -36,7 +37,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   isConnecting,
   setIsConnecting,
   onStreamEnd,
-  onStreamStart
+  onStreamStart,
+  bypassShowChatInputCondition = true,
 }) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -111,6 +113,11 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    // Check the feature flag before applying the condition
+    if (!bypassShowChatInputCondition && !showChatInput) {
+      console.log('Form submission blocked: Chat input not shown');
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
         method: 'POST',
@@ -140,7 +147,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, user, roomName]);
+  }, [fullName, email, contactNumber, user, roomName, showChatInput, bypassShowChatInputCondition]);
 
   return (
     <div className={styles.chatbot}>
@@ -166,7 +173,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           />
         )}
       </div>
-      {showChatInput && (
+      {(showChatInput || bypassShowChatInputCondition) && (
         <div className={styles.chatInput}>
           <form onSubmit={handleSubmit}>
             <input

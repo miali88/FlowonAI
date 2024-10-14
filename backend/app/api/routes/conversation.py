@@ -7,6 +7,8 @@ import os
 import asyncio
 import logging
 from starlette.concurrency import run_in_threadpool
+from collections import defaultdict
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -64,23 +66,58 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 #     return EventSourceResponse(event_generator())
 
 
-@router.post("/chat_message")
-async def post_chat_message(request: Request):
-    try:
-        # response = supabase.table("chat_logs").select("*").eq("user_id", user_id).execute()
-        # if response.data:
-        #     return JSONResponse(content=response.data)
-        # else:
-        #     return JSONResponse(content=[], status_code=200)
-        print("\n\n endpoint: post_chat_message")
-        print(await request.json())
+# Add this at the module level
+chat_messages = defaultdict(list)
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+@router.api_route("/chat_message", methods=["POST", "GET"])
+async def chat_message(request: Request):
+
+    print("\n\n request method=", request.method)
+    if request.method == "POST":
+        try:
+            data = await request.json()
+            room_name = "doodaa" #data.get('room_name', 'unknown')
+            full_name = data.get('fullName', 'unknown')
+            email = data.get('email', 'unknown')
+            contact_number = data.get('contactNumber', 'unknown')
+            user_id = data.get('user_id', 'unknown')
+
+            # if not all([room_name, message, user_id]):
+            #     raise HTTPException(status_code=400, detail="room_name, message, and user_id are required")
+
+            chat_messages[room_name].append({
+                'user_id': user_id,
+                'full_name': full_name,
+                'email': email,
+                'contact_number': contact_number,
+                'timestamp': datetime.now().isoformat()
+            })
+
+            logger.info(f"Message added to room {room_name}")
+            print("\n\n chat_messages=", chat_messages)
+            return JSONResponse(content={"status": "success", "message": "Message added"})
+
+        except Exception as e:
+            logger.error(f"Error in POST /chat_message: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+    elif request.method == "GET":
+        try:
+            room_name = request.query_params.get('room_name', 'unknown')
+            print("\n\n room_name=", room_name)
+            # if not room_name:
+            #     raise HTTPException(status_code=400, detail="room_name query parameter is required")
+
+            messages = chat_messages.get(room_name, [])
+            print("\n\n messages=", messages)
+            return JSONResponse(content=messages)
+
+        except Exception as e:
+            logger.error(f"Error in GET /chat_message: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # Add this at the module level
 event_broadcasters = {}
-
 
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):

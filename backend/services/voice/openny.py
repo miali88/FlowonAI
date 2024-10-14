@@ -148,6 +148,25 @@ class CustomVoiceAssistant(VoiceAssistant):
         async with aiohttp.ClientSession() as session:
             try:
                 await session.post(f'{self.DOMAIN}/conversation/trigger_show_chat_input', json={'room_name': room_name, 'job_id': job_id})
+                print("\n\n\n post /conversation/trigger_show_chat_input", job_id)
+                
+                response = await session.get(f'{self.DOMAIN}/conversation/chat_message', json={'room_name': room_name, 'job_id': job_id})
+                response_data = await response.json()
+                
+                if response_data and isinstance(response_data, list) and len(response_data) > 0:
+                    chat_message = {
+                        'full_name': response_data[0].get('full_name'),
+                        'email': response_data[0].get('email'),
+                        'contact_number': response_data[0].get('contact_number')
+                    }
+                    print("\n\n\n Processed chat_message:", chat_message)
+                    
+                    # Here you can add logic to handle the chat_message data
+                    # For example, you might want to add it to the chat context or use it in some other way
+                    
+                else:
+                    print("\n\n\n No valid chat message data received")
+                
             except Exception as e:
                 self.logger.error(f"Error triggering show_chat_input: {str(e)}", extra={'room_name': room_name, 'job_id': job_id})
 
