@@ -163,7 +163,7 @@ class CustomVoiceAssistant(VoiceAssistant):
                     
                     # Here you can add logic to handle the chat_message data
                     # For example, you might want to add it to the chat context or use it in some other way
-                    
+                    #test
                 else:
                     print("\n\n\n No valid chat message data received")
                 
