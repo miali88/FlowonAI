@@ -38,7 +38,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   setIsConnecting,
   onStreamEnd,
   onStreamStart,
-  bypassShowChatInputCondition = true,
+  bypassShowChatInputCondition = false,
 }) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
