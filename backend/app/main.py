@@ -9,6 +9,9 @@ from app.core.config import settings
 from contextlib import asynccontextmanager
 import os 
 from dotenv import load_dotenv
+import subprocess
+import psutil
+import time
 
 load_dotenv()
 
@@ -48,10 +51,43 @@ if origins:
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# @app.on_event("startup")
-# async def startup_event():
-#     cleanup()
+@app.on_event("startup")
+async def startup_event():
+    global livekit_process
+    import os
+    
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2
 
-# @app.on_event("shutdown")
-# async def shutdown_event():
-#     cleanup()
+    for attempt in range(MAX_RETRIES):
+        try:
+            livekit_process = subprocess.Popen(['python', 'services/livekit_server.py', 'start'])
+            print("LiveKit server started")
+            break
+        except subprocess.SubprocessError as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < MAX_RETRIES - 1:
+                print(f"Retrying in {RETRY_DELAY} seconds...")
+                time.sleep(RETRY_DELAY)
+            else:
+                print("Failed to start LiveKit server after maximum retries")
+                raise
+    
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global livekit_process
+    if livekit_process:
+        try:
+            # Terminate the LiveKit server process
+            print("\n\nTerminating LiveKit server")
+            parent = psutil.Process(livekit_process.pid)
+            for child in parent.children(recursive=True):
+                child.terminate()
+            parent.terminate()
+            print("LiveKit server terminated")
+        except psutil.NoSuchProcess:
+            print("LiveKit server process not found")
+        except Exception as e:
+            print(f"Error terminating LiveKit server: {e}")

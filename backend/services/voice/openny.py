@@ -64,7 +64,6 @@ class AssistantFunction(agents.llm.FunctionContext):
         print(f"Triggering end call: {user_msg}")
         return None
 
-
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -144,7 +143,9 @@ class CustomVoiceAssistant(VoiceAssistant):
                     await self._tts.synthesize(new_handle.content, self._audio_stream)
 
     async def trigger_show_chat_input(self, room_name: str, job_id: str):
-        print("\n\n\n trigger_show_chat_input method called", job_id)
+        #print("\n\n\n trigger_show_chat_input method called", job_id)
+        print("\n\n\n\n shutting down workeb:", job_id)
+        await agents.Worker.aclose()
         async with aiohttp.ClientSession() as session:
             try:
                 await session.post(f'{self.DOMAIN}/conversation/trigger_show_chat_input', json={'room_name': room_name, 'job_id': job_id})
@@ -198,6 +199,7 @@ async def entrypoint(ctx: JobContext):
     try:
         await acquire_room_lock(room_name)
         
+
         print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
         await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
         print(f"Room name: {room_name}")
@@ -317,14 +319,22 @@ async def entrypoint(ctx: JobContext):
                     # Create a background task to run the async function
                     asyncio.create_task(assistant.trigger_show_chat_input(ctx.room.name, ctx.job.id))
 
+        # @ctx.room.on("disconnected")
+        # def on_disconnected():
+        #     print("\n\n\n Room disconnected")
+        #     sys.exit(0)
+
+
         assistant.start(ctx.room)
+
 
         #await asyncio.sleep(0.5)
         await assistant.say(OPENING_LINE, allow_interruptions=False)
 
-        # Keep the process running
-        while True:
-            await asyncio.sleep(0.2)
+
+        # # Keep the process running
+        # while True:
+        #     await asyncio.sleep(0.2)
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")

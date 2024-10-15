@@ -46,6 +46,15 @@ def main():
     os.environ['AGENT_ID'] = agent_id
     os.environ['USER_ID'] = user_id
 
+    print("\n\n\n running open.py with the following environment variables:")
+    print(os.environ['AGENT_INSTRUCTIONS'])
+    print(os.environ['AGENT_VOICE_ID'])
+    print(os.environ['AGENT_TEMPERATURE'])
+    print(os.environ['AGENT_OPENING_LINE'])
+    print(os.environ['AGENT_ID'])
+    print(os.environ['USER_ID'])
+    print(room)
+
     # Construct the command to run open.py
     command = ["python", "services/voice/openny.py", "connect"]
     if room:
