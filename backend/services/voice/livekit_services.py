@@ -117,22 +117,13 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
 async def start_agent_request(access_token: str, agent_id: str, room_name: str):
     livekit_api = await create_livekit_api()
     try:
-        # Create an RTC Room object
-        rtc_room = rtc.Room()
-        await rtc_room.connect(os.getenv("LIVEKIT_URL"), access_token)
+        # Instead of creating the agent here, we'll just ensure the room exists
+        # and let the agent worker handle the agent creation and management
+        room = await livekit_api.room.create_room(CreateRoomRequest(name=room_name))
+        print(f"Ensured room exists: {room.name} with SID: {room.sid}")
 
-        # Create and start the agent only if it doesn't exist
-        print(f"Remote participants: {rtc_room.remote_participants}", type(rtc_room.remote_participants))
-        print(f"Local participant: {rtc_room.local_participant}", type(rtc_room.local_participant))
-
-        """ add condition to check if agent is in room for visitor x or not """
-        agent = await create_voice_assistant(agent_id)
-        agent.start(rtc_room)
-        await agent.say("Ola my amigo", allow_interruptions=False)
-
-        print(f"Started agent for room: {room_name}")
-        # else:
-        #     print(f"Agent already exists in room: {room_name}")
+        # The agent will be created and managed by the entrypoint function in livekit_server.py
+        print(f"Room ready for agent in: {room_name}")
 
     finally:
         await livekit_api.aclose()

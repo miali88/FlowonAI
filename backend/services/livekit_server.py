@@ -1,6 +1,8 @@
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli
 
+from services.voice.livekit_services import create_voice_assistant
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,6 +20,12 @@ async def entrypoint(ctx: JobContext):
         for rp in room.remote_participants.values():
             print("rp.identity", rp.identity)
 
+        # Create and start the agent here, within the job context
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+        agent = await create_voice_assistant(agent_id)
+        agent.start(room)
+        await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
+
         # Add event handlers to monitor connection status
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
@@ -30,6 +38,9 @@ async def entrypoint(ctx: JobContext):
         @ctx.room.on('connected')
         def on_connected():
             print(f"Room {room_name} connected")
+
+        while True:
+            await asyncio.sleep(0.2)
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
