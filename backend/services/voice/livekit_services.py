@@ -1,20 +1,23 @@
 import os
-import subprocess
 import random
 from fastapi import HTTPException, BackgroundTasks
-from livekit import api as livekit_api
+from livekit import api
 from app.core.config import settings
 import uuid 
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.plugins import cartesia, deepgram, openai, silero
+from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
+import os 
+from dotenv import load_dotenv
+from livekit import rtc
 
-from livekit.api.room_service import RoomService
-room_service = RoomService()
-room_service.create_room("test")
-# from livekit.api import LiveKitAPI
-# api = LiveKitAPI()
-# api.room_service.create_room("test")
+load_dotenv()
 
+async def create_livekit_api():
+    return LiveKitAPI(
+        url=os.getenv("LIVEKIT_URL"),
+        api_key=os.getenv("LIVEKIT_API_KEY"),
+        api_secret=os.getenv("LIVEKIT_API_SECRET"))
 
 from livekit.agents import llm
 from supabase import create_client, Client
@@ -23,37 +26,65 @@ supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVIC
 from asyncio import Lock
 
 # Add this global variable
-agent_creation_locks = {}
+room_locks = {}
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
     print("Token request received")
     print(f"Request parameters: agent_id={agent_id}, user_id={user_id}")
     
-    if not agent_id:
-        print("Missing agent_id in request")
-        raise HTTPException(status_code=400, detail="Missing agent_id")
-    if not user_id:
-        print("Missing user_id in request")
-        raise HTTPException(status_code=400, detail="Missing user_id")
+    if not agent_id or not user_id:
+        raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
 
-    room_name = f"agent_{agent_id}_room_{uuid.uuid4()}"
-    api_key = os.getenv("LIVEKIT_API_KEY")
-    api_secret = os.getenv("LIVEKIT_API_SECRET")
-    livekit_server_url = os.getenv("LIVEKIT_URL")
+    room_name = f"agent_{agent_id}_room_{user_id}"
+
+    # Use a lock to ensure only one token generation process happens at a time for this room
+    if room_name not in room_locks:
+        room_locks[room_name] = Lock()
     
-    if not api_key or not api_secret or not livekit_server_url:
-        print("LiveKit credentials not configured")
-        raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
+    async with room_locks[room_name]:
+        api_key = os.getenv("LIVEKIT_API_KEY")
+        api_secret = os.getenv("LIVEKIT_API_SECRET")
+        livekit_server_url = os.getenv("LIVEKIT_URL")
+        
+        if not api_key or not api_secret or not livekit_server_url:
+            raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
 
-    print(f"Generating token for room: {room_name}")
-    token = livekit_api.AccessToken(api_key, api_secret)\
-        .with_identity(user_id)\
-        .with_name(f"User {user_id}")\
-        .with_grants(livekit_api.VideoGrants(
-            room_join=True,
-            room=room_name))
+        print(f"Generating token for room: {room_name}")
+        token = api.AccessToken(api_key, api_secret)\
+            .with_identity(f"visitorId_{uuid.uuid4()}")\
+            .with_grants(api.VideoGrants(
+                room_join=True,
+                room=room_name))
 
-    return token.to_jwt(), livekit_server_url, room_name
+        try:
+            livekit_api = await create_livekit_api()
+
+            # List rooms
+            list_request = ListRoomsRequest()
+            rooms_response = await livekit_api.room.list_rooms(list_request)
+            
+            # Check if the room exists
+            room_exists = any(room.name == room_name for room in rooms_response.rooms)
+
+            if room_exists:
+                print(f"Room {room_name} already exists")
+                list_participants_request = ListParticipantsRequest(room=room_name)
+                participants_response = await livekit_api.room.list_participants(list_participants_request)
+                print(f"\nParticipants in room '{room_name}':")
+                for participant in participants_response.participants:
+                    print(f"Participant: {participant.identity}, SID: {participant.sid}")     
+            else:
+                print(f"Room {room_name} doesn't exist, creating it and starting the agent")
+                background_tasks.add_task(start_agent_request, room_name, agent_id, user_id, token.to_jwt())
+
+
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error checking room existence")
+        finally:
+            await livekit_api.aclose()
+
+        return token.to_jwt(), livekit_server_url, room_name
 
 async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
     print("Token request received")
@@ -83,66 +114,48 @@ async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
 
     return token.to_jwt(), livekit_server_url, room_name
 
-async def start_agent_request(room_name: str, agent_id: str, user_id: str):
+async def start_agent_request(room_name: str, agent_id: str, user_id: str, access_token: str):
     print(f"Starting create_agent_request for room: {room_name}")
-    temperature = "0.6"
 
+    livekit_api = await create_livekit_api()
+
+    try:
+        # Create a room if it doesn't exist
+        create_request = CreateRoomRequest(name=room_name)
+        room = await livekit_api.room.create_room(create_request)
+        print(f"Created room: {room.name} with SID: {room.sid}")
+
+        # Create an RTC Room object
+        rtc_room = rtc.Room()
+        await rtc_room.connect(os.getenv("LIVEKIT_URL"), access_token)
+
+        # Create and start the agent only if it doesn't exist
+        if not any(p.identity.startswith("agent-") for p in rtc_room.participants.values()):
+            agent = await create_voice_assistant(agent_id)
+            agent.start(rtc_room)
+            print(f"Started agent for room: {room_name}")
+        else:
+            print(f"Agent already exists in room: {room_name}")
+
+    finally:
+        await livekit_api.aclose()
+
+async def create_voice_assistant(agent_id):
     agent = await get_agent(agent_id)
-
-    instructions = agent['instructions']
-    voice_id = agent['voice']
-    functions = agent['functions']
-    opening_line = agent['openingLine']
-
     initial_ctx = llm.ChatContext().append(
         role="system",
-        text="You are an arab rug merchant named Ismail")
-
-    room_service.list_rooms()
-
-    agent = VoiceAssistant(
+        text=agent['instructions'])
+    return VoiceAssistant(
         vad=silero.VAD.load(),
-        # flexibility to use any models
         stt=deepgram.STT(model="nova-2-general"),
         llm=openai.LLM(),   
         tts=cartesia.TTS(),
-        # intial ChatContext with system prompt
         chat_ctx=initial_ctx,
-        # whether the agent can be interrupted
         allow_interruptions=True,
-        # sensitivity of when to interrupt
         interrupt_speech_duration=0.5,
         interrupt_min_words=0,
-        # minimal silence duration to consider end of turn
         min_endpointing_delay=0.5,
-        # callback to run before LLM is called, can be used to modify chat context
-        before_llm_cb=None,
-        # callback to run before TTS is called, can be used to customize pronounciation
-        before_tts_cb=None,
     )
-
-    # start the participant for a particular room, taking audio input from a single participant
-    agent.start(room_name)
-
-
-    # # Construct the command
-    # command = [
-    #     "python", 
-    #     "services/voice/run_open.py",
-    #     "--instructions", instructions,
-    #     "--voice", voice_id,
-    #     "--temperature", temperature,
-    #     "--room", room_name,
-    #     "--opening_line", opening_line,
-    #     "--agent_id", agent_id,
-    #     "--user_id", user_id]
-
-    # print(f"Executing command: {' '.join(command)}")
-
-    # # Run run_open.py as a subprocess with arguments
-    # subprocess.Popen(command)
-
-    return 
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \

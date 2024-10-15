@@ -1,5 +1,5 @@
 import asyncio
-from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest
+from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
 import os 
 from dotenv import load_dotenv
 
@@ -26,6 +26,14 @@ async def main():
         rooms_response = await livekit_api.room.list_rooms(list_request)
         for room in rooms_response.rooms:
             print(f"Room: {room.name}, SID: {room.sid}")
+
+        # List participants in the newly created room
+        list_participants_request = ListParticipantsRequest(room=new_room.name)
+        participants_response = await livekit_api.room.list_participants(list_participants_request)
+        
+        print(f"\nParticipants in room '{new_room.name}':")
+        for participant in participants_response.participants:
+            print(f"Participant: {participant.identity}, SID: {participant.sid}")
 
     finally:
         # Don't forget to close the session when you're done
