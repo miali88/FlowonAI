@@ -1,5 +1,5 @@
 from livekit import agents, rtc
-from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, cli
+from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 
 from services.voice.livekit_services import create_voice_assistant
 import asyncio
@@ -25,6 +25,15 @@ async def entrypoint(ctx: JobContext):
         agent = await create_voice_assistant(agent_id)
         agent.start(room)
         await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
+
+        ## if end_chat_func_triggered:
+        # await ctx.shutdown(reason="Session ended")
+        ## shutdown hook to post process
+        #     async def my_shutdown_hook():
+        # # save user state
+        # ...
+        # ctx.add_shutdown_callback(my_shutdown_hook)
+
 
         # Add event handlers to monitor connection status
         @ctx.room.on('participant_disconnected')
@@ -53,31 +62,30 @@ async def entrypoint(ctx: JobContext):
         else:
             print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
 
-async def request_fnc(ctx: JobRequest):
-    print("request_fnc called")
-    return True
 
-async def prewarm_fnc(ctx: JobProcess):
-    print("prewarm_fnc called")
-    return True
+# async def request_fnc(ctx: JobRequest):
+#     print("request_fnc called")
+#     return True
 
-async def load_fnc(proc: JobProcess):
-    print("load_fnc called")
-    return True
+# def prewarm_fnc(ctx: JobProcess):
+#     print("prewarm_fnc called")
+#     return True
 
+# async def load_fnc(proc: JobProcess):
+#     print("load_fnc called")
+#     return True
 
 
 if __name__ == "__main__":
     opts = WorkerOptions(
         # entrypoint function is called when a job is assigned to this worker
         entrypoint_fnc=entrypoint,
-        # inspect the request and decide if the current worker should handle it.
-        request_fnc=request_fnc,
-        # a function to perform any necessary initialization in a new process.
-        prewarm_fnc=prewarm_fnc,
         # the type of worker to create, either JT_ROOM or JT_PUBLISHER
         worker_type=WorkerType.PUBLISHER,
+        # # inspect the request and decide if the current worker should handle it.
+        # request_fnc=request_fnc,
+        # # a function to perform any necessary initialization in a new process.
+        # prewarm_fnc=prewarm_fnc,
     )
-
 
     cli.run_app(opts)

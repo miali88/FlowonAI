@@ -61,7 +61,7 @@ async def startup_event():
 
     for attempt in range(MAX_RETRIES):
         try:
-            livekit_process = subprocess.Popen(['python', 'livekit_server.py', 'start'])
+            livekit_process = subprocess.Popen(['python', 'livekit_server.py', 'dev'])
             print("LiveKit server started")
             break
         except subprocess.SubprocessError as e:
