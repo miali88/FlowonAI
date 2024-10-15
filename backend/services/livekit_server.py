@@ -1,7 +1,5 @@
-from livekit import agents
+from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli
-
-from livekit import rtc
 
 from dotenv import load_dotenv
 
@@ -26,21 +24,23 @@ async def entrypoint(ctx: JobContext):
             print(f"Participant {participant.identity} disconnected")
 
         @ctx.room.on('disconnected')
-        def on_disconnected(reason: rtc.DisconnectReason):
-            print(f"Room {room_name} disconnected. Reason: {reason}")
+        def on_disconnected(exception: Exception):
+            print(f"Room {room_name} disconnected. Reason: {str(exception)}")
 
         @ctx.room.on('connected')
         def on_connected():
             print(f"Room {room_name} connected")
 
-        # Keep the agent running
-        await ctx.room.wait_until_disconnected()
-
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
     finally:
         # Ensure proper cleanup
-        await ctx.disconnect()
+        if hasattr(ctx.room, 'disconnect'):
+            await ctx.room.disconnect()
+        elif hasattr(ctx, 'disconnect'):
+            await ctx.disconnect()
+        else:
+            print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
 
 if __name__ == "__main__":
     opts = WorkerOptions(

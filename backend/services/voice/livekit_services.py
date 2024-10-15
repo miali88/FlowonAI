@@ -10,6 +10,8 @@ from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListPar
 import os 
 from dotenv import load_dotenv
 from livekit import rtc
+from livekit import agents
+from livekit.agents import WorkerOptions
 
 load_dotenv()
 
@@ -126,6 +128,8 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
         """ add condition to check if agent is in room for visitor x or not """
         agent = await create_voice_assistant(agent_id)
         agent.start(rtc_room)
+        await agent.say("Ola my amigo", allow_interruptions=False)
+
         print(f"Started agent for room: {room_name}")
         # else:
         #     print(f"Agent already exists in room: {room_name}")
@@ -150,6 +154,7 @@ async def create_voice_assistant(agent_id):
         interrupt_speech_duration=0.5,
         interrupt_min_words=0,
         min_endpointing_delay=0.5)
+
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \
