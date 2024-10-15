@@ -52,6 +52,7 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         print(f"Generating token for room: {room_name}")
         token = api.AccessToken(api_key, api_secret)\
             .with_identity(f"visitorId_{uuid.uuid4()}")\
+            .with_name(user_id  )\
             .with_grants(api.VideoGrants(
                 room_join=True,
                 room=room_name))
@@ -75,44 +76,15 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
                     print(f"Participant: {participant.identity}, SID: {participant.sid}")     
             else:
                 print(f"Room {room_name} doesn't exist, creating it and starting the agent")
-                background_tasks.add_task(start_agent_request, room_name, agent_id, user_id, token.to_jwt())
-
+                await start_agent_request(room_name, agent_id, user_id, token.to_jwt())
 
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
             raise HTTPException(status_code=500, detail="Error checking room existence")
         finally:
             await livekit_api.aclose()
-
         return token.to_jwt(), livekit_server_url, room_name
 
-async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
-    print("Token request received")
-    print(f"Request parameters: agent_id={agent_id}")
-    
-    if not agent_id:
-        print("Missing agent_id in request")
-        raise HTTPException(status_code=400, detail="Missing agent_id")
-
-    visitor_id = f"{random.randint(100000000000, 999999999999):012d}"
-    room_name = f"agent_{agent_id}_room_{visitor_id}"
-    api_key = os.getenv("LIVEKIT_API_KEY")
-    api_secret = os.getenv("LIVEKIT_API_SECRET")
-    livekit_server_url = os.getenv("LIVEKIT_URL")
-    
-    if not api_key or not api_secret or not livekit_server_url:
-        print("LiveKit credentials not configured")
-        raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
-
-    print(f"Generating token for room: {room_name}")
-    token = livekit_api.AccessToken(api_key, api_secret)\
-        .with_identity(visitor_id)\
-        .with_name(f"Visitor {visitor_id}")\
-        .with_grants(livekit_api.VideoGrants(
-            room_join=True,
-            room=room_name))
-
-    return token.to_jwt(), livekit_server_url, room_name
 
 async def start_agent_request(room_name: str, agent_id: str, user_id: str, access_token: str):
     print(f"Starting create_agent_request for room: {room_name}")
@@ -130,15 +102,20 @@ async def start_agent_request(room_name: str, agent_id: str, user_id: str, acces
         await rtc_room.connect(os.getenv("LIVEKIT_URL"), access_token)
 
         # Create and start the agent only if it doesn't exist
-        if not any(p.identity.startswith("agent-") for p in rtc_room.participants.values()):
-            agent = await create_voice_assistant(agent_id)
-            agent.start(rtc_room)
-            print(f"Started agent for room: {room_name}")
-        else:
-            print(f"Agent already exists in room: {room_name}")
+        print(f"Remote participants: {rtc_room.remote_participants}")
+        print(f"Local participant: {rtc_room.local_participant}")
+
+        # if not any(p.identity.startswith("agent-") for p in rtc_room.participants.values()):
+        #     agent = await create_voice_assistant(agent_id)
+        #     agent.start(rtc_room)
+        #     print(f"Started agent for room: {room_name}")
+        # else:
+        #     print(f"Agent already exists in room: {room_name}")
 
     finally:
         await livekit_api.aclose()
+
+
 
 async def create_voice_assistant(agent_id):
     agent = await get_agent(agent_id)
@@ -167,3 +144,33 @@ async def get_agent(agent_id):
         return response.data[0]
     else:
         return None
+
+
+
+async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
+    print("Token request received")
+    print(f"Request parameters: agent_id={agent_id}")
+    
+    if not agent_id:
+        print("Missing agent_id in request")
+        raise HTTPException(status_code=400, detail="Missing agent_id")
+
+    visitor_id = f"{random.randint(100000000000, 999999999999):012d}"
+    room_name = f"agent_{agent_id}_room_{visitor_id}"
+    api_key = os.getenv("LIVEKIT_API_KEY")
+    api_secret = os.getenv("LIVEKIT_API_SECRET")
+    livekit_server_url = os.getenv("LIVEKIT_URL")
+    
+    if not api_key or not api_secret or not livekit_server_url:
+        print("LiveKit credentials not configured")
+        raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
+
+    print(f"Generating token for room: {room_name}")
+    token = livekit_api.AccessToken(api_key, api_secret)\
+        .with_identity(visitor_id)\
+        .with_name(f"Visitor {visitor_id}")\
+        .with_grants(livekit_api.VideoGrants(
+            room_join=True,
+            room=room_name))
+
+    return token.to_jwt(), livekit_server_url, room_name

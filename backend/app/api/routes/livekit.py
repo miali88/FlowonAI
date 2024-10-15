@@ -40,8 +40,8 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
     user_id = request.query_params.get("user_id")
     access_token, livekit_url, room_name = await token_gen(agent_id, user_id, background_tasks)
 
-    print(f"Adding create_agent_request task for room {room_name}")
-    background_tasks.add_task(start_agent_request, room_name, agent_id, user_id, access_token)
+    # print(f"Adding create_agent_request task for room {room_name}")
+    # background_tasks.add_task(start_agent_request, room_name, agent_id, user_id, access_token)
 
     return {
         "accessToken": access_token,
