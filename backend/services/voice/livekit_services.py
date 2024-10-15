@@ -68,7 +68,14 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
             room_exists = any(room.name == room_name for room in rooms_response.rooms)
 
             if room_exists:
+
                 print(f"Room {room_name} already exists")
+
+                # Print all rooms
+                print("Room exists. All rooms:")
+                for room in rooms_response.rooms:
+                    print(f"Room name: {room.name}, SID: {room.sid}")
+
                 list_participants_request = ListParticipantsRequest(room=room_name)
                 participants_response = await livekit_api.room.list_participants(list_participants_request)
                 print(f"\nParticipants in room '{room_name}':")
@@ -76,7 +83,7 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
                     print(f"Participant: {participant.identity}, SID: {participant.sid}")     
             else:
                 print(f"Room {room_name} doesn't exist, creating it and starting the agent")
-                await start_agent_request(room_name, agent_id, user_id, token.to_jwt())
+                await create_room(room_name, token.to_jwt(), agent_id)
 
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
@@ -86,35 +93,46 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         return token.to_jwt(), livekit_server_url, room_name
 
 
-async def start_agent_request(room_name: str, agent_id: str, user_id: str, access_token: str):
-    print(f"Starting create_agent_request for room: {room_name}")
-
-    livekit_api = await create_livekit_api()
-
+async def create_room(room_name: str, access_token: str, agent_id: str):
     try:
+        print(f"Starting create_agent_request for room: {room_name}")
+
+        livekit_api = await create_livekit_api()
+
         # Create a room if it doesn't exist
         create_request = CreateRoomRequest(name=room_name)
         room = await livekit_api.room.create_room(create_request)
         print(f"Created room: {room.name} with SID: {room.sid}")
 
+        print("Room created, starting agent")
+        await start_agent_request(access_token, agent_id, room_name)
+
+    finally:
+        await livekit_api.aclose()
+        print("livekit_api closed in create_room")
+
+
+async def start_agent_request(access_token: str, agent_id: str, room_name: str):
+    livekit_api = await create_livekit_api()
+    try:
         # Create an RTC Room object
         rtc_room = rtc.Room()
         await rtc_room.connect(os.getenv("LIVEKIT_URL"), access_token)
 
         # Create and start the agent only if it doesn't exist
-        print(f"Remote participants: {rtc_room.remote_participants}")
-        print(f"Local participant: {rtc_room.local_participant}")
+        print(f"Remote participants: {rtc_room.remote_participants}", type(rtc_room.remote_participants))
+        print(f"Local participant: {rtc_room.local_participant}", type(rtc_room.local_participant))
 
-        # if not any(p.identity.startswith("agent-") for p in rtc_room.participants.values()):
-        #     agent = await create_voice_assistant(agent_id)
-        #     agent.start(rtc_room)
-        #     print(f"Started agent for room: {room_name}")
+        """ add condition to check if agent is in room for visitor x or not """
+        agent = await create_voice_assistant(agent_id)
+        agent.start(rtc_room)
+        print(f"Started agent for room: {room_name}")
         # else:
         #     print(f"Agent already exists in room: {room_name}")
 
     finally:
         await livekit_api.aclose()
-
+        print("livekit_api closed in start_agent_request")
 
 
 async def create_voice_assistant(agent_id):
@@ -131,8 +149,7 @@ async def create_voice_assistant(agent_id):
         allow_interruptions=True,
         interrupt_speech_duration=0.5,
         interrupt_min_words=0,
-        min_endpointing_delay=0.5,
-    )
+        min_endpointing_delay=0.5)
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \
@@ -144,7 +161,6 @@ async def get_agent(agent_id):
         return response.data[0]
     else:
         return None
-
 
 
 async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):

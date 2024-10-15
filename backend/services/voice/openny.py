@@ -199,7 +199,6 @@ async def entrypoint(ctx: JobContext):
     try:
         await acquire_room_lock(room_name)
         
-
         print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
         await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
         print(f"Room name: {room_name}")
@@ -209,15 +208,11 @@ async def entrypoint(ctx: JobContext):
                 ChatMessage(
                     role="system",
                     content=INSTRUCTIONS)])
-
         gpt = openai.LLM(model="gpt-4o", temperature=TEMPERATURE)
-
         cartesia_tts = tts.StreamAdapter(
             tts=cartesia.TTS(voice=VOICE_ID),
             sentence_tokenizer=tokenize.basic.SentenceTokenizer()
         )
-
-        # Use CustomVoiceAssistant instead of VoiceAssistant
         assistant = CustomVoiceAssistant(
             vad=silero.VAD.load(),  # This line is causing an issue
             stt=deepgram.STT(),     # We'll use Deepgram's Speech To Text (STT)
@@ -227,32 +222,35 @@ async def entrypoint(ctx: JobContext):
             chat_ctx=chat_context,
         )
         assistant.job_id = ctx.job.id  # Add this line to set the job_id
+        assistant.start(ctx.room)
+        await assistant.say(OPENING_LINE, allow_interruptions=False)
+       
 
-        async def send_transcript_to_backend(transcript: dict, endpoint: str, chat_context: ChatContext, room: rtc.Room):
-            """
-            Send the transcript and chat context to a backend API endpoint asynchronously.
-            """
-            backend_url = f"{DOMAIN}{endpoint}"
-            print(f"\n\n\n Sending to {endpoint}:", transcript)
+        # async def send_transcript_to_backend(transcript: dict, endpoint: str, chat_context: ChatContext, room: rtc.Room):
+        #     """
+        #     Send the transcript and chat context to a backend API endpoint asynchronously.
+        #     """
+        #     backend_url = f"{DOMAIN}{endpoint}"
+        #     print(f"\n\n\n Sending to {endpoint}:", transcript)
 
-            transcript["user_id"] = USER_ID
-            transcript["job_id"] = ctx.job.id
-            transcript["room_name"] = room.name
-            transcript["room_sid"] = await room.sid
-            transcript['agent_id'] = AGENT_ID
+        #     transcript["user_id"] = USER_ID
+        #     transcript["job_id"] = ctx.job.id
+        #     transcript["room_name"] = room.name
+        #     transcript["room_sid"] = await room.sid
+        #     transcript['agent_id'] = AGENT_ID
 
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(backend_url, json=transcript) as response:
-                        if response.status == 200:
-                            print(f"Transcript and chat context sent to backend successfully")
-                            return await response.json()  # Return the response data if needed
-                        else:
-                            print(f"Failed to send data to backend. Status: {response.status}")
-                            return None
-            except aiohttp.ClientError as e:
-                print(f"Error sending data to backend: {str(e)}")
-                return None
+        #     try:
+        #         async with aiohttp.ClientSession() as session:
+        #             async with session.post(backend_url, json=transcript) as response:
+        #                 if response.status == 200:
+        #                     print(f"Transcript and chat context sent to backend successfully")
+        #                     return await response.json()  # Return the response data if needed
+        #                 else:
+        #                     print(f"Failed to send data to backend. Status: {response.status}")
+        #                     return None
+        #     except aiohttp.ClientError as e:
+        #         print(f"Error sending data to backend: {str(e)}")
+        #         return None
 
         # async def _answer(text: str):
         #     """
@@ -276,61 +274,55 @@ async def entrypoint(ctx: JobContext):
         #                 follow_up_response = "Now that I've requested your personal information, please go ahead and provide it."
         #                 await assistant.say(follow_up_response, allow_interruptions=False)
 
-        @assistant.on("user_speech_committed")
-        def on_transcription(transcript: rtc.ChatMessage):
-            """This event triggers when voice input is transcribed."""
-            print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+        # @assistant.on("user_speech_committed")
+        # def on_transcription(transcript: rtc.ChatMessage):
+        #     """This event triggers when voice input is transcribed."""
+        #     print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
             
-            user_transcript = {"user_message": transcript.content}
+        #     user_transcript = {"user_message": transcript.content}
 
-            if transcript.content:
-                asyncio.create_task(send_transcript_to_backend(user_transcript, \
-                                    "/voice/transcript/commit", chat_context, ctx.room))
+        #     if transcript.content:
+        #         asyncio.create_task(send_transcript_to_backend(user_transcript, \
+        #                             "/voice/transcript/commit", chat_context, ctx.room))
 
-        @assistant.on("agent_speech_committed")
-        def on_transcription(transcript: rtc.ChatMessage):
-            """This event triggers when voice input is transcribed."""
-            print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
+        # @assistant.on("agent_speech_committed")
+        # def on_transcription(transcript: rtc.ChatMessage):
+        #     """This event triggers when voice input is transcribed."""
+        #     print("\n\n\n VOICE INPUT TRANSCRIBED:", transcript)
 
-            assistant_transcript = {"assistant_message": transcript.content}
+        #     assistant_transcript = {"assistant_message": transcript.content}
 
-            if transcript.content:
-                asyncio.create_task(send_transcript_to_backend(assistant_transcript, \
-                                    "/voice/transcript/commit", chat_context, ctx.room))
+        #     if transcript.content:
+        #         asyncio.create_task(send_transcript_to_backend(assistant_transcript, \
+        #                             "/voice/transcript/commit", chat_context, ctx.room))
 
-                for_msg = f""" 
-                # User Query:
-                {transcript.content}
-                """
+        #         for_msg = f""" 
+        #         # User Query:
+        #         {transcript.content}
+        #         """
    
-        @assistant.on("function_calls_finished")
-        def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
-            print("\n\n\n on_function_calls_finished method called")
-            print("\n\n\n called_functions:", called_functions)
+        # @assistant.on("function_calls_finished")
+        # def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+        #     print("\n\n\n on_function_calls_finished method called")
+        #     print("\n\n\n called_functions:", called_functions)
 
-            """This event triggers when an assistant's function call completes."""
+        #     """This event triggers when an assistant's function call completes."""
 
-            for called_function in called_functions:
-                function_name = called_function.call_info.function_info.name
-                print(f"Function called: {function_name}")
+        #     for called_function in called_functions:
+        #         function_name = called_function.call_info.function_info.name
+        #         print(f"Function called: {function_name}")
 
-                if function_name == "request_personal_data":
-                    print("Triggering show_chat_input")
-                    # Create a background task to run the async function
-                    asyncio.create_task(assistant.trigger_show_chat_input(ctx.room.name, ctx.job.id))
+        #         if function_name == "request_personal_data":
+        #             print("Triggering show_chat_input")
+        #             # Create a background task to run the async function
+        #             asyncio.create_task(assistant.trigger_show_chat_input(ctx.room.name, ctx.job.id))
 
         # @ctx.room.on("disconnected")
         # def on_disconnected():
         #     print("\n\n\n Room disconnected")
         #     sys.exit(0)
 
-
-        assistant.start(ctx.room)
-
-
         #await asyncio.sleep(0.5)
-        await assistant.say(OPENING_LINE, allow_interruptions=False)
-
 
         # # Keep the process running
         # while True:
