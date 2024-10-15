@@ -1,5 +1,5 @@
 from livekit import agents, rtc
-from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli
+from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, cli
 
 from services.voice.livekit_services import create_voice_assistant
 import asyncio
@@ -13,7 +13,7 @@ async def entrypoint(ctx: JobContext):
         room = ctx.room
         
         print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-        await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+        await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
         print(f"Room name: {room_name}")
 
         print("iterating through room.remote_participants")
@@ -53,8 +53,31 @@ async def entrypoint(ctx: JobContext):
         else:
             print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
 
+async def request_fnc(ctx: JobRequest):
+    print("request_fnc called")
+    return True
+
+async def prewarm_fnc(ctx: JobProcess):
+    print("prewarm_fnc called")
+    return True
+
+async def load_fnc(proc: JobProcess):
+    print("load_fnc called")
+    return True
+
+
+
 if __name__ == "__main__":
     opts = WorkerOptions(
+        # entrypoint function is called when a job is assigned to this worker
         entrypoint_fnc=entrypoint,
+        # inspect the request and decide if the current worker should handle it.
+        request_fnc=request_fnc,
+        # a function to perform any necessary initialization in a new process.
+        prewarm_fnc=prewarm_fnc,
+        # the type of worker to create, either JT_ROOM or JT_PUBLISHER
+        worker_type=WorkerType.PUBLISHER,
     )
+
+
     cli.run_app(opts)

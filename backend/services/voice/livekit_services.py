@@ -9,9 +9,6 @@ from livekit.plugins import cartesia, deepgram, openai, silero
 from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
 import os 
 from dotenv import load_dotenv
-from livekit import rtc
-from livekit import agents
-from livekit.agents import WorkerOptions
 
 load_dotenv()
 
