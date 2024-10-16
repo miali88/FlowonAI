@@ -20,11 +20,37 @@ async def entrypoint(ctx: JobContext):
         for rp in room.remote_participants.values():
             print("rp.identity", rp.identity)
 
-        # Create and start the agent here, within the job context
-        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        agent = await create_voice_assistant(agent_id)
-        agent.start(room)
-        await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
+
+        # Find an available participant that is not subscribed to any track
+        available_participant = None
+        for rp in room.remote_participants.values():
+            print("remote participant:",rp)
+            if not any(pub.subscribed for pub in rp.track_publications.values()):
+                print("available participant found:",rp)
+                available_participant = rp
+                break
+
+        if available_participant:
+            print(f"Found available participant: {available_participant.identity}")            
+            for publication in available_participant.track_publications.values():
+                print("publication", publication)
+                if publication.kind == rtc.TrackKind.KIND_AUDIO and publication.source == rtc.TrackSource.SOURCE_MICROPHONE:
+                    publication.set_subscribed(True)
+                    print(f"Subscribed to audio track: {publication.sid}")
+                    break
+            
+            # Create and start the agent here, within the job context
+            agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+            agent = await create_voice_assistant(agent_id)
+            agent.start(room, available_participant)
+            await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
+
+
+        else:
+            print("No available participants found.")
+            await ctx.shutdown(reason="No available participants")
+
+
 
         ## if end_chat_func_triggered:
         # await ctx.shutdown(reason="Session ended")
@@ -39,6 +65,23 @@ async def entrypoint(ctx: JobContext):
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             print(f"Participant {participant.identity} disconnected")
+            print("participant connected to:", available_participant)
+            print("if match, then shut down worker")
+            if participant.identity == available_participant.identity:
+                print("participant disconnected, shutting down worker")
+                ctx.shutdown()
+
+        @ctx.room.on("track_subscribed")
+        def on_track_subscribed(
+            track: rtc.Track,
+            publication: rtc.TrackPublication,
+            participant: rtc.RemoteParticipant,
+        ):
+            if track.kind == rtc.TrackKind.KIND_AUDIO:
+                audio_stream = rtc.AudioStream(track)
+                for event in audio_stream:
+                    print(event.frame)
+
 
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):
@@ -51,16 +94,17 @@ async def entrypoint(ctx: JobContext):
         while True:
             await asyncio.sleep(0.2)
 
+
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
-    finally:
-        # Ensure proper cleanup
-        if hasattr(ctx.room, 'disconnect'):
-            await ctx.room.disconnect()
-        elif hasattr(ctx, 'disconnect'):
-            await ctx.disconnect()
-        else:
-            print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
+    # finally:
+    #     # Ensure proper cleanup
+    #     if hasattr(ctx.room, 'disconnect'):
+    #         await ctx.room.disconnect()
+    #     elif hasattr(ctx, 'disconnect'):
+    #         await ctx.disconnect()
+    #     else:
+    #         print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
 
 
 # async def request_fnc(ctx: JobRequest):

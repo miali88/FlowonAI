@@ -8,11 +8,11 @@ logging.info('Starting ngrok tunnel setup')
 
 try:
     # # Establish an HTTP tunnel to the server running on port 3000 with a specific subdomain
-    # http_tunnel_3000 = ngrok.connect(addr="http://localhost:3000", subdomain="internally-wise-spaniel")
-    # logging.info(f"ngrok tunnel for port 3000 established -> {http_tunnel_3000.public_url}")
+    http_tunnel_3000 = ngrok.connect(addr="http://localhost:3000", subdomain="internally-wise-spaniel")
+    logging.info(f"ngrok tunnel for port 3000 established -> {http_tunnel_3000.public_url}")
     
     # Establish another HTTP tunnel to the server running on port 8000 with a random subdomain
-    http_tunnel_8000 = ngrok.connect(addr="http://localhost:8000", subdomain="internally-wise-spaniel")
+    http_tunnel_8000 = ngrok.connect(addr="http://localhost:8000")
     logging.info(f"ngrok tunnel for port 8000 established -> {http_tunnel_8000.public_url}")
     
     # Keep the script running
