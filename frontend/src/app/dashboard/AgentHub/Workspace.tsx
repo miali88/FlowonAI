@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -50,6 +51,16 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleStreamStart,
 }) => {
   const [activeTab, setActiveTab] = useState('preview');
+  const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
+  const [currentFeature, setCurrentFeature] = useState<string | null>(null);
+  const [callTransferConfig, setCallTransferConfig] = useState({
+    primaryNumber: '',
+    secondaryNumber: '',
+  });
+  const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
+    nylasApiKey: '',
+  });
+  const [formFields, setFormFields] = useState<FormField[]>([]);
 
   const iframeCode = `<iframe
 src="https://www.flowon.ai/embed/${selectedAgent?.id}"
@@ -71,15 +82,86 @@ domain="www.flowon.ai"
 defer
 ></script>`;
 
+  const handleConfigureFeature = (featureId: string) => {
+    setCurrentFeature(featureId);
+    setIsConfigureDialogOpen(true);
+  };
+
+  const handleCallTransferConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCallTransferConfig({
+      ...callTransferConfig,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleAppointmentBookingConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAppointmentBookingConfig({
+      ...appointmentBookingConfig,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSaveConfig = () => {
+    if (currentFeature === 'callTransfer') {
+      setSelectedAgent({
+        ...selectedAgent,
+        features: {
+          ...selectedAgent?.features,
+          callTransfer: {
+            ...selectedAgent?.features?.callTransfer,
+            ...callTransferConfig,
+          },
+        },
+      });
+    } else if (currentFeature === 'appointmentBooking') {
+      setSelectedAgent({
+        ...selectedAgent,
+        features: {
+          ...selectedAgent?.features,
+          appointmentBooking: {
+            ...selectedAgent?.features?.appointmentBooking,
+            ...appointmentBookingConfig,
+          },
+        },
+      });
+    } else if (currentFeature === 'form') {
+      setSelectedAgent({
+        ...selectedAgent,
+        features: {
+          ...selectedAgent?.features,
+          form: {
+            ...selectedAgent?.features?.form,
+            fields: formFields,
+          },
+        },
+      });
+    }
+    setIsConfigureDialogOpen(false);
+  };
+
+  const handleAddFormField = () => {
+    setFormFields([...formFields, { type: 'text', label: '', options: [] }]);
+  };
+
+  const handleRemoveFormField = (index: number) => {
+    setFormFields(formFields.filter((_, i) => i !== index));
+  };
+
+  const handleFormFieldChange = (index: number, field: Partial<FormField>) => {
+    const newFields = [...formFields];
+    newFields[index] = { ...newFields[index], ...field };
+    setFormFields(newFields);
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="mb-4 h-12">
         <TabsTrigger value="preview">Playground</TabsTrigger>
         <TabsTrigger value="edit">Settings</TabsTrigger>
+        <TabsTrigger value="features">Features</TabsTrigger>
         <TabsTrigger value="ui">UI</TabsTrigger>
         <TabsTrigger value="embed">Embed</TabsTrigger>
         <TabsTrigger value="share">Share</TabsTrigger>
-        <TabsTrigger value="features">Features</TabsTrigger>
       </TabsList>
       <TabsContent value="edit">
         <div className="space-y-4">
@@ -284,6 +366,114 @@ defer
           </CardContent>
         </Card>
       </TabsContent>
+
+      {/* Configuration Dialog */}
+      <Dialog open={isConfigureDialogOpen} onOpenChange={setIsConfigureDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              Configure {getFeatureTitle(currentFeature)}
+            </DialogTitle>
+            <DialogDescription>
+              {getFeatureDescription(currentFeature)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {currentFeature === 'callTransfer' && (
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="primaryNumber" className="text-right">
+                    Primary Number
+                  </Label>
+                  <Input
+                    id="primaryNumber"
+                    value={callTransferConfig.primaryNumber}
+                    onChange={handleCallTransferConfigChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="secondaryNumber" className="text-right">
+                    Secondary Number
+                  </Label>
+                  <Input
+                    id="secondaryNumber"
+                    value={callTransferConfig.secondaryNumber}
+                    onChange={handleCallTransferConfigChange}
+                    className="col-span-3"
+                  />
+                </div>
+              </>
+            )}
+            {currentFeature === 'appointmentBooking' && (
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="nylasApiKey" className="text-right">
+                    Nylas API Key
+                  </Label>
+                  <Input
+                    id="nylasApiKey"
+                    value={appointmentBookingConfig.nylasApiKey}
+                    onChange={handleAppointmentBookingConfigChange}
+                    className="col-span-3"
+                  />
+                </div>
+              </>
+            )}
+            {currentFeature === 'form' && (
+              <>
+                {formFields.map((field, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Select
+                        value={field.type}
+                        onValueChange={(value) => handleFormFieldChange(index, { type: value })}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select field type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Text</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
+                          <SelectItem value="phone">Phone</SelectItem>
+                          <SelectItem value="dropdown">Dropdown</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFormField(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder="Enter placeholder text here"
+                      value={field.label}
+                      onChange={(e) => handleFormFieldChange(index, { label: e.target.value })}
+                      className="italic"
+                    />
+                    {field.type === 'dropdown' && (
+                      <Textarea
+                        placeholder="Enter options (one per line)"
+                        value={field.options.join('\n')}
+                        onChange={(e) => handleFormFieldChange(index, { options: e.target.value.split('\n') })}
+                      />
+                    )}
+                  </div>
+                ))}
+                <Button onClick={handleAddFormField} className="w-full">
+                  <Plus className="mr-2 h-4 w-4" /> Add Field
+                </Button>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handleSaveConfig}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </Tabs>
   );
 };
@@ -302,7 +492,26 @@ function getFeatureDescription(featureId: string): string {
     case "appointmentBooking":
       return "Enable the agent to schedule appointments and manage a calendar.";
     case "form":
-      return "Let the agent collect structured data through customizable forms.";
+      return "Let the agent collect structured data through customisable forms.";
+    default:
+      return "";
+  }
+}
+
+interface FormField {
+  type: 'text' | 'email' | 'phone' | 'dropdown';
+  label: string;
+  options: string[];
+}
+
+function getFeatureTitle(featureId: string | null): string {
+  switch (featureId) {
+    case "callTransfer":
+      return "Call Transfer";
+    case "appointmentBooking":
+      return "Appointment Booking";
+    case "form":
+      return "Custom Form";
     default:
       return "";
   }

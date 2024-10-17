@@ -51,17 +51,6 @@ async def entrypoint(ctx: JobContext):
 
 
 
-        ## if end_chat_func_triggered:
-        # await ctx.shutdown(reason="Session ended")
-        ## shutdown hook to post process
-        #     async def my_shutdown_hook():
-        # # save user state
-        # ...
-        # ctx.add_shutdown_callback(my_shutdown_hook)
-
-
-
-
         # Add event handlers to monitor connection status
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
@@ -83,7 +72,6 @@ async def entrypoint(ctx: JobContext):
                 for event in audio_stream:
                     print(event.frame)
 
-
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):
             print(f"Room {room_name} disconnected. Reason: {str(exception)}")
@@ -98,14 +86,9 @@ async def entrypoint(ctx: JobContext):
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
-    # finally:
-    #     # Ensure proper cleanup
-    #     if hasattr(ctx.room, 'disconnect'):
-    #         await ctx.room.disconnect()
-    #     elif hasattr(ctx, 'disconnect'):
-    #         await ctx.disconnect()
-    #     else:
-    #         print("No disconnect method found. Please check LiveKit SDK documentation for proper cleanup.")
+    finally:
+         # Ensure proper cleanup
+        ctx.shutdown(reason="finally, session ended")
 
 
 # async def request_fnc(ctx: JobRequest):
