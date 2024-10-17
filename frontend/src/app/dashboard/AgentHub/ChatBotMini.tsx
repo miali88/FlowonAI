@@ -202,6 +202,12 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           </form>
         </div>
       )}
+      
+      {/* Update the footer */}
+      <footer className={styles.footer}>
+        <img src="/assets/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <span className={styles.footerText}>Powered by Flowon.AI</span>
+      </footer>
     </div>
   );
 };
