@@ -45,7 +45,6 @@ async def entrypoint(ctx: JobContext):
             agent.start(room, available_participant)
             await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
 
-
         else:
             print("No available participants found.")
             await ctx.shutdown(reason="No available participants")
@@ -61,11 +60,13 @@ async def entrypoint(ctx: JobContext):
         # ctx.add_shutdown_callback(my_shutdown_hook)
 
 
+
+
         # Add event handlers to monitor connection status
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             print(f"Participant {participant.identity} disconnected")
-            print("participant connected to:", available_participant)
+            print(f"Agent {ctx.job.id} connected to:", available_participant)
             print("if match, then shut down worker")
             if participant.identity == available_participant.identity:
                 print("participant disconnected, shutting down worker")

@@ -9,6 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
+import { Switch } from "@/components/ui/switch";
+import { ChevronRight } from "lucide-react";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -77,6 +79,7 @@ defer
         <TabsTrigger value="ui">UI</TabsTrigger>
         <TabsTrigger value="embed">Embed</TabsTrigger>
         <TabsTrigger value="share">Share</TabsTrigger>
+        <TabsTrigger value="features">Features</TabsTrigger>
       </TabsList>
       <TabsContent value="edit">
         <div className="space-y-4">
@@ -233,8 +236,74 @@ defer
           </div>
         </div>
       </TabsContent>
+      <TabsContent value="features">
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Features</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {[
+                { id: "callTransfer", label: "Call Transfer" },
+                { id: "appointmentBooking", label: "Appointment Booking" },
+                { id: "form", label: "Form" },
+              ].map((feature) => (
+                <div key={feature.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={feature.id}>{feature.label}</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id={feature.id}
+                        checked={selectedAgent?.features?.[feature.id] || false}
+                        onCheckedChange={(checked) => 
+                          setSelectedAgent({
+                            ...selectedAgent, 
+                            features: {...selectedAgent?.features, [feature.id]: checked}
+                          })
+                        }
+                      />
+                      {selectedAgent?.features?.[feature.id] && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConfigureFeature(feature.id)}
+                        >
+                          Configure <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {selectedAgent?.features?.[feature.id] && (
+                    <p className="text-sm text-muted-foreground">
+                      {getFeatureDescription(feature.id)}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </Tabs>
   );
 };
 
 export default Workspace;
+
+function handleConfigureFeature(featureId: string) {
+  // Implement the logic to open a modal or expandable section for configuration
+  console.log(`Configure ${featureId}`);
+}
+
+function getFeatureDescription(featureId: string): string {
+  switch (featureId) {
+    case "callTransfer":
+      return "Allow the agent to transfer calls to human operators.";
+    case "appointmentBooking":
+      return "Enable the agent to schedule appointments and manage a calendar.";
+    case "form":
+      return "Let the agent collect structured data through customizable forms.";
+    default:
+      return "";
+  }
+}
