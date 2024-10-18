@@ -142,7 +142,7 @@ async def create_voice_assistant(agent_id):
         stt=deepgram.STT(model="nova-2-general"),
         llm=openai.LLM(),   
         tts=cartesia.TTS(),
-        fnc_ctx=AssistantFunction(),
+        # fnc_ctx=AssistantFunction(),
         chat_ctx=initial_ctx,
         allow_interruptions=True,
         interrupt_speech_duration=0.5,
@@ -150,45 +150,44 @@ async def create_voice_assistant(agent_id):
         min_endpointing_delay=0.5)
 
 
-class MyAgentFunctions(FunctionContext):
-    def __init__(self):
-        super().__init__()
+# class MyAgentFunctions(FunctionContext):
+#     def __init__(self):
+#         super().__init__()
 
-    @llm.ai_callable(
-        name="get_weather",
-        description="Get the current weather for a given location",
-        auto_retry=True
-    )
-    def get_weather(self, location: str) -> str:
-        """
-        Get the current weather for a given location.
+#     @llm.ai_callable(
+#         name="get_weather",
+#         description="Get the current weather for a given location",
+#         auto_retry=True
+#     )
+#     def get_weather(self, location: str) -> str:
+#         """
+#         Get the current weather for a given location.
 
-        Args:
-            location (str): The name of the city or location.
+#         Args:
+#             location (str): The name of the city or location.
 
-        Returns:
-            str: A description of the current weather.
-        """
-        # Implement your weather fetching logic here
-        return f"The weather in {location} is sunny and 25°C."
+#         Returns:
+#             str: A description of the current weather.
+#         """
+#         # Implement your weather fetching logic here
+#         return f"The weather in {location} is sunny and 25°C."
 
-    @llm.ai_callable(
-        description="",
-        auto_retry=False
-    )
-    def calculate_sum(self, a: int, b: int) -> int:
-        """
-        Calculate the sum of two numbers.
+#     @llm.ai_callable(
+#         description="",
+#         auto_retry=False
+#     )
+#     def calculate_sum(self, a: int, b: int) -> int:
+#         """
+#         Calculate the sum of two numbers.
 
-        Args:
-            a (int): The first number.
-            b (int): The second number.
+#         Args:
+#             a (int): The first number.
+#             b (int): The second number.
 
-        Returns:
-            int: The sum of a and b.
-        """
-        return a + b
-
+#         Returns:
+#             int: The sum of a and b.
+#         """
+#         return a + b
 
 
 

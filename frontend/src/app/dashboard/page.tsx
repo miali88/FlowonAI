@@ -205,7 +205,7 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Widget"); // Change default to "Widget"
+  const [activeItem, setActiveItem] = useState("Agent Hub"); // Change default to "Agent Hub"
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
@@ -245,7 +245,7 @@ function AdminDashboard() {
       case "Integrations":
         return <Integrations />;
       default:
-        return <DashboardContent />; // Change default to ChatBot
+        return <Lab />; // Change default to Lab (Agent Hub)
     }
   };
 
