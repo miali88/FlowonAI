@@ -12,6 +12,8 @@ import { Agent } from './AgentCards';
 import { Switch } from "@/components/ui/switch";
 import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -32,7 +34,7 @@ interface WorkspaceProps {
   handleStreamStart: () => void;
 }
 
-const Workspace: React.FC<WorkspaceProps> = ({
+    const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
@@ -267,10 +269,102 @@ defer
         </div>
       </TabsContent>
       <TabsContent value="ui">
-        <div className="space-y-4">
-          <p>UI customization options for the agent will be shown here.</p>
-          {/* Add UI customization fields here */}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>UI Customization</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex space-x-4">
+              <div className="w-1/2 space-y-6">
+                <div>
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <ColorPicker
+                    value={selectedAgent?.uiConfig?.primaryColor || DEFAULT_COLOR}
+                    onChange={(color) => setSelectedAgent({
+                      ...selectedAgent,
+                      uiConfig: { ...selectedAgent?.uiConfig, primaryColor: color }
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <ColorPicker
+                    value={selectedAgent?.uiConfig?.secondaryColor || DEFAULT_COLOR}
+                    onChange={(color) => setSelectedAgent({
+                      ...selectedAgent,
+                      uiConfig: { ...selectedAgent?.uiConfig, secondaryColor: color }
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fontSize">Font Size</Label>
+                  <Slider
+                    id="fontSize"
+                    min={12}
+                    max={24}
+                    step={1}
+                    value={[selectedAgent?.uiConfig?.fontSize || 16]}
+                    onValueChange={(value) => setSelectedAgent({
+                      ...selectedAgent,
+                      uiConfig: { ...selectedAgent?.uiConfig, fontSize: value[0] }
+                    })}
+                  />
+                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.fontSize || 16}px</span>
+                </div>
+                <div>
+                  <Label htmlFor="borderRadius">Border Radius</Label>
+                  <Slider
+                    id="borderRadius"
+                    min={0}
+                    max={20}
+                    step={1}
+                    value={[selectedAgent?.uiConfig?.borderRadius || 4]}
+                    onValueChange={(value) => setSelectedAgent({
+                      ...selectedAgent,
+                      uiConfig: { ...selectedAgent?.uiConfig, borderRadius: value[0] }
+                    })}
+                  />
+                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.borderRadius || 4}px</span>
+                </div>
+                <div>
+                  <Label htmlFor="chatboxHeight">Chatbox Height</Label>
+                  <Slider
+                    id="chatboxHeight"
+                    min={300}
+                    max={800}
+                    step={10}
+                    value={[selectedAgent?.uiConfig?.chatboxHeight || 500]}
+                    onValueChange={(value) => setSelectedAgent({
+                      ...selectedAgent,
+                      uiConfig: { ...selectedAgent?.uiConfig, chatboxHeight: value[0] }
+                    })}
+                  />
+                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.chatboxHeight || 500}px</span>
+                </div>
+              </div>
+              <div className="w-1/2">
+                <div className="border rounded-lg p-4" style={{ height: `${selectedAgent?.uiConfig?.chatboxHeight || 500}px` }}>
+                  <ChatBotMini
+                    agentId={selectedAgent?.id || ''}
+                    isStreaming={isStreaming}
+                    setIsStreaming={setIsStreaming}
+                    isLiveKitActive={isLiveKitActive}
+                    setIsLiveKitActive={setIsLiveKitActive}
+                    token={token}
+                    setToken={setToken}
+                    url={url}
+                    setUrl={setUrl}
+                    isConnecting={isConnecting}
+                    setIsConnecting={setIsConnecting}
+                    onStreamEnd={handleStreamEnd}
+                    onStreamStart={handleStreamStart}
+                    bypassShowChatInputCondition={true}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
       <TabsContent value="embed">
         <Card>
@@ -479,7 +573,6 @@ defer
 };
 
 export default Workspace;
-
 function handleConfigureFeature(featureId: string) {
   // Implement the logic to open a modal or expandable section for configuration
   console.log(`Configure ${featureId}`);
