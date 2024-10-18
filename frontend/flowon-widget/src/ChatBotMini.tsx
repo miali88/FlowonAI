@@ -1,10 +1,8 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import styles from './ChatBotMini.module.css';
+import styles from './styles/ChatBotMini.module.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
-import { useUser } from "@clerk/nextjs";
 import { Room, LocalParticipant } from 'livekit-client';
-import { ClerkProvider } from "@clerk/clerk-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -25,6 +23,7 @@ interface ChatBotMiniProps {
   bypassShowChatInputCondition?: boolean;
   localParticipant: LocalParticipant | null;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
+  userId: string | null;
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
@@ -42,8 +41,9 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   onStreamEnd,
   onStreamStart,
   bypassShowChatInputCondition = false,
+  userId,
 }) => {
-  const chatboxRef = useRef<HTMLUListElement>(null);
+  const chatboxRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const sendBtnRef = useRef<HTMLSpanElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
@@ -54,8 +54,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
-
-  const { user } = useUser();
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -89,10 +87,10 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     } else {
       setIsConnecting(true);
       try {
-        if (!user) {
+        if (!userId) {
           throw new Error('User not authenticated');
         }
-        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${user.id}`, {
+        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -114,7 +112,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setIsConnecting(false);
       }
     }
-  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, user]);
+  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, userId]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +131,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           fullName,
           email,
           contactNumber,
-          user_id: user?.id,
+          user_id: userId,
           room_name: roomName,
         }),
       });
@@ -152,7 +150,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, user, roomName, showChatInput, bypassShowChatInputCondition]);
+  }, [fullName, email, contactNumber, userId, roomName, showChatInput, bypassShowChatInputCondition]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -163,78 +161,77 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [localParticipant, isMuted]);
 
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <div className={styles.chatbot}>
-        <header className={styles.header}>
-          <h2>Flowon</h2>
-        </header>
-        <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
-          <MorphingStreamButton
-            onStreamToggle={handleStreamToggle}
-            isStreaming={isStreaming}
-            showTextBox={false}
-            isConnecting={isConnecting}
-          />
-          {isLiveKitActive && token && url && roomName && (
-            <>
-              <LiveKitEntry 
-                token={token} 
-                url={url} 
-                roomName={roomName}
-                isStreaming={isStreaming} 
-                onStreamEnd={onStreamEnd} 
-                onStreamStart={onStreamStart}
-                setRoom={setLiveKitRoom}
-                setLocalParticipant={setLocalParticipant}
-              />
-              {isStreaming && localParticipant && (
-                <button
-                  onClick={handleMuteToggle}
-                  className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
-                >
-                  {isMuted ? 'Unmute' : 'Mute'}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-        {(showChatInput || bypassShowChatInputCondition) && (
-          <div className={styles.chatInput}>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name"
-                required
-              />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
-                required
-              />
-              <input
-                type="tel"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="Contact Number (optional)"
-              />
-              <button type="submit" className={styles.submitBtn}>
-                Submit
+    <div className={styles.chatbot}>
+      <header className={styles.header}>
+        <h2>Flowon</h2>
+      </header>
+      <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
+        <MorphingStreamButton
+          onStreamToggle={handleStreamToggle}
+          isStreaming={isStreaming}
+          showTextBox={false}
+          isConnecting={isConnecting}
+        />
+        {isLiveKitActive && token && url && roomName && (
+          <>
+            <LiveKitEntry 
+              token={token} 
+              url={url} 
+              roomName={roomName}
+              isStreaming={isStreaming} 
+              onStreamEnd={onStreamEnd} 
+              onStreamStart={onStreamStart}
+              setRoom={setLiveKitRoom}
+              setLocalParticipant={setLocalParticipant}
+            />
+            {isStreaming && localParticipant && (
+              <button
+                onClick={handleMuteToggle}
+                className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
+              >
+                {isMuted ? 'Unmute' : 'Mute'}
               </button>
-            </form>
-          </div>
+            )}
+          </>
         )}
-        
-        {/* Update the footer */}
-        <footer className={styles.footer}>
-          <img src="/assets/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
-          <span className={styles.footerText}>Powered by Flowon.AI</span>
-        </footer>
       </div>
-    </ClerkProvider>
+      {(showChatInput || bypassShowChatInputCondition) && (
+        <div className={styles.chatInput}>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              required
+            />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email Address"
+              required
+            />
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              placeholder="Contact Number (optional)"
+            />
+            <button type="submit" className={styles.submitBtn}>
+              Submit
+            </button>
+          </form>
+        </div>
+      )
+      }
+      
+      {/* Update the footer */}
+      <footer className={styles.footer}>
+        <img src="/assets/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <span className={styles.footerText}>Powered by Flowon.AI</span>
+      </footer>
+    </div>
   );
 };
 
