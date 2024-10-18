@@ -20,7 +20,6 @@ async def entrypoint(ctx: JobContext):
         for rp in room.remote_participants.values():
             print("rp.identity", rp.identity)
 
-
         # Find an available participant that is not subscribed to any track
         available_participant = None
         for rp in room.remote_participants.values():
@@ -48,8 +47,6 @@ async def entrypoint(ctx: JobContext):
         else:
             print("No available participants found.")
             await ctx.shutdown(reason="No available participants")
-
-
 
         """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
