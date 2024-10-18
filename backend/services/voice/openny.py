@@ -64,6 +64,7 @@ class AssistantFunction(agents.llm.FunctionContext):
         print(f"Triggering end call: {user_msg}")
         return None
 
+
 class CustomVoiceAssistant(VoiceAssistant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

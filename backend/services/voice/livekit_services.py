@@ -9,6 +9,8 @@ from livekit.plugins import cartesia, deepgram, openai, silero
 from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
 import os 
 from dotenv import load_dotenv
+from livekit.agents import llm
+from livekit.agents.llm import FunctionContext
 
 load_dotenv()
 
@@ -129,19 +131,65 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
 
 async def create_voice_assistant(agent_id):
     agent = await get_agent(agent_id)
+
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=agent['instructions'])
+    
+
     return VoiceAssistant(
         vad=silero.VAD.load(),
         stt=deepgram.STT(model="nova-2-general"),
         llm=openai.LLM(),   
         tts=cartesia.TTS(),
+        fnc_ctx=AssistantFunction(),
         chat_ctx=initial_ctx,
         allow_interruptions=True,
         interrupt_speech_duration=0.5,
         interrupt_min_words=0,
         min_endpointing_delay=0.5)
+
+
+class MyAgentFunctions(FunctionContext):
+    def __init__(self):
+        super().__init__()
+
+    @llm.ai_callable(
+        name="get_weather",
+        description="Get the current weather for a given location",
+        auto_retry=True
+    )
+    def get_weather(self, location: str) -> str:
+        """
+        Get the current weather for a given location.
+
+        Args:
+            location (str): The name of the city or location.
+
+        Returns:
+            str: A description of the current weather.
+        """
+        # Implement your weather fetching logic here
+        return f"The weather in {location} is sunny and 25°C."
+
+    @llm.ai_callable(
+        description="",
+        auto_retry=False
+    )
+    def calculate_sum(self, a: int, b: int) -> int:
+        """
+        Calculate the sum of two numbers.
+
+        Args:
+            a (int): The first number.
+            b (int): The second number.
+
+        Returns:
+            int: The sum of a and b.
+        """
+        return a + b
+
+
 
 
 async def get_agent(agent_id):

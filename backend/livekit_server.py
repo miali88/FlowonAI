@@ -51,7 +51,7 @@ async def entrypoint(ctx: JobContext):
 
 
 
-        # Add event handlers to monitor connection status
+        """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             print(f"Participant {participant.identity} disconnected")
