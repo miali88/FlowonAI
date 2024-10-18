@@ -3,7 +3,7 @@ import styles from './ChatBotMini.module.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
-import { Room } from 'livekit-client';
+import { Room, LocalParticipant } from 'livekit-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -22,6 +22,8 @@ interface ChatBotMiniProps {
   onStreamEnd: () => void;
   onStreamStart: () => void;
   bypassShowChatInputCondition?: boolean;
+  localParticipant: LocalParticipant | null;
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
@@ -49,6 +51,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [isMuted, setIsMuted] = useState(false);
+  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
 
   const { user } = useUser();
 
@@ -149,6 +153,14 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [fullName, email, contactNumber, user, roomName, showChatInput, bypassShowChatInputCondition]);
 
+  const handleMuteToggle = useCallback(() => {
+    if (localParticipant) {
+      const newMuteState = !isMuted;
+      localParticipant.setMicrophoneEnabled(!newMuteState);
+      setIsMuted(newMuteState);
+    }
+  }, [localParticipant, isMuted]);
+
   return (
     <div className={styles.chatbot}>
       <header className={styles.header}>
@@ -162,15 +174,26 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           isConnecting={isConnecting}
         />
         {isLiveKitActive && token && url && roomName && (
-          <LiveKitEntry 
-            token={token} 
-            url={url} 
-            roomName={roomName}
-            isStreaming={isStreaming} 
-            onStreamEnd={onStreamEnd} 
-            onStreamStart={onStreamStart}
-            setRoom={setLiveKitRoom}
-          />
+          <>
+            <LiveKitEntry 
+              token={token} 
+              url={url} 
+              roomName={roomName}
+              isStreaming={isStreaming} 
+              onStreamEnd={onStreamEnd} 
+              onStreamStart={onStreamStart}
+              setRoom={setLiveKitRoom}
+              setLocalParticipant={setLocalParticipant}
+            />
+            {isStreaming && localParticipant && (
+              <button
+                onClick={handleMuteToggle}
+                className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
+              >
+                {isMuted ? 'Unmute' : 'Mute'}
+              </button>
+            )}
+          </>
         )}
       </div>
       {(showChatInput || bypassShowChatInputCondition) && (

@@ -6,7 +6,7 @@ import {
   useLocalParticipant,
   useConnectionState,
 } from '@livekit/components-react';
-import { Room } from 'livekit-client';
+import { Room, LocalParticipant } from 'livekit-client';
 import { useState, useEffect, useCallback } from "react";
 
 interface LiveKitEntryProps {
@@ -17,9 +17,10 @@ interface LiveKitEntryProps {
   onStreamEnd: () => void;
   onStreamStart: () => void;
   setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
-export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom }: LiveKitEntryProps) {
+export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
   const handleConnected = useCallback((room: Room) => {
@@ -43,12 +44,27 @@ export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, o
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
-      <ActiveRoom room={localRoom} isStreaming={isStreaming} onStreamEnd={onStreamEnd} />
+      <ActiveRoom 
+        room={localRoom} 
+        isStreaming={isStreaming} 
+        onStreamEnd={onStreamEnd} 
+        setLocalParticipant={setLocalParticipant}
+      />
     </LiveKitRoom>
   );
 }
 
-const ActiveRoom = ({ room, isStreaming, onStreamEnd }: { room: Room | null, isStreaming: boolean, onStreamEnd: () => void }) => {
+const ActiveRoom = ({ 
+  room, 
+  isStreaming, 
+  onStreamEnd,
+  setLocalParticipant
+}: { 
+  room: Room | null, 
+  isStreaming: boolean, 
+  onStreamEnd: () => void,
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>
+}) => {
   const { localParticipant } = useLocalParticipant();
   const connectionState = useConnectionState();
   const [isConnected, setIsConnected] = useState(false);
@@ -64,8 +80,9 @@ const ActiveRoom = ({ room, isStreaming, onStreamEnd }: { room: Room | null, isS
   useEffect(() => {
     if (isConnected && localParticipant) {
       localParticipant.setMicrophoneEnabled(true);
+      setLocalParticipant(localParticipant);
     }
-  }, [isConnected, localParticipant]);
+  }, [isConnected, localParticipant, setLocalParticipant]);
 
   useEffect(() => {
     if (!isStreaming && room) {
