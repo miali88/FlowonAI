@@ -25,9 +25,16 @@ export class FlowonChatWidget extends LitElement {
     `;
   }
 
+  private getConfig() {
+    return {
+      NEXT_PUBLIC_API_BASE_URL: window.FLOWON_CONFIG?.NEXT_PUBLIC_API_BASE_URL || 'https://71efb9730013.ngrok.app/api/v1',
+    };
+  }
+
   firstUpdated() {
     const container = this.shadowRoot?.getElementById('chat-container');
     if (container) {
+      const config = this.getConfig();
       ReactDOM.render(
         React.createElement(ChatBotMini, {
           agentId: this.agentId,
@@ -46,10 +53,19 @@ export class FlowonChatWidget extends LitElement {
           bypassShowChatInputCondition: true,
           localParticipant: null,
           setLocalParticipant: () => {},
-          userId: null, // or provide a valid user ID if available
+          userId: null,
+          config: config,
         }),
         container
       );
     }
+  }
+}
+
+declare global {
+  interface Window {
+    FLOWON_CONFIG?: {
+      NEXT_PUBLIC_API_BASE_URL: string;
+    };
   }
 }
