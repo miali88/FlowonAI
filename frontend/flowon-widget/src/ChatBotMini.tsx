@@ -4,8 +4,6 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 interface ChatBotMiniProps {
   agentId: string;
   isStreaming: boolean;
@@ -24,6 +22,9 @@ interface ChatBotMiniProps {
   localParticipant: LocalParticipant | null;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
   userId: string | null;
+  config: {
+    NEXT_PUBLIC_API_BASE_URL: string;
+  };
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
@@ -42,6 +43,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   onStreamStart,
   bypassShowChatInputCondition = false,
   userId,
+  config,
 }) => {
   const chatboxRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -63,7 +65,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   useEffect(() => {
     if (roomName) {
-      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events/${roomName}`);
+      const eventSource = new EventSource(`${config.NEXT_PUBLIC_API_BASE_URL}/conversation/events/${roomName}`);
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -90,7 +92,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         if (!userId) {
           throw new Error('User not authenticated');
         }
-        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
+        const response = await fetch(`${config.NEXT_PUBLIC_API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -122,7 +124,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
+      const response = await fetch(`${config.NEXT_PUBLIC_API_BASE_URL}/conversation/chat_message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

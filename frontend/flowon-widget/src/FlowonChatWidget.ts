@@ -4,6 +4,11 @@ import { customElement, property } from 'lit/decorators.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ChatBotMini from './ChatBotMini';
+import process from 'process';
+import { Buffer } from 'buffer';
+
+globalThis.process = process;
+globalThis.Buffer = Buffer;
 
 @customElement('flowon-chat-widget')
 export class FlowonChatWidget extends LitElement {
@@ -27,7 +32,7 @@ export class FlowonChatWidget extends LitElement {
 
   private getConfig() {
     return {
-      NEXT_PUBLIC_API_BASE_URL: window.FLOWON_CONFIG?.NEXT_PUBLIC_API_BASE_URL || 'https://71efb9730013.ngrok.app/api/v1',
+      NEXT_PUBLIC_API_BASE_URL: (window as any).FLOWON_CONFIG?.NEXT_PUBLIC_API_BASE_URL || 'https://71efb9730013.ngrok.app/api/v1',
     };
   }
 
