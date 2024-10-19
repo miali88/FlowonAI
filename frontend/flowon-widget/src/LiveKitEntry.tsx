@@ -8,6 +8,12 @@ import {
 } from '@livekit/components-react';
 import { Room, LocalParticipant } from 'livekit-client';
 import { useState, useEffect, useCallback } from "react";
+import { ReactElement } from 'react';
+
+interface LiveKitRoomProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError'> {
+  // ... other props ...
+  children: ReactElement | ReactElement[];
+}
 
 interface LiveKitEntryProps {
   token: string;
@@ -20,12 +26,14 @@ interface LiveKitEntryProps {
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
-export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }: LiveKitEntryProps) {
+const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }) => {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback(() => {
+  const handleConnected = useCallback((room: Room) => {
+    setLocalRoom(room);
+    setRoom(room);  // Update the room in the parent component
     onStreamStart(); // Notify parent that streaming has started
-  }, [onStreamStart]);
+  }, [onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -34,22 +42,28 @@ export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, o
   }, [onStreamEnd, setRoom]);
 
   return (
-    <LiveKitRoom
-      token={token}
-      serverUrl={url}
-      connectOptions={{ autoSubscribe: true, name: roomName }}
-      onConnected={handleConnected}
-      onDisconnected={handleDisconnected}
-    >
-      <ActiveRoom 
-        room={localRoom} 
-        isStreaming={isStreaming} 
-        onStreamEnd={onStreamEnd} 
-        setLocalParticipant={setLocalParticipant}
-      />
-    </LiveKitRoom>
+    <div>
+      {token && url && roomName
+        ? LiveKitRoom({
+            token,
+            serverUrl: url,
+            roomName,
+            connectOptions: { autoSubscribe: true },
+            onConnected: handleConnected,
+            onDisconnected: handleDisconnected,
+            children: (
+              <ActiveRoom
+                room={localRoom}
+                isStreaming={isStreaming}
+                onStreamEnd={onStreamEnd}
+                setLocalParticipant={setLocalParticipant}
+              />
+            ),
+          })
+        : null}
+    </div>
   );
-}
+};
 
 const ActiveRoom = ({ 
   room, 
@@ -77,7 +91,7 @@ const ActiveRoom = ({
   useEffect(() => {
     if (isConnected && localParticipant) {
       localParticipant.setMicrophoneEnabled(true);
-      setLocalParticipant(localParticipant as any);
+      setLocalParticipant(localParticipant);
     }
   }, [isConnected, localParticipant, setLocalParticipant]);
 
