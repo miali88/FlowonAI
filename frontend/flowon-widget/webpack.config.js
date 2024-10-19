@@ -15,6 +15,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'], // Added '.mjs'
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      'process/browser': 'process/browser.js', // Added alias for process/browser
     },
     fallback: {
       // Specify the exact file paths with extensions
@@ -22,9 +23,6 @@ module.exports = {
       "buffer": require.resolve("buffer/index.js"),
     },
     mainFields: ['browser', 'module', 'main'], // Prioritize browser fields
-    resolveLoader: {
-      fullySpecified: false, // Disable fully specified imports for loaders
-    },
   },
   module: {
     rules: [
