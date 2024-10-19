@@ -31,37 +31,36 @@ const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStr
 
   const handleConnected = useCallback(() => {
     if (localRoom) {
-      setRoom(localRoom);  // Update the room in the parent component
-      onStreamStart(); // Notify parent that streaming has started
+      setRoom(localRoom);
+      onStreamStart();
     }
   }, [localRoom, onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
-    setRoom(null);  // Update the room in the parent component
-    onStreamEnd(); // Notify parent that streaming has ended
+    setRoom(null);
+    onStreamEnd();
   }, [onStreamEnd, setRoom]);
 
   return (
     <div>
-      {token && url && roomName
-        ? LiveKitRoom({
-            token,
-            serverUrl: url,
-            connect: true,
-            connectOptions: { autoSubscribe: true },
-            onConnected: handleConnected,
-            onDisconnected: handleDisconnected,
-            children: (
-              <ActiveRoom
-                room={localRoom}
-                isStreaming={isStreaming}
-                onStreamEnd={onStreamEnd}
-                setLocalParticipant={setLocalParticipant}
-              />
-            ),
-          })
-        : null}
+      {token && url && roomName ? (
+        <LiveKitRoom
+          token={token}
+          serverUrl={url}
+          connect={true}
+          connectOptions={{ autoSubscribe: true }}
+          onConnected={handleConnected}
+          onDisconnected={handleDisconnected}
+        >
+          <ActiveRoom
+            room={localRoom}
+            isStreaming={isStreaming}
+            onStreamEnd={onStreamEnd}
+            setLocalParticipant={setLocalParticipant}
+          />
+        </LiveKitRoom>
+      ) : null}
     </div>
   );
 };
