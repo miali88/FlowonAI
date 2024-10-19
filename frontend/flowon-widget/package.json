@@ -5,14 +5,16 @@
     "build": "webpack --mode production"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.6.5",
+    "@livekit/components-styles": "^1.1.4",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lit": "^2.6.1",
-    "livekit-client": "^1.7.0",
+    "livekit-client": "^2.5.9",
     "lucide-react": "^0.453.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7"
   },

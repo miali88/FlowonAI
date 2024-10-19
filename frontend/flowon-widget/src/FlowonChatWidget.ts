@@ -46,6 +46,7 @@ export class FlowonChatWidget extends LitElement {
           bypassShowChatInputCondition: true,
           localParticipant: null,
           setLocalParticipant: () => {},
+          userId: null, // or provide a valid user ID if available
         }),
         container
       );

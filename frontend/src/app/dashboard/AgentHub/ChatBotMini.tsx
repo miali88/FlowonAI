@@ -4,7 +4,6 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { useUser } from "@clerk/nextjs";
 import { Room, LocalParticipant } from 'livekit-client';
-import { ClerkProvider } from "@clerk/clerk-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -163,78 +162,76 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [localParticipant, isMuted]);
 
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <div className={styles.chatbot}>
-        <header className={styles.header}>
-          <h2>Flowon</h2>
-        </header>
-        <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
-          <MorphingStreamButton
-            onStreamToggle={handleStreamToggle}
-            isStreaming={isStreaming}
-            showTextBox={false}
-            isConnecting={isConnecting}
-          />
-          {isLiveKitActive && token && url && roomName && (
-            <>
-              <LiveKitEntry 
-                token={token} 
-                url={url} 
-                roomName={roomName}
-                isStreaming={isStreaming} 
-                onStreamEnd={onStreamEnd} 
-                onStreamStart={onStreamStart}
-                setRoom={setLiveKitRoom}
-                setLocalParticipant={setLocalParticipant}
-              />
-              {isStreaming && localParticipant && (
-                <button
-                  onClick={handleMuteToggle}
-                  className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
-                >
-                  {isMuted ? 'Unmute' : 'Mute'}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-        {(showChatInput || bypassShowChatInputCondition) && (
-          <div className={styles.chatInput}>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name"
-                required
-              />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
-                required
-              />
-              <input
-                type="tel"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="Contact Number (optional)"
-              />
-              <button type="submit" className={styles.submitBtn}>
-                Submit
+    <div className={styles.chatbot}>
+      <header className={styles.header}>
+        <h2>Flowon</h2>
+      </header>
+      <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
+        <MorphingStreamButton
+          onStreamToggle={handleStreamToggle}
+          isStreaming={isStreaming}
+          showTextBox={false}
+          isConnecting={isConnecting}
+        />
+        {isLiveKitActive && token && url && roomName && (
+          <>
+            <LiveKitEntry 
+              token={token} 
+              url={url} 
+              roomName={roomName}
+              isStreaming={isStreaming} 
+              onStreamEnd={onStreamEnd} 
+              onStreamStart={onStreamStart}
+              setRoom={setLiveKitRoom}
+              setLocalParticipant={setLocalParticipant}
+            />
+            {isStreaming && localParticipant && (
+              <button
+                onClick={handleMuteToggle}
+                className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
+              >
+                {isMuted ? 'Unmute' : 'Mute'}
               </button>
-            </form>
-          </div>
+            )}
+          </>
         )}
-        
-        {/* Update the footer */}
-        <footer className={styles.footer}>
-          <img src="/assets/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
-          <span className={styles.footerText}>Powered by Flowon.AI</span>
-        </footer>
       </div>
-    </ClerkProvider>
+      {(showChatInput || bypassShowChatInputCondition) && (
+        <div className={styles.chatInput}>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              required
+            />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email Address"
+              required
+            />
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              placeholder="Contact Number (optional)"
+            />
+            <button type="submit" className={styles.submitBtn}>
+              Submit
+            </button>
+          </form>
+        </div>
+      )}
+      
+      {/* Update the footer */}
+      <footer className={styles.footer}>
+        <img src="/assets/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <span className={styles.footerText}>Powered by Flowon.AI</span>
+      </footer>
+    </div>
   );
 };
 

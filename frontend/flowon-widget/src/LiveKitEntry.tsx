@@ -23,11 +23,9 @@ interface LiveKitEntryProps {
 export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback((room: Room) => {
-    setLocalRoom(room);
-    setRoom(room);  // Update the room in the parent component
+  const handleConnected = useCallback(() => {
     onStreamStart(); // Notify parent that streaming has started
-  }, [onStreamStart, setRoom]);
+  }, [onStreamStart]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -39,8 +37,7 @@ export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, o
     <LiveKitRoom
       token={token}
       serverUrl={url}
-      roomName={roomName}
-      connectOptions={{ autoSubscribe: true }}
+      connectOptions={{ autoSubscribe: true, name: roomName }}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
@@ -80,7 +77,7 @@ const ActiveRoom = ({
   useEffect(() => {
     if (isConnected && localParticipant) {
       localParticipant.setMicrophoneEnabled(true);
-      setLocalParticipant(localParticipant);
+      setLocalParticipant(localParticipant as any);
     }
   }, [isConnected, localParticipant, setLocalParticipant]);
 

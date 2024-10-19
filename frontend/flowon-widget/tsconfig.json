@@ -15,7 +15,11 @@
       "isolatedModules": true,
       "noEmit": false,
       "jsx": "react-jsx",
-      "experimentalDecorators": true
+      "experimentalDecorators": true,
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["src/*"]
+      }
     },
     "include": ["src"]
   }
