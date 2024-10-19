@@ -29,11 +29,12 @@ interface LiveKitEntryProps {
 const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }) => {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback((room: Room) => {
-    setLocalRoom(room);
-    setRoom(room);  // Update the room in the parent component
-    onStreamStart(); // Notify parent that streaming has started
-  }, [onStreamStart, setRoom]);
+  const handleConnected = useCallback(() => {
+    if (localRoom) {
+      setRoom(localRoom);  // Update the room in the parent component
+      onStreamStart(); // Notify parent that streaming has started
+    }
+  }, [localRoom, onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -47,7 +48,7 @@ const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStr
         ? LiveKitRoom({
             token,
             serverUrl: url,
-            roomName,
+            connect: true,
             connectOptions: { autoSubscribe: true },
             onConnected: handleConnected,
             onDisconnected: handleDisconnected,
