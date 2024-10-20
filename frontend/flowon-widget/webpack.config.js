@@ -6,7 +6,7 @@ const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
-  entry: './src/FlowonChatWidget.ts',
+  entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'flowon-chat-widget.js',
@@ -15,7 +15,7 @@ module.exports = {
       type: 'umd',
       umdNamedDefine: true,
     },
-    clean: true, // Optional: Cleans the output directory before emit
+    clean: true,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
@@ -63,17 +63,17 @@ module.exports = {
     new CleanWebpackPlugin(),
     new NodePolyfillPlugin(),
     new webpack.DefinePlugin({
-      'process.env': JSON.stringify(process.env)
+      'process.env': JSON.stringify(process.env),
+      'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(process.env.NEXT_PUBLIC_API_BASE_URL || 'https://71efb9730013.ngrok.app/api/v1'),
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser.js',
       Buffer: ['buffer', 'Buffer'],
     }),
-    new webpack.DefinePlugin({
-      'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(process.env.NEXT_PUBLIC_API_BASE_URL || 'https://71efb9730013.ngrok.app/api/v1'),
+    new HtmlWebpackPlugin({
+      template: 'public/index.html',
     }),
   ],
-  // Removed experiments section
   ignoreWarnings: [
     {
       module: /@livekit\/components-react/,
@@ -89,11 +89,19 @@ module.exports = {
     minimize: true,
     minimizer: [new TerserPlugin({
       terserOptions: {
-        ecma: 2015, // Specify ECMAScript target version
+        ecma: 2015,
         compress: {
-          drop_console: true, // Example: remove console logs
+          drop_console: true,
         },
       },
     })],
+  },
+  devServer: {
+    static: {
+      directory: path.join(__dirname, 'public'),
+    },
+    compress: true,
+    port: 8080,
+    hot: true,
   },
 };
