@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom';
 import ChatBotMini from './ChatBotMini';
 import process from 'process';
 import { Buffer } from 'buffer';
+import { createRoot } from 'react-dom/client';
 
 globalThis.process = process;
 globalThis.Buffer = Buffer;
