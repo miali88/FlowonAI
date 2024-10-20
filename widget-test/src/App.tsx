@@ -27,13 +27,13 @@ function App() {
     console.log('Stream started');
   };
 
-  return (
+  return ( 
     <Layout>
       <div className="App">
         <h1 className="text-2xl font-bold mb-4">ChatBot Mini Test Environment</h1>
         <ErrorBoundary>
           <ChatBotMini
-            agentId="test-agent-id"
+            agentId="a14205e6-4b73-43d0-90f8-ea0a38da0112"
             isStreaming={isStreaming}
             setIsStreaming={setIsStreaming}
             isLiveKitActive={isLiveKitActive}
