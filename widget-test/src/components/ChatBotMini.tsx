@@ -4,7 +4,7 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL;
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 interface ChatBotMiniProps {
   agentId: string;
@@ -43,6 +43,17 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   bypassShowChatInputCondition = false,
   userId,
 }) => {
+  console.log('ChatBotMini props:', {
+    agentId,
+    isStreaming,
+    isLiveKitActive,
+    token,
+    url,
+    isConnecting,
+    bypassShowChatInputCondition,
+    userId
+  });
+
   const chatboxRef = useRef<HTMLUListElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const sendBtnRef = useRef<HTMLSpanElement>(null);
@@ -93,21 +104,39 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         });
+        
+        const responseText = await response.text();
+        console.log('Server response:', responseText);
+
         if (!response.ok) {
-          throw new Error('Failed to fetch token');
+          throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
         }
-        const { accessToken, url: liveKitUrl, roomName } = await response.json();
-        setToken(accessToken);
-        setUrl(liveKitUrl);
-        setRoomName(roomName);
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (error) {
+          console.error('Failed to parse JSON:', error);
+          throw new Error(`Invalid JSON response. Please check the API endpoint and server configuration.`);
+        }
+        
+        console.log('Parsed data:', data);
+        
+        if (!data.accessToken || !data.url || !data.roomName) {
+          throw new Error(`Invalid response structure. Expected accessToken, url, and roomName.`);
+        }
+        
+        setToken(data.accessToken);
+        setUrl(data.url);
+        setRoomName(data.roomName);
         setIsLiveKitActive(true);
         setIsStreaming(true);
       } catch (error) {
         console.error('Failed to connect:', error);
-        // Handle error (e.g., show an alert)
+        alert(`Failed to connect: ${error.message}\n\nPlease check the console for more details and ensure the API server is running correctly.`);
       } finally {
         setIsConnecting(false);
       }
@@ -161,7 +190,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [localParticipant, isMuted]);
 
   return (
-    <div className={styles.chatbot}>
+    <div className={`${styles.chatbot} debug-chatbot-mini`}>
       <header className={styles.header}>
         <h2>Flowon</h2>
       </header>

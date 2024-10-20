@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import ChatBotMini from './components/ChatBotMini';
+import ErrorBoundary from './components/ErrorBoundary';
+import Layout from './components/Layout';
 
 // Mock user object
 const mockUser = {
@@ -26,27 +28,32 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>ChatBot Mini Test Environment</h1>
-      <ChatBotMini
-        agentId="test-agent-id"
-        isStreaming={isStreaming}
-        setIsStreaming={setIsStreaming}
-        isLiveKitActive={isLiveKitActive}
-        setIsLiveKitActive={setIsLiveKitActive}
-        token={token}
-        setToken={setToken}
-        url={url}
-        setUrl={setUrl}
-        isConnecting={isConnecting}
-        setIsConnecting={setIsConnecting}
-        onStreamEnd={handleStreamEnd}
-        onStreamStart={handleStreamStart}
-        bypassShowChatInputCondition={true}
-        localParticipant={null}
-        setLocalParticipant={() => {}}
-      />
-    </div>
+    <Layout>
+      <div className="App">
+        <h1 className="text-2xl font-bold mb-4">ChatBot Mini Test Environment</h1>
+        <ErrorBoundary>
+          <ChatBotMini
+            agentId="test-agent-id"
+            isStreaming={isStreaming}
+            setIsStreaming={setIsStreaming}
+            isLiveKitActive={isLiveKitActive}
+            setIsLiveKitActive={setIsLiveKitActive}
+            token={token}
+            setToken={setToken}
+            url={url}
+            setUrl={setUrl}
+            isConnecting={isConnecting}
+            setIsConnecting={setIsConnecting}
+            onStreamEnd={handleStreamEnd}
+            onStreamStart={handleStreamStart}
+            bypassShowChatInputCondition={true}
+            localParticipant={null}
+            setLocalParticipant={() => {}}
+            userId="test-user-id"
+          />
+        </ErrorBoundary>
+      </div>
+    </Layout>
   );
 }
 

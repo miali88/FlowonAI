@@ -34,7 +34,7 @@ async def get_current_user(x_user_id: str = Header(...)):
 @router.get("/token")
 async def get_token(request: Request, background_tasks: BackgroundTasks):
     """ Create a token for a user to join a room & starts the agent """
-    print("\n\n /token endpoint called")
+    print("\n\n /livekit/token endpoint called")
 
     agent_id = request.query_params.get("agent_id")
     user_id = request.query_params.get("user_id")
