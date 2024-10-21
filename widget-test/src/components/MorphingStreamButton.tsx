@@ -16,6 +16,8 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
   showTextBox,
   isConnecting,
 }) => {
+  console.log('MorphingStreamButton rendered with props:', { isStreaming, isConnecting });
+
   const handleClick = () => {
     onStreamToggle();
   };
