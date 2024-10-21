@@ -6,6 +6,8 @@ import babel from '@rollup/plugin-babel';
 import terser from '@rollup/plugin-terser';
 import postcss from 'rollup-plugin-postcss';
 import replace from '@rollup/plugin-replace';
+import json from '@rollup/plugin-json';
+import strip from '@rollup/plugin-strip';
 
 export default defineConfig({
   input: 'src/main.tsx',
@@ -13,18 +15,24 @@ export default defineConfig({
     file: 'dist/embed.min.js',
     format: 'iife',
     name: 'EmbeddedChatbot',
-    sourcemap: true, // Enable source maps
+    sourcemap: true,
   },
   plugins: [
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
-      preventAssignment: true
+      preventAssignment: true,
+    }),
+    strip({
+      include: '**/*.mjs',
+      // Removes all comments including "use client"
+      comments: 'none',
     }),
     resolve({
       browser: true,
       preferBuiltins: false,
     }),
     commonjs(),
+    json(),
     typescript({ tsconfig: './tsconfig.app.json' }),
     babel({
       babelHelpers: 'bundled',
@@ -40,9 +48,11 @@ export default defineConfig({
       extensions: ['.css'],
       minimize: true,
       inject: true,
-      modules: true,
+      modules: {
+        exclude: /node_modules/,
+      },
     }),
     terser(),
   ],
-  external: [], // Continue bundling all dependencies
+  external: [],
 });

@@ -58,6 +58,25 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+@keyframes morph {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes expand {
+  from { width: 0; }
+  to { width: auto; }
+}
+
+.animate-morph {
+  animation: morph 0.5s ease-in-out;
+}
+
+.animate-expand {
+  animation: expand 0.5s ease-in-out;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

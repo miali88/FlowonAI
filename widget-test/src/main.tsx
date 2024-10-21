@@ -15,7 +15,8 @@ const initializeWidget = () => {
   container.id = 'embedded-chatbot-container';
   document.body.appendChild(container);
 
-  createRoot(container).render(
+  const root = createRoot(container);
+  root.render(
     <React.StrictMode>
       <App agentId={config.agentId} domain={config.domain} />
     </React.StrictMode>
