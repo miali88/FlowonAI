@@ -8,6 +8,7 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 interface ChatBotMiniProps {
   agentId: string;
+  domain: string;
   isStreaming: boolean;
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
   isLiveKitActive: boolean;
@@ -28,6 +29,7 @@ interface ChatBotMiniProps {
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
+  domain,
   isStreaming,
   setIsStreaming,
   isLiveKitActive,
@@ -45,6 +47,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 }) => {
   console.log('ChatBotMini props:', {
     agentId,
+    domain,
     isStreaming,
     isLiveKitActive,
     token,
@@ -134,7 +137,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setRoomName(data.roomName);
         setIsLiveKitActive(true);
         setIsStreaming(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to connect:', error);
         alert(`Failed to connect: ${error.message}\n\nPlease check the console for more details and ensure the API server is running correctly.`);
       } finally {
