@@ -558,10 +558,10 @@ defer
           <CardContent>
             <div className="space-y-6">
               {[
+                { id: "prospects", label: "Prospect Notification" },
+                { id: "form", label: "Form Builder" },
                 { id: "callTransfer", label: "Call Transfer" },
                 { id: "appointmentBooking", label: "Appointment Booking" },
-                { id: "form", label: "Form" },
-                { id: "prospects", label: "Prospect Notification" },
               ].map((feature) => (
                 <div key={feature.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -753,7 +753,7 @@ function getFeatureDescription(featureId: string): string {
     case "form":
       return "Let the agent collect structured data through customizable forms.";
     case "prospects":
-      return "Enable the agent to manage and track potential customers or leads.";
+      return "Be notified when a prospect shows interest.";
     default:
       return "";
   }

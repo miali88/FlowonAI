@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
 import { handleScrape } from './HandleScrape';
+import { TokenCounter } from './TokenCounter';
 interface SavedItem {
   id: number;
   title: string;
@@ -89,8 +90,13 @@ function KnowledgeBaseContent() {
             id: item.id,
             title: item.title,
             content: item.content || "Content not available",
-            data_type: item.data_type, // Add this line
+            data_type: item.data_type,
+            tokens: item.tokens || 0, // Add this line
           }));
+          
+          // Calculate total tokens
+          const total = formattedItems.reduce((sum, item) => sum + (item.tokens || 0), 0);
+          setTotalTokens(total);
           setSavedItems(formattedItems);
           
           // Log each item's title and data_type
@@ -361,7 +367,7 @@ function KnowledgeBaseContent() {
                   />
                 </div>
                 <div className="mb-4">
-                  <p>Total Tokens: {totalTokens}</p>
+                  <TokenCounter totalTokens={totalTokens} />
                 </div>
                 <ScrollArea className="h-[calc(100vh-300px)]">
                   {filteredItems.map((item) => {
