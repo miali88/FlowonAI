@@ -444,10 +444,10 @@ defer
               {/* Relocated features section */}
               <div className="space-y-6">
                 {[
-                  { id: "prospects", label: "Prospect Notification" },
-                  { id: "form", label: "Form Builder" },
-                  { id: "callTransfer", label: "Call Transfer" },
-                  { id: "appointmentBooking", label: "Appointment Booking" },
+                  { id: "prospects", label: "Notify you on interest" },
+                  { id: "form", label: "Collect written information" },
+                  { id: "callTransfer", label: "Transfer call to a human" },
+                  { id: "appointmentBooking", label: "Book calendar slot" },
                 ].map((feature) => (
                   <div key={feature.id} className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -729,9 +729,16 @@ defer
               <>
                 <Accordion type="single" collapsible>
                   <AccordionItem value="info">
-                    <AccordionTrigger>Important Information</AccordionTrigger>
+                    <AccordionTrigger>how to use</AccordionTrigger>
                     <AccordionContent>
-                      Forms should be limited to requesting personal data from the caller as these are more sensitive to spelling. The AI agent will be able to extract all other kinds of information from a call automatically.
+                      <p className="mb-4">
+                        Forms should only be used to collect personal data that requires exact spelling. All other types of information will be automatically extracted. The agent will:
+                      </p>
+                      <ul>
+                        <li>- Request and verify this information from the caller</li>
+                        <li>- Let the AI system capture other relevant details from the conversation</li>
+                        <li>- Qualify a caller as a lead</li>
+                      </ul>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -862,3 +869,4 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
+
