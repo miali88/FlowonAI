@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Plus, Trash2, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
@@ -41,6 +41,27 @@ interface ProspectSettings {
   sms: string;
   whatsapp: string;
 }
+
+// Add this constant at the top of the file, after the imports
+const VOICE_OPTIONS = {
+  "en-GB": [
+    { id: "voice1", name: "Alex K", file: "/voices/AlexK.wav" },
+    { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
+    { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.wav" },
+  ],
+  "en-US": [
+    { id: "us-voice1", name: "US Voice 1", file: "/voices/USVoice1.wav" },
+    { id: "us-voice2", name: "US Voice 2", file: "/voices/USVoice2.wav" },
+  ],
+  "fr": [
+    { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav" },
+    { id: "a249eaff-1e96-4d2c-b23b-12efa4f66f41", name: "Female", file: "/voices/cartesia_french2.wav" },
+  ],
+  "de": [{ id: "de-voice1", name: "German Voice 1", file: "/voices/cartesia_german1.wav" }],
+  "ar": [{ id: "ar-voice1", name: "Arabic Voice 1", file: "/voices/cartesia_arabic1.wav" }],
+  "nl": [{ id: "nl-voice1", name: "Dutch Voice 1", file: "/voices/cartesia_dutch1.wav" }],
+  "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
+};
 
     const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
@@ -79,6 +100,18 @@ interface ProspectSettings {
     sms: selectedAgent?.features?.prospects?.sms || '',
     whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
   });
+
+  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+
+  const playVoiceSample = (voiceFile: string) => {
+    if (audioPlayer) {
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+    }
+    const newAudioPlayer = new Audio(voiceFile);
+    newAudioPlayer.play();
+    setAudioPlayer(newAudioPlayer);
+  };
 
   const iframeCode = `<iframe
 src="https://www.flowon.ai/embed/${selectedAgent?.id}"
@@ -119,49 +152,9 @@ defer
     });
   };
 
-  const handleSaveConfig = async () => {
-    let updatedFeatures = { ...selectedAgent?.features };
-
-    if (currentFeature === 'callTransfer') {
-      updatedFeatures.callTransfer = {
-        ...updatedFeatures.callTransfer,
-        ...callTransferConfig,
-      };
-    } else if (currentFeature === 'appointmentBooking') {
-      updatedFeatures.appointmentBooking = {
-        ...updatedFeatures.appointmentBooking,
-        ...appointmentBookingConfig,
-      };
-    } else if (currentFeature === 'form') {
-      updatedFeatures.form = {
-        ...updatedFeatures.form,
-        fields: formFields,
-      };
-    } else if (currentFeature === 'prospects') {
-      updatedFeatures.prospects = {
-        notifyOnInterest: prospectSettings.notifyOnInterest,
-        email: prospectSettings.email,
-        sms: prospectSettings.sms,
-        whatsapp: prospectSettings.whatsapp,
-      };
-    }
-
-    const updatedAgent = {
-      ...selectedAgent,
-      features: updatedFeatures,
-    };
-
-    setSelectedAgent(updatedAgent);
+  const handleConfigureDone = () => {
     setIsConfigureDialogOpen(false);
-
-    try {
-      // Call the parent component's handleSaveChanges function with updatedAgent
-      await handleSaveChanges(updatedAgent);
-      // Optionally, show a success message here
-    } catch (error) {
-      console.error("Failed to save configuration:", error);
-      // Optionally, show an error message here
-    }
+    // The changes are already in the local state, so we don't need to do anything else here
   };
 
   const handleAddFormField = () => {
@@ -180,6 +173,29 @@ defer
 
   const handleProspectSettingsChange = (field: keyof ProspectSettings, value: string | boolean) => {
     setProspectSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFeatureToggle = (featureId: string, checked: boolean) => {
+    setSelectedAgent(prevAgent => ({
+      ...prevAgent,
+      features: {
+        ...prevAgent?.features,
+        [featureId]: checked ? {} : undefined
+      }
+    }));
+  };
+
+  const handleSaveFeatures = async () => {
+    if (selectedAgent) {
+      try {
+        await handleSaveChanges(selectedAgent);
+        // Optionally, show a success message here
+        console.log("Features saved successfully");
+      } catch (error) {
+        console.error("Failed to save features:", error);
+        // Optionally, show an error message here
+      }
+    }
   };
 
   // Update useEffect to set initial values when selectedAgent changes
@@ -274,13 +290,53 @@ defer
             />
         </div>
         <div>
+            <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
+            <Select 
+              value={selectedAgent?.language}
+              onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en-GB">English GB</SelectItem>
+                <SelectItem value="en-US">English US</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="de">German</SelectItem>
+                <SelectItem value="ar">Arabic</SelectItem>
+                <SelectItem value="nl">Dutch</SelectItem>
+                <SelectItem value="zh">Chinese</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-            <Input 
-            id="voice"
-            value={selectedAgent?.voice || ''} 
-            onChange={(e) => setSelectedAgent({...selectedAgent, voice: e.target.value})}
-            />
-        </div>
+            <div className="flex items-center space-x-2">
+              <Select 
+                value={selectedAgent?.voice}
+                onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
+                  if (voiceFile) playVoiceSample(voiceFile);
+                }}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         <div>
             <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
             <Textarea 
@@ -481,12 +537,7 @@ defer
                       <Switch
                         id={feature.id}
                         checked={!!selectedAgent?.features?.[feature.id]}
-                        onCheckedChange={(checked) => 
-                          setSelectedAgent({
-                            ...selectedAgent, 
-                            features: {...selectedAgent?.features, [feature.id]: checked ? {} : undefined}
-                          })
-                        }
+                        onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked)}
                       />
                       {selectedAgent?.features?.[feature.id] && (
                         <Button
@@ -507,6 +558,9 @@ defer
                 </div>
               ))}
             </div>
+            <Button onClick={handleSaveFeatures} className="mt-6">
+              Save Changes
+            </Button>
           </CardContent>
         </Card>
       </TabsContent>
@@ -642,7 +696,7 @@ defer
             )}
           </div>
           <DialogFooter>
-            <Button type="button" onClick={handleSaveConfig}>Save changes</Button>
+            <Button type="button" onClick={handleConfigureDone}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -692,3 +746,4 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
+

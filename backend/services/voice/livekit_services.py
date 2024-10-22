@@ -136,8 +136,8 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
 
 
 lang_options = {
-    "en-US": {"deepgram": "en-US", "cartesia": "en-US"},
-    "en-GB": {"deepgram": "en-GB", "cartesia": "en-GB"},
+    "en-US": {"deepgram": "en-US", "cartesia": "en-US", "cartesia_model": "sonic-english"},
+    "en-GB": {"deepgram": "en-GB", "cartesia": "en-GB", "cartesia_model": "sonic-english"},
     "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
 }
 
