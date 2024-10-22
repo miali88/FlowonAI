@@ -83,7 +83,7 @@ const VOICE_OPTIONS = {
   "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
 };
 
-    const Workspace: React.FC<WorkspaceProps> = ({
+const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
@@ -276,189 +276,256 @@ defer
       <TabsList className="mb-4 h-12">
         <TabsTrigger value="preview">Playground</TabsTrigger>
         <TabsTrigger value="edit">Settings</TabsTrigger>
-        <TabsTrigger value="features">Features</TabsTrigger>
+        <TabsTrigger value="advanced">Advanced</TabsTrigger>
         <TabsTrigger value="ui">UI</TabsTrigger>
         <TabsTrigger value="embed">Embed</TabsTrigger>
         <TabsTrigger value="share">Share</TabsTrigger>
       </TabsList>
       <TabsContent value="edit">
-        <div className="space-y-4">
-        <div>
-        <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
-            <Input 
-            id="agentName"
-            value={selectedAgent?.agentName || ''} 
-            onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
-            />
-        </div>
-        <div>
-            <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
-            <Select 
-              value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
-              onValueChange={() => {}}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
-                    ? selectedAgent.agentPurpose
-                        .map(value => AGENT_PURPOSES.find(p => p.value === value)?.label)
-                        .join(', ')
-                    : "Select agent skills"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {AGENT_PURPOSES.map((purpose) => (
-                  <SelectItem key={purpose.value} value={purpose.value}>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`checkbox-${purpose.value}`}
-                        checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
-                        onCheckedChange={(checked) => {
-                          if (!selectedAgent) return;
-                          
-                          const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
-                            ? [...selectedAgent.agentPurpose] 
-                            : [];
-                          
-                          const newPurposes = checked
-                            ? [...currentPurposes, purpose.value]
-                            : currentPurposes.filter(p => p !== purpose.value);
-                          
-                          setSelectedAgent({
-                            ...selectedAgent,
-                            agentPurpose: newPurposes
-                          });
-                        }}
-                      />
-                      <label 
-                        htmlFor={`checkbox-${purpose.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {purpose.label}
-                      </label>
+        <Card>
+          <CardHeader>
+            <CardTitle>Agent Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
+                <Input 
+                  id="agentName"
+                  value={selectedAgent?.agentName || ''} 
+                  onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
+                <Select 
+                  value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
+                  onValueChange={() => {}}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
+                        ? selectedAgent.agentPurpose
+                            .map(value => AGENT_PURPOSES.find(p => p.value === value)?.label)
+                            .join(', ')
+                        : "Select agent skills"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AGENT_PURPOSES.map((purpose) => (
+                      <SelectItem key={purpose.value} value={purpose.value}>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`checkbox-${purpose.value}`}
+                            checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
+                            onCheckedChange={(checked) => {
+                              if (!selectedAgent) return;
+                              
+                              const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
+                                ? [...selectedAgent.agentPurpose] 
+                                : [];
+                              
+                              const newPurposes = checked
+                                ? [...currentPurposes, purpose.value]
+                                : currentPurposes.filter(p => p !== purpose.value);
+                              
+                              setSelectedAgent({
+                                ...selectedAgent,
+                                agentPurpose: newPurposes
+                              });
+                            }}
+                          />
+                          <label 
+                            htmlFor={`checkbox-${purpose.value}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {purpose.label}
+                          </label>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
+                <Select 
+                  value={selectedAgent?.dataSource}
+                  onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select data source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="tagged">Items with tag...</SelectItem>
+                    <SelectItem value="natural-language">Describe using natural language</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedAgent?.dataSource === "tagged" && (
+                <div>
+                  <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
+                  <Input 
+                    id="tag"
+                    value={selectedAgent.tag || ''} 
+                    onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
+                <Input 
+                  id="openingLine"
+                  value={selectedAgent?.openingLine || ''} 
+                  onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
+                <Select 
+                  value={selectedAgent?.language}
+                  onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-GB">English GB</SelectItem>
+                    <SelectItem value="en-US">English US</SelectItem>
+                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="de">German</SelectItem>
+                    <SelectItem value="ar">Arabic</SelectItem>
+                    <SelectItem value="nl">Dutch</SelectItem>
+                    <SelectItem value="zh">Chinese</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
+                <div className="flex items-center space-x-2">
+                  <Select 
+                    value={selectedAgent?.voice}
+                    onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
+                      if (voiceFile) playVoiceSample(voiceFile);
+                    }}
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {/* Add a divider before features */}
+              <div className="my-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Features</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Relocated features section */}
+              <div className="space-y-6">
+                {[
+                  { id: "prospects", label: "Prospect Notification" },
+                  { id: "form", label: "Form Builder" },
+                  { id: "callTransfer", label: "Call Transfer" },
+                  { id: "appointmentBooking", label: "Appointment Booking" },
+                ].map((feature) => (
+                  <div key={feature.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={feature.id}>{feature.label}</Label>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={feature.id}
+                          checked={!!selectedAgent?.features?.[feature.id]}
+                          onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked)}
+                        />
+                        {selectedAgent?.features?.[feature.id] && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleConfigureFeature(feature.id)}
+                          >
+                            Configure <ChevronRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </SelectItem>
+                    {selectedAgent?.features?.[feature.id] && (
+                      <p className="text-sm text-muted-foreground">
+                        {getFeatureDescription(feature.id)}
+                      </p>
+                    )}
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-        </div>
-        <div>
-            <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
-            <Select 
-            value={selectedAgent?.dataSource}
-            onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
-            >
-            <SelectTrigger>
-                <SelectValue placeholder="Select data source" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="tagged">Items with tag...</SelectItem>
-                <SelectItem value="natural-language">Describe using natural language</SelectItem>
-            </SelectContent>
-            </Select>
-        </div>
-        {selectedAgent?.dataSource === "tagged" && (
-            <div>
-            <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
-            <Input 
-                id="tag"
-                value={selectedAgent.tag || ''} 
-                onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
-            />
+              </div>
+              <div className="flex space-x-2 pt-4">
+                <Button onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}>
+                  Save Changes
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">Delete Agent</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the agent
+                        and remove all of its data from our servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteAgent}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
-        )}
-        <div>
-            <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
-            <Input 
-            id="openingLine"
-            value={selectedAgent?.openingLine || ''} 
-            onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
-            />
-        </div>
-        <div>
-            <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
-            <Select 
-              value={selectedAgent?.language}
-              onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en-GB">English GB</SelectItem>
-                <SelectItem value="en-US">English US</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="de">German</SelectItem>
-                <SelectItem value="ar">Arabic</SelectItem>
-                <SelectItem value="nl">Dutch</SelectItem>
-                <SelectItem value="zh">Chinese</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-            <div className="flex items-center space-x-2">
-              <Select 
-                value={selectedAgent?.voice}
-                onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
-                  if (voiceFile) playVoiceSample(voiceFile);
-                }}
-              >
-                <Play className="h-4 w-4" />
-              </Button>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="advanced">
+        <Card>
+          <CardHeader>
+            <CardTitle>Advanced Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
+              <Textarea 
+                id="instructions"
+                value={selectedAgent?.instructions || ''} 
+                onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+                className="min-h-[400px]"
+              />
             </div>
-          </div>
-        <div>
-            <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-            <Textarea 
-            id="instructions"
-            value={selectedAgent?.instructions || ''} 
-            onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
-            className="min-h-[400px]"
-            />
-        </div>
-        <div className="flex space-x-2">
-            <Button onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}>
+            <Button onClick={handleSaveFeatures} className="mt-6">
               Save Changes
             </Button>
-            <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="destructive">Delete Agent</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the agent
-                    and remove all of its data from our servers.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAgent}>
-                Delete
-                </AlertDialogAction>
-            </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-        </div>
-        </div>
+          </CardContent>
+        </Card>
       </TabsContent>
       <TabsContent value="ui">
         <Card>
@@ -603,53 +670,6 @@ defer
             )}
           </div>
         </div>
-      </TabsContent>
-      <TabsContent value="features">
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {[
-                { id: "prospects", label: "Prospect Notification" },
-                { id: "form", label: "Form Builder" },
-                { id: "callTransfer", label: "Call Transfer" },
-                { id: "appointmentBooking", label: "Appointment Booking" },
-              ].map((feature) => (
-                <div key={feature.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={feature.id}>{feature.label}</Label>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id={feature.id}
-                        checked={!!selectedAgent?.features?.[feature.id]}
-                        onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked)}
-                      />
-                      {selectedAgent?.features?.[feature.id] && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleConfigureFeature(feature.id)}
-                        >
-                          Configure <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  {selectedAgent?.features?.[feature.id] && (
-                    <p className="text-sm text-muted-foreground">
-                      {getFeatureDescription(feature.id)}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Button onClick={handleSaveFeatures} className="mt-6">
-              Save Changes
-            </Button>
-          </CardContent>
-        </Card>
       </TabsContent>
 
       {/* Configuration Dialog */}
@@ -842,6 +862,3 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
-
-
-
