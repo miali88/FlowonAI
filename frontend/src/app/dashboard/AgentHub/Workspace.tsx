@@ -48,6 +48,20 @@ interface ProspectSettings {
   whatsapp: string;
 }
 
+// Add this type definition near your other interfaces
+interface AgentPurpose {
+  value: string;
+  label: string;
+}
+
+// Add this constant with your available skills
+const AGENT_PURPOSES: AgentPurpose[] = [
+  { value: "prospecting", label: "Prospecting" },
+  { value: "question-answer", label: "Question & Answer" },
+  { value: "customer-service", label: "Customer Service" },
+  { value: "product-recommendation", label: "Product Recommendation" },
+];
+
 // Add this constant at the top of the file, after the imports
 const VOICE_OPTIONS = {
   "en-GB": [
@@ -280,18 +294,52 @@ defer
         <div>
             <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
             <Select 
-            value={selectedAgent?.agentPurpose}
-            onValueChange={(value) => setSelectedAgent({...selectedAgent, agentPurpose: value})}
+              value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
+              onValueChange={() => {}}
             >
-            <SelectTrigger>
-                <SelectValue placeholder="Select agent purpose" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="prospecting">Prospecting</SelectItem>
-                <SelectItem value="question-answer">Question & Answer</SelectItem>
-                <SelectItem value="customer-service">Customer Service</SelectItem>
-                <SelectItem value="product-recommendation">Product Recommendation</SelectItem>
-            </SelectContent>
+              <SelectTrigger className="w-full">
+                <SelectValue>
+                  {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
+                    ? selectedAgent.agentPurpose
+                        .map(value => AGENT_PURPOSES.find(p => p.value === value)?.label)
+                        .join(', ')
+                    : "Select agent skills"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {AGENT_PURPOSES.map((purpose) => (
+                  <SelectItem key={purpose.value} value={purpose.value}>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`checkbox-${purpose.value}`}
+                        checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
+                        onCheckedChange={(checked) => {
+                          if (!selectedAgent) return;
+                          
+                          const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
+                            ? [...selectedAgent.agentPurpose] 
+                            : [];
+                          
+                          const newPurposes = checked
+                            ? [...currentPurposes, purpose.value]
+                            : currentPurposes.filter(p => p !== purpose.value);
+                          
+                          setSelectedAgent({
+                            ...selectedAgent,
+                            agentPurpose: newPurposes
+                          });
+                        }}
+                      />
+                      <label 
+                        htmlFor={`checkbox-${purpose.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {purpose.label}
+                      </label>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
         </div>
         <div>
@@ -794,4 +842,6 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
+
+
 
