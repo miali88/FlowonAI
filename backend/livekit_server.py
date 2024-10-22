@@ -57,6 +57,8 @@ async def entrypoint(ctx: JobContext):
             if participant.identity == available_participant.identity:
                 print("participant disconnected, shutting down worker")
                 ctx.shutdown(reason="Subscribed participant disconnected")
+                ctx.add_shutdown_callback(lambda: print("shutdown callback called"))
+
 
         @ctx.room.on("track_subscribed")
         def on_track_subscribed(

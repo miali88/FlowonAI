@@ -15,6 +15,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -272,7 +278,7 @@ defer
             />
         </div>
         <div>
-            <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
+            <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
             <Select 
             value={selectedAgent?.agentPurpose}
             onValueChange={(value) => setSelectedAgent({...selectedAgent, agentPurpose: value})}
@@ -653,6 +659,15 @@ defer
             )}
             {currentFeature === 'form' && (
               <>
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="info">
+                    <AccordionTrigger>Important Information</AccordionTrigger>
+                    <AccordionContent>
+                      Forms should be limited to requesting personal data from the caller as these are more sensitive to spelling. The AI agent will be able to extract all other kinds of information from a call automatically.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
                 {formFields.map((field, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -779,3 +794,4 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
+
