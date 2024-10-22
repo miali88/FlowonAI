@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -154,7 +154,40 @@ defer
 
   const handleConfigureDone = () => {
     setIsConfigureDialogOpen(false);
-    // The changes are already in the local state, so we don't need to do anything else here
+    if (currentFeature === 'callTransfer') {
+      setSelectedAgent(prevAgent => ({
+        ...prevAgent,
+        features: {
+          ...prevAgent?.features,
+          callTransfer: { ...callTransferConfig }
+        }
+      }));
+    } else if (currentFeature === 'appointmentBooking') {
+      setSelectedAgent(prevAgent => ({
+        ...prevAgent,
+        features: {
+          ...prevAgent?.features,
+          appointmentBooking: { ...appointmentBookingConfig }
+        }
+      }));
+    } else if (currentFeature === 'form') {
+      setSelectedAgent(prevAgent => ({
+        ...prevAgent,
+        features: {
+          ...prevAgent?.features,
+          form: { fields: [...formFields] }
+        }
+      }));
+    } else if (currentFeature === 'prospects') {
+      setSelectedAgent(prevAgent => ({
+        ...prevAgent,
+        features: {
+          ...prevAgent?.features,
+          prospects: { ...prospectSettings }
+        }
+      }));
+    }
+    setCurrentFeature(null); // Reset current feature
   };
 
   const handleAddFormField = () => {
@@ -198,7 +231,7 @@ defer
     }
   };
 
-  // Update useEffect to set initial values when selectedAgent changes
+  // Synchronize local state with selectedAgent when it changes
   useEffect(() => {
     if (selectedAgent) {
       setCallTransferConfig({
@@ -718,8 +751,8 @@ function getFeatureDescription(featureId: string): string {
     case "appointmentBooking":
       return "Enable the agent to schedule appointments and manage a calendar.";
     case "form":
-      return "Let the agent collect structured data through customisable forms.";
-    case "prospects": // Add description for the new feature
+      return "Let the agent collect structured data through customizable forms.";
+    case "prospects":
       return "Enable the agent to manage and track potential customers or leads.";
     default:
       return "";
@@ -740,10 +773,9 @@ function getFeatureTitle(featureId: string | null): string {
       return "Appointment Booking";
     case "form":
       return "Custom Form";
-    case "prospects": // Add title for the new feature
+    case "prospects":
       return "Prospects";
     default:
       return "";
   }
 }
-

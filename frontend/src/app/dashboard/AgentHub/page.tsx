@@ -46,25 +46,32 @@ defer
     setSelectedAgent(agent);
   };
 
-  const handleSaveChanges = async (agent: Agent) => {
-    if (!agent || !userId) return;
+  const handleSaveChanges = async () => {
+    if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/livekit/agents/${agent.id}`, {
+      const response = await fetch(`${API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,
         },
         body: JSON.stringify({
-          agentName: agent.agentName,
-          agentPurpose: agent.agentPurpose,
-          dataSource: agent.dataSource,
-          tag: agent.tag,
-          openingLine: agent.openingLine,
-          voice: agent.voice,
-          instructions: agent.instructions,
-          features: agent.features, // Send the entire features object
+          agentName: selectedAgent.agentName,
+          agentPurpose: selectedAgent.agentPurpose,
+          dataSource: selectedAgent.dataSource,
+          tag: selectedAgent.tag,
+          openingLine: selectedAgent.openingLine,
+          language: selectedAgent.language,
+          voice: selectedAgent.voice,
+          instructions: selectedAgent.instructions,
+          uiConfig: selectedAgent.uiConfig,
+          features: {
+            callTransfer: selectedAgent.features?.callTransfer,
+            appointmentBooking: selectedAgent.features?.appointmentBooking,
+            form: selectedAgent.features?.form,
+            prospects: selectedAgent.features?.prospects,
+          },
         }),
       });
 

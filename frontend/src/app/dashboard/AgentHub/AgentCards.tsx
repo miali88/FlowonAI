@@ -9,23 +9,47 @@ import { BorderBeam } from "@/components/ui/border-beam";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 // Move the Agent type definition here
-export type Agent = {
-  id: string
-  agentPurpose: string
-  agentName: string
-  voice: string
-  dataSource: string
+export interface Agent {
+  id: string;
+  agentName: string;
+  agentPurpose: string;
+  dataSource: string;
+  tag?: string;
+  openingLine: string;
+  language: string;
+  voice: string;
+  instructions: string;
+  uiConfig?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    fontSize?: number;
+    borderRadius?: number;
+    chatboxHeight?: number;
+  };
   features?: {
-    callTransfer?: any
-    appointmentBooking?: any
-    form?: any
+    callTransfer?: {
+      primaryNumber?: string;
+      secondaryNumber?: string;
+    };
+    appointmentBooking?: {
+      nylasApiKey?: string;
+    };
+    form?: {
+      fields: FormField[];
+    };
     prospects?: {
-      notifyOnInterest: boolean
-      email: string
-      sms: string
-      whatsapp: string
-    }
-  }
+      notifyOnInterest: boolean;
+      email: string;
+      sms: string;
+      whatsapp: string;
+    };
+  };
+}
+
+interface FormField {
+  type: 'text' | 'email' | 'phone' | 'dropdown';
+  label: string;
+  options: string[];
 }
 
 interface AgentCardsProps {
