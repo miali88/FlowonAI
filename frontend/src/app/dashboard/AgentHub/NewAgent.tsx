@@ -44,8 +44,8 @@ const VOICE_OPTIONS = {
     { id: "us-voice2", name: "US Voice 2", file: "/voices/USVoice2.wav" },
   ],
   "fr": [
-    { id: "fr-voice1", name: "Male", file: "/voices/cartesia_french1.wav" },
-    { id: "fr-voice2", name: "Female", file: "/voices/cartesia_french2.wav" },
+    { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav" },
+    { id: "a249eaff-1e96-4d2c-b23b-12efa4f66f41", name: "Female", file: "/voices/cartesia_french2.wav" },
   ],
   // Add placeholder voices for other languages
   "de": [{ id: "de-voice1", name: "German Voice 1", file: "/voices/cartesia_german1.wav" }],

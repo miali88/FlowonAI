@@ -40,9 +40,9 @@ async def entrypoint(ctx: JobContext):
             
             # Create and start the agent here, within the job context
             agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-            agent = await create_voice_assistant(agent_id)
+            agent, opening_line = await create_voice_assistant(agent_id)
             agent.start(room, available_participant)
-            await agent.say("Hello, I'm ready to assist you.", allow_interruptions=False)
+            await agent.say(opening_line, allow_interruptions=False)
 
         else:
             print("No available participants found.")

@@ -135,27 +135,39 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
         print("livekit_api closed in start_agent_request")
 
 
+lang_options = {
+    "en-US": {"deepgram": "en-US", "cartesia": "en-US"},
+    "en-GB": {"deepgram": "en-GB", "cartesia": "en-GB"},
+    "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
+}
+
 async def create_voice_assistant(agent_id):
     """ Invoked inside the entrypoint fnc in livekit_server.py """
 
     agent = await get_agent(agent_id)
 
+    opening_line = agent['openingLine']
+    language = agent['language']
+    voice_id = agent['voice']
+
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=agent['instructions'])
-    
 
     return VoiceAssistant(
         vad=silero.VAD.load(),
-        stt=deepgram.STT(model="nova-2-general"),
+        stt=deepgram.STT(model="nova-2-general", language=lang_options[language]['deepgram']),
         llm=openai.LLM(),   
-        tts=cartesia.TTS(),
+        tts=cartesia.TTS(
+            language=lang_options[language]['cartesia'],
+            model=lang_options[language]['cartesia_model'],
+            voice=voice_id),
         # fnc_ctx=AssistantFunction(),
         chat_ctx=initial_ctx,
         allow_interruptions=True,
         interrupt_speech_duration=0.5,
         interrupt_min_words=0,
-        min_endpointing_delay=0.5)
+        min_endpointing_delay=0.5), opening_line
 
 
 # class MyAgentFunctions(FunctionContext):
