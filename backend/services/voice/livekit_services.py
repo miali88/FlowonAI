@@ -53,46 +53,52 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         print(f"Generating token for room: {room_name}")
         token = api.AccessToken(api_key, api_secret)\
             .with_identity(f"visitorId_{uuid.uuid4()}")\
-            .with_name(user_id  )\
+            .with_name(user_id)\
             .with_grants(api.VideoGrants(
                 room_join=True,
                 room=room_name))
 
-        try:
-            livekit_api = await create_livekit_api()
+        await check_and_create_room(room_name, token.to_jwt(), agent_id)
 
-            # List rooms
-            list_request = ListRoomsRequest()
-            rooms_response = await livekit_api.room.list_rooms(list_request)
-            
-            # Check if the room exists
-            room_exists = any(room.name == room_name for room in rooms_response.rooms)
-
-            if room_exists:
-
-                print(f"Room {room_name} already exists")
-
-                # Print all rooms
-                print("Room exists. All rooms:")
-                for room in rooms_response.rooms:
-                    print(f"Room name: {room.name}, SID: {room.sid}")
-
-                list_participants_request = ListParticipantsRequest(room=room_name)
-                participants_response = await livekit_api.room.list_participants(list_participants_request)
-                print(f"\nParticipants in room '{room_name}':")
-                for participant in participants_response.participants:
-                    print(f"Participant: {participant.identity}, SID: {participant.sid}")     
-            else:
-                print(f"Room {room_name} doesn't exist, creating it and starting the agent")
-                await create_room(room_name, token.to_jwt(), agent_id)
-
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error checking room existence")
-        finally:
-            await livekit_api.aclose()
         return token.to_jwt(), livekit_server_url, room_name
 
+async def check_and_create_room(room_name: str, token: str, agent_id: str):
+    try:
+        livekit_api = await create_livekit_api()
+        room_exists = await check_room_exists(livekit_api, room_name)
+
+        if room_exists:
+            print(f"Room {room_name} already exists")
+            await print_room_details(livekit_api, room_name)
+        else:
+            print(f"Room {room_name} doesn't exist, creating it and starting the agent")
+            await create_room(room_name, token, agent_id)
+
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error checking room existence")
+    finally:
+        await livekit_api.aclose()
+
+async def check_room_exists(livekit_api, room_name: str) -> bool:
+    list_request = ListRoomsRequest()
+    rooms_response = await livekit_api.room.list_rooms(list_request)
+    return any(room.name == room_name for room in rooms_response.rooms)
+
+async def print_room_details(livekit_api, room_name: str):
+    # Print all rooms
+    list_request = ListRoomsRequest()
+    rooms_response = await livekit_api.room.list_rooms(list_request)
+    print("Room exists. All rooms:")
+    for room in rooms_response.rooms:
+        print(f"Room name: {room.name}, SID: {room.sid}")
+
+    # Print participants
+    list_participants_request = ListParticipantsRequest(room=room_name)
+    participants_response = await livekit_api.room.list_participants(list_participants_request)
+    print(f"\nParticipants in room '{room_name}':")
+    for participant in participants_response.participants:
+        print(f"Participant: {participant.identity}, SID: {participant.sid}")
 
 async def create_room(room_name: str, access_token: str, agent_id: str):
     try:
@@ -130,6 +136,8 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
 
 
 async def create_voice_assistant(agent_id):
+    """ Invoked inside the entrypoint fnc in livekit_server.py """
+
     agent = await get_agent(agent_id)
 
     initial_ctx = llm.ChatContext().append(
