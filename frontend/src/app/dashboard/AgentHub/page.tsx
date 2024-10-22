@@ -46,30 +46,25 @@ defer
     setSelectedAgent(agent);
   };
 
-  const handleSaveChanges = async () => {
-    if (!selectedAgent || !userId) return;
+  const handleSaveChanges = async (agent: Agent) => {
+    if (!agent || !userId) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
+      const response = await fetch(`${API_BASE_URL}/livekit/agents/${agent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,
         },
         body: JSON.stringify({
-          agentName: selectedAgent.agentName,
-          agentPurpose: selectedAgent.agentPurpose,
-          dataSource: selectedAgent.dataSource,
-          tag: selectedAgent.tag,
-          openingLine: selectedAgent.openingLine,
-          voice: selectedAgent.voice,
-          instructions: selectedAgent.instructions,
-          prospect_settings: {
-            notifyOnInterest: selectedAgent.features?.prospects?.notifyOnInterest || false,
-            email: selectedAgent.features?.prospects?.email || '',
-            sms: selectedAgent.features?.prospects?.sms || '',
-            whatsapp: selectedAgent.features?.prospects?.whatsapp || '',
-          },
+          agentName: agent.agentName,
+          agentPurpose: agent.agentPurpose,
+          dataSource: agent.dataSource,
+          tag: agent.tag,
+          openingLine: agent.openingLine,
+          voice: agent.voice,
+          instructions: agent.instructions,
+          features: agent.features, // Send the entire features object
         }),
       });
 

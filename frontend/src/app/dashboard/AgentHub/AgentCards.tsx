@@ -15,6 +15,17 @@ export type Agent = {
   agentName: string
   voice: string
   dataSource: string
+  features?: {
+    callTransfer?: any
+    appointmentBooking?: any
+    form?: any
+    prospects?: {
+      notifyOnInterest: boolean
+      email: string
+      sms: string
+      whatsapp: string
+    }
+  }
 }
 
 interface AgentCardsProps {

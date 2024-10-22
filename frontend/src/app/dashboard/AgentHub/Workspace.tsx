@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 interface WorkspaceProps {
   selectedAgent: Agent | null;
   setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
-  handleSaveChanges: () => Promise<void>;
+  handleSaveChanges: (agent: Agent) => Promise<void>;
   handleDeleteAgent: () => Promise<void>;
   isStreaming: boolean;
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
@@ -64,18 +64,20 @@ interface ProspectSettings {
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [callTransferConfig, setCallTransferConfig] = useState({
-    primaryNumber: '',
-    secondaryNumber: '',
+    primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
+    secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
   });
   const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
-    nylasApiKey: '',
+    nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
   });
-  const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [formFields, setFormFields] = useState<FormField[]>(
+    selectedAgent?.features?.form?.fields || []
+  );
   const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
-    notifyOnInterest: false,
-    email: '',
-    sms: '',
-    whatsapp: '',
+    notifyOnInterest: selectedAgent?.features?.prospects?.notifyOnInterest || false,
+    email: selectedAgent?.features?.prospects?.email || '',
+    sms: selectedAgent?.features?.prospects?.sms || '',
+    whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
   });
 
   const iframeCode = `<iframe
@@ -137,8 +139,10 @@ defer
       };
     } else if (currentFeature === 'prospects') {
       updatedFeatures.prospects = {
-        ...updatedFeatures.prospects,
-        ...prospectSettings,
+        notifyOnInterest: prospectSettings.notifyOnInterest,
+        email: prospectSettings.email,
+        sms: prospectSettings.sms,
+        whatsapp: prospectSettings.whatsapp,
       };
     }
 
@@ -151,12 +155,12 @@ defer
     setIsConfigureDialogOpen(false);
 
     try {
-      // Send the updated agent data to the backend
-      await handleSaveChanges();
-      // You might want to show a success message here
+      // Call the parent component's handleSaveChanges function with updatedAgent
+      await handleSaveChanges(updatedAgent);
+      // Optionally, show a success message here
     } catch (error) {
       console.error("Failed to save configuration:", error);
-      // You might want to show an error message here
+      // Optionally, show an error message here
     }
   };
 
@@ -177,6 +181,26 @@ defer
   const handleProspectSettingsChange = (field: keyof ProspectSettings, value: string | boolean) => {
     setProspectSettings(prev => ({ ...prev, [field]: value }));
   };
+
+  // Update useEffect to set initial values when selectedAgent changes
+  useEffect(() => {
+    if (selectedAgent) {
+      setCallTransferConfig({
+        primaryNumber: selectedAgent.features?.callTransfer?.primaryNumber || '',
+        secondaryNumber: selectedAgent.features?.callTransfer?.secondaryNumber || '',
+      });
+      setAppointmentBookingConfig({
+        nylasApiKey: selectedAgent.features?.appointmentBooking?.nylasApiKey || '',
+      });
+      setFormFields(selectedAgent.features?.form?.fields || []);
+      setProspectSettings({
+        notifyOnInterest: selectedAgent.features?.prospects?.notifyOnInterest || false,
+        email: selectedAgent.features?.prospects?.email || '',
+        sms: selectedAgent.features?.prospects?.sms || '',
+        whatsapp: selectedAgent.features?.prospects?.whatsapp || '',
+      });
+    }
+  }, [selectedAgent]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -267,7 +291,9 @@ defer
             />
         </div>
         <div className="flex space-x-2">
-            <Button onClick={handleSaveChanges}>Save Changes</Button>
+            <Button onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}>
+              Save Changes
+            </Button>
             <AlertDialog>
             <AlertDialogTrigger asChild>
                 <Button variant="destructive">Delete Agent</Button>
@@ -446,7 +472,7 @@ defer
                 { id: "callTransfer", label: "Call Transfer" },
                 { id: "appointmentBooking", label: "Appointment Booking" },
                 { id: "form", label: "Form" },
-                { id: "prospects", label: "Prospect Notification" }, // New feature added here
+                { id: "prospects", label: "Prospect Notification" },
               ].map((feature) => (
                 <div key={feature.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -454,11 +480,11 @@ defer
                     <div className="flex items-center space-x-2">
                       <Switch
                         id={feature.id}
-                        checked={selectedAgent?.features?.[feature.id] || false}
+                        checked={!!selectedAgent?.features?.[feature.id]}
                         onCheckedChange={(checked) => 
                           setSelectedAgent({
                             ...selectedAgent, 
-                            features: {...selectedAgent?.features, [feature.id]: checked}
+                            features: {...selectedAgent?.features, [feature.id]: checked ? {} : undefined}
                           })
                         }
                       />
@@ -666,4 +692,3 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
-
