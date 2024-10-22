@@ -14,6 +14,7 @@ import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -32,6 +33,13 @@ interface WorkspaceProps {
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
   handleStreamEnd: () => void;
   handleStreamStart: () => void;
+}
+
+interface ProspectSettings {
+  notifyOnInterest: boolean;
+  email: string;
+  sms: string;
+  whatsapp: string;
 }
 
     const Workspace: React.FC<WorkspaceProps> = ({
@@ -63,6 +71,12 @@ interface WorkspaceProps {
     nylasApiKey: '',
   });
   const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
+    notifyOnInterest: false,
+    email: '',
+    sms: '',
+    whatsapp: '',
+  });
 
   const iframeCode = `<iframe
 src="https://www.flowon.ai/embed/${selectedAgent?.id}"
@@ -103,42 +117,47 @@ defer
     });
   };
 
-  const handleSaveConfig = () => {
+  const handleSaveConfig = async () => {
+    let updatedFeatures = { ...selectedAgent?.features };
+
     if (currentFeature === 'callTransfer') {
-      setSelectedAgent({
-        ...selectedAgent,
-        features: {
-          ...selectedAgent?.features,
-          callTransfer: {
-            ...selectedAgent?.features?.callTransfer,
-            ...callTransferConfig,
-          },
-        },
-      });
+      updatedFeatures.callTransfer = {
+        ...updatedFeatures.callTransfer,
+        ...callTransferConfig,
+      };
     } else if (currentFeature === 'appointmentBooking') {
-      setSelectedAgent({
-        ...selectedAgent,
-        features: {
-          ...selectedAgent?.features,
-          appointmentBooking: {
-            ...selectedAgent?.features?.appointmentBooking,
-            ...appointmentBookingConfig,
-          },
-        },
-      });
+      updatedFeatures.appointmentBooking = {
+        ...updatedFeatures.appointmentBooking,
+        ...appointmentBookingConfig,
+      };
     } else if (currentFeature === 'form') {
-      setSelectedAgent({
-        ...selectedAgent,
-        features: {
-          ...selectedAgent?.features,
-          form: {
-            ...selectedAgent?.features?.form,
-            fields: formFields,
-          },
-        },
-      });
+      updatedFeatures.form = {
+        ...updatedFeatures.form,
+        fields: formFields,
+      };
+    } else if (currentFeature === 'prospects') {
+      updatedFeatures.prospects = {
+        ...updatedFeatures.prospects,
+        ...prospectSettings,
+      };
     }
+
+    const updatedAgent = {
+      ...selectedAgent,
+      features: updatedFeatures,
+    };
+
+    setSelectedAgent(updatedAgent);
     setIsConfigureDialogOpen(false);
+
+    try {
+      // Send the updated agent data to the backend
+      await handleSaveChanges();
+      // You might want to show a success message here
+    } catch (error) {
+      console.error("Failed to save configuration:", error);
+      // You might want to show an error message here
+    }
   };
 
   const handleAddFormField = () => {
@@ -153,6 +172,10 @@ defer
     const newFields = [...formFields];
     newFields[index] = { ...newFields[index], ...field };
     setFormFields(newFields);
+  };
+
+  const handleProspectSettingsChange = (field: keyof ProspectSettings, value: string | boolean) => {
+    setProspectSettings(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -423,6 +446,7 @@ defer
                 { id: "callTransfer", label: "Call Transfer" },
                 { id: "appointmentBooking", label: "Appointment Booking" },
                 { id: "form", label: "Form" },
+                { id: "prospects", label: "Prospect Notification" }, // New feature added here
               ].map((feature) => (
                 <div key={feature.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -561,6 +585,35 @@ defer
                 </Button>
               </>
             )}
+            {currentFeature === 'prospects' && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="notifyOnInterest"
+                    checked={prospectSettings.notifyOnInterest}
+                    onCheckedChange={(checked) => handleProspectSettingsChange('notifyOnInterest', checked)}
+                  />
+                  <Label htmlFor="notifyOnInterest">Notify when a prospect shows interest</Label>
+                </div>
+                
+                {prospectSettings.notifyOnInterest && (
+                  <div className="space-y-4 mt-4">
+                    <Label>Notification Methods</Label>
+                    {['email', 'sms', 'whatsapp'].map((method) => (
+                      <div key={method} className="space-y-2">
+                        <Label htmlFor={`notify-${method}`}>{method.charAt(0).toUpperCase() + method.slice(1)}</Label>
+                        <Input
+                          id={`notify-${method}`}
+                          placeholder={`Enter ${method} details`}
+                          value={prospectSettings[method as keyof ProspectSettings]}
+                          onChange={(e) => handleProspectSettingsChange(method as keyof ProspectSettings, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" onClick={handleSaveConfig}>Save changes</Button>
@@ -586,6 +639,8 @@ function getFeatureDescription(featureId: string): string {
       return "Enable the agent to schedule appointments and manage a calendar.";
     case "form":
       return "Let the agent collect structured data through customisable forms.";
+    case "prospects": // Add description for the new feature
+      return "Enable the agent to manage and track potential customers or leads.";
     default:
       return "";
   }
@@ -605,7 +660,10 @@ function getFeatureTitle(featureId: string | null): string {
       return "Appointment Booking";
     case "form":
       return "Custom Form";
+    case "prospects": // Add title for the new feature
+      return "Prospects";
     default:
       return "";
   }
 }
+

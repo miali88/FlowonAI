@@ -64,6 +64,12 @@ defer
           openingLine: selectedAgent.openingLine,
           voice: selectedAgent.voice,
           instructions: selectedAgent.instructions,
+          prospect_settings: {
+            notifyOnInterest: selectedAgent.features?.prospects?.notifyOnInterest || false,
+            email: selectedAgent.features?.prospects?.email || '',
+            sms: selectedAgent.features?.prospects?.sms || '',
+            whatsapp: selectedAgent.features?.prospects?.whatsapp || '',
+          },
         }),
       });
 
