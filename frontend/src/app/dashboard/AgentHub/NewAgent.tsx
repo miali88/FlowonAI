@@ -23,13 +23,36 @@ import { Loader2 } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Updated VOICE_OPTIONS with no spaces in file names
-const VOICE_OPTIONS = [
-  { id: "voice1", name: "Alex K", file: "/voices/AlexK.wav" },
-  { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
-  { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.wav" },
-  // Add more voice options as needed
+const LANGUAGE_OPTIONS = [
+  { id: "en-GB", name: "English GB" },
+  { id: "en-US", name: "English US" },
+  { id: "fr", name: "French" },
+  { id: "de", name: "German" },
+  { id: "ar", name: "Arabic" },
+  { id: "nl", name: "Dutch" },
+  { id: "zh", name: "Mandarin" },
 ];
+
+const VOICE_OPTIONS = {
+  "en-GB": [
+    { id: "voice1", name: "Alex K", file: "/voices/AlexK.wav" },
+    { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
+    { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.wav" },
+  ],
+  "en-US": [
+    { id: "us-voice1", name: "US Voice 1", file: "/voices/USVoice1.wav" },
+    { id: "us-voice2", name: "US Voice 2", file: "/voices/USVoice2.wav" },
+  ],
+  "fr": [
+    { id: "fr-voice1", name: "French Voice 1", file: "/voices/cartesia_french1.wav" },
+    { id: "fr-voice2", name: "French Voice 2", file: "/voices/cartesia_french2.wav" },
+  ],
+  // Add placeholder voices for other languages
+  "de": [{ id: "de-voice1", name: "German Voice 1", file: "/voices/cartesia_german1.wav" }],
+  "ar": [{ id: "ar-voice1", name: "Arabic Voice 1", file: "/voices/cartesia_arabic1.wav" }],
+  "nl": [{ id: "nl-voice1", name: "Dutch Voice 1", file: "/voices/cartesia_dutch1.wav" }],
+  "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
+};
 
 export function NewAgent() {
   const { user } = useUser();
@@ -43,12 +66,15 @@ export function NewAgent() {
     openingLine: "",
     voice: "",
     instructions: "",
+    language: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -64,6 +90,13 @@ export function NewAgent() {
   const handleVoiceChange = (value: string) => {
     setSelectedVoice(value);
     handleSelectChange("voice", value);
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setSelectedLanguage(value);
+    handleSelectChange("language", value);
+    setAvailableVoices(VOICE_OPTIONS[value as keyof typeof VOICE_OPTIONS] || []);
+    setSelectedVoice(""); // Reset voice selection when language changes
   };
 
   const playVoiceSample = (voiceId: string, file: string) => {
@@ -251,6 +284,26 @@ export function NewAgent() {
                 onChange={handleInputChange}
               />
             </div>
+            {/* Language Selection */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="language" className="text-right text-foreground">
+                Language
+              </Label>
+              <div className="col-span-3">
+                <Select onValueChange={handleLanguageChange} value={selectedLanguage}>
+                  <SelectTrigger className="w-full bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
+                    {LANGUAGE_OPTIONS.map((language) => (
+                      <SelectItem key={language.id} value={language.id}>
+                        {language.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             {/* Voice Selection */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="voice" className="text-right text-foreground">
@@ -262,7 +315,7 @@ export function NewAgent() {
                     <SelectValue placeholder="Select a voice" />
                   </SelectTrigger>
                   <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
-                    {VOICE_OPTIONS.map((voice) => (
+                    {availableVoices.map((voice) => (
                       <SelectItem key={voice.id} value={voice.id}>
                         {voice.name}
                       </SelectItem>
@@ -273,7 +326,7 @@ export function NewAgent() {
             </div>
             {/* Voice Sample Buttons */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {VOICE_OPTIONS.map((voice) => (
+              {availableVoices.map((voice) => (
                 <Button
                   key={voice.id}
                   type="button"
