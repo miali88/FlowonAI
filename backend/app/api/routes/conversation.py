@@ -71,17 +71,19 @@ event_broadcasters = {}
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
+    print("\n\n chat_message endpoint reached\n\n")
     if request.method == "POST":
         try:
             data = await request.json()
-            job_id = data.get('job_id', 'unknown')  # Add job_id
+            print("\n\n chat_message data:", data, "\n\n")
+            participant_identity = data.get('participant_identity', 'unknown') 
             room_name = data.get('room_name', 'unknown')
             full_name = data.get('fullName', 'unknown')
             email = data.get('email', 'unknown')
             contact_number = data.get('contactNumber', 'unknown')
             user_id = data.get('user_id', 'unknown')
 
-            chat_messages[job_id].append({  # Changed key to job_id
+            chat_messages[participant_identity].append({  # Changed key to participant_identity
                 'room_name': room_name,     # Include room_name as field
                 'user_id': user_id,
                 'full_name': full_name,
@@ -90,7 +92,7 @@ async def chat_message(request: Request):
                 'timestamp': datetime.now().isoformat()
             })
 
-            logger.info(f"Message added for job {job_id}")
+            logger.info(f"Message added for participant_identity {participant_identity}")
             return JSONResponse(content={"status": "success", "message": "Message added"})
 
         except Exception as e:
@@ -99,8 +101,11 @@ async def chat_message(request: Request):
 
     elif request.method == "GET":
         try:
-            job_id = request.query_params.get('job_id', 'unknown')  # Changed to job_id
-            messages = chat_messages.get(job_id, [])
+            participant_identity = request.query_params.get('participant_identity', 'unknown')
+            messages = chat_messages.get(participant_identity, [])
+            # Clear the messages after retrieving them
+            if messages:
+                chat_messages[participant_identity] = []
             return JSONResponse(content=messages)
 
         except Exception as e:
@@ -113,41 +118,40 @@ async def trigger_show_chat_input(request: Request):
     print("\n\n post conversation/trigger_show_chat_input\n\n")
 
     data = await request.json()
-    job_id = data.get('job_id')
+    participant_identity = data.get('participant_identity')
+    if not participant_identity:
+        raise HTTPException(status_code=400, detail="participant_identity is required")
     
-    if not job_id:
-        raise HTTPException(status_code=400, detail="job_id is required")
-    
-    logger.info(f"Triggering show_chat_input for job: {job_id}")
-    if job_id in event_broadcasters:  # Changed to job_id
-        await run_in_threadpool(event_broadcasters[job_id].set)
-        logger.info(f"Event set for job: {job_id}")
+    logger.info(f"Triggering show_chat_input for participant_identity: {participant_identity}")
+    if participant_identity in event_broadcasters:  
+        await run_in_threadpool(event_broadcasters[participant_identity].set)
+        logger.info(f"Event set for participant_identity: {participant_identity}")
     else:
-        logger.warning(f"No event broadcaster found for job: {job_id}")
+        logger.warning(f"No event broadcaster found for participant_identity: {participant_identity}")
     
     return JSONResponse(content={"status": "success"})
 
 
-@router.get("/events/{job_id}")  # Changed route parameter
-async def events(job_id: str):  # Changed parameter
-    logger.info(f"SSE connection established for job: {job_id}")
+@router.get("/events/{participant_identity}")  # Changed route parameter
+async def events(participant_identity: str):  # Changed parameter
+    logger.info(f"SSE connection established for participant_identity: {participant_identity}")
     
     async def event_generator():
-        if job_id not in event_broadcasters:
-            event_broadcasters[job_id] = asyncio.Event()
+        if participant_identity not in event_broadcasters:
+            event_broadcasters[participant_identity] = asyncio.Event()
         try:
             while True:
-                logger.info(f"Waiting for event in job: {job_id}")
-                await event_broadcasters[job_id].wait()
-                logger.info(f"Event triggered for job: {job_id}")
+                logger.info(f"Waiting for event in participant_identity: {participant_identity}")
+                await event_broadcasters[participant_identity].wait()
+                logger.info(f"Event triggered for participant_identity: {participant_identity}")
                 yield {
                     "event": "message",
                     "data": '{"type": "show_chat_input"}'
                 }
-                event_broadcasters[job_id].clear()
+                event_broadcasters[participant_identity].clear()
         finally:
-            if job_id in event_broadcasters:
-                del event_broadcasters[job_id]
-            logger.info(f"SSE connection closed for job: {job_id}")
+            if participant_identity in event_broadcasters:
+                del event_broadcasters[participant_identity]
+            logger.info(f"SSE connection closed for participant_identity: {participant_identity}")
 
     return EventSourceResponse(event_generator())

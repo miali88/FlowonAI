@@ -53,6 +53,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
+  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
 
   const { user } = useUser();
 
@@ -63,8 +64,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [liveKitRoom]);
 
   useEffect(() => {
-    if (roomName) {
-      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events/${roomName}`);
+    if (participantIdentity) {
+      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events/${participantIdentity}`);
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -77,7 +78,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         eventSource.close();
       };
     }
-  }, [roomName]);
+  }, [participantIdentity]);
 
   const handleStreamToggle = useCallback(async () => {
     if (isStreaming) {
@@ -134,6 +135,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           contactNumber,
           user_id: user?.id,
           room_name: roomName,
+          participant_identity: participantIdentity,  // Added this line
         }),
       });
 
@@ -151,7 +153,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, user, roomName, showChatInput, bypassShowChatInputCondition]);
+  }, [fullName, email, contactNumber, user, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -184,6 +186,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               onStreamStart={onStreamStart}
               setRoom={setLiveKitRoom}
               setLocalParticipant={setLocalParticipant}
+              setParticipantIdentity={setParticipantIdentity}
             />
             {isStreaming && localParticipant && (
               <button

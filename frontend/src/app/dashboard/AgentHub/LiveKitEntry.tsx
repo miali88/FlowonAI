@@ -18,28 +18,39 @@ interface LiveKitEntryProps {
   onStreamStart: () => void;
   setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
+  setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }: LiveKitEntryProps) {
+export function LiveKitEntry({ 
+  token, 
+  url, 
+  roomName, 
+  isStreaming, 
+  onStreamEnd, 
+  onStreamStart, 
+  setRoom, 
+  setLocalParticipant,
+  setParticipantIdentity
+}: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
   const handleConnected = useCallback((room: Room) => {
     setLocalRoom(room);
-    setRoom(room);  // Update the room in the parent component
-    onStreamStart(); // Notify parent that streaming has started
+    setRoom(room);
+    onStreamStart();
   }, [onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
-    setRoom(null);  // Update the room in the parent component
-    onStreamEnd(); // Notify parent that streaming has ended
+    setRoom(null);
+    onStreamEnd();
   }, [onStreamEnd, setRoom]);
 
   return (
     <LiveKitRoom
       token={token}
       serverUrl={url}
-      roomName={roomName}
+      name={roomName}
       connectOptions={{ autoSubscribe: true }}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
@@ -49,6 +60,7 @@ export function LiveKitEntry({ token, url, roomName, isStreaming, onStreamEnd, o
         isStreaming={isStreaming} 
         onStreamEnd={onStreamEnd} 
         setLocalParticipant={setLocalParticipant}
+        setParticipantIdentity={setParticipantIdentity}
       />
     </LiveKitRoom>
   );
@@ -58,24 +70,30 @@ const ActiveRoom = ({
   room, 
   isStreaming, 
   onStreamEnd,
-  setLocalParticipant
+  setLocalParticipant,
+  setParticipantIdentity
 }: { 
   room: Room | null, 
   isStreaming: boolean, 
   onStreamEnd: () => void,
-  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>,
+  setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>
 }) => {
   const { localParticipant } = useLocalParticipant();
   const connectionState = useConnectionState();
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (connectionState === 'connected') {
+    if (connectionState === 'connected' && localParticipant) {
       setIsConnected(true);
+      console.log('Participant connected with identity:', localParticipant.identity);
+      console.log('Connection State:', connectionState);
+      console.log('Local Participant:', localParticipant);
+      setParticipantIdentity(localParticipant.identity);
     } else {
       setIsConnected(false);
     }
-  }, [connectionState]);
+  }, [connectionState, localParticipant, setParticipantIdentity]);
 
   useEffect(() => {
     if (isConnected && localParticipant) {
