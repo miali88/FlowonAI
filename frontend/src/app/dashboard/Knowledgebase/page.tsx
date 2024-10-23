@@ -242,11 +242,15 @@ function KnowledgeBaseContent() {
   
       try {
         const token = await getToken();
+        const itemToDelete = savedItems.find(item => item.id === itemId);
         await axios.delete(`${API_BASE_URL}/dashboard/knowledge_base/${itemId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,
           },
+          data: {
+            data_type: itemToDelete?.data_type
+          }
         });
   
         setSavedItems(prevItems => prevItems.filter(item => item.id !== itemId));

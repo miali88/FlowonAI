@@ -157,11 +157,23 @@ async def create_item_handler(request: Request,
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 @router.delete("/knowledge_base/{item_id}")
-async def delete_item_handler(item_id: int, current_user: str = Depends(get_current_user)):
+async def delete_item_handler(item_id: int, request: Request,current_user: str = Depends(get_current_user)):
     try:
-        result = supabase.table('knowledge_base').delete().eq('id', item_id).eq('user_id', current_user).execute()
+        # Get the request body
+        body = await request.json()
+        data_type = body.get('data_type')
+        logger.info(f"Deleting item {item_id} with data_type: {data_type}")
+
+        if data_type == 'web':
+            # Delete from user_web_data if data_type is web
+            result = supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
+        else:
+            # Delete from user_text_files for all other data types
+            result = supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
+        
         if len(result.data) == 0:
             raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
+            
         return {"message": "Item deleted successfully"}
     except Exception as e:
         logger.error(f"Error deleting item: {str(e)}")
