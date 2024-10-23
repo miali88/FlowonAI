@@ -1,10 +1,12 @@
-
 from typing import Annotated
 import aiohttp
 import os
 from dotenv import load_dotenv
+import logging
 
 from livekit.agents import llm
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -46,11 +48,17 @@ async def trigger_show_chat_input(room_name: str, job_id: str):
                 }
                 print("\n\n\n Processed chat_message:", chat_message)
                 
-                # Here you can add logic to handle the chat_message data
-                # For example, you might want to add it to the chat context or use it in some other way
-                #test
+                # Send email notification
+                await send_lead_notification(chat_message)
+                
+                return chat_message                
             else:
                 print("\n\n\n No valid chat message data received")
             
         except Exception as e:
             logger.error(f"Error triggering show_chat_input: {str(e)}", extra={'room_name': room_name, 'job_id': job_id})
+
+
+async def send_lead_notification(chat_message: dict):
+    """ nylas email send here """
+    pass
