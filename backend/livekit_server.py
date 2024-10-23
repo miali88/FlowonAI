@@ -107,14 +107,13 @@ async def entrypoint(ctx: JobContext):
             chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
             print("chat_message retrieved from trigger_show_chat_input:", chat_message)
             if chat_message:
+                print("chat_message found, adding to agent's chat context")
                 user_message = f"user input data: \n\n{chat_message}\n"
                 # Add the message to the agent's chat context
                 agent.chat_ctx.append({"role": "user", "content": user_message})
                 print(f"Added user message from {participant_identity} to chat context: {user_message}")
 
-            while True:
-                await asyncio.sleep(0.2)
-
+  
         while True:
             await asyncio.sleep(0.2)
 

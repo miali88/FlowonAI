@@ -18,7 +18,7 @@ API_BASE_URL = os.getenv("DOMAIN")
 class AgentFunctions(llm.FunctionContext):
     @llm.ai_callable(
         name="request_personal_data",
-        description="Call this function when the assistant has provided product information to the user, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+        description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
         auto_retry=False
     )
     async def request_personal_data(
@@ -26,7 +26,7 @@ class AgentFunctions(llm.FunctionContext):
         message: Annotated[
             str,
             llm.TypeInfo(
-                description="Call this function when the assistant has provided product information to the user, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback"
+                description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback"
             )
         ]
     ) -> str:
@@ -47,7 +47,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
             await asyncio.sleep(3)
 
             # Poll for the chat message with a timeout
-            max_attempts = 60  # 30 seconds total (0.5 second intervals)
+            max_attempts = 30  # 30 seconds total (1 second intervals)
             attempt = 0
             
             while attempt < max_attempts:
@@ -68,7 +68,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                     await send_lead_notification(chat_message)
                     return chat_message
                 
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
                 attempt += 1
             
             logger.warning("Timeout waiting for chat message")
