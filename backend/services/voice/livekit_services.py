@@ -158,8 +158,6 @@ async def maintain_agent_session(room_name: str, agent_id: str):
     except Exception as e:
         logger.error(f"Session maintenance error: {str(e)}", exc_info=True)
 
-from livekit.plugins.cartesia.models import TTSModels
-
 lang_options = {
     "en-US": {"deepgram": "en-US", "cartesia": "en", "cartesia_model": "sonic-english"},
     "en-GB": {"deepgram": "en-GB", "cartesia": "en", "cartesia_model": "sonic-english"},
@@ -183,11 +181,8 @@ async def create_voice_assistant(agent_id):
                 logger.error(f"Missing required field: {field}")
                 raise ValueError(f"Agent configuration missing required field: {field}")
 
-        print("CARTESIA CONFIGS")
-        print('agent language', agent['language'])
-        print(lang_options[agent['language']]['cartesia_model'])
-        print(lang_options[agent['language']]['cartesia'])
         logger.info("Creating voice assistant with configuration")
+        fnc_ctx = AgentFunctions()
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
@@ -199,6 +194,7 @@ async def create_voice_assistant(agent_id):
             chat_ctx=llm.ChatContext().append(
                 role="system",
                 text=agent['instructions']),
+            fnc_ctx=fnc_ctx,
             allow_interruptions=True,
             interrupt_speech_duration=1,
             interrupt_min_words=3,
@@ -211,6 +207,7 @@ async def create_voice_assistant(agent_id):
         logger.error(f"Error creating voice assistant: {str(e)}", exc_info=True)
         raise
 
+
 async def get_agent(agent_id):
     response = supabase.table('agents') \
         .select('*') \
@@ -222,7 +219,7 @@ async def get_agent(agent_id):
     else:
         return None
 
-
+""" to refactor code"""
 async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
     print("Token request received")
     print(f"Request parameters: agent_id={agent_id}")
@@ -250,15 +247,3 @@ async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
             room=room_name))
 
     return token.to_jwt(), livekit_server_url, room_name
-
-async def monitor_connection_state(room):
-    logger.info("Starting connection state monitoring")
-    try:
-        while True:
-            if room.connection_state != 1:  # Not connected
-                logger.warning(f"Connection state changed: {room.connection_state}")
-                # Add reconnection logic here
-                break
-            await asyncio.sleep(1)
-    except Exception as e:
-        logger.error(f"Connection monitoring error: {str(e)}", exc_info=True)

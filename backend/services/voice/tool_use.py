@@ -45,7 +45,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str):
                                       json={'room_name': room_name, 'job_id': job_id})
             response_data = await response.json()
             
-            if response_data and isinstance(response_data, list) and len(response_data) > 0:
+            if response_data:
                 chat_message = {
                     'full_name': response_data[0].get('full_name'),
                     'email': response_data[0].get('email'),
