@@ -31,6 +31,8 @@ import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
 import { handleScrape } from './HandleScrape';
 import { TokenCounter } from './TokenCounter';
+import { KnowledgeBaseTable } from './KnowledgeBaseTable'
+
 interface SavedItem {
   id: number;
   title: string;
@@ -358,86 +360,38 @@ function KnowledgeBaseContent() {
   
         <div className="flex h-full">
           {activeTab === 'library' ? (
-            <>
-              {/* Left section (1/3 width) */}
-              <div className="w-1/3 p-4 border-r">
-                <div className="flex justify-between items-center mb-4">
-                </div>
-                <div className="mb-4">
-                  <Input 
-                    placeholder="Search items..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="mb-4">
-                  <TokenCounter totalTokens={totalTokens} />
-                </div>
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  {filteredItems.map((item) => {
-                    console.log(`Rendering item ${item.id} with data_type:`, item.data_type);
-                    return (
-                      <Card 
-                        key={item.id} 
-                        className={cn(
-                          "mb-2 cursor-pointer",
-                          selectedItem?.id === item.id && "bg-secondary"
-                        )}
-                        onClick={() => { setSelectedItem(item); setIsEditing(false); }}
-                      >
-                        <CardHeader className="p-3 flex flex-row items-center justify-between">
-                          <CardTitle className="text-sm">{item.title}</CardTitle>
-                          <span className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full">
-                            {item.data_type || ''}
-                          </span>
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
-                </ScrollArea>
-              </div>
-  
-              {/* Right section (2/3 width) */}
+            <div className="flex w-full">
+              {/* Left section with table (2/3 width) */}
               <div className="w-2/3 p-4">
+                <KnowledgeBaseTable
+                  data={savedItems}
+                  totalTokens={totalTokens}
+                  onEdit={(item) => {
+                    setSelectedItem(item);
+                    setIsEditing(true);
+                    setNewItemContent(item.content);
+                  }}
+                  onDelete={handleDeleteItem}
+                  setSelectedItem={setSelectedItem}
+                />
+              </div>
+
+              {/* Right section with content preview (1/3 width) */}
+              <div className="w-1/3 p-4 border-l">
                 {selectedItem ? (
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold">{selectedItem.title}</h3>
-                      <div className="flex space-x-2">
-                        <Button onClick={handleEditItem} disabled={isEditing}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDeleteItem(selectedItem.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                        </Button>
-                      </div>
-                    </div>
-                    {isEditing ? (
-                      <>
-                        <Textarea 
-                          className="w-full h-[calc(100vh-250px)] p-4 bg-background border border-input mb-4"
-                          value={newItemContent}
-                          onChange={(e) => setNewItemContent(e.target.value)}
-                        />
-                        <Button onClick={handleSaveEdit}>Save Changes</Button>
-                      </>
-                    ) : (
-                      <ScrollArea className="h-[calc(100vh-250px)]">
-                        <p className="whitespace-pre-wrap">{selectedItem.content}</p>
-                      </ScrollArea>
-                    )}
+                  <div className="h-full">
+                    <h3 className="text-xl font-semibold mb-4">{selectedItem.title}</h3>
+                    <ScrollArea className="h-[calc(100vh-200px)]">
+                      <p className="whitespace-pre-wrap">{selectedItem.content}</p>
+                    </ScrollArea>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Select an item to view or edit</p>
+                    <p className="text-muted-foreground">Select an item to view details</p>
                   </div>
                 )}
               </div>
-            </>
+            </div>
           ) : (
             <div className="w-full p-4">
               <div className="relative w-full mb-6">
