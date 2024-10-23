@@ -98,16 +98,16 @@ async def entrypoint(ctx: JobContext):
                 if function_name == "request_personal_data":
                     print("Triggering show_chat_input")
                     # Create task for handling the chat input response
-                    asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id))
+                    asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id, available_participant.identity))
 
-        async def handle_chat_input_response(agent, room_name: str, job_id: str):
+        async def handle_chat_input_response(agent, room_name: str, job_id: str, participant_identity: str):
             """Separate async function to handle the chat input response"""
-            chat_message = await trigger_show_chat_input(room_name, job_id)
+            chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
             if chat_message:
                 user_message = f"user input data: \n\n{chat_message}\n"
                 # Add the message to the agent's chat context
                 agent.chat_ctx.append({"role": "user", "content": user_message})
-                print(f"Added user message to chat context: {user_message}")
+                print(f"Added user message from {participant_identity} to chat context: {user_message}")
 
             while True:
                 await asyncio.sleep(0.2)
