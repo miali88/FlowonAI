@@ -1,33 +1,30 @@
-import os
-import random
+import os, random, uuid
+from typing import Annotated
+from dotenv import load_dotenv
+from asyncio import Lock
+
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
-from app.core.config import settings
-import uuid 
 from livekit.agents.voice_assistant import VoiceAssistant
-from livekit.plugins import cartesia, deepgram, openai, silero
-from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
-import os 
-from dotenv import load_dotenv
 from livekit.agents import llm
-from livekit.agents.llm import FunctionContext
+from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
+from livekit.plugins import cartesia, deepgram, openai, silero
+from supabase import create_client, Client
+
+from app.core.config import settings
+from services.voice.tool_use import AgentFunctions
 
 load_dotenv()
+
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+
+room_locks = {}
 
 async def create_livekit_api():
     return LiveKitAPI(
         url=os.getenv("LIVEKIT_URL"),
         api_key=os.getenv("LIVEKIT_API_KEY"),
         api_secret=os.getenv("LIVEKIT_API_SECRET"))
-
-from livekit.agents import llm
-from supabase import create_client, Client
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-
-from asyncio import Lock
-
-# Add this global variable
-room_locks = {}
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
     print("Token request received")
@@ -118,7 +115,6 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
         await livekit_api.aclose()
         print("livekit_api closed in create_room")
 
-
 async def start_agent_request(access_token: str, agent_id: str, room_name: str):
     livekit_api = await create_livekit_api()
     try:
@@ -133,7 +129,6 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
     finally:
         await livekit_api.aclose()
         print("livekit_api closed in start_agent_request")
-
 
 lang_options = {
     "en-US": {"deepgram": "en-US", "cartesia": "en-US", "cartesia_model": "sonic-english"},
@@ -154,6 +149,8 @@ async def create_voice_assistant(agent_id):
         role="system",
         text=agent['instructions'])
 
+    functions = AgentFunctions()
+
     return VoiceAssistant(
         vad=silero.VAD.load(),
         stt=deepgram.STT(model="nova-2-general", language=lang_options[language]['deepgram']),
@@ -162,53 +159,12 @@ async def create_voice_assistant(agent_id):
             language=lang_options[language]['cartesia'],
             model=lang_options[language]['cartesia_model'],
             voice=voice_id),
-        # fnc_ctx=AssistantFunction(),
+        fnc_ctx=functions,
         chat_ctx=initial_ctx,
         allow_interruptions=True,
-        interrupt_speech_duration=0.5,
-        interrupt_min_words=0,
+        interrupt_speech_duration=1,
+        interrupt_min_words=3,
         min_endpointing_delay=0.5), opening_line
-
-
-# class MyAgentFunctions(FunctionContext):
-#     def __init__(self):
-#         super().__init__()
-
-#     @llm.ai_callable(
-#         name="get_weather",
-#         description="Get the current weather for a given location",
-#         auto_retry=True
-#     )
-#     def get_weather(self, location: str) -> str:
-#         """
-#         Get the current weather for a given location.
-
-#         Args:
-#             location (str): The name of the city or location.
-
-#         Returns:
-#             str: A description of the current weather.
-#         """
-#         # Implement your weather fetching logic here
-#         return f"The weather in {location} is sunny and 25°C."
-
-#     @llm.ai_callable(
-#         description="",
-#         auto_retry=False
-#     )
-#     def calculate_sum(self, a: int, b: int) -> int:
-#         """
-#         Calculate the sum of two numbers.
-
-#         Args:
-#             a (int): The first number.
-#             b (int): The second number.
-
-#         Returns:
-#             int: The sum of a and b.
-#         """
-#         return a + b
-
 
 
 async def get_agent(agent_id):

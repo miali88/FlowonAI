@@ -479,28 +479,8 @@ defer
               </div>
               <div className="flex space-x-2 pt-4">
                 <Button onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}>
-                  Save Changes
+                  Retrain Agent
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Delete Agent</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the agent
-                        and remove all of its data from our servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteAgent}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             </div>
           </CardContent>
@@ -521,9 +501,31 @@ defer
                 className="min-h-[400px]"
               />
             </div>
-            <Button onClick={handleSaveFeatures} className="mt-6">
-              Save Changes
-            </Button>
+            <div className="flex space-x-2">
+              <Button onClick={handleSaveFeatures}>
+                Retrain Agent
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Delete Agent</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the agent
+                      and remove all of its data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteAgent}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>

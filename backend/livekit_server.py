@@ -1,9 +1,11 @@
+import asyncio
+from dotenv import load_dotenv
+
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 
 from services.voice.livekit_services import create_voice_assistant
-import asyncio
-from dotenv import load_dotenv
+from services.voice.tool_use import trigger_show_chat_input
 
 load_dotenv()
 
@@ -78,6 +80,25 @@ async def entrypoint(ctx: JobContext):
         @ctx.room.on('connected')
         def on_connected():
             print(f"Room {room_name} connected")
+
+
+        @agent.on("function_calls_finished")
+        def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+            """This event triggers when an assistant's function call completes."""
+            print("\n\n\n on_function_calls_finished method called")
+            print("\n\n\n called_functions:", called_functions)
+
+            for called_function in called_functions:
+                function_name = called_function.call_info.function_info.name
+                print(f"Function called: {function_name}")
+
+                if function_name == "request_personal_data":
+                    print("Triggering show_chat_input")
+                    asyncio.create_task(trigger_show_chat_input(ctx.room.name, ctx.job.id))
+
+
+
+
 
         while True:
             await asyncio.sleep(0.2)
