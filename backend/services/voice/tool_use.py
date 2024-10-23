@@ -64,7 +64,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                         'email': response_data[0].get('email'),
                         'contact_number': response_data[0].get('contact_number')
                     }
-                    logger.info(f"Successfully received chat message for {chat_message.get('full_name')}")
+                    #logger.info(f"Successfully received chat message for {chat_message.get('full_name')}")
                     await send_lead_notification(chat_message)
                     return chat_message
                 

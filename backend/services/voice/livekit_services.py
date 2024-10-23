@@ -196,9 +196,9 @@ async def create_voice_assistant(agent_id):
                 text=agent['instructions']),
             fnc_ctx=fnc_ctx,
             allow_interruptions=True,
-            interrupt_speech_duration=1,
-            interrupt_min_words=3,
-            min_endpointing_delay=0.5)
+            interrupt_speech_duration=0.5,
+            interrupt_min_words=2,
+            min_endpointing_delay=1)
             
         logger.info("Voice assistant created successfully")
         return assistant, agent['openingLine']
