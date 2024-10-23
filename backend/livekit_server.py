@@ -40,11 +40,13 @@ async def entrypoint(ctx: JobContext):
                     print(f"Subscribed to audio track: {publication.sid}")
                     break
             
-            # Create and start the agent here, within the job context
             agent_id = room_name.split('_')[1]  # Extract agent_id from room name
             agent, opening_line = await create_voice_assistant(agent_id)
             agent.start(room, available_participant)
             await agent.say(opening_line, allow_interruptions=False)
+
+            # Add this line to keep the session alive
+            await asyncio.Event().wait()  # This will wait indefinitely until the context is shutdown
 
         else:
             print("No available participants found.")
@@ -80,32 +82,32 @@ async def entrypoint(ctx: JobContext):
         def on_connected():
             print(f"Room {room_name} connected")
 
-    @agent.on("function_calls_finished")
-    def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
-        """This event triggers when an assistant's function call completes."""
-        print("\n\n\n on_function_calls_finished method called")
-        print("\n\n\n called_functions:", called_functions)
+        @agent.on("function_calls_finished")
+        def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+            """This event triggers when an assistant's function call completes."""
+            print("\n\n\n on_function_calls_finished method called")
+            print("\n\n\n called_functions:", called_functions)
 
-        for called_function in called_functions:
-            function_name = called_function.call_info.function_info.name
-            print(f"Function called: {function_name}")
+            for called_function in called_functions:
+                function_name = called_function.call_info.function_info.name
+                print(f"Function called: {function_name}")
 
-            if function_name == "request_personal_data":
-                print("Triggering show_chat_input")
-                # Create task for handling the chat input response
-                asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id))
+                if function_name == "request_personal_data":
+                    print("Triggering show_chat_input")
+                    # Create task for handling the chat input response
+                    asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id))
 
-    async def handle_chat_input_response(agent, room_name: str, job_id: str):
-        """Separate async function to handle the chat input response"""
-        chat_message = await trigger_show_chat_input(room_name, job_id)
-        if chat_message:
-            user_message = f"user input data: \n\n{chat_message}\n"
-            # Add the message to the agent's chat context
-            agent.chat_ctx.append({"role": "user", "content": user_message})
-            print(f"Added user message to chat context: {user_message}")
+        async def handle_chat_input_response(agent, room_name: str, job_id: str):
+            """Separate async function to handle the chat input response"""
+            chat_message = await trigger_show_chat_input(room_name, job_id)
+            if chat_message:
+                user_message = f"user input data: \n\n{chat_message}\n"
+                # Add the message to the agent's chat context
+                agent.chat_ctx.append({"role": "user", "content": user_message})
+                print(f"Added user message to chat context: {user_message}")
 
-        while True:
-            await asyncio.sleep(0.2)
+            while True:
+                await asyncio.sleep(0.2)
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")

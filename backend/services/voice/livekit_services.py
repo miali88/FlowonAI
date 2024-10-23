@@ -2,6 +2,7 @@ import os, random, uuid
 from typing import Annotated
 from dotenv import load_dotenv
 from asyncio import Lock
+import logging
 
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
@@ -20,6 +21,8 @@ supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVIC
 
 room_locks = {}
 
+logger = logging.getLogger(__name__)
+
 async def create_livekit_api():
     return LiveKitAPI(
         url=os.getenv("LIVEKIT_URL"),
@@ -27,13 +30,14 @@ async def create_livekit_api():
         api_secret=os.getenv("LIVEKIT_API_SECRET"))
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
-    print("Token request received")
-    print(f"Request parameters: agent_id={agent_id}, user_id={user_id}")
+    logger.info(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
     
     if not agent_id or not user_id:
+        logger.error("Missing required parameters: agent_id or user_id")
         raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
 
     room_name = f"agent_{agent_id}_room_{user_id}"
+    logger.debug(f"Generated room name: {room_name}")
 
     # Use a lock to ensure only one token generation process happens at a time for this room
     if room_name not in room_locks:
@@ -60,19 +64,20 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         return token.to_jwt(), livekit_server_url, room_name
 
 async def check_and_create_room(room_name: str, token: str, agent_id: str):
+    logger.info(f"Checking room existence: {room_name}")
     try:
         livekit_api = await create_livekit_api()
         room_exists = await check_room_exists(livekit_api, room_name)
 
         if room_exists:
             print(f"Room {room_name} already exists")
-            await print_room_details(livekit_api, room_name)
+            await print_room_details(livekit_api, room_name, agent_id)
         else:
             print(f"Room {room_name} doesn't exist, creating it and starting the agent")
             await create_room(room_name, token, agent_id)
 
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
+        logger.error(f"Error checking/creating room {room_name}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error checking room existence")
     finally:
         await livekit_api.aclose()
@@ -82,7 +87,7 @@ async def check_room_exists(livekit_api, room_name: str) -> bool:
     rooms_response = await livekit_api.room.list_rooms(list_request)
     return any(room.name == room_name for room in rooms_response.rooms)
 
-async def print_room_details(livekit_api, room_name: str):
+async def print_room_details(livekit_api, room_name: str, agent_id: str):
     # Print all rooms
     list_request = ListRoomsRequest()
     rooms_response = await livekit_api.room.list_rooms(list_request)
@@ -90,12 +95,23 @@ async def print_room_details(livekit_api, room_name: str):
     for room in rooms_response.rooms:
         print(f"Room name: {room.name}, SID: {room.sid}")
 
-    # Print participants
-    list_participants_request = ListParticipantsRequest(room=room_name)
-    participants_response = await livekit_api.room.list_participants(list_participants_request)
-    print(f"\nParticipants in room '{room_name}':")
-    for participant in participants_response.participants:
-        print(f"Participant: {participant.identity}, SID: {participant.sid}")
+    # Print participants with error handling
+    try:
+        list_participants_request = ListParticipantsRequest(room=room_name)
+        participants_response = await livekit_api.room.list_participants(list_participants_request)
+        print(f"\nParticipants in room '{room_name}':")
+        for participant in participants_response.participants:
+            print(f"Participant: {participant.identity}, SID: {participant.sid}")
+    except api.twirp_client.TwirpError as e:
+        if e.code == 'not_found' and 'room does not exist' in e.message:
+            logger.warning(f"Room {room_name} not found when listing participants, creating room")
+            await create_room(room_name, None, agent_id)  # You'll need to pass agent_id as a parameter
+        else:
+            logger.error(f"Unexpected TwirpError: {e}")
+            raise
+    except Exception as e:
+        logger.error(f"Error listing participants: {e}")
+        raise
 
 async def create_room(room_name: str, access_token: str, agent_id: str):
     try:
@@ -116,56 +132,82 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
         print("livekit_api closed in create_room")
 
 async def start_agent_request(access_token: str, agent_id: str, room_name: str):
+    logger.info(f"Starting agent request for room: {room_name}")
     livekit_api = await create_livekit_api()
     try:
-        # Instead of creating the agent here, we'll just ensure the room exists
-        # and let the agent worker handle the agent creation and management
+        # Create/verify room
         room = await livekit_api.room.create_room(CreateRoomRequest(name=room_name))
-        print(f"Ensured room exists: {room.name} with SID: {room.sid}")
+        logger.info(f"Room verified: {room.name} with SID: {room.sid}")
 
-        # The agent will be created and managed by the entrypoint function in livekit_server.py
-        print(f"Room ready for agent in: {room_name}")
+        # Keep session alive
+        logger.info("Initializing agent session")
+        await maintain_agent_session(room_name, agent_id)
 
+    except Exception as e:
+        logger.error(f"Error in start_agent_request: {str(e)}", exc_info=True)
+        raise
     finally:
         await livekit_api.aclose()
-        print("livekit_api closed in start_agent_request")
+        logger.info("LiveKit API connection closed")
+
+async def maintain_agent_session(room_name: str, agent_id: str):
+    logger.info(f"Maintaining agent session for room: {room_name}")
+    try:
+        # Add session management logic here
+        pass
+    except Exception as e:
+        logger.error(f"Session maintenance error: {str(e)}", exc_info=True)
 
 lang_options = {
-    "en-US": {"deepgram": "en-US", "cartesia": "en-US", "cartesia_model": "sonic-english"},
-    "en-GB": {"deepgram": "en-GB", "cartesia": "en-GB", "cartesia_model": "sonic-english"},
+    "en-US": {"deepgram": "en-US", "cartesia": "en", "cartesia_model": "sonic-english"},
+    "en-GB": {"deepgram": "en-GB", "cartesia": "en", "cartesia_model": "sonic-english"},
     "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
 }
 
 async def create_voice_assistant(agent_id):
-    """ Invoked inside the entrypoint fnc in livekit_server.py """
+    logger.info(f"Creating voice assistant for agent_id: {agent_id}")
+    try:
+        agent = await get_agent(agent_id)
+        if not agent:
+            logger.error(f"Agent not found: {agent_id}")
+            raise ValueError(f"Agent {agent_id} not found")
+            
+        logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}")
+        
+        # Add validation for required agent fields
+        required_fields = ['language', 'voice', 'instructions', 'openingLine']
+        for field in required_fields:
+            if not agent.get(field):
+                logger.error(f"Missing required field: {field}")
+                raise ValueError(f"Agent configuration missing required field: {field}")
 
-    agent = await get_agent(agent_id)
+        print("CARTESIA CONFIGS")
+        print('agent language', agent['language'])
+        print(lang_options[agent['language']]['cartesia_model'])
+        print(lang_options[agent['language']]['cartesia'])
+        logger.info("Creating voice assistant with configuration")
+        assistant = VoiceAssistant(
+            vad=silero.VAD.load(),
+            stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
+            llm=openai.LLM(),   
+            tts=cartesia.TTS(
+                language=lang_options[agent['language']]['cartesia'],
+                model=lang_options[agent['language']]['cartesia_model'],
+                voice=agent['voice']),
+            chat_ctx=llm.ChatContext().append(
+                role="system",
+                text=agent['instructions']),
+            allow_interruptions=True,
+            interrupt_speech_duration=1,
+            interrupt_min_words=3,
+            min_endpointing_delay=0.5)
+            
+        logger.info("Voice assistant created successfully")
+        return assistant, agent['openingLine']
 
-    opening_line = agent['openingLine']
-    language = agent['language']
-    voice_id = agent['voice']
-
-    initial_ctx = llm.ChatContext().append(
-        role="system",
-        text=agent['instructions'])
-
-    functions = AgentFunctions()
-
-    return VoiceAssistant(
-        vad=silero.VAD.load(),
-        stt=deepgram.STT(model="nova-2-general", language=lang_options[language]['deepgram']),
-        llm=openai.LLM(),   
-        tts=cartesia.TTS(
-            language=lang_options[language]['cartesia'],
-            model=lang_options[language]['cartesia_model'],
-            voice=voice_id),
-        fnc_ctx=functions,
-        chat_ctx=initial_ctx,
-        allow_interruptions=True,
-        interrupt_speech_duration=1,
-        interrupt_min_words=3,
-        min_endpointing_delay=0.5), opening_line
-
+    except Exception as e:
+        logger.error(f"Error creating voice assistant: {str(e)}", exc_info=True)
+        raise
 
 async def get_agent(agent_id):
     response = supabase.table('agents') \
@@ -206,3 +248,15 @@ async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
             room=room_name))
 
     return token.to_jwt(), livekit_server_url, room_name
+
+async def monitor_connection_state(room):
+    logger.info("Starting connection state monitoring")
+    try:
+        while True:
+            if room.connection_state != 1:  # Not connected
+                logger.warning(f"Connection state changed: {room.connection_state}")
+                # Add reconnection logic here
+                break
+            await asyncio.sleep(1)
+    except Exception as e:
+        logger.error(f"Connection monitoring error: {str(e)}", exc_info=True)

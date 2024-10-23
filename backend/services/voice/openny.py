@@ -302,6 +302,7 @@ async def entrypoint(ctx: JobContext):
         #         {transcript.content}
         #         """
    
+   
         # @assistant.on("function_calls_finished")
         # def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
         #     print("\n\n\n on_function_calls_finished method called")
@@ -317,6 +318,7 @@ async def entrypoint(ctx: JobContext):
         #             print("Triggering show_chat_input")
         #             # Create a background task to run the async function
         #             asyncio.create_task(assistant.trigger_show_chat_input(ctx.room.name, ctx.job.id))
+
 
         # @ctx.room.on("disconnected")
         # def on_disconnected():

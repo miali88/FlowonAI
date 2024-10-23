@@ -6,6 +6,8 @@ import logging
 
 from livekit.agents import llm
 
+# Update logger configuration
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -16,7 +18,7 @@ class AgentFunctions(llm.FunctionContext):
     @llm.ai_callable(
         name="request_personal_data",
         description="Called when the agent requests personal data from the user or when the user needs human assistance",
-        auto_retry=False  # Since this is a user interaction, we don't want automatic retries
+        auto_retry=False
     )
     async def request_personal_data(
         self,
@@ -27,17 +29,20 @@ class AgentFunctions(llm.FunctionContext):
             )
         ]
     ) -> str:
-        print(f"Triggering request personal data: {message}")
+        logger.info(f"Personal data request triggered with message: {message}")
         return "Form now presented to caller"
 
 async def trigger_show_chat_input(room_name: str, job_id: str):
-    print("\n\n\n\n shutting down workeb:", job_id)
+    logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
     async with aiohttp.ClientSession() as session:
         try:
-            await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', json={'room_name': room_name, 'job_id': job_id})
-            print("\n\n\n post /conversation/trigger_show_chat_input", job_id)
+            logger.debug("Sending POST request to trigger_show_chat_input endpoint")
+            await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', 
+                             json={'room_name': room_name, 'job_id': job_id})
             
-            response = await session.get(f'{API_BASE_URL}/conversation/chat_message', json={'room_name': room_name, 'job_id': job_id})
+            logger.debug("Fetching chat message")
+            response = await session.get(f'{API_BASE_URL}/conversation/chat_message', 
+                                      json={'room_name': room_name, 'job_id': job_id})
             response_data = await response.json()
             
             if response_data and isinstance(response_data, list) and len(response_data) > 0:
@@ -46,17 +51,17 @@ async def trigger_show_chat_input(room_name: str, job_id: str):
                     'email': response_data[0].get('email'),
                     'contact_number': response_data[0].get('contact_number')
                 }
-                print("\n\n\n Processed chat_message:", chat_message)
-                
-                # Send email notification
+                logger.info(f"Successfully processed chat message for {chat_message.get('full_name')}")
                 await send_lead_notification(chat_message)
-                
-                return chat_message                
+                return chat_message
             else:
-                print("\n\n\n No valid chat message data received")
+                logger.warning("No valid chat message data received")
             
         except Exception as e:
-            logger.error(f"Error triggering show_chat_input: {str(e)}", extra={'room_name': room_name, 'job_id': job_id})
+            logger.error(f"Error in trigger_show_chat_input: {str(e)}", 
+                        extra={'room_name': room_name, 'job_id': job_id}, 
+                        exc_info=True)
+            raise
 
 
 async def send_lead_notification(chat_message: dict):
