@@ -134,20 +134,22 @@ async def create_item_handler(request: Request,
         data = await request.json()
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
 
-        print("\n\n\n DATA:", data)
-
-        # Insert the data into Supabase
-        new_item = supabase.table('user_web_data').insert(data).execute()
-        logger.info(f"New item created: {json.dumps(new_item.data[0], indent=2)}")
+        # Determine which table to use based on data type
+        data_type = data.get('data_type', 'text')  # Default to 'text' if not specified
+        print("\n\n\n data_type:", data_type)
+        table_name = 'user_web_data' if data_type == 'web' else 'user_text_files'
+        
+        # Insert the data into the appropriate Supabase table
+        new_item = supabase.table(table_name).insert(data).execute()
+        logger.info(f"New item created in {table_name}: {json.dumps(new_item.data[0], indent=2)}")
 
         # Schedule the kb_item_to_chunks function to run in the background
         background_tasks.add_task(kb_item_to_chunks, 
-        new_item.data[0]['id'], 
-        new_item.data[0]['content'],
-        new_item.data[0]['user_id'],
+            new_item.data[0]['id'], 
+            new_item.data[0]['content'],
+            new_item.data[0]['user_id'],
         )
 
-        # Return a success response immediately
         return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON: {str(e)}")
@@ -157,7 +159,7 @@ async def create_item_handler(request: Request,
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 @router.delete("/knowledge_base/{item_id}")
-async def delete_item_handler(item_id: int, request: Request,current_user: str = Depends(get_current_user)):
+async def delete_item_handler(item_id: int, request: Request, current_user: str = Depends(get_current_user)):
     try:
         # Get the request body
         body = await request.json()
