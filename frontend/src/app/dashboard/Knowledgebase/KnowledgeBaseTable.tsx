@@ -18,15 +18,6 @@ import {
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Table,
   TableBody,
   TableCell,
@@ -43,8 +34,9 @@ export type KnowledgeBaseItem = {
   title: string
   content: string
   data_type: string
+  tag: string
   tokens: number
-  created_at: string // Adding this for sorting purposes
+  created_at: string
 }
 
 interface KnowledgeBaseTableProps {
@@ -88,6 +80,15 @@ export function KnowledgeBaseTable({
       cell: ({ row }) => (
         <div className="px-2 py-1 text-xs font-semibold text-white bg-cyan-800 rounded-full w-fit">
           {row.getValue("data_type")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tag",
+      header: "Tag",
+      cell: ({ row }) => (
+        <div className="px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full w-fit">
+          {row.getValue("tag") || "No Tag"}
         </div>
       ),
     },

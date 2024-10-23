@@ -62,7 +62,8 @@ async def get_kb_items(current_user):
                     'title': item.get('heading', 'No Title'),
                     'content': item.get('content', ''),
                     'user_id': current_user,
-                    'data_type': item.get('data_type')
+                    'data_type': item.get('data_type'),
+                    'tag': item.get('tag', '')
                 }
                 for item in items.data
             ]

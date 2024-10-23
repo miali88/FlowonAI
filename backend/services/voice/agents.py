@@ -44,6 +44,11 @@ async def delete_agent(agent_id: int, user_id: str):
 
 async def update_agent(agent_id: int, data: dict):
     try:
+        # Handle tag field if present
+        if 'tag' in data:
+            data['dataSource'] = data['tag']
+            del data['tag']  # Remove the 'tag' key from the data
+            
         response = supabase.table('agents').update(data).eq('id', agent_id).execute()
         return response
     except Exception as e:

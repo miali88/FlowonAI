@@ -6,11 +6,6 @@ import axios from 'axios';
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,7 +88,8 @@ function KnowledgeBaseContent() {
             title: item.title,
             content: item.content || "Content not available",
             data_type: item.data_type,
-            tokens: item.tokens || 0, // Add this line
+            tag: item.tag || "", // Add this line
+            tokens: item.tokens || 0,
           }));
           
           // Calculate total tokens
