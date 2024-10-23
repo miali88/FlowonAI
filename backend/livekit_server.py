@@ -1,5 +1,9 @@
 import asyncio
 from dotenv import load_dotenv
+import logging  # Add this import
+
+# Add logging configuration
+logging.getLogger('livekit').setLevel(logging.WARNING)
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
@@ -44,9 +48,6 @@ async def entrypoint(ctx: JobContext):
             agent, opening_line = await create_voice_assistant(agent_id)
             agent.start(room, available_participant)
             await agent.say(opening_line, allow_interruptions=False)
-
-            # Add this line to keep the session alive
-            await asyncio.Event().wait()  # This will wait indefinitely until the context is shutdown
 
         else:
             print("No available participants found.")
@@ -108,6 +109,9 @@ async def entrypoint(ctx: JobContext):
 
             while True:
                 await asyncio.sleep(0.2)
+
+        while True:
+            await asyncio.sleep(0.2)
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
