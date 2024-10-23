@@ -103,17 +103,13 @@ async def entrypoint(ctx: JobContext):
 
         async def handle_chat_input_response(agent, room_name: str, job_id: str, participant_identity: str):
             try:
-                print("participant_identity being passed to trigger_show_chat_input:", participant_identity)
                 chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
                 print("chat_message retrieved from trigger_show_chat_input:", chat_message)
                 if chat_message:
-                    print("\n\nchat_message found, adding to agent's chat context")
                     user_message = f"user input data: \n\n{chat_message}\n"
-                    print("Debug - Current chat_ctx:", agent.chat_ctx)
                     print("Debug - Attempting to append message:", user_message)
                     try:
                         agent.chat_ctx.append(text=user_message, role="user")
-                        print("Debug - Append successful")
                         print(f"Added user message from {participant_identity} to chat context: {user_message}")
                         print("Debug - Updated chat_ctx:", agent.chat_ctx)
                     except Exception as append_error:

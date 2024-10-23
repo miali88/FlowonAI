@@ -42,7 +42,7 @@ import { useUser } from "@clerk/nextjs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Update the type definition to include agentPurpose and summary
+// Update the type definition to include lead
 export type ConversationLog = {
   id: string
   created_at: string
@@ -55,6 +55,7 @@ export type ConversationLog = {
   agentPurpose: string | null // Change to allow null
   agentName: string | null
   summary: string | null
+  lead: string | null  // Add this line
 }
 
 // Update the component props
@@ -72,9 +73,12 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   ])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+    React.useState<VisibilityState>({
+      lead: false  // Add this line to hide the "Lead" column by default
+    })
   const [rowSelection, setRowSelection] = React.useState({})
   const [selectedAgentState, setSelectedAgentState] = useState<Agent | null>(null);
+  const [showLeadsOnly, setShowLeadsOnly] = useState(false);
 
   // Define handleDeleteChat inside the component
   const handleDeleteChat = async (id: string) => {
@@ -161,6 +165,21 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
     },
     {
+      accessorKey: "lead",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Lead
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => <div>{(row.getValue("lead") as string) || "No"}</div>,
+    },
+    {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
@@ -242,8 +261,13 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     fetchData();
   }, [user])
 
+  // Create a memoized filtered data array
+  const filteredData = useMemo(() => {
+    return showLeadsOnly ? data.filter(row => row.lead === "yes") : data;
+  }, [data, showLeadsOnly]);
+
   const table = useReactTable({
-    data, // Use the fetched data here
+    data: filteredData, // Use the memoized filtered data
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -271,15 +295,14 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
-        <div className="flex items-center">
-          <Input
-            placeholder="Filter agent purpose..."
-            value={(table.getColumn("agentPurpose")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("agentPurpose")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showLeadsOnly ? "default" : "outline"}
+            onClick={() => setShowLeadsOnly(!showLeadsOnly)}
+          >
+            {showLeadsOnly ? "Show All" : "Show Leads"}
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

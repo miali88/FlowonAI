@@ -1,14 +1,17 @@
-from fastapi import Request, HTTPException, APIRouter, Depends
-from fastapi.responses import JSONResponse
-from sse_starlette.sse import EventSourceResponse
-from supabase import create_client, Client
-from typing import Annotated
+from typing import Annotated, List, Dict
 import os
 import asyncio
 import logging
-from starlette.concurrency import run_in_threadpool
 from collections import defaultdict
 from datetime import datetime
+
+from fastapi import Request, HTTPException, APIRouter, Depends
+from fastapi.responses import JSONResponse
+from sse_starlette.sse import EventSourceResponse
+from starlette.concurrency import run_in_threadpool
+from supabase import create_client, Client
+
+from services.chat.chat import llm_response
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +23,10 @@ router = APIRouter()
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
+
+chat_messages = defaultdict(list)
+event_broadcasters = {}
+conversation_logs = defaultdict(list)
 
 async def get_user_id(request: Request) -> str:
     user_id = request.headers.get("X-User-ID")
@@ -46,28 +53,84 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@router.post("/conversation_log")
+async def livekit_room_webhook(request: Request):
+    data = await request.json()
+    print(f"\n /conversation_log Received webhook data: {data}")
+    
+    event = data.get('event')
+    room_sid = data.get('room', {}).get('sid')
+    
+    if event == 'participant_left':
+        asyncio.create_task(process_participant_left(room_sid))
+    
+    logger.info(f"Received webhook data: {data}")
+    return {"message": "Webhook received successfully"}
 
-""" if function call works without this, then delete endpoint"""
-# @router.get("/events")
-# async def events(request: Request):
-#     async def event_generator():
-#         while True:
-#             # Check if client is still connected
-#             if await request.is_disconnected():
-#                 break
+async def process_participant_left(room_sid: str):
+    await asyncio.sleep(10)
+    
+    matching_job = next((job for job in jobs.values() if job['room_sid'] == room_sid), None)
+    
+    if matching_job:
+        # Save the job data to Supabase
+        try:
+            supabase.table("conversation_logs").insert({
+                "user_id": matching_job['user_id'],
+                "agent_id": matching_job['agent_id'],
+                "job_id": matching_job['job_id'],
+                "room_sid": matching_job['room_sid'],
+                "room_name": matching_job['room_name'],
+                "transcript": matching_job['transcript'],
+            }).execute()
+            
+            print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
+            
+            room_name = matching_job['room_name']
+            try:
+                subprocess.run(['lk', 'room', 'delete', room_name], check=True)
+                print(f"Deleted room: {room_name}")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Error deleting room {room_name}: {str(e)}")
 
-#             # Here you would typically check some condition or wait for a trigger
-#             # For now, we'll just send an event after a delay
-#             await asyncio.sleep(5)
-#             yield {
-#                 "event": "message",
-#                 "data": '{"type": "show_chat_input"}'
-#             }
-#     return EventSourceResponse(event_generator())
+            await transcript_summary(matching_job['transcript'], matching_job['job_id'])
+
+            del jobs[matching_job['job_id']]
+        except Exception as e:
+            logger.error(f"Error saving to Supabase: {str(e)}")
+    return JSONResponse(content={"message": "Participant left and job saved"})
+
+async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
+    system_prompt = f"""
+    you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
+
+    You will be as concise as possible, and only respond with the outcome of the conversation and facts related to the caller's responses.
+    Do not assume anything, not even the currency of any amounts or monies mentioned.
+
+    Your output will be in bullet points, with no prefix like "the calller is" or "the caller asks"
+    """
+    transcript_str = str(transcript)
+    try:
+        summary = await llm_response(user_prompt=transcript_str, system_prompt=system_prompt)
+        logger.info(f"Transcript summary generated successfully")
+
+        try:
+            supabase.table("conversation_logs").update({
+                "summary": summary
+            }).eq("job_id", job_id).execute()
+
+            logger.info(f"Summary inserted into summary table for job_id: {job_id}")
+        except Exception as e:
+            logger.error(f"Error inserting summary to Supabase: {str(e)}")
+
+        return summary
+    except Exception as e:
+        logger.error(f"Error generating transcript summary: {str(e)}")
+        return None
 
 
-chat_messages = defaultdict(list)
-event_broadcasters = {}
+
+
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
