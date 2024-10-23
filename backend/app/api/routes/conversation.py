@@ -85,7 +85,7 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
 
     You will be as concise as possible, and only respond with the outcome of the conversation and facts related to the caller's responses.
-    Do not assume anything, not even the currency of any amounts or monies mentioned.
+    Do not assume anything, not even the currency of any amounts or monies mentioned. If transcript is empty, return "No conversation was held"
 
     Your output will be in bullet points, with no prefix like "the calller is" or "the caller asks"
     """
