@@ -158,6 +158,8 @@ async def maintain_agent_session(room_name: str, agent_id: str):
     except Exception as e:
         logger.error(f"Session maintenance error: {str(e)}", exc_info=True)
 
+from livekit.plugins.cartesia.models import TTSModels
+
 lang_options = {
     "en-US": {"deepgram": "en-US", "cartesia": "en", "cartesia_model": "sonic-english"},
     "en-GB": {"deepgram": "en-GB", "cartesia": "en", "cartesia_model": "sonic-english"},
