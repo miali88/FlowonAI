@@ -18,7 +18,6 @@ load_dotenv()
 async def entrypoint(ctx: JobContext):
     try:
         room_name = ctx.room.name
-        room_sid = await ctx.room.sid
         room = ctx.room
         
         print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
@@ -48,6 +47,7 @@ async def entrypoint(ctx: JobContext):
                     break
             
             agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+            user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
             agent, opening_line = await create_voice_assistant(agent_id)
             agent.start(room, available_participant)
             await agent.say(opening_line, allow_interruptions=False)
@@ -56,6 +56,7 @@ async def entrypoint(ctx: JobContext):
             print("No available participants found.")
             await ctx.shutdown(reason="No available participants")
 
+        #room_sid = await ctx.room.sid
         """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
@@ -64,8 +65,11 @@ async def entrypoint(ctx: JobContext):
             print("if match, then shut down worker")
             if participant.identity == available_participant.identity:
                 print("participant disconnected, shutting down worker")
+                # Wrap the coroutine in a lambda to make it callable
+                ctx.add_shutdown_callback(
+                    lambda: store_conversation_history(agent, room_name, ctx.job.id, available_participant.identity)
+                )
                 ctx.shutdown(reason="Subscribed participant disconnected")
-                ctx.add_shutdown_callback(store_conversation_history(agent, room_name, ctx.job.id, available_participant.identity))
 
         @ctx.room.on("track_subscribed")
         def on_track_subscribed(
@@ -150,7 +154,7 @@ async def entrypoint(ctx: JobContext):
                     "job_id": job_id,
                     "participant_identity": participant_identity,
                     "room_name": room_name,
-                    "room_sid": room_sid,
+                    "user_id": user_id,
                     "agent_id": agent_id
                 }
                 

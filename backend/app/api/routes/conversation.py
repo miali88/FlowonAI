@@ -66,7 +66,7 @@ async def livekit_room_webhook(request: Request):
             "job_id": data['job_id'],
             "participant_identity": data['participant_identity'],
             "room_name": data['room_name'],
-            "room_sid": data['room_sid'],
+            "user_id": data['user_id'],
             "agent_id": data['agent_id']
         }).execute()
         
@@ -80,6 +80,7 @@ async def livekit_room_webhook(request: Request):
 
 
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
+    print("\n\n transcript_summary func called\n\n")
     system_prompt = f"""
     you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
 
