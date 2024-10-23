@@ -4,6 +4,8 @@ import logging  # Add this import
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
+logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
+logging.getLogger('hpack').setLevel(logging.WARNING)  # Add this line
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli

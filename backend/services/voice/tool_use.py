@@ -55,7 +55,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str):
                 await send_lead_notification(chat_message)
                 return chat_message
             else:
-                logger.warning("No valid chat message data received")
+                logger.warning("No valid chat message data received, chat_message={chat_message}")
             
         except Exception as e:
             logger.error(f"Error in trigger_show_chat_input: {str(e)}", 

@@ -66,26 +66,23 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 #     return EventSourceResponse(event_generator())
 
 
-# Add this at the module level
 chat_messages = defaultdict(list)
+event_broadcasters = {}
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
-
-    print("\n\n request method=", request.method)
     if request.method == "POST":
         try:
             data = await request.json()
-            room_name = "doodaa" #data.get('room_name', 'unknown')
+            job_id = data.get('job_id', 'unknown')  # Add job_id
+            room_name = data.get('room_name', 'unknown')
             full_name = data.get('fullName', 'unknown')
             email = data.get('email', 'unknown')
             contact_number = data.get('contactNumber', 'unknown')
             user_id = data.get('user_id', 'unknown')
 
-            # if not all([room_name, message, user_id]):
-            #     raise HTTPException(status_code=400, detail="room_name, message, and user_id are required")
-
-            chat_messages[room_name].append({
+            chat_messages[job_id].append({  # Changed key to job_id
+                'room_name': room_name,     # Include room_name as field
                 'user_id': user_id,
                 'full_name': full_name,
                 'email': email,
@@ -93,8 +90,7 @@ async def chat_message(request: Request):
                 'timestamp': datetime.now().isoformat()
             })
 
-            logger.info(f"Message added to room {room_name}")
-            print("\n\n chat_messages=", chat_messages)
+            logger.info(f"Message added for job {job_id}")
             return JSONResponse(content={"status": "success", "message": "Message added"})
 
         except Exception as e:
@@ -103,63 +99,55 @@ async def chat_message(request: Request):
 
     elif request.method == "GET":
         try:
-            room_name = request.query_params.get('room_name', 'unknown')
-            print("\n\n room_name=", room_name)
-            # if not room_name:
-            #     raise HTTPException(status_code=400, detail="room_name query parameter is required")
-
-            messages = chat_messages.get(room_name, [])
-            print("\n\n messages=", messages)
+            job_id = request.query_params.get('job_id', 'unknown')  # Changed to job_id
+            messages = chat_messages.get(job_id, [])
             return JSONResponse(content=messages)
 
         except Exception as e:
             logger.error(f"Error in GET /chat_message: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-# Add this at the module level
-event_broadcasters = {}
-
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):
-    """ Triggered by livekit AI agent @openny.py """
+    """ Invoked by tool_use.py """
+    print("\n\n post conversation/trigger_show_chat_input\n\n")
 
     data = await request.json()
-    room_name = data.get('room_name')
     job_id = data.get('job_id')
-    if not room_name:
-        raise HTTPException(status_code=400, detail="room_name is required")
     
-    logger.info(f"Triggering show_chat_input for room: {room_name}")
-    if room_name in event_broadcasters:
-        await run_in_threadpool(event_broadcasters[room_name].set)
-        logger.info(f"Event set for room: {room_name}")
+    if not job_id:
+        raise HTTPException(status_code=400, detail="job_id is required")
+    
+    logger.info(f"Triggering show_chat_input for job: {job_id}")
+    if job_id in event_broadcasters:  # Changed to job_id
+        await run_in_threadpool(event_broadcasters[job_id].set)
+        logger.info(f"Event set for job: {job_id}")
     else:
-        logger.warning(f"No event broadcaster found for room: {room_name}")
+        logger.warning(f"No event broadcaster found for job: {job_id}")
     
     return JSONResponse(content={"status": "success"})
 
-@router.get("/events/{room_name}")
-async def events(room_name: str):
-    """ SSE with frontend ChatBotMini.tsx """
 
-    logger.info(f"SSE connection established for room: {room_name}")
+@router.get("/events/{job_id}")  # Changed route parameter
+async def events(job_id: str):  # Changed parameter
+    logger.info(f"SSE connection established for job: {job_id}")
     
     async def event_generator():
-        if room_name not in event_broadcasters:
-            event_broadcasters[room_name] = asyncio.Event()
+        if job_id not in event_broadcasters:
+            event_broadcasters[job_id] = asyncio.Event()
         try:
             while True:
-                logger.info(f"Waiting for event in room: {room_name}")
-                await event_broadcasters[room_name].wait()
-                logger.info(f"Event triggered for room: {room_name}")
+                logger.info(f"Waiting for event in job: {job_id}")
+                await event_broadcasters[job_id].wait()
+                logger.info(f"Event triggered for job: {job_id}")
                 yield {
                     "event": "message",
                     "data": '{"type": "show_chat_input"}'
                 }
-                event_broadcasters[room_name].clear()
+                event_broadcasters[job_id].clear()
         finally:
-            if room_name in event_broadcasters:
-                del event_broadcasters[room_name]
-            logger.info(f"SSE connection closed for room: {room_name}")
+            if job_id in event_broadcasters:
+                del event_broadcasters[job_id]
+            logger.info(f"SSE connection closed for job: {job_id}")
 
     return EventSourceResponse(event_generator())
