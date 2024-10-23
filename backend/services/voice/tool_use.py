@@ -44,7 +44,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                              json={'room_name': room_name, 'job_id': job_id, 'participant_identity': participant_identity})
             
             # Wait 3 seconds before starting to poll
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
             # Poll for the chat message with a timeout
             max_attempts = 30  # 30 seconds total (1 second intervals)

@@ -53,52 +53,31 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.post("/conversation_log")
+@router.post("/store_history")
 async def livekit_room_webhook(request: Request):
     data = await request.json()
-    print(f"\n /conversation_log Received webhook data: {data}")
-    
-    event = data.get('event')
-    room_sid = data.get('room', {}).get('sid')
-    
-    if event == 'participant_left':
-        asyncio.create_task(process_participant_left(room_sid))
+    print(f"\n /store_history Received webhook data: {data}")
     
     logger.info(f"Received webhook data: {data}")
+
+    try:
+        supabase.table("conversation_logs").insert({
+            "transcript": data['transcript'],  
+            "job_id": data['job_id'],
+            "participant_identity": data['participant_identity'],
+            "room_name": data['room_name'],
+            "room_sid": data['room_sid'],
+            "agent_id": data['agent_id']
+        }).execute()
+        
+        print(f"Saved conversation log for job {data['job_id']} to Supabase")
+
+        await transcript_summary(data['transcript'], data['job_id'])
+
+    except Exception as e:
+        logger.error(f"Error saving to Supabase: {str(e)}")
     return {"message": "Webhook received successfully"}
 
-async def process_participant_left(room_sid: str):
-    await asyncio.sleep(10)
-    
-    matching_job = next((job for job in jobs.values() if job['room_sid'] == room_sid), None)
-    
-    if matching_job:
-        # Save the job data to Supabase
-        try:
-            supabase.table("conversation_logs").insert({
-                "user_id": matching_job['user_id'],
-                "agent_id": matching_job['agent_id'],
-                "job_id": matching_job['job_id'],
-                "room_sid": matching_job['room_sid'],
-                "room_name": matching_job['room_name'],
-                "transcript": matching_job['transcript'],
-            }).execute()
-            
-            print(f"Saved conversation log for job {matching_job['job_id']} to Supabase")
-            
-            room_name = matching_job['room_name']
-            try:
-                subprocess.run(['lk', 'room', 'delete', room_name], check=True)
-                print(f"Deleted room: {room_name}")
-            except subprocess.CalledProcessError as e:
-                logger.error(f"Error deleting room {room_name}: {str(e)}")
-
-            await transcript_summary(matching_job['transcript'], matching_job['job_id'])
-
-            del jobs[matching_job['job_id']]
-        except Exception as e:
-            logger.error(f"Error saving to Supabase: {str(e)}")
-    return JSONResponse(content={"message": "Participant left and job saved"})
 
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     system_prompt = f"""

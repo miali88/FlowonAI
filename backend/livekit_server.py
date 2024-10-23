@@ -18,6 +18,7 @@ load_dotenv()
 async def entrypoint(ctx: JobContext):
     try:
         room_name = ctx.room.name
+        room_sid = await ctx.room.sid
         room = ctx.room
         
         print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
@@ -64,7 +65,7 @@ async def entrypoint(ctx: JobContext):
             if participant.identity == available_participant.identity:
                 print("participant disconnected, shutting down worker")
                 ctx.shutdown(reason="Subscribed participant disconnected")
-                ctx.add_shutdown_callback(lambda: print("shutdown callback called"))
+                ctx.add_shutdown_callback(store_conversation_history(agent, room_name, ctx.job.id, available_participant.identity))
 
         @ctx.room.on("track_subscribed")
         def on_track_subscribed(
@@ -100,7 +101,6 @@ async def entrypoint(ctx: JobContext):
                     # Create task for handling the chat input response
                     asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id, available_participant.identity))
 
-
         async def handle_chat_input_response(agent, room_name: str, job_id: str, participant_identity: str):
             try:
                 chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
@@ -118,6 +118,52 @@ async def entrypoint(ctx: JobContext):
             except Exception as e:
                 print(f"Error in handle_chat_input_response: {str(e)}")
   
+        async def store_conversation_history(agent, room_name: str, job_id: str, participant_identity: str):
+            print("store_conversation_history method called")
+            
+            # Parse chat context into simplified format
+            conversation_history = []
+            for message in agent.chat_ctx.messages:
+                message_dict = {}
+                if message.role == 'assistant':
+                    message_dict['assistant_message'] = message.content
+                elif message.role == 'user':
+                    message_dict['user_message'] = message.content
+                elif message.role == 'tool':
+                    message_dict['tool'] = {
+                        'name': message.name,
+                        'content': message.content
+                    }
+                
+                if message_dict:
+                    conversation_history.append(message_dict)
+            print("\n\nconversation_history:", conversation_history)
+            try:
+                import os
+                import aiohttp
+                
+                API_BASE_URL = os.getenv('API_BASE_URL')
+                url = f"{API_BASE_URL}/conversation/store_history"
+                
+                payload = {
+                    "transcript": conversation_history,  # Using the parsed history
+                    "job_id": job_id,
+                    "participant_identity": participant_identity,
+                    "room_name": room_name,
+                    "room_sid": room_sid,
+                    "agent_id": agent_id
+                }
+                
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, json=payload) as response:
+                        if response.status == 200:
+                            print("Successfully stored conversation history")
+                        else:
+                            print(f"Failed to store conversation history. Status: {response.status}")
+                            
+            except Exception as e:
+                print(f"Error storing conversation history: {str(e)}")
+
         while True:
             await asyncio.sleep(0.2)
 
