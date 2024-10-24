@@ -105,6 +105,10 @@ async def entrypoint(ctx: JobContext):
                     # Create task for handling the chat input response
                     asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id, available_participant.identity))
 
+                elif function_name == "search_products_and_services":
+                    print("search_products_and_services called")
+                    print("\n\nagent.chat_ctx:", agent.chat_ctx)
+
         async def handle_chat_input_response(agent, room_name: str, job_id: str, participant_identity: str):
             try:
                 chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)

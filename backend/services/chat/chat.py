@@ -160,13 +160,24 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                 )
                 response_content = response.choices[0].message.content
             elif model == "claude":
-                response = await anthropic.messages.create(
-                    model="claude-3-5-sonnet-20240620",
-                    system=system_prompt,
-                    messages=messages,
-                    max_tokens=token_size
-                )
-                response_content = response.content[0].text
+                try:
+                    response = await anthropic.messages.create(
+                        model="claude-3-5-sonnet-20240620",
+                        system=system_prompt,
+                        messages=messages,
+                        max_tokens=token_size
+                    )
+                    response_content = response.content[0].text
+                except Exception as claude_error:
+                    # If Claude is overloaded, switch to OpenAI
+                    print("Claude API overloaded, switching to OpenAI...")
+                    response = await asyncio.to_thread(
+                        openai.chat.completions.create,
+                        model="gpt-4o",
+                        messages=[{"role": "system", "content": system_prompt}] + messages,
+                        stream=False
+                    )
+                    response_content = response.choices[0].message.content
             else:
                 raise ValueError("Invalid model specified. Choose 'openai' or 'claude'.")
 
@@ -512,5 +523,6 @@ def extract_thinking(response):
     pattern = r'<thinking>(.*?)</thinking>'
     matches = re.findall(pattern, response, re.DOTALL)
     return ['<thinking>' + match + '</thinking>' for match in matches]
+
 
 
