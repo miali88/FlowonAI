@@ -67,7 +67,8 @@ async def livekit_room_webhook(request: Request):
             "participant_identity": data['participant_identity'],
             "room_name": data['room_name'],
             "user_id": data['user_id'],
-            "agent_id": data['agent_id']
+            "agent_id": data['agent_id'],
+            "lead": data['prospect_status']
         }).execute()
         
         print(f"Saved conversation log for job {data['job_id']} to Supabase")

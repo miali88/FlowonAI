@@ -17,6 +17,8 @@ load_dotenv()
 
 async def entrypoint(ctx: JobContext):
     try:
+        # Add participant tracking dictionary
+        participant_prospects = {}
         room_name = ctx.room.name
         room = ctx.room
         
@@ -38,6 +40,9 @@ async def entrypoint(ctx: JobContext):
                 break
 
         if available_participant:
+            # Add the participant to tracking dictionary with empty prospect status
+            participant_prospects[available_participant.sid] = ""
+            print(f"Added participant {available_participant.sid} to tracking with empty prospect status")
             print(f"Found available participant: {available_participant.identity}")            
             for publication in available_participant.track_publications.values():
                 print("publication", publication)
@@ -67,7 +72,11 @@ async def entrypoint(ctx: JobContext):
                 print("participant disconnected, shutting down worker")
                 # Wrap the coroutine in a lambda to make it callable
                 ctx.add_shutdown_callback(
-                    lambda: store_conversation_history(agent, room_name, ctx.job.id, available_participant.identity)
+                    lambda: store_conversation_history(agent, 
+                                                       room_name, 
+                                                       ctx.job.id, 
+                                                       available_participant.identity, 
+                                                       participant_prospects[available_participant.sid])
                 )
                 ctx.shutdown(reason="Subscribed participant disconnected")
 
@@ -102,14 +111,25 @@ async def entrypoint(ctx: JobContext):
 
                 if function_name == "request_personal_data":
                     print("Triggering show_chat_input")
+                    # Update prospect status for the participant
+                    participant_prospects[available_participant.sid] = "yes"
+                    print(f"Updated {available_participant.sid} to prospect status")
                     # Create task for handling the chat input response
-                    asyncio.create_task(handle_chat_input_response(agent, ctx.room.name, ctx.job.id, available_participant.identity))
+                    asyncio.create_task(handle_chat_input_response(agent, 
+                                                                    ctx.room.name, 
+                                                                    ctx.job.id, 
+                                                                    available_participant.identity,)
+                                                                    )
 
                 elif function_name == "search_products_and_services":
                     print("search_products_and_services called")
                     print("\n\nagent.chat_ctx:", agent.chat_ctx)
 
-        async def handle_chat_input_response(agent, room_name: str, job_id: str, participant_identity: str):
+        async def handle_chat_input_response(agent, 
+                                             room_name: str, 
+                                             job_id: str, 
+                                             participant_identity: str,
+                                             prospect_status: str):
             try:
                 chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
                 print("chat_message retrieved from trigger_show_chat_input:", chat_message)
@@ -126,7 +146,11 @@ async def entrypoint(ctx: JobContext):
             except Exception as e:
                 print(f"Error in handle_chat_input_response: {str(e)}")
   
-        async def store_conversation_history(agent, room_name: str, job_id: str, participant_identity: str):
+        async def store_conversation_history(agent, 
+                                             room_name: str, 
+                                             job_id: str, 
+                                             participant_identity: str, 
+                                             prospect_status: str):
             print("store_conversation_history method called")
             
             # Parse chat context into simplified format
@@ -159,7 +183,8 @@ async def entrypoint(ctx: JobContext):
                     "participant_identity": participant_identity,
                     "room_name": room_name,
                     "user_id": user_id,
-                    "agent_id": agent_id
+                    "agent_id": agent_id,
+                    "prospect_status": prospect_status
                 }
                 
                 async with aiohttp.ClientSession() as session:
