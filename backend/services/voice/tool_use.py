@@ -1,9 +1,10 @@
-from typing import Annotated
+from typing import Annotated, Optional
 import aiohttp
 import os
 from dotenv import load_dotenv
 import logging
 import asyncio
+from typing import Literal
 
 from livekit.agents import llm
 
@@ -33,6 +34,52 @@ class AgentFunctions(llm.FunctionContext):
         logger.info(f"Personal data request triggered with message: {message}")
         return "Form now presented to caller"
 
+    @llm.ai_callable(
+        name="search_products_and_services",
+        description="Search for products and services in the database when the user inquires about specific offerings, prices, or availability",
+        auto_retry=True
+    )
+    async def search_products_and_services(
+        self,
+        query: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The search query containing keywords about products or services"
+            )
+        ],
+        category: Annotated[
+            Optional[Literal["products", "services", "both"]],
+            llm.TypeInfo(
+                description="The category to search in. Default is 'both'",
+            )
+        ] = "both",
+        max_results: Annotated[
+            Optional[int],
+            llm.TypeInfo(
+                description="Maximum number of results to return (1-10)",
+                min=1,
+                max=10
+            )
+        ] = 5
+    ) -> str:
+        """
+        Performs a semantic search in the database for products and services based on the user's query.
+        Returns formatted information about matching products/services.
+        """
+        logger.info(f"Searching products/services with query: {query}, category: {category}")
+        try:
+            # TODO: Implement actual database search logic here
+            # This would typically involve:
+            # 1. Vector embedding of the query
+            # 2. Semantic search in your vector DB
+            # 3. Formatting results
+            
+            # Placeholder return
+            return "Found matching products/services: [Results would be listed here]"
+            
+        except Exception as e:
+            logger.error(f"Error in search_products_and_services: {str(e)}", exc_info=True)
+            return "Sorry, I encountered an error while searching for products and services."
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
