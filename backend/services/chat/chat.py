@@ -185,7 +185,7 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
 
 
 tables = ["user_web_data", "user_text_files"]
-async def similarity_search(query: str, user_id: str, table_names: List[str] = tables,
+async def similarity_search(query: str, tag: List[str], table_names: List[str] = tables,
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 
                             embedding_column: str = "jina_embedding", max_results: int = 15):
     print("\n\nsimilarity_search...")
@@ -211,7 +211,8 @@ async def similarity_search(query: str, user_id: str, table_names: List[str] = t
                         'query_embedding': query_embedding,
                         'embedding_column': embedding_column,
                         'similarity_threshold': similarity_threshold,
-                        'max_results': max_results
+                        'max_results': max_results,
+                        'tag_filter': tag  # Add tag filtering parameter
                     }
                 ).execute()
             
@@ -219,11 +220,12 @@ async def similarity_search(query: str, user_id: str, table_names: List[str] = t
                 query_embedding = await get_embedding(query, table)
 
                 response = supabase.rpc(
-                    "search_chunks",  # Make sure this RPC function exists
+                    "search_chunks",
                     {
                         'query_embedding': query_embedding,
                         'similarity_threshold': similarity_threshold,
-                        'max_results': max_results
+                        'max_results': max_results,
+                        'tag_filter': tag  # Add tag filtering parameter
                     }
                 ).execute()
             
@@ -510,4 +512,5 @@ def extract_thinking(response):
     pattern = r'<thinking>(.*?)</thinking>'
     matches = re.findall(pattern, response, re.DOTALL)
     return ['<thinking>' + match + '</thinking>' for match in matches]
+
 

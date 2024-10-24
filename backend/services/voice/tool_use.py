@@ -22,8 +22,8 @@ class AgentFunctions(llm.FunctionContext):
         super().__init__()
     
     """ to be updated with agent's dataSources in database. Perhaps store in mem from SB """
-    data_source = {
-        "e8b64819-7c2c-432f-9f80-05a72bd49787" : "english_car_mechanic"
+    tag_filter = {
+        "e8b64819-7c2c-432f-9f80-05a72bd49787" : ["english_car_mechanic"]
     }
 
     @llm.ai_callable(
@@ -77,6 +77,8 @@ class AgentFunctions(llm.FunctionContext):
         job_id = self.job_ctx.job.id
         room_name = self.job_ctx.room.name
         user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+
 
         print("\n\n\n\n FUNCTION CALL: search_products_and_services")
         print(f"job_id: {job_id}, room_name: {room_name}, user_id: {user_id}")
@@ -84,8 +86,7 @@ class AgentFunctions(llm.FunctionContext):
 
         try:
 
-            """ ADD ARGUMENT TO SIMILARITY SEARCH, 'TAG' column for agent."""
-            results = await similarity_search(query, user_id)
+            results = await similarity_search(query, self.tag_filter[agent_id])
             return f"Found matching products/services: {results}"
             
         except Exception as e:
@@ -142,4 +143,5 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
 async def send_lead_notification(chat_message: dict):
     """ nylas email send here """
     pass
+
 
