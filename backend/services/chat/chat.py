@@ -147,7 +147,7 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
     # Add the current user prompt
     messages.append({"role": "user", "content": user_prompt})
 
-    print("\n\n\n =-[=-[=-[=-[=-[ \n\n\n\nmessages:", messages)
+    #print("\n\n\n =-[=-[=-[=-[=-[ \n\n\n\nmessages:", messages)
     for attempt in range(max_retries):
         try:
             if model == "openai":

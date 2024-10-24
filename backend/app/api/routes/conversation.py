@@ -56,7 +56,7 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 @router.post("/store_history")
 async def livekit_room_webhook(request: Request):
     data = await request.json()
-    print(f"\n /store_history Received webhook data: {data}")
+    #print(f"\n /store_history Received webhook data: {data}")
     
     logger.info(f"Received webhook data: {data}")
 
@@ -107,9 +107,6 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     except Exception as e:
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
-
-
-
 
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
