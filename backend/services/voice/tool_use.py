@@ -1,12 +1,12 @@
-from typing import Annotated, Optional
-import aiohttp
-import os
+from typing import Annotated, Optional, Literal
+
+import aiohttp, os, logging, asyncio
 from dotenv import load_dotenv
-import logging
-import asyncio
-from typing import Literal
 
 from livekit.agents import llm
+from livekit.agents import JobContext
+
+from services.chat.chat import similarity_search
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +17,10 @@ load_dotenv()
 API_BASE_URL = os.getenv("DOMAIN")
 
 class AgentFunctions(llm.FunctionContext):
+    def __init__(self, job_context: JobContext):
+        super().__init__()
+        self.job_context = job_context
+
     @llm.ai_callable(
         name="request_personal_data",
         description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
@@ -56,9 +60,7 @@ class AgentFunctions(llm.FunctionContext):
         max_results: Annotated[
             Optional[int],
             llm.TypeInfo(
-                description="Maximum number of results to return (1-10)",
-                min=1,
-                max=10
+                description="Maximum number of results to return (between 1 and 10)"
             )
         ] = 5
     ) -> str:
@@ -67,13 +69,17 @@ class AgentFunctions(llm.FunctionContext):
         Returns formatted information about matching products/services.
         """
         logger.info(f"Searching products/services with query: {query}, category: {category}")
+        job_id = self.job_context.job.id
+        room_name = self.job_context.room.name
+
         try:
             # TODO: Implement actual database search logic here
             # This would typically involve:
             # 1. Vector embedding of the query
             # 2. Semantic search in your vector DB
             # 3. Formatting results
-            
+            results = await similarity_search(query, ['products', 'services'], job_id, room_name)
+
             # Placeholder return
             return "Found matching products/services: [Results would be listed here]"
             
@@ -131,3 +137,4 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
 async def send_lead_notification(chat_message: dict):
     """ nylas email send here """
     pass
+

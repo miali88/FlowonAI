@@ -7,7 +7,7 @@ import logging
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
 from livekit.agents.voice_assistant import VoiceAssistant
-from livekit.agents import llm
+from livekit.agents import llm, JobContext
 from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
 from livekit.plugins import cartesia, deepgram, openai, silero
 from supabase import create_client, Client
@@ -164,7 +164,7 @@ lang_options = {
     "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
 }
 
-async def create_voice_assistant(agent_id):
+async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
     logger.info(f"Creating voice assistant for agent_id: {agent_id}")
     try:
         agent = await get_agent(agent_id)
@@ -182,7 +182,7 @@ async def create_voice_assistant(agent_id):
                 raise ValueError(f"Agent configuration missing required field: {field}")
 
         logger.info("Creating voice assistant with configuration")
-        fnc_ctx = AgentFunctions()
+        fnc_ctx = AgentFunctions(job_ctx)
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
