@@ -350,11 +350,23 @@ defer
               <div>
                 <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
                 <Select 
-                  value={selectedAgent?.dataSource}
-                  onValueChange={(value) => setSelectedAgent({...selectedAgent, dataSource: value})}
+                  value={selectedAgent?.dataSource || ''}
+                  onValueChange={(value) => {
+                    if (!selectedAgent) return;
+                    setSelectedAgent({
+                      ...selectedAgent,
+                      dataSource: value,
+                      // Only clear the tag if switching away from 'tagged'
+                      tag: value === 'tagged' ? selectedAgent.tag : undefined
+                    });
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select data source" />
+                    <SelectValue>
+                      {selectedAgent?.dataSource === 'tagged' 
+                        ? `Tagged: ${selectedAgent.tag}` 
+                        : selectedAgent?.dataSource || 'Select data source'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
@@ -362,14 +374,22 @@ defer
                     <SelectItem value="natural-language">Describe using natural language</SelectItem>
                   </SelectContent>
                 </Select>
+                {selectedAgent?.dataSource === "natural-language" && (
+                  <p className="text-sm text-muted-foreground mt-1">Feature coming soon</p>
+                )}
               </div>
+              {/* Show tag input only when dataSource is "tagged" */}
               {selectedAgent?.dataSource === "tagged" && (
                 <div>
                   <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
                   <Input 
                     id="tag"
+                    placeholder="Enter tag..."
                     value={selectedAgent.tag || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, tag: e.target.value})}
+                    onChange={(e) => setSelectedAgent({
+                      ...selectedAgent,
+                      tag: e.target.value
+                    })}
                   />
                 </div>
               )}
