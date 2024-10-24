@@ -48,7 +48,7 @@ async def entrypoint(ctx: JobContext):
             
             agent_id = room_name.split('_')[1]  # Extract agent_id from room name
             user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
-            agent, opening_line = await create_voice_assistant(agent_id)
+            agent, opening_line = await create_voice_assistant(agent_id, ctx)
             agent.start(room, available_participant)
             await agent.say(opening_line, allow_interruptions=False)
 

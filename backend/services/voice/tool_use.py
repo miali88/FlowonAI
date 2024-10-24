@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, Literal
+from typing import Annotated, Optional, Literal, Union
 
 import aiohttp, os, logging, asyncio
 from dotenv import load_dotenv
@@ -17,10 +17,10 @@ load_dotenv()
 API_BASE_URL = os.getenv("DOMAIN")
 
 class AgentFunctions(llm.FunctionContext):
-    def __init__(self, job_context: JobContext):
+    def __init__(self, job_ctx):
+        self.job_ctx = job_ctx
         super().__init__()
-        self.job_context = job_context
-
+    
     @llm.ai_callable(
         name="request_personal_data",
         description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
@@ -52,13 +52,13 @@ class AgentFunctions(llm.FunctionContext):
             )
         ],
         category: Annotated[
-            Optional[Literal["products", "services", "both"]],
+            str,  # Changed from Optional[Literal["products", "services", "both"]]
             llm.TypeInfo(
-                description="The category to search in. Default is 'both'",
+                description="The category to search in: 'products', 'services', or 'both'"
             )
         ] = "both",
         max_results: Annotated[
-            Optional[int],
+            int,  # Changed from Optional[int]
             llm.TypeInfo(
                 description="Maximum number of results to return (between 1 and 10)"
             )
@@ -69,18 +69,15 @@ class AgentFunctions(llm.FunctionContext):
         Returns formatted information about matching products/services.
         """
         logger.info(f"Searching products/services with query: {query}, category: {category}")
-        job_id = self.job_context.job.id
-        room_name = self.job_context.room.name
+        job_id = self.job_ctx.job.id
+        room_name = self.job_ctx.room.name
+        
+        print("\n\n\n\n FUNCTION CALL: search_products_and_services")
+        print(f"job_id: {job_id}, room_name: {room_name}")
+        print(f"Searching products/services with query: {query}, category: {category}")
 
         try:
-            # TODO: Implement actual database search logic here
-            # This would typically involve:
-            # 1. Vector embedding of the query
-            # 2. Semantic search in your vector DB
-            # 3. Formatting results
             results = await similarity_search(query, ['products', 'services'], job_id, room_name)
-
-            # Placeholder return
             return "Found matching products/services: [Results would be listed here]"
             
         except Exception as e:
