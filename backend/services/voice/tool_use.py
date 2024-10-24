@@ -84,7 +84,8 @@ class AgentFunctions(llm.FunctionContext):
 
         try:
 
-            results = await similarity_search(query, "all", user_id)
+            """ ADD ARGUMENT TO SIMILARITY SEARCH, 'TAG' column for agent."""
+            results = await similarity_search(query, user_id)
             return f"Found matching products/services: {results}"
             
         except Exception as e:
