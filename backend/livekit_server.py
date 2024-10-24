@@ -1,6 +1,7 @@
 import asyncio
 from dotenv import load_dotenv
 import logging  # Add this import
+import time  # Add this import
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -17,8 +18,12 @@ load_dotenv()
 
 async def entrypoint(ctx: JobContext):
     try:
-        # Add participant tracking dictionary
+        # Add participant tracking dictionary and last_audio_time
         participant_prospects = {}
+        last_audio_time = time.time()  # Track when we last received any audio
+        last_participant_audio = time.time()  # Track participant's last audio
+        last_agent_audio = time.time()  # Track agent's last audio
+        SILENCE_TIMEOUT = 80  # Timeout in seconds
         room_name = ctx.room.name
         room = ctx.room
         
@@ -89,7 +94,38 @@ async def entrypoint(ctx: JobContext):
             if track.kind == rtc.TrackKind.KIND_AUDIO:
                 audio_stream = rtc.AudioStream(track)
                 for event in audio_stream:
+                    nonlocal last_audio_time, last_participant_audio
+                    current_time = time.time()
+                    last_audio_time = current_time  # Update overall last audio time
+                    last_participant_audio = current_time  # Update participant's last audio time
                     print(event.frame)
+
+        # Add handler for agent's audio
+        # Replace the previous agent.on("speaking_started") with these handlers
+        @agent.on("agent_started_speaking")
+        def on_agent_started_speaking():
+            nonlocal last_audio_time, last_agent_audio
+            current_time = time.time()
+            last_audio_time = current_time
+            last_agent_audio = current_time
+            print("Agent started speaking, updating last_audio_time:", current_time)
+
+        @agent.on("user_started_speaking")
+        def on_user_started_speaking():
+            nonlocal last_audio_time, last_participant_audio
+            current_time = time.time()
+            last_audio_time = current_time
+            last_participant_audio = current_time
+            print("User started speaking, updating last_audio_time:", current_time)
+
+        # Optional: You might also want to track when speaking stops
+        @agent.on("agent_stopped_speaking")
+        def on_agent_stopped_speaking():
+            print("Agent stopped speaking")
+
+        @agent.on("user_stopped_speaking")
+        def on_user_stopped_speaking():
+            print("User stopped speaking")
 
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):
@@ -118,7 +154,8 @@ async def entrypoint(ctx: JobContext):
                     asyncio.create_task(handle_chat_input_response(agent, 
                                                                     ctx.room.name, 
                                                                     ctx.job.id, 
-                                                                    available_participant.identity,)
+                                                                    available_participant.identity,
+                                                                    participant_prospects[available_participant.sid])  # Pass the prospect_status
                                                                     )
 
                 elif function_name == "search_products_and_services":
@@ -197,13 +234,54 @@ async def entrypoint(ctx: JobContext):
             except Exception as e:
                 print(f"Error storing conversation history: {str(e)}")
 
-        while True:
-            await asyncio.sleep(0.2)
+        async def check_silence_timeout():
+            while True:
+                await asyncio.sleep(1)  # Check every second
+                current_time = time.time()
+                time_since_last_audio = current_time - last_audio_time
+                time_since_participant = current_time - last_participant_audio
+                time_since_agent = current_time - last_agent_audio
+
+                # Log the silence durations for debugging
+                if time_since_last_audio > SILENCE_TIMEOUT / 2:  # Only log if silence is getting significant
+                    print(f"Time since last audio: {time_since_last_audio:.1f}s")
+                    print(f"Time since participant audio: {time_since_participant:.1f}s")
+                    print(f"Time since agent audio: {time_since_agent:.1f}s")
+
+                if time_since_last_audio > SILENCE_TIMEOUT:
+                    print(f"Silence timeout reached after {SILENCE_TIMEOUT} seconds")
+                    print(f"Last participant audio: {time_since_participant:.1f}s ago")
+                    print(f"Last agent audio: {time_since_agent:.1f}s ago")
+                    # Store conversation history before shutting down
+                    await store_conversation_history(agent, 
+                                                  room_name, 
+                                                  ctx.job.id, 
+                                                  available_participant.identity, 
+                                                  participant_prospects[available_participant.sid])
+                    await ctx.shutdown(reason="Silence timeout reached")
+                    break
+
+        # Create and store the silence checker task
+        silence_checker_task = asyncio.create_task(check_silence_timeout())
+
+        try:
+            while True:
+                await asyncio.sleep(0.2)
+        except Exception as e:
+            print(f"Error in main loop: {str(e)}")
+        finally:
+            # Cancel the silence checker task during cleanup
+            if silence_checker_task and not silence_checker_task.done():
+                silence_checker_task.cancel()
+                try:
+                    await silence_checker_task
+                except asyncio.CancelledError:
+                    pass
 
     except Exception as e:
         print(f"Error in entrypoint: {str(e)}")
     finally:
-         # Ensure proper cleanup
+        # Ensure proper cleanup
         ctx.shutdown(reason="finally, session ended")
 
 
@@ -228,7 +306,7 @@ if __name__ == "__main__":
         worker_type=WorkerType.PUBLISHER,
         # # inspect the request and decide if the current worker should handle it.
         # request_fnc=request_fnc,
-        # # a function to perform any necessary initialization in a new process.
+        # a function to perform any necessary initialization in a new process.
         # prewarm_fnc=prewarm_fnc,
     )
 
