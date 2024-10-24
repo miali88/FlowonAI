@@ -5,15 +5,30 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
+    <style>
+      #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
     <script>
+      // Add debugging
+      console.log('Config initialization...');
       window.embeddedChatbotConfig = {
         agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
         domain: 'http://localhost:3000'
       };
+      console.log('Config loaded:', window.embeddedChatbotConfig);
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/dist/embed.min.js"></script>
+    <script 
+      src="https://6a575afa.flowonwidget.pages.dev/embed.min.js"
+      onload="console.log('Widget script loaded')"
+      onerror="console.error('Widget failed to load')"
+    ></script>
   </body>
 </html>

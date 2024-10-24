@@ -188,6 +188,7 @@ async def similarity_search(query: str, table_names: List[str], user_id: str,
     print("\n\nsimilarity_search...")
     query_embedding = await get_embedding(query)
     results = {}
+    tables = ["user_web_data", "user_text_files"]
 
     if search_type == "Deep Search":
         similarity_threshold = 0.30

@@ -21,6 +21,11 @@ class AgentFunctions(llm.FunctionContext):
         self.job_ctx = job_ctx
         super().__init__()
     
+    """ to be updated with agent's dataSources in database. Perhaps store in mem from SB """
+    data_source = {
+        "e8b64819-7c2c-432f-9f80-05a72bd49787" : "english_car_mechanic"
+    }
+
     @llm.ai_callable(
         name="request_personal_data",
         description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
@@ -71,14 +76,16 @@ class AgentFunctions(llm.FunctionContext):
         logger.info(f"Searching products/services with query: {query}, category: {category}")
         job_id = self.job_ctx.job.id
         room_name = self.job_ctx.room.name
-        
+        user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
+
         print("\n\n\n\n FUNCTION CALL: search_products_and_services")
-        print(f"job_id: {job_id}, room_name: {room_name}")
+        print(f"job_id: {job_id}, room_name: {room_name}, user_id: {user_id}")
         print(f"Searching products/services with query: {query}, category: {category}")
 
         try:
-            results = await similarity_search(query, ['products', 'services'], job_id, room_name)
-            return "Found matching products/services: [Results would be listed here]"
+
+            results = await similarity_search(query, "all", user_id)
+            return f"Found matching products/services: {results}"
             
         except Exception as e:
             logger.error(f"Error in search_products_and_services: {str(e)}", exc_info=True)
