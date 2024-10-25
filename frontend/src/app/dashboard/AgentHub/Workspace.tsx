@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ChatBotMini from './ChatBotMini';
+import ChatBotMini from './ChatBotMini_backup';
 import { Agent } from './AgentCards';
 import { Switch } from "@/components/ui/switch";
 import { ChevronRight, Plus, Trash2, Play } from "lucide-react";

@@ -1,5 +1,5 @@
 'use client';
-
+/* VERSION 2.0.0 */
 import {
   LiveKitRoom,
   RoomAudioRenderer,

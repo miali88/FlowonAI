@@ -1,6 +1,4 @@
-"use client";
 import { ArrowRight } from "lucide-react";
-import { useEffect } from "react";
 
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Button } from "@/components/ui/button";
@@ -8,41 +6,12 @@ import { BorderBeam } from "@/components/magicui/border-beam";
 import { Particles } from "@/components/magicui/particles";
 
 export function Hero() {
-  useEffect(() => {
-    // Initialize config after DOM is fully loaded
-    const initWidget = () => {
-      window.embeddedChatbotConfig = {
-        agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
-        domain: 'http://localhost:3000'
-      };
-
-      const script = document.createElement('script');
-      script.src = '/dist/embed.min.js';
-      script.async = true; // Add async loading
-      script.defer = true; // Add defer to prevent blocking
-      
-      // Add script to head instead of body
-      document.head.appendChild(script);
-
-      return script;
-    };
-
-    const script = initWidget();
-
-    // Cleanup function
-    return () => {
-      script.remove();
-    };
-  }, []);
-
   return (
     <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">
-      {/* Add the container for the embedded chatbot */}
-      <div id="embedded-chatbot-container"></div>
       <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
         <TextShimmer className="inline-flex items-center justify-center">
           <span className="text-xs text-secondary-foreground/60">
-            ✨ Introducing Magic UI Template{" "}
+            ✨ Introducing Forms, a new way to collect info from callers
           </span>
           <ArrowRight
             size={20}
@@ -86,14 +55,4 @@ export function Hero() {
       />
     </section>
   );
-}
-
-// Add TypeScript declaration for the window object
-declare global {
-  interface Window {
-    embeddedChatbotConfig: {
-      agentId: string;
-      domain: string;
-    };
-  }
 }

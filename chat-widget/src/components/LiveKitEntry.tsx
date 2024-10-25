@@ -1,3 +1,5 @@
+
+/* VERSION 2.0.0 */
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -6,12 +8,6 @@ import {
 } from '@livekit/components-react';
 import { Room, LocalParticipant } from 'livekit-client';
 import { useState, useEffect, useCallback } from "react";
-import { ReactElement } from 'react';
-
-interface LiveKitRoomProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError'> {
-  // ... other props ...
-  children: ReactElement | ReactElement[];
-}
 
 interface LiveKitEntryProps {
   token: string;
@@ -22,17 +18,27 @@ interface LiveKitEntryProps {
   onStreamStart: () => void;
   setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
+  setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStreaming, onStreamEnd, onStreamStart, setRoom, setLocalParticipant }) => {
+export function LiveKitEntry({ 
+  token, 
+  url, 
+  roomName, 
+  isStreaming, 
+  onStreamEnd, 
+  onStreamStart, 
+  setRoom, 
+  setLocalParticipant,
+  setParticipantIdentity
+}: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback(() => {
-    if (localRoom) {
-      setRoom(localRoom);
-      onStreamStart();
-    }
-  }, [localRoom, onStreamStart, setRoom]);
+  const handleConnected = useCallback((room: Room) => {
+    setLocalRoom(room);
+    setRoom(room);
+    onStreamStart();
+  }, [onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -41,50 +47,53 @@ const LiveKitEntry: React.FC<LiveKitEntryProps> = ({ token, url, roomName, isStr
   }, [onStreamEnd, setRoom]);
 
   return (
-    <div>
-      {token && url && roomName ? (
-        <LiveKitRoom
-          token={token}
-          serverUrl={url}
-          connect={true}
-          connectOptions={{ autoSubscribe: true }}
-          onConnected={handleConnected}
-          onDisconnected={handleDisconnected}
-        >
-          <ActiveRoom
-            room={localRoom}
-            isStreaming={isStreaming}
-            onStreamEnd={onStreamEnd}
-            setLocalParticipant={setLocalParticipant}
-          />
-        </LiveKitRoom>
-      ) : null}
-    </div>
+    <LiveKitRoom
+      token={token}
+      serverUrl={url}
+      name={roomName}
+      connectOptions={{ autoSubscribe: true }}
+      onConnected={handleConnected}
+      onDisconnected={handleDisconnected}
+    >
+      <ActiveRoom 
+        room={localRoom} 
+        isStreaming={isStreaming} 
+        onStreamEnd={onStreamEnd} 
+        setLocalParticipant={setLocalParticipant}
+        setParticipantIdentity={setParticipantIdentity}
+      />
+    </LiveKitRoom>
   );
-};
+}
 
 const ActiveRoom = ({ 
   room, 
   isStreaming, 
   onStreamEnd,
-  setLocalParticipant
+  setLocalParticipant,
+  setParticipantIdentity
 }: { 
   room: Room | null, 
   isStreaming: boolean, 
   onStreamEnd: () => void,
-  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>,
+  setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>
 }) => {
   const { localParticipant } = useLocalParticipant();
   const connectionState = useConnectionState();
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (connectionState === 'connected') {
+    if (connectionState === 'connected' && localParticipant) {
       setIsConnected(true);
+      console.log('Participant connected with identity:', localParticipant.identity);
+      console.log('Connection State:', connectionState);
+      console.log('Local Participant:', localParticipant);
+      setParticipantIdentity(localParticipant.identity);
     } else {
       setIsConnected(false);
     }
-  }, [connectionState]);
+  }, [connectionState, localParticipant, setParticipantIdentity]);
 
   useEffect(() => {
     if (isConnected && localParticipant) {

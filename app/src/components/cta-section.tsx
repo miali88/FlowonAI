@@ -12,9 +12,9 @@ export function CtaSection() {
         </div>
         <div className="z-10 mt-4 flex flex-col items-center text-center">
           <h2 className="text-3xl font-bold lg:text-4xl font-heading">
-            Stop wasting time on design.
+            Make customers love interacting with your brand.
           </h2>
-          <p className="mt-2">Start your 7-day free trial. No credit card required.</p>
+          {/* <p className="mt-2">Start your 7-day free trial. No credit card required.</p> */}
           <Button
             size="lg"
             asChild

@@ -34,7 +34,7 @@ export function Pricing() {
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
                 <h2 className="text-base font-semibold leading-7">Basic</h2>
-                <p className="h-12 text-sm leading-5">
+                <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
                   A basic plan for startups and individual users
                 </p>
               </div>
@@ -45,11 +45,11 @@ export function Pricing() {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">$10</span>
+                <span className="text-4xl font-bold leading-7">£0</span>
                 <span className="text-xs mb-1">/month</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Subscribe</span>
+                <span>Ready</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
@@ -75,80 +75,14 @@ export function Pricing() {
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">5 projects limit</span>
+                  <span className="flex">1 hour of conversation</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">Access to basic AI tools</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border-2 border-accent">
-            <CardContent className="flex flex-col gap-8 p-4">
-              <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Premium</h2>
-                <p className="h-12 text-sm leading-5">A premium plan for growing businesses</p>
-              </div>
-              <motion.div
-                animate="animate"
-                initial="initial"
-                variants={{ animate: { y: 0, opacity: 1 }, initial: { y: 12, opacity: 0 } }}
-                transition={{
-                  ease: [0.21, 0.47, 0.32, 0.98],
-                  delay: 0.15000000000000002,
-                  duration: 0.4,
-                }}
-                className="flex flex-row gap-1 justify-start items-end"
-              >
-                <span className="text-4xl font-bold leading-7">$20</span>
-                <span className="text-xs mb-1">/month</span>
-              </motion.div>
-              <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Subscribe</span>
-                <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Subscribe
-                </span>
-              </Button>
-              <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <ul className="flex flex-col gap-2 font-normal">
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Advanced AI insights</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Priority support</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Unlimited projects</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Access to all AI tools</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Custom integrations</span>
+                  <span className="flex">All agent features</span>
                 </li>
               </ul>
             </CardContent>
@@ -156,23 +90,23 @@ export function Pricing() {
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Enterprise</h2>
-                <p className="h-12 text-sm leading-5">
-                  An enterprise plan with advanced features for large organizations
+                <h2 className="text-base font-semibold leading-7">Basic</h2>
+                <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
+                  A basic plan for startups and individual users
                 </p>
               </div>
               <motion.div
                 animate="animate"
                 initial="initial"
                 variants={{ animate: { y: 0, opacity: 1 }, initial: { y: 12, opacity: 0 } }}
-                transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.2, duration: 0.4 }}
+                transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">$50</span>
+                <span className="text-4xl font-bold leading-7">£97</span>
                 <span className="text-xs mb-1">/month</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Subscribe</span>
+                <span>Ready</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
@@ -184,42 +118,28 @@ export function Pricing() {
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">Custom AI solutions</span>
+                  <span className="flex">10 hours of conversation</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">24/7 dedicated support</span>
+                  <span className="flex">All integrations</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">Unlimited projects</span>
+                  <span className="flex">Consultation to tune AI</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">Access to all AI tools</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Custom integrations</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Data security and compliance</span>
+                  <span className="flex">Unlimited knowledge base size</span>
                 </li>
               </ul>
             </CardContent>
@@ -228,7 +148,7 @@ export function Pricing() {
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
                 <h2 className="text-base font-semibold leading-7">Ultimate</h2>
-                <p className="h-12 text-sm leading-5">
+                <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
                   The ultimate plan with all features for industry leaders
                 </p>
               </div>
@@ -239,11 +159,11 @@ export function Pricing() {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.25, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">$80</span>
-                <span className="text-xs mb-1">/month</span>
+                <span className="text-4xl font-bold leading-7" />
+                <span className="text-xs mb-1" />
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Subscribe</span>
+                <span>Start Partnership</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
@@ -255,7 +175,7 @@ export function Pricing() {
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">Bespoke AI development</span>
+                  <span className="flex">Unlimited minutes</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
