@@ -23,6 +23,8 @@
   display: flex;
   flex-direction: column;
   pointer-events: auto;
+  /* Add isolation to prevent styles from affecting/being affected by the main page */
+  isolation: isolate;
 }
 
 .chatbot * {

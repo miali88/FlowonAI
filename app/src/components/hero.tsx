@@ -37,6 +37,8 @@ export function Hero() {
 
   return (
     <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">
+      {/* Add the container for the embedded chatbot */}
+      <div id="embedded-chatbot-container"></div>
       <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
         <TextShimmer className="inline-flex items-center justify-center">
           <span className="text-xs text-secondary-foreground/60">
