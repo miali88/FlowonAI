@@ -12,9 +12,29 @@
         margin: 0;
         padding: 0;
       }
+      
+      .landing {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f5f5f5;
+      }
+      
+      .landing h1 {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #333;
+        text-align: center;
+        max-width: 800px;
+        padding: 0 20px;
+      }
     </style>
   </head>
   <body>
+    <div class="landing">
+      <h1>Welcome to the Conversational Web</h1>
+    </div>
     <div id="root"></div>
     <script>
       // Add debugging
@@ -25,10 +45,24 @@
       };
       console.log('Config loaded:', window.embeddedChatbotConfig);
     </script>
-    <script 
-      src="dist/embed.min.js"
-      onload="console.log('Widget script loaded')"
-      onerror="console.error('Widget failed to load')"
-    ></script>
+    <!-- Add a container for the widget -->
+    <div id="embedded-chatbot-container">
+      <script>
+        (function() {
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = 'src/main.tsx';
+          script.async = true;
+          script.onload = () => {
+            console.log('Widget script loaded');
+            if (window.initializeWidget) {
+              window.initializeWidget('embedded-chatbot-container');
+            }     
+          };
+          script.onerror = () => console.error('Widget failed to load');
+          document.body.appendChild(script);
+        })();
+      </script>
+    </div>
   </body>
 </html>

@@ -9,26 +9,23 @@
 }
 
 .chatbot {
-  all: initial;
-  contain: content;
-  font-family: "Poppins", sans-serif;
-  overflow: hidden;
-  width: 30vw;
-  height: 80vh;
-  min-width: 320px;
-  min-height: 500px;
-  max-width: 450px;
-  max-height: 700px;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 350px;
+  height: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  z-index: 2147483647;
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .chatbot * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
@@ -271,4 +268,13 @@
 .chatbot-widget *:before,
 .chatbot-widget *:after {
   box-sizing: inherit;
+}
+
+@media (max-width: 768px) {
+  .chatbot {
+    width: 90vw;
+    height: 80vh;
+    right: 5vw;
+    bottom: 10vh;
+  }
 }

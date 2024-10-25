@@ -17,12 +17,12 @@ export default defineConfig({
     name: 'EmbeddedChatbot',
     sourcemap: true,
     globals: {
-      react: 'React',
-      'react-dom': 'ReactDOM'
+      // Remove or ensure react and react-dom are bundled
+      // react: 'React',
+      // 'react-dom': 'ReactDOM'
     }
   },
   plugins: [
-    // Add this before your existing plugins
     replace({
       preventAssignment: true,
       'process.env.NODE_ENV': JSON.stringify('production'),
@@ -30,7 +30,6 @@ export default defineConfig({
     }),
     strip({
       include: '**/*.mjs',
-      // Removes all comments including "use client"
       comments: 'none',
     }),
     resolve({

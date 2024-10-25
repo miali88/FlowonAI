@@ -4,10 +4,10 @@ import App from './App.tsx'
 import './index.css'
 
 // Function to initialize the widget
-const initializeWidget = () => {
-  // Prevent multiple initializations
-  if (document.getElementById('embedded-chatbot-container')) {
-    console.warn('Widget already initialized');
+const initializeWidget = (containerId: string) => {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container with id "${containerId}" not found`);
     return;
   }
 
@@ -16,15 +16,6 @@ const initializeWidget = () => {
     console.error('EmbeddedChatbotConfig is missing or incomplete.');
     return;
   }
-
-  const container = document.createElement('div');
-  container.id = 'embedded-chatbot-container';
-  
-  // Add isolation attributes
-  container.setAttribute('data-widget', 'flowon-chatbot');
-  container.style.isolation = 'isolate';
-  
-  document.body.appendChild(container);
 
   const root = createRoot(container);
   root.render(
@@ -36,9 +27,9 @@ const initializeWidget = () => {
 
 // Initialize the widget after the DOM is fully loaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeWidget);
+  document.addEventListener('DOMContentLoaded', () => initializeWidget('embedded-chatbot-container'));
 } else {
-  initializeWidget();
+  initializeWidget('embedded-chatbot-container');
 };
 
 // Expose any necessary methods globally if needed

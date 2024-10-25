@@ -26,7 +26,6 @@ function App({ agentId, domain }: AppProps) {
   return ( 
     <Layout>
       <div className="App">
-        <h1 className="text-2xl font-bold mb-4">ChatBot Mini Test Environment</h1>
         <ErrorBoundary>
           <ChatBotMini
             agentId={agentId}
