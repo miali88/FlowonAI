@@ -16,11 +16,17 @@ export default defineConfig({
     format: 'iife',
     name: 'EmbeddedChatbot',
     sourcemap: true,
+    globals: {
+      react: 'React',
+      'react-dom': 'ReactDOM'
+    }
   },
   plugins: [
+    // Add this before your existing plugins
     replace({
-      'process.env.NODE_ENV': JSON.stringify('production'),
       preventAssignment: true,
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.WIDGET_VERSION': JSON.stringify(process.env.npm_package_version),
     }),
     strip({
       include: '**/*.mjs',

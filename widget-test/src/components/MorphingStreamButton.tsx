@@ -25,7 +25,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
           onClick={handleClick}
           disabled={isConnecting}
         >
-          yowzie
+          Start Chat
         </Button>
       </CardContent>
     </Card>

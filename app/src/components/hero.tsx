@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { useEffect } from "react";
 
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,28 @@ import { BorderBeam } from "@/components/magicui/border-beam";
 import { Particles } from "@/components/magicui/particles";
 
 export function Hero() {
+  useEffect(() => {
+    // Initialize config
+    console.log('Config initialization...');
+    window.embeddedChatbotConfig = {
+      agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
+      domain: 'http://localhost:3000'
+    };
+    console.log('Config loaded:', window.embeddedChatbotConfig);
+
+    // Load widget script
+    const script = document.createElement('script');
+    script.src = 'https://6a575afa.flowonwidget.pages.dev/embed.min.js';
+    script.onload = () => console.log('Widget script loaded');
+    script.onerror = () => console.error('Widget failed to load');
+    document.body.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []); // Empty dependency array means this runs once on mount
+
   return (
     <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">
       <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
@@ -55,4 +78,14 @@ export function Hero() {
       />
     </section>
   );
+}
+
+// Add TypeScript declaration for the window object
+declare global {
+  interface Window {
+    embeddedChatbotConfig: {
+      agentId: string;
+      domain: string;
+    };
+  }
 }

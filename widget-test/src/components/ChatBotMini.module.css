@@ -1,6 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,700&display=swap");
 
+:root {
+  --flowon-primary: #0baadf;
+  --flowon-secondary: #0b8aaf;
+  --flowon-background: #fff;
+  --flowon-text: #000;
+  --flowon-border: #eee;
+}
+
 .chatbot {
+  all: initial;
+  contain: content;
   font-family: "Poppins", sans-serif;
   overflow: hidden;
   width: 30vw;
@@ -205,4 +215,30 @@
 
 .animate-expand {
   animation: expand 0.5s ease-in-out;
+}
+
+.muteButton {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.muteButton:not(.muted) {
+  background-color: #28c4f3;
+  color: white;
+}
+
+.muteButton.muted {
+  background-color: #ff4444;
+  color: white;
+}
+
+.muteButton:hover:not(.muted) {
+  background-color: #1ab2e8;
+}
+
+.muteButton.muted:hover {
+  background-color: #ff2222;
 }
