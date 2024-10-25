@@ -1,3 +1,4 @@
+"use client";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 
@@ -8,26 +9,31 @@ import { Particles } from "@/components/magicui/particles";
 
 export function Hero() {
   useEffect(() => {
-    // Initialize config
-    console.log('Config initialization...');
-    window.embeddedChatbotConfig = {
-      agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
-      domain: 'http://localhost:3000'
-    };
-    console.log('Config loaded:', window.embeddedChatbotConfig);
+    // Initialize config after DOM is fully loaded
+    const initWidget = () => {
+      window.embeddedChatbotConfig = {
+        agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
+        domain: 'http://localhost:3000'
+      };
 
-    // Load widget script
-    const script = document.createElement('script');
-    script.src = 'https://6a575afa.flowonwidget.pages.dev/embed.min.js';
-    script.onload = () => console.log('Widget script loaded');
-    script.onerror = () => console.error('Widget failed to load');
-    document.body.appendChild(script);
+      const script = document.createElement('script');
+      script.src = '/dist/embed.min.js';
+      script.async = true; // Add async loading
+      script.defer = true; // Add defer to prevent blocking
+      
+      // Add script to head instead of body
+      document.head.appendChild(script);
+
+      return script;
+    };
+
+    const script = initWidget();
 
     // Cleanup function
     return () => {
-      document.body.removeChild(script);
+      script.remove();
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   return (
     <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">

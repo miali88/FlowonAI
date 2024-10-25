@@ -242,3 +242,33 @@
 .muteButton.muted:hover {
   background-color: #ff2222;
 }
+
+.chatbot-widget {
+  /* Reset all inherited styles */
+  all: initial;
+  
+  /* Contain everything inside this element */
+  contain: content;
+  
+  /* Prevent CSS inheritance */
+  isolation: isolate;
+  
+  /* Base styles */
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  
+  /* Custom properties for easy theming */
+  --chatbot-primary: #0baadf;
+  --chatbot-background: #ffffff;
+  --chatbot-text: #000000;
+  
+  /* Ensure widget stays on top */
+  z-index: 2147483647;
+}
+
+/* Ensure all child elements use the widget's box-sizing */
+.chatbot-widget *,
+.chatbot-widget *:before,
+.chatbot-widget *:after {
+  box-sizing: inherit;
+}
