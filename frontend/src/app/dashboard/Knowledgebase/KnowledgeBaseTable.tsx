@@ -1,7 +1,5 @@
 import * as React from "react"
 import {
-  ChevronDownIcon,
-  DotsHorizontalIcon,
   CaretSortIcon,
 } from "@radix-ui/react-icons"
 import {

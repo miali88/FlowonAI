@@ -1,15 +1,27 @@
 import axios from 'axios';
-import { useState } from 'react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+interface SavedItem {
+  id: string;
+  title: string;
+  content: string;
+  user_id: string;
+  // Add other properties as needed
+}
+
+interface User {
+  id: string;
+  // Add other user properties as needed
+}
 
 interface HandleNewItemProps {
   activeAddTab: string;
   newItemContent: string;
-  user: any;
+  user: User;
   getToken: () => Promise<string>;
   handleFileUpload: () => Promise<void>;
-  setSavedItems: React.Dispatch<React.SetStateAction<any[]>>;
+  setSavedItems: React.Dispatch<React.SetStateAction<SavedItem[]>>;
   setNewItemContent: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   setAlertMessage: React.Dispatch<React.SetStateAction<string>>;

@@ -3,13 +3,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, Globe } from "lucide-react";
+// Add this import at the top
+import { DropzoneRootProps, DropzoneInputProps } from 'react-dropzone';
 
 interface RenderAddContentProps {
   activeAddTab: string;
   newItemContent: string;
   setNewItemContent: (content: string) => void;
-  getRootProps: () => any;
-  getInputProps: () => any;
+  // Update these two lines with proper types
+  getRootProps: () => DropzoneRootProps;
+  getInputProps: () => DropzoneInputProps;
   isDragActive: boolean;
   selectedFile: File | null;
   scrapeUrl: string;

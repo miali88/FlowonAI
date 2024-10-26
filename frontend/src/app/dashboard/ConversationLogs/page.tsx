@@ -13,7 +13,6 @@ import {
 import { ChatUI } from './ChatUI';
 
 const ChatHistory: React.FC = () => {
-  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<ConversationLog | null>(null);
 

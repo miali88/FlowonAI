@@ -17,7 +17,6 @@ export function Hero() {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [localParticipant, setLocalParticipant] = useState(null);
   const [chatTitle, setChatTitle] = useState("Flowon");
 
   const handleGridClick = (title: string) => {

@@ -3,9 +3,13 @@
 import { AgentHub } from '@/app/dashboard/agenthub/iframe';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Agent } from '@/app/dashboard/naAgentHub/LibraryTable';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
+
+type Agent = {
+  id: string;
+  [key: string]: any;  // Allow for additional properties from the API
+};
 
 export default function AgentVoiceClient() {
   const params = useParams();

@@ -32,11 +32,8 @@ import {
   Search,
   Settings,
   X,
-  Home as HomeIcon,  // Rename the Home icon import
-  Beaker,
   Plug,
-  Mic2,  // Add this import
-  MessageCircle, // Add this import for the Widget icon
+
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/conversationlogs/page';
 
@@ -78,7 +75,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   );
 }
 
-function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
+function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
   const sidebarItems = [
     //{ icon: HomeIcon, label: "Dashboard" },
     { icon: Mic, label: "Agent Hub" },
@@ -140,7 +137,7 @@ function LogoutMenuItem() {
   );
 }
 
-function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
+function Header({ activeItem, selectedFeature }) {
   const router = useRouter();
   const { user } = useUser();
   const { getToken } = useAuth();

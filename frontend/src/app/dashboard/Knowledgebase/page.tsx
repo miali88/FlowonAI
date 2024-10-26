@@ -9,15 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   AlertCircle,
-  Edit,
   Globe,
   SendIcon,
-  Trash2,
   Upload,
-  Home as HomeIcon,  // Rename the Home icon import
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,16 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
 import { handleScrape } from './HandleScrape';
-import { TokenCounter } from './TokenCounter';
 import { KnowledgeBaseTable } from './KnowledgeBaseTable'
-
-interface SavedItem {
-  id: number;
-  title: string;
-  content: string;
-  data_type: string;
-  // Add other properties as needed
-}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -44,15 +31,14 @@ function KnowledgeBaseContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
     const [newItemContent, setNewItemContent] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
     const [alertType, setAlertType] = useState("success");
     const [selectedItem, setSelectedItem] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
+    const [setIsEditing] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [showScrapeInput, setShowScrapeInput] = useState(false);
+    const [setShowScrapeInput] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
-    const [scrapeError, setScrapeError] = useState("");
+    const [setScrapeError] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
     const [activeTab, setActiveTab] = useState('library');
   
@@ -60,9 +46,9 @@ function KnowledgeBaseContent() {
       if (user) {
         fetchUserSpecificData();
       }
-    }, [user]);
+    }, [user, fetchUserSpecificData]);
   
-    const fetchUserSpecificData = async () => {
+    const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
         console.error("User not authenticated");
         setAlertMessage("User not authenticated");
@@ -117,7 +103,7 @@ function KnowledgeBaseContent() {
       } finally {
         setIsLoading(false);
       }
-    };
+    }, [user, getToken]);
   
     // Add this new function to handle file uploads
     const handleFileUpload = async () => {
@@ -169,67 +155,6 @@ function KnowledgeBaseContent() {
         setAlertType
       });
     };
-  
-    const handleEditItem = () => {
-      if (selectedItem) {
-        setIsEditing(true);
-        setNewItemContent(selectedItem.content);
-      }
-    };
-  
-    const handleSaveEdit = () => {
-      if (newItemContent.trim() === "") {
-        setAlertMessage("Cannot save empty item");
-        setAlertType("error");
-        return;
-      }
-  
-      const updatedItems = savedItems.map(item => 
-        item.id === selectedItem.id 
-          ? { ...item, content: newItemContent, title: newItemContent.split('\n')[0].substring(0, 50) }
-          : item
-      );
-  
-      setSavedItems(updatedItems);
-      setSelectedItem({ ...selectedItem, content: newItemContent, title: newItemContent.split('\n')[0].substring(0, 50) });
-      setIsEditing(false);
-      setNewItemContent("");
-      setAlertMessage("Item updated successfully");
-      setAlertType("success");
-    };
-  
-    const handleFileChange = (event) => {
-      setSelectedFile(event.target.files[0]);
-    };
-  
-    const handleScrapeWrapper = async (e: React.FormEvent) => {
-      e.preventDefault();
-      await handleScrape({
-        scrapeUrl,
-        setScrapeError,
-        getToken,
-        user,
-        API_BASE_URL,
-        setNewItemContent,
-        setShowScrapeInput,
-        setScrapeUrl,
-        setAlertMessage,
-        setAlertType
-      });
-    };
-  
-    const filteredItems = savedItems.filter(item =>
-      item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  
-    useEffect(() => {
-      if (alertMessage) {
-        const timer = setTimeout(() => {
-          setAlertMessage("");
-        }, 3000);
-        return () => clearTimeout(timer);
-      }
-    }, [alertMessage]);
   
     const handleDeleteItem = async (itemId: number) => {
       if (!user) {
