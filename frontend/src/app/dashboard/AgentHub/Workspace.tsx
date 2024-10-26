@@ -715,8 +715,11 @@ defer
         </Card>
       </TabsContent>
       <TabsContent value="preview">
-        <div className="relative h-[600px] w-full">
-          <div className="absolute inset-0 flex items-center justify-center p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Agent Preview</CardTitle>
+          </CardHeader>
+          <CardContent className="min-h-[600px] flex items-center justify-center">
             {selectedAgent && (
               <div className="w-full max-w-md">
                 <ChatBotMini 
@@ -738,8 +741,8 @@ defer
                 />
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       {/* Configuration Dialog */}
