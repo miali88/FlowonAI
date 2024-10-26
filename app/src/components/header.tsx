@@ -10,8 +10,13 @@ export function Header() {
   return (
     <header className="fixed left-0 top-0 z-50 w-full translate-y-[-1rem] animate-fade-in border-b opacity-0 [--animation-delay:600ms] backdrop-blur-[12px]">
       <div className="container flex h-[3.5rem] items-center justify-between">
-        <Link href="/" className="flex items-center">
-          Magic UI
+        <Link href="/" className="flex items-center gap-2">
+          <img 
+            src="/flowon_see_though_v2.png" 
+            alt="Flowon AI Logo" 
+            className="h-8 w-8 invert"
+          />
+          Flowon AI
         </Link>
         <div className="ml-auto flex gap-6 h-full items-center">
           <Link href="/signin" className="text-sm">

@@ -10,6 +10,7 @@ import { Room, LocalParticipant } from 'livekit-client';
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
 interface ChatBotMiniProps {
+  title?: string;
   agentId: string;
   isStreaming: boolean;
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,6 +28,7 @@ interface ChatBotMiniProps {
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
+  title = "Flowon",
   agentId,
   isStreaming,
   setIsStreaming,
@@ -163,7 +165,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   return (
     <div className={styles.chatbot}>
       <header className={styles.header}>
-        <h2>Flowon</h2>
+        <h2>{title}</h2>
       </header>
       <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
         <MorphingStreamButton

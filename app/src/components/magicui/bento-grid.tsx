@@ -1,14 +1,9 @@
 import {
-    BellIcon,
-    CalendarIcon,
-    FileTextIcon,
-    GlobeIcon,
-    InputIcon,
     PersonIcon,  // Changed from UsersIcon
-    HomeIcon,
     CrossCircledIcon,
     HeartFilledIcon,
 } from "@radix-ui/react-icons";
+import { PoundSterling, DollarSign } from "lucide-react";
   
   import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
   
@@ -16,7 +11,7 @@ import {
 
   const features = [
     {
-      Icon: PersonIcon,  // Changed from UsersIcon
+      Icon: PersonIcon,
       name: "HR Assistant",
       description: "Streamlines employee onboarding by guiding through paperwork and policies",
       href: "/hr",
@@ -31,7 +26,12 @@ import {
       className: "lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3",
     },
     {
-      Icon: HomeIcon,
+      Icon: () => (
+        <div className="flex gap-1">
+          <PoundSterling className="text-black" />
+          <DollarSign className="text-black" />
+        </div>
+      ),
       name: "Sales Qualifier",
       description: "Identifies and qualifies leads through natural conversation",
       href: "/sales",
@@ -92,11 +92,20 @@ import {
     },
   ];
   
-  export async function BentoDemo() {
+  // Add type for the onGridClick prop
+  interface BentoDemoProps {
+    onGridClick?: (title: string) => void;
+  }
+
+  export function BentoDemo({ onGridClick }: BentoDemoProps) {
     return (
       <BentoGrid className="lg:grid-rows-3">
         {features.map((feature) => (
-          <BentoCard key={feature.name} {...feature} />
+          <BentoCard 
+            key={feature.name} 
+            {...feature} 
+            onClick={() => onGridClick?.(feature.name)}
+          />
         ))}
       </BentoGrid>
     );

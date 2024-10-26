@@ -18,6 +18,11 @@ export function Hero() {
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [localParticipant, setLocalParticipant] = useState(null);
+  const [chatTitle, setChatTitle] = useState("Flowon");
+
+  const handleGridClick = (title: string) => {
+    setChatTitle(title);
+  };
 
   return (
     <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">
@@ -53,6 +58,7 @@ export function Hero() {
           <BorderBeam size={500} anchor={0} duration={270} borderWidth={1.5} />
           <div className="min-w-[500px] p-5">
             <ChatBotMini
+              title={chatTitle}
               agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
               isStreaming={isStreaming}
               setIsStreaming={setIsStreaming}
@@ -72,7 +78,7 @@ export function Hero() {
           </div>
           <div className="p-5">
             <h2 className="text-4xl font-medium mb-6">Demo an agent</h2>
-            <BentoDemo />
+            <BentoDemo onGridClick={handleGridClick} />
           </div>
         </div>
       </div>
