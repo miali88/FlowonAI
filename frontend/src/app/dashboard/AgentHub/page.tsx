@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { useAuth } from "@clerk/nextjs";
 import { NewAgent } from './NewAgent';
 import Workspace from './Workspace';
+import { LocalParticipant } from 'livekit-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -19,6 +20,7 @@ const Lab = () => {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -129,6 +131,8 @@ const Lab = () => {
             setIsConnecting={setIsConnecting}
             handleStreamEnd={handleStreamEnd}
             handleStreamStart={handleStreamStart}
+            localParticipant={localParticipant}
+            setLocalParticipant={setLocalParticipant}
           />
         ) : (
           <p>Select or create an agent to get started.</p>
