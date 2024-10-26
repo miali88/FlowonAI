@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { AgentCards, Agent } from './agenthub/AgentCards';
+import { AgentCards, Agent } from './AgentHub/AgentCards';
 import Particles from '@/components/ui/particles';
 
 const DashboardContent: React.FC = () => {

@@ -21,8 +21,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
 import { KnowledgeBaseTable } from './KnowledgeBaseTable'
+import { handleScrape } from './HandleScrape';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';  // Provide default empty string
 
 function KnowledgeBaseContent() {
     const { user } = useUser();
@@ -38,12 +39,8 @@ function KnowledgeBaseContent() {
     const [scrapeUrl, setScrapeUrl] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
     const [activeTab, setActiveTab] = useState('library');
-  
-    useEffect(() => {
-      if (user) {
-        fetchUserSpecificData();
-      }
-    }, [user, fetchUserSpecificData]);
+    const [scrapeError, setScrapeError] = useState("");
+    const [showScrapeInput, setShowScrapeInput] = useState(true);
   
     const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
@@ -101,6 +98,12 @@ function KnowledgeBaseContent() {
         setIsLoading(false);
       }
     }, [user, getToken]);
+  
+    useEffect(() => {
+      if (user) {
+        fetchUserSpecificData();
+      }
+    }, [user, fetchUserSpecificData]);
   
     // Add this new function to handle file uploads
     const handleFileUpload = async () => {
@@ -256,6 +259,28 @@ function KnowledgeBaseContent() {
       }
     };
     
+    const handleScrapeWrapper = async () => {
+      const token = await getToken();
+      if (!token || !user) {
+        setAlertMessage("Authentication failed");
+        setAlertType("error");
+        return;
+      }
+
+      await handleScrape({
+        scrapeUrl,
+        setScrapeError,
+        getToken: async () => token,
+        user: { id: user.id }, // Convert to expected type
+        API_BASE_URL,
+        setNewItemContent,
+        setShowScrapeInput,
+        setScrapeUrl,
+        setAlertMessage,
+        setAlertType
+      });
+    };
+
     if (isLoading) {
       return <div>Loading...</div>;
     }

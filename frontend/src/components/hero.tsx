@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowRight } from "lucide-react";
-import ChatBotMini from "@/app/dashboard/agenthub/ChatBotMini";
+import ChatBotMini from "@/app/dashboard/AgentHub/ChatBotMini";
 import { useState } from "react";
 
 import { TextShimmer } from "@/components/magicui/text-shimmer";

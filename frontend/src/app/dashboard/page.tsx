@@ -35,11 +35,11 @@ import {
   Plug,
 
 } from "lucide-react";
-import ChatHistory from '@/app/dashboard/conversationlogs/page';
+import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
-import KnowledgeBaseContent from "@/app/dashboard/knowledgebase/page";
-import Lab from '@/app/dashboard/agenthub/page';  // Add this import
-import Integrations from "@/app/dashboard/integrations/page";
+import KnowledgeBaseContent from "./Knowledgebase/page";
+import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
+import Integrations from "@/app/dashboard/Integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
 // Add this interface at the top of your file 
