@@ -22,6 +22,24 @@ export function Hero() {
 
   const handleGridClick = (title: string) => {
     setChatTitle(title);
+    // Reset streaming states when switching agents
+    if (isStreaming) {
+      setIsStreaming(false);
+      setIsLiveKitActive(false);
+      setToken(null);
+      setUrl(null);
+    }
+  };
+
+  const handleStreamEnd = () => {
+    setIsStreaming(false);
+    setIsLiveKitActive(false);
+    setToken(null);
+    setUrl(null);
+  };
+
+  const handleStreamStart = () => {
+    // Add any stream start logic if needed
   };
 
   return (
@@ -70,10 +88,9 @@ export function Hero() {
               setUrl={setUrl}
               isConnecting={isConnecting}
               setIsConnecting={setIsConnecting}
-              onStreamEnd={() => {}}
-              onStreamStart={() => {}}
-              localParticipant={localParticipant}
-              setLocalParticipant={setLocalParticipant}
+              onStreamEnd={handleStreamEnd}
+              onStreamStart={handleStreamStart}
+              bypassShowChatInputCondition={false}
             />
           </div>
           <div className="p-5">

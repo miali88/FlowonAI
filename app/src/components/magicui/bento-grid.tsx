@@ -1,6 +1,6 @@
 import {
     PersonIcon,  // Changed from UsersIcon
-    CrossCircledIcon,
+    ClipboardIcon,  // Replace HeartFilledIcon with ClipboardIcon
     HeartFilledIcon,
 } from "@radix-ui/react-icons";
 import { PoundSterling, DollarSign } from "lucide-react";
@@ -23,7 +23,6 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Benefits enrollment assistance"
       ],
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      className: "lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3",
     },
     {
       Icon: () => (
@@ -43,7 +42,8 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Instant notifications to sales team"
       ],
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      className: "lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3",
+      // Updated className to ensure consistent size
+      className: "lg:col-span-1 h-[280px] w-full",
     },
     {
       Icon: () => <Image src="/icons/graduation.png" alt="Graduation" width={20} height={20} />,
@@ -57,11 +57,20 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Schedule planning",
         "Deadline reminders"
       ],
-      background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      className: "lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2",
+      background: (
+        <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0">
+          <Image 
+            src="/bento/mid_aged_lady.jpg"  // Add your background image path here
+            alt="Education background"
+            fill
+            className="object-cover opacity-60"
+          />
+        </div>
+      ),
+      className: "lg:col-span-1 h-[280px] w-full group",
     },
     {
-      Icon: CrossCircledIcon,
+      Icon: HeartFilledIcon,
       name: "Healthcare Scheduler",
       description: "Streamlines patient scheduling and appointment management",
       href: "/healthcare",
@@ -72,11 +81,20 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Scheduling and calendar management",
         "Instant notifications to healthcare team"
       ],
-      background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      className: "lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4",
+      background: (
+        <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0">
+          <Image 
+            src="/bento/nurse_2.jpg"
+            alt="Healthcare background"
+            fill
+            className="object-cover opacity-60"
+          />
+        </div>
+      ),
+      className: "lg:col-span-1 h-[280px] w-full group",
     },
     {
-      Icon: HeartFilledIcon,
+      Icon: ClipboardIcon,  // Changed from HeartFilledIcon
       name: "Insurance Agent",
       description: "Assists customers with insurance policy selection and enrollment",
       href: "/insurance",
@@ -87,25 +105,40 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Claims processing and management",
         "Instant notifications to insurance team"
       ],
-      background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      className: "lg:col-start-3 lg:col-end-3 lg:row-start-3 lg:row-end-4",
+      background: (
+        <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0">
+          <Image 
+            src="/bento/insurance.webp"
+            alt="Insurance background"
+            fill
+            className="object-cover opacity-60"
+          />
+        </div>
+      ),
+      className: "lg:col-span-1 h-[280px] w-full group",
     },
   ];
   
   // Add type for the onGridClick prop
   interface BentoDemoProps {
-    onGridClick?: (title: string) => void;
+    onGridClick: (title: string) => void;
   }
 
   export function BentoDemo({ onGridClick }: BentoDemoProps) {
     return (
-      <BentoGrid className="lg:grid-rows-3">
+      <BentoGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {features.map((feature) => (
-          <BentoCard 
-            key={feature.name} 
-            {...feature} 
-            onClick={() => onGridClick?.(feature.name)}
-          />
+          <div
+            key={feature.name}
+            onClick={() => onGridClick(feature.name)}
+            // Added consistent sizing classes
+            className="w-full aspect-[1.1/1]"
+          >
+            <BentoCard 
+              key={feature.name} 
+              {...feature}
+            />
+          </div>
         ))}
       </BentoGrid>
     );
