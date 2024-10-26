@@ -113,9 +113,9 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAgents.map((agent) => (
-          <div key={agent.id} className="relative">
+          <div key={agent.id} className="relative h-full">
             <Card 
-              className={`cursor-pointer hover:shadow-md transition-shadow ${
+              className={`cursor-pointer hover:shadow-md transition-shadow h-full flex flex-col ${
                 selectedAgentId === agent.id ? 'border-transparent' : ''
               }`} 
               onClick={() => handleAgentSelect(agent)}
@@ -123,7 +123,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
               <CardHeader>
                 <CardTitle>{agent.agentName}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <p className="text-sm text-gray-600 mb-2">{agent.agentPurpose}</p>
                 <Badge variant="secondary" className="mr-2">
                   {agent.voice}
