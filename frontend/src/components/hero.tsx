@@ -47,12 +47,8 @@ export function Hero() {
       <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
         <TextShimmer className="inline-flex items-center justify-center">
           <span className="text-xs text-secondary-foreground/60">
-            ✨ Introducing Forms, a new way to collect info from callers
+            ✨ Forms, a new way to collect info from callers
           </span>
-          <ArrowRight
-            size={20}
-            className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5"
-          />
         </TextShimmer>
       </div>
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-6 text-center text-5xl font-medium font-heading leading-none tracking-tighter text-transparent text-balance sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
@@ -75,7 +71,7 @@ export function Hero() {
         className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms]"
         onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/dashboard` || '/dashboard'}
       >
-        <span>Get Started for free</span>
+        <span>Talk To Your AI Agent</span>
         <ArrowRight
           size={20}
           className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"

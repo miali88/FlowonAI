@@ -42,8 +42,6 @@ import { PoundSterling, DollarSign } from "lucide-react";
         "Instant notifications to sales team"
       ],
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
-      // Updated className to ensure consistent size
-      className: "lg:col-span-1 h-[280px] w-full",
     },
     {
       Icon: () => <Image src="/icons/graduation.png" alt="Graduation" width={20} height={20} />,
@@ -67,7 +65,6 @@ import { PoundSterling, DollarSign } from "lucide-react";
           />
         </div>
       ),
-      className: "lg:col-span-1 h-[280px] w-full group",
     },
     {
       Icon: HeartFilledIcon,
@@ -91,7 +88,6 @@ import { PoundSterling, DollarSign } from "lucide-react";
           />
         </div>
       ),
-      className: "lg:col-span-1 h-[280px] w-full group",
     },
     {
       Icon: ClipboardIcon,  // Changed from HeartFilledIcon
@@ -115,7 +111,6 @@ import { PoundSterling, DollarSign } from "lucide-react";
           />
         </div>
       ),
-      className: "lg:col-span-1 h-[280px] w-full group",
     },
   ];
   
@@ -126,17 +121,17 @@ import { PoundSterling, DollarSign } from "lucide-react";
 
   export function BentoDemo({ onGridClick }: BentoDemoProps) {
     return (
-      <BentoGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <BentoGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
         {features.map((feature) => (
           <div
             key={feature.name}
             onClick={() => onGridClick(feature.name)}
-            // Added consistent sizing classes
-            className="w-full aspect-[1.1/1]"
+            className="w-full aspect-[4/5]"  // Changed from aspect-square to aspect-[4/5]
           >
             <BentoCard 
               key={feature.name} 
               {...feature}
+              className="h-full w-full"
             />
           </div>
         ))}
