@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { Particles } from "@/components/magicui/particles";
 import { BentoDemo } from "@/components/magicui/bento-grid";
+import WordRotate from "@/components/ui/word-rotate";
 
 export function Hero() {
   // Add state management for ChatBotMini
@@ -55,8 +56,15 @@ export function Hero() {
         </TextShimmer>
       </div>
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-6 text-center text-5xl font-medium font-heading leading-none tracking-tighter text-transparent text-balance sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
-        Give Your Website a Voice That Converts
-        <br />
+        Give Your Website a Voice That{" "}
+        <WordRotate
+          words={[
+            "Converts",
+            "Answers Questions",
+            "Engages With Visitors",
+            "Books Appointments"
+          ]}
+        />
       </h1>
       <p className="mb-12 text-lg tracking-tight text-muted-foreground md:text-xl text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-xl mx-auto">
         Easily deploy AI agents to your website to assist with prospecting, appointment booking,
