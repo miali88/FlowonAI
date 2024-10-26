@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -656,10 +656,50 @@ defer
       <TabsContent value="embed">
         <Card>
           <CardHeader>
-            <CardTitle>Embed</CardTitle>
+            <CardTitle>Embed Options</CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* ... (include the embed code sections from the original file) ... */}
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">IFrame Embed</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Add this code to embed the agent directly in your website.
+                </p>
+                <div className="relative">
+                  <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                    <code className="text-sm">{iframeCode}</code>
+                  </pre>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => navigator.clipboard.writeText(iframeCode)}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Script Embed</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Add this script to your website to enable the chat widget.
+                </p>
+                <div className="relative">
+                  <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                    <code className="text-sm">{scriptCode}</code>
+                  </pre>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => navigator.clipboard.writeText(scriptCode)}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>

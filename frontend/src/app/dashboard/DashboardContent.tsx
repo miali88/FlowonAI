@@ -4,7 +4,7 @@ import { AgentCards, Agent } from './agenthub/AgentCards';
 import Particles from '@/components/ui/particles';
 
 const DashboardContent: React.FC = () => {
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [setSelectedAgent] = useState<Agent | null>(null);
   const { theme } = useTheme();
   const [color, setColor] = useState('#ffffff');
 

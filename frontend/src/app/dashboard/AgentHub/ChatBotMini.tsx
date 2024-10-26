@@ -1,4 +1,3 @@
-/* VERSION 2.0.0 */
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import styles from './ChatBotMini.module.css';
@@ -41,8 +40,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   bypassShowChatInputCondition = false,
 }) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
-  const sendBtnRef = useRef<HTMLSpanElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [showChatInput, setShowChatInput] = useState(false);

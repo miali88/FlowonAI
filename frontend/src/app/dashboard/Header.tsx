@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,11 +36,10 @@ function LogoutMenuItem() {
   );
 }
 
-function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
+function Header({ activeItem, selectedFeature }) {
   const router = useRouter();
   const { user } = useUser();
-  const { getToken } = useAuth();
-  const [userPlan, setUserPlan] = useState("Loading...");
+  const [userPlan] = useState("Loading...");
 
   const renderTitle = () => {
     if (selectedFeature) {

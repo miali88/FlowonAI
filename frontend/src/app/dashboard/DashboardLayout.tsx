@@ -7,7 +7,7 @@ import Header from './Header';
 export default function DashboardLayout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Dashboard");
-  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [selectedFeature] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
 

@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import LiveKitEntry from '@/app/dashboard/AgentHub/LiveKitEntryEntry';
-import MorphingStreamButton from '@/app/dashboard/AgentHub/MorphingStreamButtonutton';
-import { Agent } from './LibraryTable';
+import { LiveKitEntry } from './LiveKitEntry';
+import MorphingStreamButton from './MorphingStreamButton';
+// import { Agent } from './LibraryTable';
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 interface AgentHubProps {
-  selectedAgent: Agent | null;
+  selectedAgent?: any | null;
   embedMode?: boolean;
 }
 

@@ -13,7 +13,6 @@ interface MorphingStreamButtonProps {
 const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
   onStreamToggle, 
   isStreaming, 
-  showTextBox,
   isConnecting,
 }) => {
   const handleClick = () => {

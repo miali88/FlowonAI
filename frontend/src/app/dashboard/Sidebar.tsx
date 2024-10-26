@@ -37,7 +37,7 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   );
 }
 
-function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem, activePanel, setActivePanel }) {
+function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
   const sidebarItems = [
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
