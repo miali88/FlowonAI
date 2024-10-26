@@ -49,7 +49,7 @@ export function Hero() {
       </Button>
       <div className="relative mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms]">
         <div className="rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
-          <BorderBeam size={200} anchor={90} duration={10} borderWidth={1.5} />
+          <BorderBeam size={500} anchor={0} duration={270} borderWidth={1.5} />
           <ChatBotMini
             agentId="e8b64819-7c2c-432f-9f80-05a72bd49787" // Replace with your actual agent ID
             isStreaming={isStreaming}
