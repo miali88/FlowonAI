@@ -7,13 +7,13 @@ interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
   isStreaming: boolean;
   showTextBox: boolean;
-  isConnecting: boolean; // Add new prop for loading state
+  isLoading: boolean;  // Changed from isConnecting to isLoading
 }
 
 const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
   onStreamToggle, 
   isStreaming, 
-  isConnecting,
+  isLoading,  // Changed from isConnecting to isLoading
 }) => {
   const handleClick = () => {
     onStreamToggle();
@@ -30,10 +30,10 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
           <Button
             className="w-full h-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none overflow-hidden"
             onClick={handleClick}
-            disabled={isConnecting} // Disable the button while connecting or disconnecting
+            disabled={isLoading}  // Changed from isConnecting to isLoading
           >
             <AnimatePresence mode="wait">
-              {isConnecting ? (
+              {isLoading ? (
                 <motion.div
                   key="loading"
                   initial={{ opacity: 0 }}

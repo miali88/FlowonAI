@@ -8,7 +8,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 
 type Agent = {
   id: string;
-  [key: string]: any;  // Allow for additional properties from the API
+  name?: string;
+  content?: string;
+  // Add other specific properties you expect from the API
+  [key: string]: string | undefined;  // Allow string properties while maintaining type safety
 };
 
 export default function AgentVoiceClient() {

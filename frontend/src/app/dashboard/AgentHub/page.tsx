@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { AgentCards, Agent } from './AgentCards';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { NewAgent } from './NewAgent';
 import Workspace from './Workspace';
 
@@ -19,7 +19,6 @@ const Lab = () => {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { user } = useUser();
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -95,37 +94,6 @@ const Lab = () => {
       setAlertDialogOpen(true);
     }
   };
-
-  const handleConnect = useCallback(async () => {
-    if (!selectedAgent || !user) {
-      console.error('No agent selected or user not authenticated');
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${selectedAgent.id}&user_id=${user.id}`, { 
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch token');
-      }
-      const { accessToken, url } = await response.json();
-      setToken(accessToken);
-      setUrl(url);
-      setIsLiveKitActive(true);
-      setIsStreaming(true);
-    } catch (error) {
-      console.error('Failed to connect:', error);
-      setAlertDialogMessage('Failed to connect to the stream. Please try again.');
-      setAlertDialogOpen(true);
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [selectedAgent, user]);
 
   const handleStreamEnd = useCallback(() => {
     setIsStreaming(false);

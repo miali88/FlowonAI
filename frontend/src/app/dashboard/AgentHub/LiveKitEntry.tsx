@@ -12,12 +12,10 @@ import { useState, useEffect, useCallback } from "react";
 interface LiveKitEntryProps {
   token: string;
   url: string;
-  roomName: string;
   isStreaming: boolean;
   onStreamEnd: () => void;
   onStreamStart: () => void;
   setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
-  // Update this type to match React.Dispatch
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
   setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -25,7 +23,6 @@ interface LiveKitEntryProps {
 export function LiveKitEntry({ 
   token, 
   url, 
-  roomName, 
   isStreaming, 
   onStreamEnd, 
   onStreamStart, 
@@ -35,11 +32,15 @@ export function LiveKitEntry({
 }: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback((room: Room) => {
-    setLocalRoom(room);
-    setRoom(room);
-    onStreamStart();
-  }, [onStreamStart, setRoom]);
+  const handleConnected = useCallback(() => {
+    // Room is available through the event object
+    const room = localRoom;
+    if (room) {
+      setLocalRoom(room);
+      setRoom(room);
+      onStreamStart();
+    }
+  }, [localRoom, onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -51,8 +52,9 @@ export function LiveKitEntry({
     <LiveKitRoom
       token={token}
       serverUrl={url}
-      name={roomName}
-      connectOptions={{ autoSubscribe: true }}
+      connectOptions={{ 
+        autoSubscribe: true
+      }}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
@@ -71,7 +73,6 @@ interface ActiveRoomProps {
   room: Room | null;
   isStreaming: boolean;
   onStreamEnd: () => void;
-  // Update this type to match React.Dispatch
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
   setParticipantIdentity: React.Dispatch<React.SetStateAction<string | null>>;
 }

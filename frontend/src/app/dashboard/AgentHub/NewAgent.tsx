@@ -54,11 +54,23 @@ const VOICE_OPTIONS = {
   "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
 };
 
+// Add an interface for the form data type
+interface FormData {
+  agentName: string;
+  agentPurpose: string;
+  dataSource: string;
+  tag?: string;  // Make tag optional with '?'
+  openingLine: string;
+  voice: string;
+  instructions: string;
+  language: string;
+}
+
 export function NewAgent() {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [dataSource, setDataSource] = useState<string>("");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     agentName: "",
     agentPurpose: "",
     dataSource: "",

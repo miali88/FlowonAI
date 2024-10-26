@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(content, { status: 200 });
   } catch (error) {
     console.error('Error fetching agent content:', error);
-    return NextResponse.json({ error: 'Failed to load agent content', details: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to load agent content', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 });
   }
 }

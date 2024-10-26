@@ -9,7 +9,10 @@ import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPatter
 interface AgentHubProps {
   selectedAgent?: {
     id: string;
-    [key: string]: any; // Use a more specific type if possible
+    name?: string;
+    description?: string;
+    status?: string;
+    // Add other specific properties your agent might have
   } | null;
   embedMode?: boolean;
 }
@@ -18,6 +21,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export function AgentHub({ selectedAgent, embedMode = false }: AgentHubProps) {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);  // Fixed: properly destructure both state and setter
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
 
@@ -62,17 +66,27 @@ export function AgentHub({ selectedAgent, embedMode = false }: AgentHubProps) {
   return (
     <div className={`flex flex-col ${embedMode ? 'h-full' : 'h-screen'}`}>
       <div className="flex-grow relative">
-        <AnimatedGridPatternDemo className="absolute inset-0" />
+        <AnimatedGridPatternDemo />
         <div className="absolute inset-0 flex items-center justify-center">
           <MorphingStreamButton 
             onStreamToggle={toggleLiveKit} 
             isStreaming={isLiveKitActive} 
             showTextBox={false} 
+            isLoading={isConnecting}  // Add this line
           />
         </div>
         {isLiveKitActive && token && url && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <LiveKitEntry token={token} url={url} />
+            <LiveKitEntry 
+              token={token} 
+              url={url}
+              isStreaming={isLiveKitActive}
+              onStreamEnd={() => setIsLiveKitActive(false)}
+              onStreamStart={() => {}}
+              setRoom={() => {}}
+              setLocalParticipant={() => {}}
+              setParticipantIdentity={() => {}}
+            />
           </div>
         )}
       </div>

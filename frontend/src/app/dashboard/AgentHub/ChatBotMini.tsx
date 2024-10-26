@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import styles from './ChatBotMini.module.css';
 import MorphingStreamButton from './MorphingStreamButton';
@@ -39,7 +38,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   onStreamStart,
   bypassShowChatInputCondition = false,
 }) => {
-  const chatboxRef = useRef<HTMLUListElement>(null);
+  const chatboxRef = useRef<HTMLDivElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [showChatInput, setShowChatInput] = useState(false);
@@ -165,19 +164,17 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           onStreamToggle={handleStreamToggle}
           isStreaming={isStreaming}
           showTextBox={false}
-          isConnecting={isConnecting}
+          isLoading={isConnecting}
         />
         {isLiveKitActive && token && url && roomName && (
           <>
             <LiveKitEntry 
               token={token} 
               url={url} 
-              roomName={roomName}
               isStreaming={isStreaming} 
               onStreamEnd={onStreamEnd} 
               onStreamStart={onStreamStart}
               setRoom={setLiveKitRoom}
-              localParticipant={localParticipant}
               setLocalParticipant={setLocalParticipant}
               setParticipantIdentity={setParticipantIdentity}
             />

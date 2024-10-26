@@ -1,4 +1,4 @@
-import { CSSProperties, FC, ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,6 @@ export function TextShimmer({ children, className, shimmerWidth = 100 }: TextShi
           "--shimmer-width": `${shimmerWidth}px`,
         } as CSSProperties
       }
-      // eslint-disable-next-line tailwindcss/no-custom-classname
       className={cn(
         "mx-auto max-w-md text-muted-foreground",
 

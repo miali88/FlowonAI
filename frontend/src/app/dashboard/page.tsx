@@ -43,14 +43,14 @@ import Integrations from "@/app/dashboard/integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
 // Add this interface at the top of your file 
-interface SavedItem {
-  id: number;
-  title: string;
-  content: string;
-  data_type: string;
-  meep: string
-  // Add other properties as needed
-}
+// interface SavedItem {
+//   id: number;
+//   title: string;
+//   content: string;
+//   data_type: string;
+//   meep: string
+//   // Add other properties as needed
+// }
 
 function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   return (
@@ -138,10 +138,9 @@ function LogoutMenuItem() {
 }
 
 function Header({ activeItem, selectedFeature }) {
-  const router = useRouter();
   const { user } = useUser();
-  const { getToken } = useAuth();
-  const [userPlan, setUserPlan] = useState("Loading...");
+  const [userPlan] = useState("Loading...");
+  
   const renderTitle = () => {
     if (selectedFeature) {
       return (
@@ -187,7 +186,10 @@ function Header({ activeItem, selectedFeature }) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/settings')}>
+            <DropdownMenuItem onClick={() => {
+              // Move navigation logic to parent component
+              window.location.href = '/settings';
+            }}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
@@ -202,12 +204,11 @@ function Header({ activeItem, selectedFeature }) {
 
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("Agent Hub"); // Change default to "Agent Hub"
+  const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
-  const router = useRouter();
-
+  
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
     setSelectedFeature(null);

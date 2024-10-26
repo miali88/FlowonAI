@@ -20,7 +20,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
-import { handleScrape } from './HandleScrape';
 import { KnowledgeBaseTable } from './KnowledgeBaseTable'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -36,9 +35,7 @@ function KnowledgeBaseContent() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [setIsEditing] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [setShowScrapeInput] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
-    const [setScrapeError] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
     const [activeTab, setActiveTab] = useState('library');
   

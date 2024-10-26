@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useUser } from "@clerk/nextjs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { DataTableDemo, ConversationLog } from './LibraryTable';
