@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { LiveKitEntry } from './LiveKitEntry';
 import MorphingStreamButton from './MorphingStreamButton';
 // import { Agent } from './LibraryTable';
 import { AnimatedGridPatternDemo } from '@/components/magicui/AnimatedGridPattern';
-import { Loader2, AlertCircle } from 'lucide-react';
 
 interface AgentHubProps {
-  selectedAgent?: any | null;
+  selectedAgent?: {
+    id: string;
+    [key: string]: any; // Use a more specific type if possible
+  } | null;
   embedMode?: boolean;
 }
 
@@ -18,7 +20,6 @@ export function AgentHub({ selectedAgent, embedMode = false }: AgentHubProps) {
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = useCallback(async () => {
     if (!selectedAgent) {

@@ -17,7 +17,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -40,6 +39,13 @@ import axios from "axios"
 import { useUser } from "@clerk/nextjs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// Add Agent type definition
+type Agent = {
+  id: string;
+  agentName: string;
+  agentPurpose: string;
+};
 
 // Update the type definition to include lead
 export type ConversationLog = {
@@ -76,11 +82,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       lead: false  // Add this line to hide the "Lead" column by default
     })
   const [rowSelection, setRowSelection] = React.useState({})
-  const [selectedAgentState, setSelectedAgentState] = useState<Agent | null>(null);
   const [showLeadsOnly, setShowLeadsOnly] = useState(false);
 
   // Define handleDeleteChat inside the component
-  const handleDeleteChat = async (id: string) => {
+  const handleDeleteChat = React.useCallback(async (id: string) => {
     try {
       await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
         headers: {
@@ -92,9 +97,8 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       console.log(`Chat with id: ${id} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting chat with id: ${id}`, error);
-      // Optionally, show an error message to the user
     }
-  };
+  }, [user]);
 
   // Define columns inside the component using useMemo
   const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
@@ -235,10 +239,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
             'x-user-id': user.id
           }
         });
-        const agents = agentResponse.data.data;
+        const agents = agentResponse.data.data as Agent[];
 
         const updatedData = conversations.map((conversation: ConversationLog) => {
-          const agent = agents.find((a: any) => a.id === conversation.agent_id);
+          const agent = agents.find((a) => a.id === conversation.agent_id);
           return {
             ...conversation,
             agentName: agent ? agent.agentName : null,

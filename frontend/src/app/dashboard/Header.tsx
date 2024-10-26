@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from "next/navigation";
-import { useUser, useAuth, useClerk } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {

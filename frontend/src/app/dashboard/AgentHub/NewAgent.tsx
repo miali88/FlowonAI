@@ -193,7 +193,7 @@ export function NewAgent() {
           <DialogHeader>
             <DialogTitle className="text-foreground dark:text-gray-200">Create New Agent</DialogTitle>
             <DialogDescription className="text-muted-foreground dark:text-gray-400">
-              Fill in the details to create a new agent. Click save when you're done.
+              Fill in the details to create a new agent. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

@@ -899,10 +899,6 @@ defer
 };
 
 export default Workspace;
-function handleConfigureFeature(featureId: string) {
-  // Implement the logic to open a modal or expandable section for configuration
-  console.log(`Configure ${featureId}`);
-}
 
 function getFeatureDescription(featureId: string): string {
   switch (featureId) {
@@ -939,4 +935,3 @@ function getFeatureTitle(featureId: string | null): string {
       return "";
   }
 }
-

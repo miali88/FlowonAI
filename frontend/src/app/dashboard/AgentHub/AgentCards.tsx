@@ -62,7 +62,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const handleAgentSelect = (agent: Agent) => {

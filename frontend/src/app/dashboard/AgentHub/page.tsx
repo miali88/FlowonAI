@@ -15,32 +15,11 @@ const Lab = () => {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
   const { userId } = useAuth();
-  const [activeTab, setActiveTab] = useState('preview');
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const { user } = useUser();
-
-  const iframeCode = `<iframe
-src="https://www.flowon.ai/embed/${selectedAgent?.id}"
-width="100%"
-style="height: 100%; min-height: 700px"
-frameborder="0"
-></iframe>`;
-
-  const scriptCode = `<script>
-window.embeddedAgentConfig = {
-  agentId: "${selectedAgent?.id}",
-  domain: "www.flowon.ai"
-}
-</script>
-<script
-src="https://flowon.ai/embed.min.js"
-agentId="${selectedAgent?.id}"
-domain="www.flowon.ai"
-defer
-></script>`;
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -147,29 +126,6 @@ defer
       setIsConnecting(false);
     }
   }, [selectedAgent, user]);
-
-  const handleStreamToggle = useCallback(async () => {
-    if (isStreaming) {
-      // If currently streaming, initiate disconnection
-      setIsConnecting(true);
-      setIsStreaming(false);
-      setIsLiveKitActive(false);
-    } else {
-      // If not streaming, initiate connection
-      setIsConnecting(true);
-      try {
-        await handleConnect();
-        setIsStreaming(true);
-        setIsLiveKitActive(true);
-      } catch (error) {
-        console.error('Failed to connect:', error);
-        setAlertDialogMessage('Failed to connect to the stream. Please try again.');
-        setAlertDialogOpen(true);
-      } finally {
-        setIsConnecting(false);
-      }
-    }
-  }, [isStreaming, handleConnect]);
 
   const handleStreamEnd = useCallback(() => {
     setIsStreaming(false);
