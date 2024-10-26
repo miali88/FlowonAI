@@ -64,7 +64,10 @@ export function Hero() {
         customer service, and more
         <br />
       </p>
-      <Button className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms]">
+      <Button 
+        className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms]"
+        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/dashboard` || '/dashboard'}
+      >
         <span>Get Started for free</span>
         <ArrowRight
           size={20}
