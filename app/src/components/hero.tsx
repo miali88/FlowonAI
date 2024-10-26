@@ -8,6 +8,7 @@ import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { Particles } from "@/components/magicui/particles";
+import { BentoDemo } from "@/components/magicui/bento-grid";
 
 export function Hero() {
   // Add state management for ChatBotMini
@@ -48,25 +49,31 @@ export function Hero() {
         />
       </Button>
       <div className="relative mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms]">
-        <div className="rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
+        <div className="flex flex-row items-center gap-6 rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
           <BorderBeam size={500} anchor={0} duration={270} borderWidth={1.5} />
-          <ChatBotMini
-            agentId="e8b64819-7c2c-432f-9f80-05a72bd49787" // Replace with your actual agent ID
-            isStreaming={isStreaming}
-            setIsStreaming={setIsStreaming}
-            isLiveKitActive={isLiveKitActive}
-            setIsLiveKitActive={setIsLiveKitActive}
-            token={token}
-            setToken={setToken}
-            url={url}
-            setUrl={setUrl}
-            isConnecting={isConnecting}
-            setIsConnecting={setIsConnecting}
-            onStreamEnd={() => {}}
-            onStreamStart={() => {}}
-            localParticipant={localParticipant}
-            setLocalParticipant={setLocalParticipant}
-          />
+          <div className="min-w-[500px] p-5">
+            <ChatBotMini
+              agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
+              isStreaming={isStreaming}
+              setIsStreaming={setIsStreaming}
+              isLiveKitActive={isLiveKitActive}
+              setIsLiveKitActive={setIsLiveKitActive}
+              token={token}
+              setToken={setToken}
+              url={url}
+              setUrl={setUrl}
+              isConnecting={isConnecting}
+              setIsConnecting={setIsConnecting}
+              onStreamEnd={() => {}}
+              onStreamStart={() => {}}
+              localParticipant={localParticipant}
+              setLocalParticipant={setLocalParticipant}
+            />
+          </div>
+          <div className="p-5">
+            <h2 className="text-4xl font-medium mb-6">Demo an agent</h2>
+            <BentoDemo />
+          </div>
         </div>
       </div>
       <Particles
