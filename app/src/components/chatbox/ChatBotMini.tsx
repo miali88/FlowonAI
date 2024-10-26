@@ -6,8 +6,8 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
-console.log('API_BASE_URL:', API_BASE_URL); // Add this line temporarily
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 interface ChatBotMiniProps {
   agentId: string;
@@ -24,8 +24,6 @@ interface ChatBotMiniProps {
   onStreamEnd: () => void;
   onStreamStart: () => void;
   bypassShowChatInputCondition?: boolean;
-  localParticipant: LocalParticipant | null;
-  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
@@ -54,8 +52,10 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [email, setEmail] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
-  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
+  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
+
+  const userId = "donkeykong";
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -89,31 +89,16 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     } else {
       setIsConnecting(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}`, {
+        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        
-        // Add response logging
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-        
         if (!response.ok) {
-          throw new Error(`Failed to fetch token: ${response.status} ${response.statusText}`);
+          throw new Error('Failed to fetch token');
         }
-        
-        // Try parsing the response text
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Invalid response format from server');
-        }
-
-        const { accessToken, url: liveKitUrl, roomName } = data;
+        const { accessToken, url: liveKitUrl, roomName } = await response.json();
         setToken(accessToken);
         setUrl(liveKitUrl);
         setRoomName(roomName);
@@ -121,8 +106,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setIsStreaming(true);
       } catch (error) {
         console.error('Failed to connect:', error);
-        // Add user-friendly error handling
-        alert('Failed to connect to the streaming service. Please try again later.');
+        // Handle error (e.g., show an alert)
       } finally {
         setIsConnecting(false);
       }
@@ -131,6 +115,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    // Check the feature flag before applying the condition
     if (!bypassShowChatInputCondition && !showChatInput) {
       console.log('Form submission blocked: Chat input not shown');
       return;
@@ -145,7 +130,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           fullName,
           email,
           contactNumber,
-          user_id: null,
+          user_id: userId,
           room_name: roomName,
           participant_identity: participantIdentity,
         }),
@@ -165,7 +150,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
+  }, [fullName, email, contactNumber, userId, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -197,6 +182,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               onStreamEnd={onStreamEnd} 
               onStreamStart={onStreamStart}
               setRoom={setLiveKitRoom}
+              localParticipant={localParticipant}
               setLocalParticipant={setLocalParticipant}
               setParticipantIdentity={setParticipantIdentity}
             />
@@ -243,7 +229,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       
       {/* Update the footer */}
       <footer className={styles.footer}>
-        <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <img src="/assets/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
         <span className={styles.footerText}>Powered by Flowon.AI</span>
       </footer>
     </div>

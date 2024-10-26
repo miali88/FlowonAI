@@ -5,7 +5,9 @@ import styles from './ChatBotMini.module.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+const API_BASE_URL = 'http://localhost:8000/api/v1';
+console.log('API_BASE_URL:', API_BASE_URL); // Add this line temporarily
 
 interface ChatBotMiniProps {
   agentId: string;
@@ -22,7 +24,11 @@ interface ChatBotMiniProps {
   onStreamEnd: () => void;
   onStreamStart: () => void;
   bypassShowChatInputCondition?: boolean;
+  localParticipant: LocalParticipant | null;
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
+
+const userId = "donkeykong";
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
@@ -50,10 +56,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [email, setEmail] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
-  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
-
-  const userId = "donkeykong";
+  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -93,10 +97,25 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
             'Content-Type': 'application/json',
           },
         });
+        
+        // Add response logging
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch token');
+          throw new Error(`Failed to fetch token: ${response.status} ${response.statusText}`);
         }
-        const { accessToken, url: liveKitUrl, roomName } = await response.json();
+        
+        // Try parsing the response text
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response as JSON:', parseError);
+          throw new Error('Invalid response format from server');
+        }
+
+        const { accessToken, url: liveKitUrl, roomName } = data;
         setToken(accessToken);
         setUrl(liveKitUrl);
         setRoomName(roomName);
@@ -104,7 +123,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setIsStreaming(true);
       } catch (error) {
         console.error('Failed to connect:', error);
-        // Handle error (e.g., show an alert)
+        // Add user-friendly error handling
+        alert('Failed to connect to the streaming service. Please try again later.');
       } finally {
         setIsConnecting(false);
       }
@@ -113,7 +133,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    // Check the feature flag before applying the condition
     if (!bypassShowChatInputCondition && !showChatInput) {
       console.log('Form submission blocked: Chat input not shown');
       return;
@@ -128,7 +147,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           fullName,
           email,
           contactNumber,
-          user_id: userId,
+          user_id: null,
           room_name: roomName,
           participant_identity: participantIdentity,
         }),
@@ -148,7 +167,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, userId, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
+  }, [fullName, email, contactNumber, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -180,7 +199,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               onStreamEnd={onStreamEnd} 
               onStreamStart={onStreamStart}
               setRoom={setLiveKitRoom}
-              localParticipant={localParticipant}
               setLocalParticipant={setLocalParticipant}
               setParticipantIdentity={setParticipantIdentity}
             />
@@ -227,7 +245,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       
       {/* Update the footer */}
       <footer className={styles.footer}>
-        <img src="/assets/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
         <span className={styles.footerText}>Powered by Flowon.AI</span>
       </footer>
     </div>

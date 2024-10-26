@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ChatBotMini from './ChatBotMini_backup';
+import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
 import { Switch } from "@/components/ui/switch";
 import { ChevronRight, Plus, Trash2, Play } from "lucide-react";
@@ -39,6 +39,8 @@ interface WorkspaceProps {
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
   handleStreamEnd: () => void;
   handleStreamStart: () => void;
+  localParticipant: LocalParticipant | null;
+  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
 interface ProspectSettings {
@@ -100,6 +102,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   setIsConnecting,
   handleStreamEnd,
   handleStreamStart,
+  localParticipant,
+  setLocalParticipant,
 }) => {
   const [activeTab, setActiveTab] = useState('preview');
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
@@ -640,6 +644,8 @@ defer
                     onStreamEnd={handleStreamEnd}
                     onStreamStart={handleStreamStart}
                     bypassShowChatInputCondition={true}
+                    localParticipant={localParticipant}
+                    setLocalParticipant={setLocalParticipant}
                   />
                 </div>
               </div>
@@ -687,6 +693,8 @@ defer
                   setIsConnecting={setIsConnecting}
                   onStreamEnd={handleStreamEnd}
                   onStreamStart={handleStreamStart}
+                  localParticipant={localParticipant}
+                  setLocalParticipant={setLocalParticipant}
                 />
               </div>
             )}
