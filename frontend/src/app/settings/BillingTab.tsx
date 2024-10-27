@@ -9,12 +9,12 @@ export default function BillingTab() {
   const redirectToCustomerPortal = async () => {
     setIsLoading(true);
     try {
+      // Add error handling for the response
       const response = await fetch('/api/create-customer-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Include any necessary user identification
         body: JSON.stringify({ userId: 'current-user-id' }),
       });
       
@@ -23,10 +23,10 @@ export default function BillingTab() {
       }
 
       const { url } = await response.json();
-      window.location.href = url;
+      // Open in new tab instead of redirecting current page
+      window.open(url, '_blank');
     } catch (error) {
       console.error('Error redirecting to customer portal:', error);
-      // Handle error (e.g., show an error message to the user)
     } finally {
       setIsLoading(false);
     }

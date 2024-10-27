@@ -27,7 +27,8 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
-origins = ["http://localhost:3000", 
+origins = ["flowon.ai",
+           "http://localhost:3000", 
            "https://localhost:3000", 
            "https://internally-wise-spaniel.in.ngrok.io",
            "https://internally-wise-spaniel.eu.ngrok.io/",
@@ -41,7 +42,7 @@ origins = ["http://localhost:3000",
 if origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

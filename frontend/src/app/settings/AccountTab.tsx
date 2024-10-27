@@ -5,9 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from 'react';
+import { useAuth } from "@clerk/nextjs";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface AccountTabProps {
   user: UserResource;
+  initialSettings?: {
+    firstName: string;
+    lastName: string;
+    businessName: string;
+    businessDomain: string;
+    email: string;
+    phone: string;
+  };
 }
 
 const BUSINESS_DOMAINS = [
@@ -24,7 +36,56 @@ const BUSINESS_DOMAINS = [
   "Other"
 ] as const;
 
-export default function AccountTab({ user }: AccountTabProps) {
+export default function AccountTab({ user, initialSettings }: AccountTabProps) {
+  const [formData, setFormData] = useState({
+    firstName: initialSettings?.firstName || user.firstName || '',
+    lastName: initialSettings?.lastName || user.lastName || '',
+    businessName: initialSettings?.businessName || '',
+    businessDomain: initialSettings?.businessDomain || '',
+    email: initialSettings?.email || user.primaryEmailAddress?.emailAddress || '',
+    phone: initialSettings?.phone || ''
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { getToken } = useAuth();
+
+  const handleChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getToken()}`
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          ...formData
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save settings');
+      }
+
+      // Add success handling
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      // Add error handling UI feedback here
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -32,25 +93,37 @@ export default function AccountTab({ user }: AccountTabProps) {
         <CardDescription>Manage your account details</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" defaultValue={user.firstName || ''} />
+              <Input 
+                id="firstName" 
+                value={formData.firstName}
+                onChange={(e) => handleChange('firstName', e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" defaultValue={user.lastName || ''} />
+              <Input 
+                id="lastName" 
+                value={formData.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="businessName">Business Name</Label>
-              <Input id="businessName" defaultValue={''} />
+              <Input 
+                id="businessName" 
+                value={formData.businessName}
+                onChange={(e) => handleChange('businessName', e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="businessDomain">Business Domain</Label>
-              <Select>
+              <Select onValueChange={(value) => handleChange('businessDomain', value)}>
                 <SelectTrigger id="businessDomain">
                   <SelectValue placeholder="Select your industry" />
                 </SelectTrigger>
@@ -66,13 +139,25 @@ export default function AccountTab({ user }: AccountTabProps) {
           </div>
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" defaultValue={user.primaryEmailAddress?.emailAddress || ''} />
+            <Input 
+              id="email" 
+              type="email" 
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+            />
           </div>
           <div>
             <Label htmlFor="phone">Contact Number</Label>
-            <Input id="phone" type="tel" defaultValue={''} />
+            <Input 
+              id="phone" 
+              type="tel" 
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+            />
           </div>
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </form>
       </CardContent>
     </Card>

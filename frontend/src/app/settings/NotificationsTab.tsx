@@ -1,47 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useUser, useAuth } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-interface NotificationSettings {
-  formNotifications: boolean;
-  conversationNotifications: boolean;
-  emailTranscripts: boolean;
+interface NotificationsTabProps {
+  settings?: {
+    formNotifications: boolean;
+    conversationNotifications: boolean;
+    emailTranscripts: boolean;
+  };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-export default function NotificationsTab() {
+export default function NotificationsTab({ settings }: NotificationsTabProps) {
   const { user } = useUser();
   const { getToken } = useAuth();
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    formNotifications: false,
-    conversationNotifications: false,
-    emailTranscripts: false
+  const [notificationSettings, setNotificationSettings] = useState({
+    formNotifications: settings?.formNotifications ?? false,
+    conversationNotifications: settings?.conversationNotifications ?? false,
+    emailTranscripts: settings?.emailTranscripts ?? false
   });
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/settings?userId=${user?.id}`, {
-          headers: {
-            'Authorization': `Bearer ${await getToken()}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setNotificationSettings(data.settings);
-        }
-      } catch (error) {
-        console.error('Failed to fetch settings:', error);
-      }
-    };
-
-    if (user?.id) {
-      fetchSettings();
-    }
-  }, [user, getToken]);
 
   const handleSettingChange = async (setting: keyof NotificationSettings) => {
     const newSettings = {

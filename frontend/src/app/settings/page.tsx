@@ -14,10 +14,20 @@ import AccountTab from './AccountTab';
 // Load your Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-interface NotificationSettings {
-  formNotifications: boolean;
-  conversationNotifications: boolean;
-  emailTranscripts: boolean;
+interface Settings {
+  notification_settings: {
+    formNotifications: boolean;
+    conversationNotifications: boolean;
+    emailTranscripts: boolean;
+  };
+  account_settings: {
+    firstName: string;
+    lastName: string;
+    businessName: string;
+    businessDomain: string;
+    email: string;
+    phone: string;
+  };
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -25,43 +35,11 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function SettingsPage() {
   const { user } = useUser();
   const { getToken } = useAuth();
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    formNotifications: false,
-    conversationNotifications: false,
-    emailTranscripts: false
-  });
-
-  const handleSettingChange = async (setting: keyof NotificationSettings) => {
-    const newSettings = {
-      ...notificationSettings,
-      [setting]: !notificationSettings[setting]
-    };
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/settings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getToken()}`
-        },
-        body: JSON.stringify({
-          userId: user?.id,
-          notifications: newSettings
-        })
-      });
-
-      if (response.ok) {
-        setNotificationSettings(newSettings);
-      }
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      setNotificationSettings(notificationSettings);
-    }
-  };
+  const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!user?.id) return;  // Early return if no user ID
+      if (!user?.id) return;
 
       try {
         const response = await fetch(`${API_BASE_URL}/settings?userId=${user.id}`, {
@@ -71,7 +49,7 @@ export default function SettingsPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          setNotificationSettings(data);
+          setSettings(data.settings);
         }
       } catch (error) {
         console.error('Failed to fetch settings:', error);
@@ -96,12 +74,14 @@ export default function SettingsPage() {
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="account">
-          <AccountTab user={user} />
+          <AccountTab 
+            user={user} 
+            initialSettings={settings?.account_settings}
+          />
         </TabsContent>
         <TabsContent value="notifications">
           <NotificationsTab 
-            notificationSettings={notificationSettings}
-            onSettingChange={handleSettingChange}
+            settings={settings?.notification_settings}
           />
         </TabsContent>
         <TabsContent value="security">
