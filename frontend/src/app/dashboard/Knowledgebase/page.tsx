@@ -14,6 +14,7 @@ import {
   Globe,
   SendIcon,
   Upload,
+  Type,  // Add this import
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +25,12 @@ import { KnowledgeBaseTable } from './KnowledgeBaseTable'
 import { handleScrape } from './HandleScrape';
 
 import "@/components/loading.css"; // Adjust the path as necessary
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function Loader() {
   return <div className="loader"></div>;
@@ -43,9 +50,11 @@ function KnowledgeBaseContent() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [scrapeUrl, setScrapeUrl] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
-    const [activeTab, setActiveTab] = useState('welcome');
+    const [activeTab, setActiveTab] = useState('insert'); // Change initial state from 'welcome' to 'insert'
     const [scrapeError, setScrapeError] = useState("");
     const [showScrapeInput, setShowScrapeInput] = useState(true);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedTab, setSelectedTab] = useState('');
   
     const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
@@ -203,85 +212,52 @@ function KnowledgeBaseContent() {
   
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
   
+    const handleCardClick = (tab: string) => {
+      setSelectedTab(tab);
+      setDialogOpen(true);
+      // Remove this line to keep the welcome tab active
+      // setActiveTab(tab);
+    };
+  
     const renderAddContent = () => {
       switch (activeTab) {
-        case 'welcome':
+        case 'insert': // Change from 'welcome' to 'insert'
           return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)]">
               <h2 className="text-2xl font-bold mb-4">Welcome to Your Knowledge Base</h2>
               <p className="text-gray-600 text-center max-w-2xl mb-6">
-                Start building your AI's knowledge by adding content through various methods. 
-                Choose from the options above to begin:
+                Start building your agent's knowledge by adding content. 
+                Choose from the below to begin:
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="p-4 border rounded-lg">
-                  <Globe className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                  <h3 className="font-semibold">Library</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center max-w-3xl mx-auto">
+                <div 
+                  className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
+                  onClick={() => handleCardClick('text')}
+                >
+                  <Type className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                  <h3 className="font-semibold">Text</h3>
                   <p className="text-sm text-gray-500">View your existing knowledge base</p>
                 </div>
-                <div className="p-4 border rounded-lg">
+                <div 
+                  className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
+                  onClick={() => handleCardClick('files')}
+                >
                   <Upload className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                  <h3 className="font-semibold">Text</h3>
-                  <p className="text-sm text-gray-500">Add text content directly</p>
+                  <h3 className="font-semibold">Document files</h3>
+                  <p className="text-sm text-gray-500">PDFs, word, excel, txt, powerpoint etc.</p>
                 </div>
-                {/* Add similar blocks for Files and Web options */}
+                <div 
+                  className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
+                  onClick={() => handleCardClick('web')}
+                >
+                  <Globe className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                  <h3 className="font-semibold">Web</h3>
+                  <p className="text-sm text-gray-500">Scrape content from any website</p>
+                </div>
               </div>
             </div>
           );
-        case 'text':
-          return (
-            <Textarea 
-              placeholder="Type or paste anything that will help Flowon learn more about your business"
-              className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
-              value={newItemContent}
-              onChange={(e) => setNewItemContent(e.target.value)}
-            />
-          );
-  
-        case 'files':
-          return (
-            <div 
-              {...getRootProps()} 
-              className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
-            >
-              <input {...getInputProps()} />
-              <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
-              <p className="text-sm text-gray-600 text-center">
-                {isDragActive 
-                  ? "Drop the files here" 
-                  : "Drag and drop files here, or click to select files"}
-              </p>
-              {selectedFile && (
-                <p className="mt-4 text-sm text-gray-600">
-                  Selected file: {selectedFile.name}
-                </p>
-              )}
-            </div>
-          );
-        case 'web':
-          return (
-            <div className="flex flex-col h-[calc(100vh-400px)]">
-              <Input
-                type="url"
-                placeholder="Enter URL to scrape"
-                value={scrapeUrl}
-                onChange={(e) => setScrapeUrl(e.target.value)}
-                className="mb-4"
-              />
-              <Button onClick={handleScrapeWrapper} className="self-start px-4 py-2">
-                Scrape Web Content
-              </Button>
-            </div>
-          );
-        case 'connect':
-          return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)]">
-              <Globe className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Connect to External Sources</h3>
-              <p className="text-sm text-gray-600 mb-4">Integrate with external platforms to import data</p>
-              <Button>Configure Connections</Button>
-            </div>
-          );
+
         default:
           return null;
       }
@@ -321,16 +297,15 @@ function KnowledgeBaseContent() {
       <div className="flex flex-col h-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full border-b">
           <TabsList className="w-full justify-start">
-            <TabsTrigger value="library" className="text-sm">Library</TabsTrigger>
-            <TabsTrigger value="text" className="text-sm">Text</TabsTrigger>
-            <TabsTrigger value="files" className="text-sm">Files</TabsTrigger>
-            <TabsTrigger value="web" className="text-sm">Web</TabsTrigger>
-            <TabsTrigger value="connect" className="text-sm">Connect</TabsTrigger>
+          <TabsTrigger value="insert" className="text-sm">Insert</TabsTrigger>
+          <TabsTrigger value="library" className="text-sm">Library</TabsTrigger>
           </TabsList>
         </Tabs>
   
-        <div className="flex h-full">
-          {activeTab === 'library' ? (
+        <div className="flex h-full justify-center w-full"> {/* Add justify-center and w-full */}
+          {activeTab === 'insert' ? (
+            renderAddContent()
+          ) : activeTab === 'library' ? (
             <div className="flex w-full">
               {/* Left section with table (2/3 width) */}
               <div className="w-2/3 p-4">
@@ -387,6 +362,85 @@ function KnowledgeBaseContent() {
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
+  
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-3xl h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedTab === 'text' && 'Add Text Content'}
+                {selectedTab === 'files' && 'Upload Files'}
+                {selectedTab === 'web' && 'Scrape Web Content'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {selectedTab === 'text' && (
+                <Textarea 
+                  placeholder="Type or paste anything that will help Flowon learn more about your business"
+                  className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
+                  value={newItemContent}
+                  onChange={(e) => setNewItemContent(e.target.value)}
+                />
+              )}
+              {selectedTab === 'files' && (
+                <div 
+                  {...getRootProps()} 
+                  className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
+                  <p className="text-sm text-gray-600 text-center">
+                    {isDragActive 
+                      ? "Drop the files here" 
+                      : "Drag and drop files here, or click to select files"}
+                  </p>
+                  {selectedFile && (
+                    <p className="mt-4 text-sm text-gray-600">
+                      Selected file: {selectedFile.name}
+                    </p>
+                  )}
+                </div>
+              )}
+              {selectedTab === 'web' && (
+                <div className="flex flex-col h-[calc(100vh-400px)]">
+                  {showScrapeInput ? (
+                    <>
+                      <Input
+                        type="url"
+                        placeholder="Enter URL to scrape"
+                        value={scrapeUrl}
+                        onChange={(e) => setScrapeUrl(e.target.value)}
+                        className="mb-4"
+                      />
+                      <Button onClick={handleScrapeWrapper} className="self-start px-4 py-2">
+                        Scrape Web Content
+                      </Button>
+                      {scrapeError && (
+                        <Alert variant="destructive" className="mt-4">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Error</AlertTitle>
+                          <AlertDescription>{scrapeError}</AlertDescription>
+                        </Alert>
+                      )}
+                    </>
+                  ) : (
+                    <Textarea
+                      value={newItemContent}
+                      onChange={(e) => setNewItemContent(e.target.value)}
+                      className="w-full h-full"
+                      placeholder="Scraped content will appear here..."
+                    />
+                  )}
+                </div>
+              )}
+              <div className="flex justify-end mt-4">
+                <Button onClick={handleNewItemWrapper}>
+                  <SendIcon className="h-4 w-4 mr-2" />
+                  Add to Knowledge Base
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
