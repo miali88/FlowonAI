@@ -115,7 +115,10 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
         print("\n\ntotal_tokens:", total_tokens)
-        return items
+        return JSONResponse(content={
+            "items": items,
+            "total_tokens": total_tokens
+        })
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

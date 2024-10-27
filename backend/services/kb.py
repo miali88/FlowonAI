@@ -50,7 +50,9 @@ async def get_kb_items(current_user):
                         'title': title,
                         'content': 'Content not available',  # Adjust as needed
                         'user_id': current_user,
-                        'data_type': 'web'
+                        'data_type': 'web',
+                        'created_at': item.get('created_at', ''),
+                        'token_count': item.get('token_count', 0)
                     })
                 total_tokens += (item.get('token_count', 0))
 

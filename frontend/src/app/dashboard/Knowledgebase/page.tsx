@@ -6,7 +6,6 @@ import axios from 'axios';
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertCircle,
   SendIcon,
@@ -16,8 +15,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
-import { KnowledgeBaseTable } from './KnowledgeBaseTable'
 import { handleScrape } from './HandleScrape';
+import { Library } from './Library';
 
 import "@/components/loading.css"; // Adjust the path as necessary
 import { Insert } from './Insert';
@@ -72,8 +71,9 @@ function KnowledgeBaseContent() {
             title: item.title,
             content: item.content || "Content not available",
             data_type: item.data_type,
-            tag: item.tag || "", // Add this line
-            tokens: item.tokens || 0,
+            tag: item.tag || "",
+            tokens: item.token_count || 0, // Changed from tokens to token_count
+            created_at: item.created_at || new Date().toISOString(), // Add created_at field
           }));
           
           // Calculate total tokens
@@ -147,7 +147,7 @@ function KnowledgeBaseContent() {
     // Replace the existing handleNewItem function with this:
     const handleNewItemWrapper = async () => {
       await handleNewItem({
-        activeAddTab: activeTab,
+        activeAddTab: selectedTab, // Change from activeTab to selectedTab
         newItemContent,
         user,
         getToken,
@@ -156,7 +156,8 @@ function KnowledgeBaseContent() {
         setNewItemContent,
         setSelectedFile,
         setAlertMessage,
-        setAlertType
+        setAlertType,
+        selectedFile  // Add this
       });
     };
   
@@ -273,43 +274,20 @@ function KnowledgeBaseContent() {
           <TabsTrigger value="library" className="text-sm">Library</TabsTrigger>
           </TabsList>
         </Tabs>
-  
-        <div className="flex h-full justify-center w-full"> {/* Add justify-center and w-full */}
+
+        <div className="flex h-full justify-center w-full">
           {activeTab === 'insert' ? (
             renderAddContent()
           ) : activeTab === 'library' ? (
-            <div className="flex w-full">
-              {/* Left section with table (2/3 width) */}
-              <div className="w-2/3 p-4">
-                <KnowledgeBaseTable
-                  data={savedItems}
-                  totalTokens={totalTokens}
-                  onEdit={(item) => {
-                    setSelectedItem(item);
-                    setIsEditing(true);
-                    setNewItemContent(item.content);
-                  }}
-                  onDelete={handleDeleteItem}
-                  setSelectedItem={setSelectedItem}
-                />
-              </div>
-
-              {/* Right section with content preview (1/3 width) */}
-              <div className="w-1/3 p-4 border-l">
-                {selectedItem ? (
-                  <div className="h-full">
-                    <h3 className="text-xl font-semibold mb-4">{selectedItem.title}</h3>
-                    <ScrollArea className="h-[calc(100vh-200px)]">
-                      <p className="whitespace-pre-wrap">{selectedItem.content}</p>
-                    </ScrollArea>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Select an item to view details</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Library
+              savedItems={savedItems}
+              totalTokens={totalTokens}
+              selectedItem={selectedItem}
+              setSelectedItem={setSelectedItem}
+              setIsEditing={setIsEditing}
+              setNewItemContent={setNewItemContent}
+              handleDeleteItem={handleDeleteItem}
+            />
           ) : (
             <div className="w-full p-4">
               <div className="relative w-full mb-6">
@@ -326,7 +304,7 @@ function KnowledgeBaseContent() {
             </div>
           )}
         </div>
-  
+
         {alertMessage && (
           <Alert variant={alertType === "error" ? "destructive" : "default"}>
             <AlertCircle className="h-4 w-4" />
