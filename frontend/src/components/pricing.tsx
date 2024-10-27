@@ -7,33 +7,37 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import React from "react";
 
 export function Pricing() {
+  // Add state for annual toggle
+  const [isAnnual, setIsAnnual] = React.useState(false);
+
   return (
     <section className="mx-auto flex max-w-screen-xl flex-col gap-8 px-4 py-14 md:px-8">
       <div className="mx-auto max-w-screen-xl px-4 md:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <h4 className="text-xl font-bold tracking-tight">Pricing</h4>
-          <h2 className="text-5xl font-bold tracking-tight sm:text-6xl font-heading">
-            Simple pricing for everyone.
-          </h2>
+          {/* <h2 className="text-5xl font-bold tracking-tight sm:text-6xl font-heading">
+            Bring Extreme Efficiency To Your Business.
+          </h2> */}
           <p className="mt-6 text-xl leading-8">
-            Choose an affordable plan that&apos;s packed with the best features for engaging your
+            Packed with the best features for engaging your
             audience, creating customer loyalty, and driving sales.
           </p>
         </div>
         <div className="flex w-full items-center justify-center space-x-2 mx-2 my-6">
-          <Switch id="interval" />
+          <Switch id="interval" onCheckedChange={(checked) => setIsAnnual(checked)} />
           <span>Annual</span>
           <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
-            2 MONTHS FREE ✨
+            Get 7 months free ✨
           </span>
         </div>
         <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-4 flex-col gap-4">
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Basic</h2>
+                <h2 className="text-base font-semibold leading-7">Taster</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
                   A basic plan for startups and individual users
                 </p>
@@ -90,9 +94,9 @@ export function Pricing() {
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Basic</h2>
+                <h2 className="text-base font-semibold leading-7">Startup</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  A basic plan for startups and individual users
+                  A basic plan for startups and indsividual users
                 </p>
               </div>
               <motion.div
@@ -102,8 +106,8 @@ export function Pricing() {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">£97</span>
-                <span className="text-xs mb-1">/month</span>
+                <span className="text-4xl font-bold leading-7">£{isAnnual ? '465.60' : '97'}</span>
+                <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
                 <span>Ready</span>
@@ -147,7 +151,7 @@ export function Pricing() {
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Ultimate</h2>
+                <h2 className="text-base font-semibold leading-7">Enterprise</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
                   The ultimate plan with all features for industry leaders
                 </p>

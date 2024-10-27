@@ -1,5 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-src 'self' https://*.stripe.com http://localhost:3000;",
+          },
+        ],
+      },
+    ];
+  },
   webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.(ogg|mp3|wav|mpe?g)$/i,
