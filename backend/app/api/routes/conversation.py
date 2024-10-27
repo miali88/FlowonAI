@@ -57,7 +57,8 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 async def livekit_room_webhook(request: Request):
     data = await request.json()
     #print(f"\n /store_history Received webhook data: {data}")
-    
+    print(f"\n\n\n call_duration: {data['call_duration']}\n\n")
+
     logger.info(f"Received webhook data: {data}")
 
     try:
@@ -68,7 +69,8 @@ async def livekit_room_webhook(request: Request):
             "room_name": data['room_name'],
             "user_id": data['user_id'],
             "agent_id": data['agent_id'],
-            "lead": data['prospect_status']
+            "lead": data['prospect_status'], 
+            "call_duration": data['call_duration']
         }).execute()
         
         print(f"Saved conversation log for job {data['job_id']} to Supabase")

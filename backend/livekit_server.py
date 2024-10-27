@@ -2,6 +2,7 @@ import asyncio
 from dotenv import load_dotenv
 import logging  # Add this import
 import time  # Add this import
+from datetime import datetime, timedelta  # Update import
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -16,8 +17,33 @@ from services.voice.tool_use import trigger_show_chat_input
 
 load_dotenv()
 
+class CallDuration:
+    def __init__(self, duration: timedelta):
+        self.duration = duration
+        self.total_seconds = int(duration.total_seconds())
+        self.minutes = self.total_seconds // 60
+        self.seconds = self.total_seconds % 60
+
+    @classmethod
+    def from_timestamps(cls, start: datetime, end: datetime):
+        return cls(end - start)
+
+    def __str__(self):
+        return f"{self.minutes}m {self.seconds}s"
+
+    def to_dict(self):
+        return {
+            "total_seconds": self.total_seconds,
+            "minutes": self.minutes,
+            "seconds": self.seconds,
+            "formatted": str(self)
+        }
+
 async def entrypoint(ctx: JobContext):
     try:
+        # Add call start time tracking
+        call_start_time = datetime.now()
+        
         # Add participant tracking dictionary and last_audio_time
         participant_prospects = {}
         last_audio_time = time.time()  # Track when we last received any audio
@@ -70,20 +96,18 @@ async def entrypoint(ctx: JobContext):
         """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
-            print(f"Participant {participant.identity} disconnected")
-            print(f"Agent {ctx.job.id} connected to:", available_participant)
-            print("if match, then shut down worker")
             if participant.identity == available_participant.identity:
-                print("participant disconnected, shutting down worker")
-                # Wrap the coroutine in a lambda to make it callable
+                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
+                print(f"Call duration: {call_duration}")
                 ctx.add_shutdown_callback(
                     lambda: store_conversation_history(agent, 
-                                                       room_name, 
-                                                       ctx.job.id, 
-                                                       available_participant.identity, 
-                                                       participant_prospects[available_participant.sid])
+                                                   room_name, 
+                                                   ctx.job.id, 
+                                                   available_participant.identity, 
+                                                   participant_prospects[available_participant.sid],
+                                                   call_duration)  # Pass CallDuration object
                 )
-                ctx.shutdown(reason="Subscribed participant disconnected")
+                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
 
         @ctx.room.on("track_subscribed")
         def on_track_subscribed(
@@ -187,7 +211,8 @@ async def entrypoint(ctx: JobContext):
                                              room_name: str, 
                                              job_id: str, 
                                              participant_identity: str, 
-                                             prospect_status: str):
+                                             prospect_status: str,
+                                             call_duration: CallDuration):  # Update type hint
             print("store_conversation_history method called")
             
             # Parse chat context into simplified format
@@ -221,7 +246,8 @@ async def entrypoint(ctx: JobContext):
                     "room_name": room_name,
                     "user_id": user_id,
                     "agent_id": agent_id,
-                    "prospect_status": prospect_status
+                    "prospect_status": prospect_status,
+                    "call_duration": call_duration.to_dict()  # Send structured duration data
                 }
                 
                 async with aiohttp.ClientSession() as session:
@@ -233,6 +259,13 @@ async def entrypoint(ctx: JobContext):
                             
             except Exception as e:
                 print(f"Error storing conversation history: {str(e)}")
+
+        def format_duration(start_time):
+            duration = datetime.now() - start_time
+            total_seconds = duration.total_seconds()
+            minutes = int(total_seconds // 60)
+            seconds = int(total_seconds % 60)
+            return f"{minutes}m {seconds}s"
 
         async def check_silence_timeout():
             while True:
@@ -249,16 +282,14 @@ async def entrypoint(ctx: JobContext):
                     print(f"Time since agent audio: {time_since_agent:.1f}s")
 
                 if time_since_last_audio > SILENCE_TIMEOUT:
-                    print(f"Silence timeout reached after {SILENCE_TIMEOUT} seconds")
-                    print(f"Last participant audio: {time_since_participant:.1f}s ago")
-                    print(f"Last agent audio: {time_since_agent:.1f}s ago")
-                    # Store conversation history before shutting down
+                    print(f"Call duration before timeout: {format_duration(call_start_time)}")
                     await store_conversation_history(agent, 
                                                   room_name, 
                                                   ctx.job.id, 
                                                   available_participant.identity, 
-                                                  participant_prospects[available_participant.sid])
-                    await ctx.shutdown(reason="Silence timeout reached")
+                                                  participant_prospects[available_participant.sid],
+                                                  format_duration(call_start_time))  # Add duration
+                    await ctx.shutdown(reason=f"Silence timeout reached after {format_duration(call_start_time)}")
                     break
 
         # Create and store the silence checker task
