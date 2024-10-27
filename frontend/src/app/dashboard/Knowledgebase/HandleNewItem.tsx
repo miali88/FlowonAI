@@ -26,6 +26,7 @@ interface HandleNewItemProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   setAlertMessage: React.Dispatch<React.SetStateAction<string>>;
   setAlertType: React.Dispatch<React.SetStateAction<string>>;
+  selectedFile: File | null;
 }
 
 export const handleNewItem = async ({
@@ -38,13 +39,40 @@ export const handleNewItem = async ({
   setNewItemContent,
   setSelectedFile,
   setAlertMessage,
-  setAlertType
+  setAlertType,
+  selectedFile
 }: HandleNewItemProps) => {
+  if (!user) {
+    setAlertMessage("User not authenticated");
+    setAlertType("error");
+    return;
+  }
+
   if (activeAddTab === 'files') {
-    await handleFileUpload();
+    if (!selectedFile) {
+      setAlertMessage("Please select a file to upload");
+      setAlertType("error");
+      return;
+    }
+
+    // Display file info
+    const fileSize = (selectedFile.size / 1024 / 1024).toFixed(2); // Convert to MB
+    setAlertMessage(`Processing ${selectedFile.name} (${selectedFile.type}) - ${fileSize}MB`);
+    setAlertType("info");
+
+    try {
+      await handleFileUpload();
+      setAlertMessage(`Successfully uploaded ${selectedFile.name}`);
+      setAlertType("success");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setAlertMessage(`Failed to upload file: ${error.message}`);
+      setAlertType("error");
+    }
   } else {
-    if (newItemContent.trim() === "" || !user) {
-      setAlertMessage(newItemContent.trim() === "" ? "Cannot add empty item" : "User not authenticated");
+    // Text content validation only for non-file uploads
+    if (newItemContent.trim() === "") {
+      setAlertMessage("Cannot add empty item");
       setAlertType("error");
       return;
     }
