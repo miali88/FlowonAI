@@ -1,7 +1,5 @@
-from fastapi import FastAPI, Request, HTTPException, APIRouter
-from fastapi.responses import Response, JSONResponse
+from fastapi import Request, HTTPException, APIRouter
 
-from services.retellai.retellai import handle_form_webhook
 import logging
 import traceback
 from services.db.supabase_services import supabase
@@ -45,10 +43,8 @@ async def get_settings(request: Request):
         # Get user_id from query parameters
         user_id = request.query_params.get('userId')
         print(f'user_id: {user_id}')
-        if not user_id:
-            raise HTTPException(status_code=400, detail="userId is required")
         
-        # Fetch both notification_settings and account_settings from Supabase
+                # Fetch both notification_settings and account_settings from Supabase
         response = supabase.table('users').select('notification_settings,account_settings').eq('id', user_id).execute()
         print(f'response: {response}')
         if not response.data:
@@ -60,6 +56,7 @@ async def get_settings(request: Request):
                 "account_settings": response.data[0]['account_settings']
             }
         }
+        
     except Exception as e:
         logger.error(f"Error retrieving settings: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Failed to retrieve settings")

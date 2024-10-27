@@ -28,21 +28,16 @@ app = FastAPI(
 )
 
 origins = ["flowon.ai",
+           "https://flowon.ai"
+           "https://www.flowon.ai"
            "http://localhost:3000", 
            "https://localhost:3000", 
-           "https://internally-wise-spaniel.in.ngrok.io",
-           "https://internally-wise-spaniel.eu.ngrok.io/",
-           "ngrok.io",
-           "http://ngrok.io",
-           "https://ngrok.io",
-           "https://eu.ngrok.io",
-           "http://internally-wise-spaniel.ngrok.io",
-           "https://internally-wise-spaniel.ngrok.io"]
+           ]
 
 if origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

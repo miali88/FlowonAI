@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserResource } from '@clerk/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from 'react';
 import { useAuth } from "@clerk/nextjs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -54,6 +53,7 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Update the handleSubmit function to match the backend's expected format
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -67,7 +67,7 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
         },
         body: JSON.stringify({
           userId: user.id,
-          ...formData
+          account: formData  // Wrap the form data in 'account' key
         })
       });
 
@@ -76,15 +76,27 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
         throw new Error(errorData.message || 'Failed to save settings');
       }
 
-      // Add success handling
       console.log('Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
-      // Add error handling UI feedback here
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Add useEffect to properly initialize form data when initialSettings changes
+  useEffect(() => {
+    if (initialSettings) {
+      setFormData({
+        firstName: initialSettings.firstName || user.firstName || '',
+        lastName: initialSettings.lastName || user.lastName || '',
+        businessName: initialSettings.businessName || '',
+        businessDomain: initialSettings.businessDomain || '',
+        email: initialSettings.email || user.primaryEmailAddress?.emailAddress || '',
+        phone: initialSettings.phone || ''
+      });
+    }
+  }, [initialSettings, user]);
 
   return (
     <Card>

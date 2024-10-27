@@ -4,15 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import BillingTab from './BillingTab';
 import NotificationsTab from './NotificationsTab';
 import { useAuth } from "@clerk/nextjs";
 import AccountTab from './AccountTab';
-
-// Load your Stripe publishable key
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Settings {
   notification_settings: {
@@ -28,7 +23,7 @@ interface Settings {
     email: string;
     phone: string;
   };
-  user_plan?: string; // Add this field
+  user_plan?: string; // You might want to remove this if it's only used for Stripe
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -97,9 +92,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="billing">
-          <Elements stripe={stripePromise}>
-            <BillingTab userPlan={settings?.user_plan} />
-          </Elements>
+          <BillingTab userPlan={settings?.user_plan} />
         </TabsContent>
       </Tabs>
     </div>
