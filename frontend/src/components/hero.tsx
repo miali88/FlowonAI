@@ -43,7 +43,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative mx-auto px-6 text-center md:px-8 pt-32 max-w-[80rem]">
+    <section className="relative mx-auto px-4 sm:px-6 text-center md:px-8 pt-16 sm:pt-24 md:pt-32 max-w-[80rem]">
       <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
         <TextShimmer className="inline-flex items-center justify-center">
           <span className="text-xs text-secondary-foreground/60">
@@ -77,8 +77,8 @@ export function Hero() {
           className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
         />
       </Button>
-      <div className="relative mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms]">
-        <div className="flex flex-row items-center gap-6 rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
+      <div className="relative mt-[4rem] sm:mt-[6rem] md:mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms]">
+        <div className="flex flex-col lg:flex-row items-center gap-6 rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
           <BorderBeam size={500} anchor={0} duration={270} borderWidth={1.5} />
           <div className="min-w-[500px] p-5">
             <ChatBotMini

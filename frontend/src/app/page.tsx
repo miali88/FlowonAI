@@ -9,7 +9,7 @@ import { Footer } from "@/components/footer";
 
 export default function HomePage() {
   return (
-    <>
+    <div className="mx-auto max-w-7xl">
       <Header />
       <Hero />
       <SocialProof />
@@ -18,6 +18,6 @@ export default function HomePage() {
       <CtaSection />
       <Testimonials />
       <Footer />
-    </>
+    </div>
   );
 }
