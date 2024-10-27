@@ -9,9 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import React from "react";
 
-export function Pricing() {
+interface PricingProps {
+  currentPlan?: string;
+}
+
+export function Pricing({ currentPlan }: PricingProps) {
   // Add state for annual toggle
   const [isAnnual, setIsAnnual] = React.useState(false);
+
+  const getButtonText = (planName: string) => {
+    return currentPlan?.toLowerCase() === planName.toLowerCase() 
+      ? "Manage Plan" 
+      : "Subscribe";
+  };
 
   return (
     <section className="mx-auto flex max-w-screen-xl flex-col gap-8 px-4 py-14 md:px-8">
@@ -30,7 +40,7 @@ export function Pricing() {
           <Switch id="interval" onCheckedChange={(checked) => setIsAnnual(checked)} />
           <span>Annual</span>
           <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
-            Get 7 months free ✨
+            Get 5 months free ✨
           </span>
         </div>
         <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-4 flex-col gap-4">
@@ -53,7 +63,7 @@ export function Pricing() {
                 <span className="text-xs mb-1">/month</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Ready</span>
+                <span>{getButtonText("taster")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
@@ -106,11 +116,11 @@ export function Pricing() {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">£{isAnnual ? '465.60' : '97'}</span>
+                <span className="text-4xl font-bold leading-7">£{isAnnual ? '698.00' : '97'}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Ready</span>
+                <span>{getButtonText("startup")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
@@ -167,7 +177,7 @@ export function Pricing() {
                 <span className="text-xs mb-1" />
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>Start Partnership</span>
+                <span>{getButtonText("enterprise")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>

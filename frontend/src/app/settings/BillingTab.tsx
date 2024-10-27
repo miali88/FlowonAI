@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
+import { Pricing } from "@/components/pricing";
 
-export default function BillingTab() {
+interface BillingTabProps {
+  userPlan?: string;
+}
+
+export default function BillingTab({ userPlan }: BillingTabProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const redirectToCustomerPortal = async () => {
@@ -34,34 +39,12 @@ export default function BillingTab() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Billing Settings</CardTitle>
-        <CardDescription>Manage your subscription and billing details</CardDescription>
-      </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Current Plan</h3>
-            <p>Your current plan: [Plan Name]</p>
-            {/* Fetch and display current plan details */}
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Manage Subscription</h3>
-            <Button onClick={redirectToCustomerPortal} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Manage Billing'
-              )}
-            </Button>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Next Payment</h3>
-            <p>Your next payment: [Date] - [Amount]</p>
-            {/* Fetch and display next payment details */}
+          
+          {/* Add separator before pricing section */}
+          <div className="pt-8">
+            <Pricing currentPlan={userPlan} />
           </div>
         </div>
       </CardContent>

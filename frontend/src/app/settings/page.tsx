@@ -28,6 +28,7 @@ interface Settings {
     email: string;
     phone: string;
   };
+  user_plan?: string; // Add this field
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -97,7 +98,7 @@ export default function SettingsPage() {
         </TabsContent>
         <TabsContent value="billing">
           <Elements stripe={stripePromise}>
-            <BillingTab />
+            <BillingTab userPlan={settings?.user_plan} />
           </Elements>
         </TabsContent>
       </Tabs>
