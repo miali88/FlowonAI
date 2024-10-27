@@ -23,6 +23,11 @@ import { handleNewItem } from './HandleNewItem';
 import { KnowledgeBaseTable } from './KnowledgeBaseTable'
 import { handleScrape } from './HandleScrape';
 
+import "@/components/loading.css"; // Adjust the path as necessary
+
+function Loader() {
+  return <div className="loader"></div>;
+}
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';  // Provide default empty string
 
 function KnowledgeBaseContent() {
@@ -38,7 +43,7 @@ function KnowledgeBaseContent() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [scrapeUrl, setScrapeUrl] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
-    const [activeTab, setActiveTab] = useState('library');
+    const [activeTab, setActiveTab] = useState('welcome');
     const [scrapeError, setScrapeError] = useState("");
     const [showScrapeInput, setShowScrapeInput] = useState(true);
   
@@ -200,6 +205,29 @@ function KnowledgeBaseContent() {
   
     const renderAddContent = () => {
       switch (activeTab) {
+        case 'welcome':
+          return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)]">
+              <h2 className="text-2xl font-bold mb-4">Welcome to Your Knowledge Base</h2>
+              <p className="text-gray-600 text-center max-w-2xl mb-6">
+                Start building your AI's knowledge by adding content through various methods. 
+                Choose from the options above to begin:
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="p-4 border rounded-lg">
+                  <Globe className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                  <h3 className="font-semibold">Library</h3>
+                  <p className="text-sm text-gray-500">View your existing knowledge base</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                  <h3 className="font-semibold">Text</h3>
+                  <p className="text-sm text-gray-500">Add text content directly</p>
+                </div>
+                {/* Add similar blocks for Files and Web options */}
+              </div>
+            </div>
+          );
         case 'text':
           return (
             <Textarea 
@@ -282,7 +310,7 @@ function KnowledgeBaseContent() {
     };
 
     if (isLoading) {
-      return <div>Loading...</div>;
+      return <Loader />;
     }
   
     if (!user) {
@@ -340,12 +368,14 @@ function KnowledgeBaseContent() {
               <div className="relative w-full mb-6">
                 {renderAddContent()}
               </div>
-              <div className="flex justify-end">
-                <Button onClick={handleNewItemWrapper}>
-                  <SendIcon className="h-4 w-4 mr-2" />
-                  Add to Knowledge Base
-                </Button>
-              </div>
+              {activeTab !== 'welcome' && (
+                <div className="flex justify-end">
+                  <Button onClick={handleNewItemWrapper}>
+                    <SendIcon className="h-4 w-4 mr-2" />
+                    Add to Knowledge Base
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -85,7 +85,7 @@ export function NewAgent() {
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
   const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,7 +271,7 @@ export function NewAgent() {
               </div>
             )}
             {/* Instructions */}
-            <div className="grid grid-cols-4 items-center gap-4">
+            {/* <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="instructions" className="text-right text-foreground">
                 Instructions
               </Label>
@@ -282,7 +282,7 @@ export function NewAgent() {
                 value={formData.instructions}
                 onChange={handleInputChange}
               />
-            </div>
+            </div> */}
             {/* Opening Line */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="openingLine" className="text-right text-foreground">
