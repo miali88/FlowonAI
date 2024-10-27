@@ -41,19 +41,16 @@ async def get_settings(request: Request):
     print('\n\n /settings')
     try:
         # Get user_id from query parameters
-        user_id = request.query_params.get('userId')
-        print(f'user_id: {user_id}')
-        
+        user_id = request.query_params.get('userId')        
                 # Fetch both notification_settings and account_settings from Supabase
-        response = supabase.table('users').select('notification_settings,account_settings').eq('id', user_id).execute()
-        print(f'response: {response}')
+        response = supabase.table('users').select('notification_settings,account_settings,user_plan').eq('id', user_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
-            
         return {
             "settings": {
                 "notification_settings": response.data[0]['notification_settings'],
-                "account_settings": response.data[0]['account_settings']
+                "account_settings": response.data[0]['account_settings'],
+                "user_plan": response.data[0]['user_plan']
             }
         }
         

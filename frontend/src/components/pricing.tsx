@@ -17,10 +17,24 @@ export function Pricing({ currentPlan }: PricingProps) {
   // Add state for annual toggle
   const [isAnnual, setIsAnnual] = React.useState(false);
 
+  const handlePlanClick = (planName: string) => {
+    if (currentPlan?.toLowerCase() === planName.toLowerCase()) {
+      return; // Handle manage plan case if needed
+    }
+    
+    // Redirect to appropriate Stripe checkout URL
+    if (planName.toLowerCase() === "startup") {
+      window.location.href = "https://buy.stripe.com/fZe00H6qzaE42PK3cf";
+    } else if (planName.toLowerCase() === "enterprise") {
+      window.location.href = "https://buy.stripe.com/4gweVBaGP27yfCwfYZ";
+    }
+  };
+
   const getButtonText = (planName: string) => {
-    return currentPlan?.toLowerCase() === planName.toLowerCase() 
-      ? "Manage Plan" 
-      : "Subscribe";
+    if (currentPlan?.toLowerCase() === planName.toLowerCase()) {
+      return "Manage Plan";
+    }
+    return planName.toLowerCase() === "enterprise" ? "Partner" : "Subscribe";
   };
 
   return (
@@ -119,7 +133,10 @@ export function Pricing({ currentPlan }: PricingProps) {
                 <span className="text-4xl font-bold leading-7">£{isAnnual ? '698.00' : '97'}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
-              <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
+              <Button 
+                className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
+                onClick={() => handlePlanClick("startup")}
+              >
                 <span>{getButtonText("startup")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
@@ -132,7 +149,7 @@ export function Pricing({ currentPlan }: PricingProps) {
                     size={16}
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
-                  <span className="flex">10 hours of conversation</span>
+                  <span className="flex">10 hours of conversation. Renewable monthly</span>
                 </li>
                 <li className="flex items-center gap-3 text-xs font-medium">
                   <Check
@@ -173,13 +190,13 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.25, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7" />
-                <span className="text-xs mb-1" />
+                <span className="text-4xl font-bold leading-7">Contact Us</span>
+                <span className="text-xs mb-1">for pricing</span>
               </motion.div>
               <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
                 <span>{getButtonText("enterprise")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Subscribe
+                  Partner
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />

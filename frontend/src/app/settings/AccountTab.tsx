@@ -60,14 +60,14 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
     
     try {
       const response = await fetch(`${API_BASE_URL}/settings`, {
-        method: 'POST',
+        method: 'POST',  // Using POST, not PATCH
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await getToken()}`
         },
         body: JSON.stringify({
           userId: user.id,
-          account: formData  // Wrap the form data in 'account' key
+          account: formData  // Sending the form data wrapped in 'account' key
         })
       });
 
@@ -135,7 +135,10 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
             </div>
             <div>
               <Label htmlFor="businessDomain">Business Domain</Label>
-              <Select onValueChange={(value) => handleChange('businessDomain', value)}>
+              <Select 
+                value={formData.businessDomain}  // Add this line
+                onValueChange={(value) => handleChange('businessDomain', value)}
+              >
                 <SelectTrigger id="businessDomain">
                   <SelectValue placeholder="Select your industry" />
                 </SelectTrigger>
