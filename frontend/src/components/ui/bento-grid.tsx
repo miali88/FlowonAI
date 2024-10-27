@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,18 +26,18 @@ const BentoCard = ({
   name,
   className,
   background,
-  Icon,
   description,
   href,
-  cta,
+  features,
+  Icon,
 }: {
   name: string;
-  className: string;
-  background: ReactNode;
-  Icon: React.ComponentType<{ className?: string }>;
+  className?: string;
+  background?: ReactNode;
   description: string;
   href: string;
-  cta: string;
+  features?: string[];
+  Icon?: React.ComponentType<{ className?: string }>;
 }) => (
   <div
     key={name}
@@ -53,25 +52,20 @@ const BentoCard = ({
   >
     <div>{background}</div>
     <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 p-6 transition-all duration-300 group-hover:-translate-y-10">
-      <Icon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75" />
+      {Icon && <Icon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75" />}
       <h3 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300">
         {name}
       </h3>
       <p className="max-w-lg text-neutral-400">{description}</p>
+      {features && (
+        <ul className="mt-4 space-y-2">
+          {features.map((feature, index) => (
+            <li key={index} className="text-sm text-neutral-400">{feature}</li>
+          ))}
+        </ul>
+      )}
     </div>
 
-    <div
-      className={cn(
-        "pointer-events-none absolute bottom-0 flex w-full translate-y-10 transform-gpu flex-row items-center p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100",
-      )}
-    >
-      <Button variant="ghost" asChild size="sm" className="pointer-events-auto">
-        <a href={href}>
-          {cta}
-          <ArrowRightIcon className="ml-2 h-4 w-4" />
-        </a>
-      </Button>
-    </div>
     <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-300 group-hover:bg-black/[.03] group-hover:dark:bg-neutral-800/10" />
   </div>
 );
