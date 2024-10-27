@@ -24,24 +24,24 @@ export default function NotificationsTab() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/settings`, {
+        const response = await fetch(`${API_BASE_URL}/settings?userId=${user?.id}`, {
           headers: {
-            'Authorization': `Bearer ${await user?.getToken()}`
+            'Authorization': `Bearer ${await getToken()}`
           }
         });
         if (response.ok) {
           const data = await response.json();
-          setNotificationSettings(data.notifications);
+          setNotificationSettings(data.settings);
         }
       } catch (error) {
         console.error('Failed to fetch settings:', error);
       }
     };
 
-    if (user) {
+    if (user?.id) {
       fetchSettings();
     }
-  }, [user]);
+  }, [user, getToken]);
 
   const handleSettingChange = async (setting: keyof NotificationSettings) => {
     const newSettings = {

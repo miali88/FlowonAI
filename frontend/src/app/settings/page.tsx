@@ -2,9 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Elements } from '@stripe/react-stripe-js';
@@ -12,6 +9,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import BillingTab from './BillingTab';
 import NotificationsTab from './NotificationsTab';
 import { useAuth } from "@clerk/nextjs";
+import AccountTab from './AccountTab';
 
 // Load your Stripe publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -63,8 +61,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchSettings = async () => {
+      if (!user?.id) return;  // Early return if no user ID
+
       try {
-        const response = await fetch(`${API_BASE_URL}/settings`, {
+        const response = await fetch(`${API_BASE_URL}/settings?userId=${user.id}`, {
           headers: {
             'Authorization': `Bearer ${await getToken()}`
           }
@@ -78,9 +78,7 @@ export default function SettingsPage() {
       }
     };
 
-    if (user) {
-      fetchSettings();
-    }
+    fetchSettings();
   }, [user, getToken]);
 
   if (!user) {
@@ -98,29 +96,7 @@ export default function SettingsPage() {
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="account">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your account details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" defaultValue={user.fullName || ''} />
-                </div>
-                <div>
-                  <Label htmlFor="businessName">Business Name</Label>
-                  <Input id="businessName" defaultValue={''} />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue={user.primaryEmailAddress?.emailAddress || ''} />
-                </div>
-                <Button type="submit">Save Changes</Button>
-              </form>
-            </CardContent>
-          </Card>
+          <AccountTab user={user} />
         </TabsContent>
         <TabsContent value="notifications">
           <NotificationsTab 
