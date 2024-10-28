@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { handleNewItem } from './HandleFile';
+import "@/components/loading.css";
 
 interface InsertProps {
   handleCardClick: (tab: string) => void;
@@ -34,6 +34,7 @@ interface InsertProps {
   selectedUrls: string[];
   setSelectedUrls: React.Dispatch<React.SetStateAction<string[]>>;
   handleScrapeAllWrapper: () => void;
+  isScrapingUrls: boolean;
 }
 
 export function Insert({ 
@@ -54,7 +55,8 @@ export function Insert({
   mappedUrls,
   selectedUrls,
   setSelectedUrls,
-  handleScrapeAllWrapper
+  handleScrapeAllWrapper,
+  isScrapingUrls
 }: InsertProps) {
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -156,7 +158,12 @@ export function Insert({
             )}
             {selectedTab === 'web' && (
               <div className="flex flex-col h-[calc(100vh-400px)]">
-                {showScrapeInput ? (
+                {isScrapingUrls ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
+                    <div className="loader"></div>
+                    <p className="mt-4">Content is being scraped from the selected URLs, please wait</p>
+                  </div>
+                ) : showScrapeInput ? (
                   <>
                     <Input
                       type="url"
@@ -191,10 +198,6 @@ export function Insert({
                               </label>
                             </div>
                           ))}
-                        </div>
-                        <div className="mt-4 text-sm text-gray-600">
-                          <p>Selected URLs: {selectedUrls.length}</p>
-                          <pre>{JSON.stringify(selectedUrls, null, 2)}</pre>
                         </div>
                         <div className="mt-4 flex gap-2">
                           <Button 

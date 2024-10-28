@@ -4,7 +4,6 @@ import axios from "axios"
 import { useUser } from "@clerk/nextjs"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BorderBeam } from "@/components/ui/border-beam";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -116,7 +115,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
           <div key={agent.id} className="relative h-full">
             <Card 
               className={`cursor-pointer hover:shadow-md transition-shadow h-full flex flex-col ${
-                selectedAgentId === agent.id ? 'border-transparent' : ''
+                selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg' : ''
               }`} 
               onClick={() => handleAgentSelect(agent)}
             >
@@ -134,7 +133,6 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
                 ID: {agent.id}
               </CardFooter>
             </Card>
-            {selectedAgentId === agent.id && <BorderBeam />}
           </div>
         ))}
       </div>

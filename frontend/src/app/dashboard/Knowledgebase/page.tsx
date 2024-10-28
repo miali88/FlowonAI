@@ -46,6 +46,7 @@ function KnowledgeBaseContent() {
     const [selectedTab, setSelectedTab] = useState('');
     const [mappedUrls, setMappedUrls] = useState<string[]>([]);
     const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+    const [isScrapingUrls, setIsScrapingUrls] = useState(false);
   
     const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
@@ -232,6 +233,7 @@ function KnowledgeBaseContent() {
               selectedUrls={selectedUrls}
               setSelectedUrls={setSelectedUrls}
               handleScrapeAllWrapper={handleScrapeAllWrapper}
+              isScrapingUrls={isScrapingUrls}
             />
           );
         default:
@@ -271,19 +273,25 @@ function KnowledgeBaseContent() {
         return;
       }
 
-      await handleScrapeAll({
-        scrapeUrl,
-        setScrapeError,
-        getToken: async () => token,
-        user: { id: user.id },
-        API_BASE_URL,
-        setNewItemContent,
-        setShowScrapeInput,
-        setScrapeUrl,
-        setAlertMessage,
-        setAlertType,
-        selectedUrls  // Add this line - pass the selectedUrls
-      });
+      setIsScrapingUrls(true); // Set loading state to true
+      try {
+        await handleScrapeAll({
+          scrapeUrl,
+          setScrapeError,
+          getToken: async () => token,
+          user: { id: user.id },
+          API_BASE_URL,
+          setNewItemContent,
+          setShowScrapeInput,
+          setScrapeUrl,
+          setAlertMessage,
+          setAlertType,
+          selectedUrls
+        });
+        return true;
+      } finally {
+        setIsScrapingUrls(false); // Set loading state back to false
+      }
     };
 
     if (isLoading) {

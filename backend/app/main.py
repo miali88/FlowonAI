@@ -57,7 +57,8 @@ async def startup_event():
 
     for attempt in range(MAX_RETRIES):
         try:
-            python_path = "/root/FlowonAI/backend/venv/bin/python"
+            #python_path = "/root/FlowonAI/backend/venv/bin/python"
+            python_path = 'python'
             livekit_process = subprocess.Popen([python_path, 'livekit_server.py', 'start'])
             print("LiveKit server started")
             break
