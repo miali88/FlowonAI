@@ -282,7 +282,7 @@ function KnowledgeBaseContent() {
         setScrapeUrl,
         setAlertMessage,
         setAlertType,
-        mappedUrls
+        selectedUrls  // Add this line - pass the selectedUrls
       });
     };
 

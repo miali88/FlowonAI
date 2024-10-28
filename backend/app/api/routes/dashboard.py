@@ -184,13 +184,15 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/scrape_url")
-async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
+@router.post("/scrape_web")
+async def scrape_url_handler(request: Request): #, current_user: str = Depends(get_current_user)):
     try:
 
-        map_result = await map_url(request.url)
-        return {"map_result": map_result}
+        request_data = await request.json()
+
+        print("\n\n\n request_data:", request_data)
     
+        return {"hey ho": "let's go"}
         """ old way, single url scrape"""
         # crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
         # result = crawler.scrape_url(request.url)

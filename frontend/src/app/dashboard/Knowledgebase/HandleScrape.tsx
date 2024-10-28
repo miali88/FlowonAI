@@ -92,13 +92,16 @@ export const handleScrapeAll = async ({
   setScrapeUrl,
   setAlertMessage,
   setAlertType,
-  selectedUrls, // Use selectedUrls instead of mappedUrls
+  selectedUrls,
 }: Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'> & { selectedUrls: string[] }) => {
   try {
+    // Add debug log
+    console.log('Selected URLs being sent:', selectedUrls);
+
     const token = await getToken();
     const response = await axios.post(
       `${API_BASE_URL}/dashboard/scrape_web`,
-      { urls: selectedUrls }, // Use selectedUrls here
+      { urls: selectedUrls },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -107,20 +110,36 @@ export const handleScrapeAll = async ({
       }
     );
 
-    if (!response.data.content) {
+    // Add debug log
+    console.log('Response from server:', response.data);
+
+    // Check if response.data exists before accessing content
+    if (!response.data) {
+      throw new Error("No response data received from server");
+    }
+
+    // Handle both possible response formats
+    const content = response.data.content || response.data;
+    if (!content) {
       throw new Error("No content received from the server");
     }
 
     setNewItemContent(prevContent => {
       const separator = prevContent ? '\n\n' : '';
-      return prevContent + separator + response.data.content;
+      return prevContent + separator + content;
     });
+    
     setShowScrapeInput(false);
     setScrapeUrl("");
     setAlertMessage("All pages scraped successfully");
     setAlertType("success");
   } catch (error) {
     console.error("Error scraping URLs:", error);
+    // Add more detailed error logging
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+      console.error("Response status:", error.response.status);
+    }
     setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URLs");
     setAlertMessage("Failed to scrape URLs: " + (error.response?.data?.detail || error.message));
     setAlertType("error");

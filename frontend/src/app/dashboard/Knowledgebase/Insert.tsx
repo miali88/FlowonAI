@@ -191,9 +191,16 @@ export function Insert({
                             </div>
                           ))}
                         </div>
+                        <div className="mt-4 text-sm text-gray-600">
+                          <p>Selected URLs: {selectedUrls.length}</p>
+                          <pre>{JSON.stringify(selectedUrls, null, 2)}</pre>
+                        </div>
                         <div className="mt-4 flex gap-2">
-                          <Button onClick={handleScrapeAllWrapper} disabled={selectedUrls.length === 0}>
-                            Scrape Selected
+                          <Button 
+                            onClick={handleScrapeAllWrapper}  // Changed this to only use handleScrapeAllWrapper
+                            disabled={selectedUrls.length === 0}
+                          >
+                            Scrape Selected ({selectedUrls.length})
                           </Button>
                         </div>
                       </div>
@@ -202,7 +209,9 @@ export function Insert({
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{scrapeError}</AlertDescription>
+                        <AlertDescription>
+                          {typeof scrapeError === 'string' ? scrapeError : JSON.stringify(scrapeError, null, 2)}
+                        </AlertDescription>
                       </Alert>
                     )}
                   </>
