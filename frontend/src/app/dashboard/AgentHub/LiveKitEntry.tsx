@@ -65,6 +65,8 @@ export function LiveKitEntry({
         setLocalParticipant={setLocalParticipant}
         setParticipantIdentity={setParticipantIdentity}
       />
+
+      <RoomAudioRenderer />
     </LiveKitRoom>
   );
 }

@@ -71,7 +71,7 @@ export function Hero() {
         className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms]"
         onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/dashboard` || '/dashboard'}
       >
-        <span>Talk To Your AI Agent</span>
+        <span>Build Your AI Agent</span>
         <ArrowRight
           size={20}
           className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
@@ -79,7 +79,6 @@ export function Hero() {
       </Button>
       <div className="relative mt-[4rem] sm:mt-[6rem] md:mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms]">
         <div className="flex flex-col lg:flex-row items-center gap-6 rounded-xl border border-white/10 bg-white/10 bg-opacity-[0.01] before:absolute before:bottom-1/2 before:left-0 before:top-0 before:h-full before:w-full before:[filter:blur(180px)] before:[background-image:linear-gradient(to_bottom,hsl(var(--accent)),hsl(var(--accent)),transparent_40%)] before:animate-image-glow before:opacity-0">
-          <BorderBeam size={500} anchor={0} duration={270} borderWidth={1.5} />
           <div className="min-w-[500px] p-5">
             <ChatBotMini
               title={chatTitle}
