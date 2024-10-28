@@ -6,7 +6,7 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = 'https://flowon.ai/api/v1';
 console.log('API_BASE_URL:', API_BASE_URL); // Add this line temporarily
 
 interface ChatBotMiniProps {

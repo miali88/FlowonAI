@@ -144,18 +144,22 @@ style="height: 100%; min-height: 700px"
 frameborder="0"
 ></iframe>`;
 
-  const scriptCode = `<script>
-window.embeddedAgentConfig = {
-  agentId: "${selectedAgent?.id}",
-  domain: "www.flowon.ai"
-}
-</script>
-<script
-src="https://flowon.ai/embed.min.js"
-agentId="${selectedAgent?.id}"
-domain="www.flowon.ai"
-defer
-></script>`;
+  const scriptCode = `
+  
+<div id="embedded-chatbot-container">
+  <script>
+    window.embeddedAgentConfig = {
+      agentId: "${selectedAgent?.id}",
+      domain: "www.flowonwidget.pages.dev"
+    }
+  </script>
+  <script
+    src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"
+    agentId="${selectedAgent?.id}"
+    domain="www.flowonwidget.pages.dev"
+    defer
+  ></script>
+</div>`;
 
   const handleConfigureFeature = (featureId: string) => {
     setCurrentFeature(featureId);
