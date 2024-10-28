@@ -2,6 +2,7 @@ import requests
 import json
 import os 
 from typing import List, Dict
+from urllib.parse import urlparse
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -69,13 +70,18 @@ async def map_url(url):
     return map_result
 
 async def scrape_url(urls: List[str], user_id: str = None):
+    # Extract root URL from the first URL in the list
+    parsed_url = urlparse(urls[0])
+    root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
     sb_insert = {
         "url": "",
         "header": "",
         "content": "",
         "token_count": 0,
         "jina_embedding": "",
-        "user_id": user_id
+        "user_id": user_id,
+        "root_url": root_url  # Add root_url to the insert dictionary
     }
 
     results = []
@@ -113,14 +119,14 @@ async def scrape_url(urls: List[str], user_id: str = None):
             print(f"KeyError occurred for site {site}: {str(e)}")
             print("Proceeding without description")
             chunks = await sliding_window_chunking(content)
-            header = "## Title: " + response['metadata']['title'] 
+            #header = "## Title: " + response['metadata']['title'] 
 
             for chunk in chunks: 
                 print(f"processing chunk {chunks.index(chunk)} of {len(chunks)}")
                 sb_insert['url'] = site
-                sb_insert['header'] = header
+                #sb_insert['header'] = header
                 sb_insert['content'] = chunk
-                chunk = header + chunk
+                #chunk = header + chunk
                 jina_response = await get_embedding(chunk)
                 sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
                 sb_insert['token_count'] = jina_response['usage']['total_tokens']
