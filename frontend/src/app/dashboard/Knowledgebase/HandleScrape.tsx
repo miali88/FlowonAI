@@ -113,6 +113,15 @@ export const handleScrapeAll = async ({
     // Add debug log
     console.log('Response from server:', response.data);
 
+    // Modified response handling
+    if (response.data.message === "completed") {
+      setAlertMessage("URLs added to your library");
+      setAlertType("success");
+      setShowScrapeInput(false);
+      setScrapeUrl("");
+      return true; // Add this to indicate success
+    }
+
     // Check if response.data exists before accessing content
     if (!response.data) {
       throw new Error("No response data received from server");
@@ -143,5 +152,6 @@ export const handleScrapeAll = async ({
     setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URLs");
     setAlertMessage("Failed to scrape URLs: " + (error.response?.data?.detail || error.message));
     setAlertType("error");
+    return false; // Add this to indicate failure
   }
 };

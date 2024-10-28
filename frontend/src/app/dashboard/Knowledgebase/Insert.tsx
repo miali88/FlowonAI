@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { handleNewItem } from './HandleFile';
 
 interface InsertProps {
   handleCardClick: (tab: string) => void;
@@ -197,7 +198,12 @@ export function Insert({
                         </div>
                         <div className="mt-4 flex gap-2">
                           <Button 
-                            onClick={handleScrapeAllWrapper}  // Changed this to only use handleScrapeAllWrapper
+                            onClick={async () => {
+                              const success = await handleScrapeAllWrapper();
+                              if (success) {
+                                setNewItemContent("URLs added to your library");
+                              }
+                            }}
                             disabled={selectedUrls.length === 0}
                           >
                             Scrape Selected ({selectedUrls.length})

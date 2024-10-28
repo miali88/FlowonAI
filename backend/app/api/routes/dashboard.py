@@ -15,7 +15,7 @@ from app.core.config import settings
 from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items
-from services.knowledge_base.web_scrape import map_url
+from services.knowledge_base.web_scrape import map_url, scrape_url
 
 load_dotenv()
 
@@ -184,27 +184,18 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("/scrape_web")
-async def scrape_url_handler(request: Request): #, current_user: str = Depends(get_current_user)):
+async def scrape_url_handler(request: Request, current_user: str = Depends(get_current_user)):
     try:
-
         request_data = await request.json()
-
-        print("\n\n\n request_data:", request_data)
-    
-        return {"hey ho": "let's go"}
-        """ old way, single url scrape"""
-        # crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
-        # result = crawler.scrape_url(request.url)
-
-        # # Extract the markdown content from the result
-        # markdown_content = result.get('markdown', '')
+        request_data = request_data.get('urls')
+        urls = request_data if isinstance(request_data, list) else [request_data]
         
-        # # Limit content to a reasonable length (e.g., 5000 characters)
-        # markdown_content = markdown_content[:5000] + '...' if len(markdown_content) > 5000 else markdown_content
-        
-        # return {"content": markdown_content}
-    
+
+        scrape_result = await scrape_url(urls, current_user)
+        return {"message": "completed", "count": len(scrape_result)}
+
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")

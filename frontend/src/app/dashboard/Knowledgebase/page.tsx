@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
-import { handleNewItem } from './HandleNewItem';
+import { handleNewItem } from './HandleFile';
 import { handleScrape, handleScrapeAll } from './HandleScrape';
 import { Library } from './Library';
 
