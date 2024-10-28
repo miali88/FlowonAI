@@ -1,21 +1,21 @@
-from dotenv import load_dotenv
-import os 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
-import json
-import logging
+import json, logging, os
+from dotenv import load_dotenv
+
+
 from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
 from supabase import create_client, Client
-from firecrawl import FirecrawlApp
 import tiktoken
 
 from app.core.config import settings
-from services.file_process import file_processing
+from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
-from services.kb import get_kb_items
+from services.knowledge_base.kb import get_kb_items
+from services.knowledge_base.web_scrape import map_url
 
 load_dotenv()
 
@@ -187,21 +187,34 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
 @router.post("/scrape_url")
 async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
-        """ old way, single url scrape"""
-        crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
-        result = crawler.scrape_url(request.url)
 
-        # Extract the markdown content from the result
-        markdown_content = result.get('markdown', '')
+        map_result = await map_url(request.url)
+        return {"map_result": map_result}
+    
+        """ old way, single url scrape"""
+        # crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
+        # result = crawler.scrape_url(request.url)
+
+        # # Extract the markdown content from the result
+        # markdown_content = result.get('markdown', '')
         
-        # Limit content to a reasonable length (e.g., 5000 characters)
-        markdown_content = markdown_content[:5000] + '...' if len(markdown_content) > 5000 else markdown_content
+        # # Limit content to a reasonable length (e.g., 5000 characters)
+        # markdown_content = markdown_content[:5000] + '...' if len(markdown_content) > 5000 else markdown_content
         
-        return {"content": markdown_content}
+        # return {"content": markdown_content}
     
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
+
+
+@router.post("/crawl_url")
+async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
+    try:
+        map_result: List[str] = await map_url(request.url)
+        return map_result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error crawling URL: {str(e)}")
 
 @router.post("/calculate_tokens")
 async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):

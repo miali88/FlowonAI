@@ -28,6 +28,11 @@ interface InsertProps {
   scrapeError: string;
   handleNewItemWrapper: () => void;
   handleScrapeWrapper: () => void;
+  mappedUrls: string[];
+  setMappedUrls: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedUrls: string[];
+  setSelectedUrls: React.Dispatch<React.SetStateAction<string[]>>;
+  handleScrapeAllWrapper: () => void;
 }
 
 export function Insert({ 
@@ -44,7 +49,11 @@ export function Insert({
   showScrapeInput,
   scrapeError,
   handleNewItemWrapper,
-  handleScrapeWrapper
+  handleScrapeWrapper,
+  mappedUrls,
+  selectedUrls,
+  setSelectedUrls,
+  handleScrapeAllWrapper
 }: InsertProps) {
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -156,8 +165,39 @@ export function Insert({
                       className="mb-4"
                     />
                     <Button onClick={handleScrapeWrapper} className="self-start px-4 py-2">
-                      Scrape Web Content
+                      Map Website
                     </Button>
+                    {mappedUrls.length > 0 && (
+                      <div className="mt-4">
+                        <h3 className="text-sm font-medium mb-2">Select pages to scrape:</h3>
+                        <div className="space-y-2">
+                          {mappedUrls.map((url, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`url-${index}`}
+                                checked={selectedUrls.includes(url)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedUrls(prev => [...prev, url]);
+                                  } else {
+                                    setSelectedUrls(prev => prev.filter(u => u !== url));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`url-${index}`} className="text-sm truncate">
+                                {url}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button onClick={handleScrapeAllWrapper} disabled={selectedUrls.length === 0}>
+                            Scrape Selected
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     {scrapeError && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />

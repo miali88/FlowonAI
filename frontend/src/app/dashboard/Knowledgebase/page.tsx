@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useDropzone } from 'react-dropzone';
 import { handleNewItem } from './HandleNewItem';
-import { handleScrape } from './HandleScrape';
+import { handleScrape, handleScrapeAll } from './HandleScrape';
 import { Library } from './Library';
 
 import "@/components/loading.css"; // Adjust the path as necessary
@@ -44,6 +44,8 @@ function KnowledgeBaseContent() {
     const [showScrapeInput, setShowScrapeInput] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedTab, setSelectedTab] = useState('');
+    const [mappedUrls, setMappedUrls] = useState<string[]>([]);
+    const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
   
     const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
@@ -218,13 +220,18 @@ function KnowledgeBaseContent() {
               newItemContent={newItemContent}
               setNewItemContent={setNewItemContent}
               selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}  // Make sure this prop is passed
+              setSelectedFile={setSelectedFile}
               scrapeUrl={scrapeUrl}
               setScrapeUrl={setScrapeUrl}
               showScrapeInput={showScrapeInput}
               scrapeError={scrapeError}
               handleNewItemWrapper={handleNewItemWrapper}
               handleScrapeWrapper={handleScrapeWrapper}
+              mappedUrls={mappedUrls}
+              setMappedUrls={setMappedUrls}
+              selectedUrls={selectedUrls}
+              setSelectedUrls={setSelectedUrls}
+              handleScrapeAllWrapper={handleScrapeAllWrapper}
             />
           );
         default:
@@ -244,13 +251,38 @@ function KnowledgeBaseContent() {
         scrapeUrl,
         setScrapeError,
         getToken: async () => token,
-        user: { id: user.id }, // Convert to expected type
+        user: { id: user.id },
         API_BASE_URL,
         setNewItemContent,
         setShowScrapeInput,
         setScrapeUrl,
         setAlertMessage,
-        setAlertType
+        setAlertType,
+        setMappedUrls,  // Add this
+        selectedUrls    // Add this
+      });
+    };
+
+    const handleScrapeAllWrapper = async () => {
+      const token = await getToken();
+      if (!token || !user) {
+        setAlertMessage("Authentication failed");
+        setAlertType("error");
+        return;
+      }
+
+      await handleScrapeAll({
+        scrapeUrl,
+        setScrapeError,
+        getToken: async () => token,
+        user: { id: user.id },
+        API_BASE_URL,
+        setNewItemContent,
+        setShowScrapeInput,
+        setScrapeUrl,
+        setAlertMessage,
+        setAlertType,
+        mappedUrls
       });
     };
 
