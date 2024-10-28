@@ -187,7 +187,7 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
 @router.post("/scrape_url")
 async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
-
+        """ old way, single url scrape"""
         crawler = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
         result = crawler.scrape_url(request.url)
 
@@ -198,6 +198,8 @@ async def scrape_url_handler(request: ScrapeUrlRequest, current_user: str = Depe
         markdown_content = markdown_content[:5000] + '...' if len(markdown_content) > 5000 else markdown_content
         
         return {"content": markdown_content}
+    
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
 

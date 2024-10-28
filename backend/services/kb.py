@@ -31,7 +31,7 @@ async def get_kb_items(current_user):
     all_items = []
     seen_titles = set()  # To keep track of unique titles
 
-    total_tokens = 0
+    total_tokens: int = 0
 
     for table in kb_tables:
         if table == "user_web_data":

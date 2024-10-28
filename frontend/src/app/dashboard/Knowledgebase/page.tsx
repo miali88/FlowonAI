@@ -64,31 +64,27 @@ function KnowledgeBaseContent() {
         });
         console.log("API response:", response);
         
-        if (response.data && Array.isArray(response.data)) {
-          console.log("Fetched items:", response.data);
-          const formattedItems = response.data.map(item => ({
+        // Update this section to handle the new response structure
+        if (response.data && response.data.items) {
+          console.log("Fetched items:", response.data.items);
+          const formattedItems = response.data.items.map(item => ({
             id: item.id,
             title: item.title,
             content: item.content || "Content not available",
             data_type: item.data_type,
             tag: item.tag || "",
-            tokens: item.token_count || 0, // Changed from tokens to token_count
-            created_at: item.created_at || new Date().toISOString(), // Add created_at field
+            tokens: item.token_count || 0,
+            created_at: item.created_at || new Date().toISOString(),
           }));
           
-          // Calculate total tokens
-          const total = formattedItems.reduce((sum, item) => sum + (item.tokens || 0), 0);
-          setTotalTokens(total);
+          // Use the total_tokens directly from the response
+          setTotalTokens(response.data.total_tokens);
           setSavedItems(formattedItems);
           
           // Log each item's title and data_type
           formattedItems.forEach((item, index) => {
             console.log(`Item ${index} title:`, item.title, `data_type:`, item.data_type);
           });
-
-          // Note: total_tokens is not present in the current response
-          // If you need to calculate total tokens, you might need to do it on the frontend
-          // or request the backend to provide this information
         } else {
           console.error("Unexpected response structure:", response.data);
           setAlertMessage("Unexpected data structure received from server");
