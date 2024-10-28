@@ -35,26 +35,26 @@ async def get_kb_items(current_user):
 
     for table in kb_tables:
         if table == "user_web_data":
-            results = supabase.table("user_web_data") \
+            results = supabase.table(table) \
                               .select('*') \
                               .eq('user_id', current_user) \
                               .execute()
             
-            # Map 'url' to 'title' and provide a 'content' placeholder if appropriate
-            for item in results.data:
-                title = item.get('url', 'No Title')
-                if title not in seen_titles:
-                    seen_titles.add(title)
-                    all_items.append({
-                        'id': item['id'],
-                        'title': title,
-                        'content': 'Content not available',  # Adjust as needed
-                        'user_id': current_user,
-                        'data_type': 'web',
-                        'created_at': item.get('created_at', ''),
-                        'token_count': item.get('token_count', 0)
-                    })
-                total_tokens += (item.get('token_count', 0))
+            formatted_items = [
+                {
+                    'id': item['id'],
+                    'title': item.get('url', 'No Title'),
+                    'root_url': item.get('root_url', ''),
+                    'content': 'Content not available',
+                    'user_id': current_user,
+                    'data_type': 'web',
+                    'created_at': item.get('created_at', ''),
+                    'token_count': item.get('token_count', 0)
+                }
+                for item in results.data
+            ]
+            all_items.extend(formatted_items)
+            total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
         elif table == "user_text_files":
             items = supabase.table(table).select('*').eq('user_id', current_user).execute()
@@ -70,6 +70,7 @@ async def get_kb_items(current_user):
                 for item in items.data
             ]
             all_items.extend(formatted_items)
-            total_tokens += (item.get('token_count', 0))
+            total_tokens += sum(item.get('token_count', 0) for item in results.data)
+
 
     return all_items, total_tokens

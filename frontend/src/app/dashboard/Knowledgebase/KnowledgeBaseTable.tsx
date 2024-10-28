@@ -82,15 +82,6 @@ export function KnowledgeBaseTable({
       ),
     },
     {
-      accessorKey: "tag",
-      header: "Tag",
-      cell: ({ row }) => (
-        <div className="px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full w-fit">
-          {row.getValue("tag") || "No Tag"}
-        </div>
-      ),
-    },
-    {
       accessorKey: "tokens",
       header: "Tokens",
       cell: ({ row }) => (
