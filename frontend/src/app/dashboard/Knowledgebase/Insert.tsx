@@ -224,8 +224,9 @@ export function Insert({
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
                     <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-                    All selected Urls have been added to your library
-                  </div>
+                    All selected Urls have been added to your library.
+                    Please refresh to add another website.
+                  </div> 
                 )}
               </div>
             )}
