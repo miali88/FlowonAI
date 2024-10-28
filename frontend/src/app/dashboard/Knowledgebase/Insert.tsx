@@ -1,6 +1,6 @@
 'use client';
 
-import { Type, Upload, Globe, SendIcon, AlertCircle } from "lucide-react";
+import { Type, Upload, Globe, SendIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useDropzone } from 'react-dropzone';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,21 +222,13 @@ export function Insert({
                     )}
                   </>
                 ) : (
-                  <Textarea
-                    value={newItemContent}
-                    onChange={(e) => setNewItemContent(e.target.value)}
-                    className="w-full h-full"
-                    placeholder="Scraped content will appear here..."
-                  />
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
+                    <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+                    All selected Urls have been added to your library
+                  </div>
                 )}
               </div>
             )}
-            <div className="flex justify-end mt-4">
-              <Button onClick={handleNewItemWrapper}>
-                <SendIcon className="h-4 w-4 mr-2" />
-                Add to Knowledge Base
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
