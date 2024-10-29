@@ -217,8 +217,8 @@ def remove_special_characters(agent, text: Union[str, AsyncIterable[str]]) -> Un
     def clean_text(input_text: str) -> str:
         # Remove URLs
         text_without_urls = url_pattern.sub('', input_text)
-        # Remove special characters but keep grammatical punctuation
-        return re.sub(r'[^A-Za-z0-9\s.,!?\'"-]', '', text_without_urls)
+        # Remove special characters but keep grammatical punctuation and currency symbols
+        return re.sub(r'[^A-Za-z0-9\s.,!?\'"-$€£¥:;]', '', text_without_urls)
 
     if isinstance(text, str):
         return clean_text(text)
