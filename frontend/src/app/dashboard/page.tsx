@@ -92,7 +92,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
     )}>
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
-          <span className="text-sm font-medium">Flowon AI</span>
+          <span className="text-sm font-medium">Flowon AI (beta)</span>
         )}
         <Button
           variant="ghost"

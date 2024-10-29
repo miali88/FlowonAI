@@ -68,7 +68,7 @@ function Header({ activeItem, selectedFeature }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/assets/invert_waves.png" alt="Flowon AI Logo" />
+                <AvatarImage src="/flowon.png" alt="Flowon AI Logo" loading="eager" />
                 <AvatarFallback>FA</AvatarFallback>
               </Avatar>
               <span>{user?.fullName || "User"}</span>

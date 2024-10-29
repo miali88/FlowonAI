@@ -8,10 +8,9 @@ export function Footer() {
         <div className="md:flex md:justify-between px-8 py-16 sm:pb-16 gap-4">
           <div className="mb-12 flex-col flex gap-4">
             <Link href="/" className="flex gap-2">
-              <img alt="Magic Ui Logo" src="/images/magicui.png" className="size-8" />
-              <span className="self-center text-2xl font-semibold whitespace-nowrap">Magic Ui</span>
+              <img alt="Flowon AI Logo" src="/flowonn.png" className="size-8 invert" />
             </Link>
-            <p className="max-w-xs">UI design library for engineers</p>
+            <p className="max-w-xs"> </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-10 sm:grid-cols-3">
             <div>
@@ -115,7 +114,7 @@ export function Footer() {
           <div className="flex flex-row justify-center text-sm text-muted-foreground gap-1">
             <span>© 2024 </span>
             <Link href="/" className="cursor-pointer">
-              Magic UI
+              Flowon AI
             </Link>
             <span>, All Rights Reserved.</span>
           </div>

@@ -9,18 +9,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
-import { Switch } from "@/components/ui/switch";
 import { ChevronRight, Plus, Trash2, Play } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { AgentFeatures } from './AgentFeatures';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -469,44 +462,15 @@ frameborder="0"
                 </div>
               </div>
 
-              {/* Relocated features section */}
-              <div className="space-y-6">
-                {[
-                  { id: "prospects", label: "Notify you on interest" },
-                  { id: "form", label: "Collect written information" },
-                  { id: "callTransfer", label: "Transfer call to a human" },
-                  { id: "appointmentBooking", label: "Book calendar slot" },
-                ].map((feature) => (
-                  <div key={feature.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={feature.id}>{feature.label}</Label>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={feature.id}
-                          checked={!!selectedAgent?.features?.[feature.id]}
-                          onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked)}
-                        />
-                        {selectedAgent?.features?.[feature.id] && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleConfigureFeature(feature.id)}
-                          >
-                            Configure <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    {selectedAgent?.features?.[feature.id] && (
-                      <p className="text-sm text-muted-foreground">
-                        {getFeatureDescription(feature.id)}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex space-x-2 pt-4">
-                <Button onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}>
+              <AgentFeatures
+                selectedAgent={selectedAgent}
+                setSelectedAgent={setSelectedAgent}
+                handleSaveFeatures={handleSaveFeatures}
+              />
+
+              {/* Add the Retrain Agent button at the bottom */}
+              <div className="pt-6">
+                <Button onClick={handleSaveFeatures}>
                   Retrain Agent
                 </Button>
               </div>
@@ -749,196 +713,8 @@ frameborder="0"
         </Card>
       </TabsContent>
 
-      {/* Configuration Dialog */}
-      <Dialog open={isConfigureDialogOpen} onOpenChange={setIsConfigureDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              Configure {getFeatureTitle(currentFeature)}
-            </DialogTitle>
-            <DialogDescription>
-              {getFeatureDescription(currentFeature)}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {currentFeature === 'callTransfer' && (
-              <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="primaryNumber" className="text-right">
-                    Primary Number
-                  </Label>
-                  <Input
-                    id="primaryNumber"
-                    value={callTransferConfig.primaryNumber}
-                    onChange={handleCallTransferConfigChange}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="secondaryNumber" className="text-right">
-                    Secondary Number
-                  </Label>
-                  <Input
-                    id="secondaryNumber"
-                    value={callTransferConfig.secondaryNumber}
-                    onChange={handleCallTransferConfigChange}
-                    className="col-span-3"
-                  />
-                </div>
-              </>
-            )}
-            {currentFeature === 'appointmentBooking' && (
-              <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nylasApiKey" className="text-right">
-                    Nylas API Key
-                  </Label>
-                  <Input
-                    id="nylasApiKey"
-                    value={appointmentBookingConfig.nylasApiKey}
-                    onChange={handleAppointmentBookingConfigChange}
-                    className="col-span-3"
-                  />
-                </div>
-              </>
-            )}
-            {currentFeature === 'form' && (
-              <>
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="info">
-                    <AccordionTrigger>how to use</AccordionTrigger>
-                    <AccordionContent>
-                      <p className="mb-4">
-                        Forms should only be used to collect personal data that requires exact spelling. All other types of information will be automatically extracted. The agent will:
-                      </p>
-                      <ul>
-                        <li>- Request and verify this information from the caller</li>
-                        <li>- Let the AI system capture other relevant details from the conversation</li>
-                        <li>- Qualify a caller as a lead</li>
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-
-                {formFields.map((field, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Select
-                        value={field.type}
-                        onValueChange={(value) => handleFormFieldChange(index, { type: value })}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select field type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text</SelectItem>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="phone">Phone</SelectItem>
-                          <SelectItem value="dropdown">Dropdown</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveFormField(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Input
-                      placeholder="Enter placeholder text here"
-                      value={field.label}
-                      onChange={(e) => handleFormFieldChange(index, { label: e.target.value })}
-                      className="italic"
-                    />
-                    {field.type === 'dropdown' && (
-                      <Textarea
-                        placeholder="Enter options (one per line)"
-                        value={field.options.join('\n')}
-                        onChange={(e) => handleFormFieldChange(index, { options: e.target.value.split('\n') })}
-                      />
-                    )}
-                  </div>
-                ))}
-                <Button onClick={handleAddFormField} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" /> Add Field
-                </Button>
-              </>
-            )}
-            {currentFeature === 'prospects' && (
-              <>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="notifyOnInterest"
-                    checked={prospectSettings.notifyOnInterest}
-                    onCheckedChange={(checked) => handleProspectSettingsChange('notifyOnInterest', checked)}
-                  />
-                  <Label htmlFor="notifyOnInterest">Notify when a prospect shows interest</Label>
-                </div>
-                
-                {prospectSettings.notifyOnInterest && (
-                  <div className="space-y-4 mt-4">
-                    <Label>Notification Methods</Label>
-                    {['email', 'sms', 'whatsapp'].map((method) => (
-                      <div key={method} className="space-y-2">
-                        <Label htmlFor={`notify-${method}`}>{method.charAt(0).toUpperCase() + method.slice(1)}</Label>
-                        <Input
-                          id={`notify-${method}`}
-                          placeholder={`Enter ${method} details`}
-                          value={prospectSettings[method as keyof ProspectSettings]}
-                          onChange={(e) => handleProspectSettingsChange(method as keyof ProspectSettings, e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button type="button" onClick={handleConfigureDone}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
     </Tabs>
   );
 };
 
 export default Workspace;
-
-function getFeatureDescription(featureId: string): string {
-  switch (featureId) {
-    case "callTransfer":
-      return "Allow the agent to transfer calls to human operators.";
-    case "appointmentBooking":
-      return "Enable the agent to schedule appointments and manage a calendar.";
-    case "form":
-      return "Let the agent collect structured data through customizable forms.";
-    case "prospects":
-      return "Be notified when a prospect shows interest.";
-    default:
-      return "";
-  }
-}
-
-interface FormField {
-  type: 'text' | 'email' | 'phone' | 'dropdown';
-  label: string;
-  options: string[];
-}
-
-function getFeatureTitle(featureId: string | null): string {
-  switch (featureId) {
-    case "callTransfer":
-      return "Call Transfer";
-    case "appointmentBooking":
-      return "Appointment Booking";
-    case "form":
-      return "Custom Form";
-    case "prospects":
-      return "Prospects";
-    default:
-      return "";
-  }
-}

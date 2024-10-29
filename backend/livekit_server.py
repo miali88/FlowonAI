@@ -151,20 +151,20 @@ async def entrypoint(ctx: JobContext):
         def on_user_stopped_speaking():
             print("User stopped speaking")
 
-        @agent.on("response_created")
-        async def on_response_created(text: str):
-            """This event is triggered when the LLM generates a response, before it's converted to speech"""
-            print("\n=== LLM Response ===")
-            print(text)
-            print("===================\n")
+        # @agent.on("response_created")
+        # async def on_response_created(text: str):
+        #     """This event is triggered when the LLM generates a response, before it's converted to speech"""
+        #     print("\n=== LLM Response ===")
+        #     print(text)
+        #     print("===================\n")
 
-        # You can also add this handler to see the final processed text
-        @agent.on("agent_speech_committed")
-        def on_speech_committed(text: str):
-            """This event is triggered after the text has been processed and sent to TTS"""
-            print("\n=== Processed Speech Text ===")
-            print(text)
-            print("===========================\n")
+        # # You can also add this handler to see the final processed text
+        # @agent.on("agent_speech_committed")
+        # def on_speech_committed(text: str):
+        #     """This event is triggered after the text has been processed and sent to TTS"""
+        #     print("\n=== Processed Speech Text ===")
+        #     print(text)
+        #     print("===========================\n")
 
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):

@@ -186,7 +186,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
-            llm=openai.LLM(),   
+            llm=openai.LLM(temperature=0.1),   
             tts=cartesia.TTS(
                 language=lang_options[agent['language']]['cartesia'],
                 model=lang_options[agent['language']]['cartesia_model'],
