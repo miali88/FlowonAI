@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from './AgentFeatures';
+import { Separator } from "@/components/ui/separator";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -247,13 +248,25 @@ frameborder="0"
 
   const handleSaveFeatures = async () => {
     if (selectedAgent) {
+      console.log('Before save - Selected Agent State:', {
+        dataSources: selectedAgent.dataSources,
+        knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
+      });
+
+      const agentToSave = {
+        ...selectedAgent,
+        knowledgeBaseIds: selectedAgent.dataSources?.includes('all')
+          ? undefined
+          : selectedAgent.knowledgeBaseIds
+      };
+
+      console.log('Saving agent with data:', agentToSave);
+
       try {
-        await handleSaveChanges(selectedAgent);
-        // Optionally, show a success message here
+        await handleSaveChanges(agentToSave);
         console.log("Features saved successfully");
       } catch (error) {
         console.error("Failed to save features:", error);
-        // Optionally, show an error message here
       }
     }
   };
@@ -355,47 +368,90 @@ frameborder="0"
                 </Select>
               </div>
               <div>
-                <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Source</Label>
+                <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
                 <Select 
-                  value={selectedAgent?.dataSource || ''}
-                  onValueChange={(value) => {
-                    if (!selectedAgent) return;
-                    setSelectedAgent({
-                      ...selectedAgent,
-                      dataSource: value,
-                      // Clear the knowledgeBaseId if not selecting a specific item
-                      knowledgeBaseId: value.startsWith('kb_') ? value.replace('kb_', '') : undefined
-                    });
-                  }}
+                  value={selectedAgent?.dataSources?.[0] || "placeholder"}
+                  onValueChange={() => {}}
                 >
                   <SelectTrigger>
-                    <SelectValue>
-                      {selectedAgent?.dataSource?.startsWith('kb_')
-                        ? knowledgeBaseItems.find(item => `kb_${item.id}` === selectedAgent.dataSource)?.title
-                        : selectedAgent?.dataSource || 'Select data source'}
+                    <SelectValue placeholder="Select data sources">
+                      {selectedAgent?.dataSources?.includes('all') 
+                        ? "All Knowledge Base Items"
+                        : selectedAgent?.knowledgeBaseIds?.length 
+                          ? `${selectedAgent.knowledgeBaseIds.length} items selected`
+                          : "Select data sources"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="all">All Knowledge Base Items</SelectItem>
-                    </SelectGroup>
-                    
-                    {knowledgeBaseItems.length > 0 && (
-                      <SelectGroup>
-                        <SelectSeparator />
-                        <SelectLabel>Specific Knowledge Base Items</SelectLabel>
-                        {knowledgeBaseItems.map((item) => (
-                          <SelectItem key={item.id} value={`kb_${item.id}`}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{item.title}</span>
-                              <span className="text-xs text-muted-foreground ml-2">
+                    <div className="p-2">
+                      <div className="flex items-center space-x-2 py-2">
+                        <Checkbox
+                          id="checkbox-all"
+                          checked={selectedAgent?.dataSources?.includes('all')}
+                          onCheckedChange={(checked) => {
+                            if (!selectedAgent) return;
+                            setSelectedAgent({
+                              ...selectedAgent,
+                              dataSources: checked ? ['all'] : [],
+                              knowledgeBaseIds: [],
+                              dataSource: checked ? 'kb_all' : undefined
+                            });
+                          }}
+                        />
+                        <label 
+                          htmlFor="checkbox-all"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          All Knowledge Base Items
+                        </label>
+                      </div>
+
+                      {knowledgeBaseItems.length > 0 && (
+                        <>
+                          <Separator className="my-2" />
+                          <div className="text-sm text-muted-foreground mb-2">Specific Knowledge Base Items</div>
+                          {knowledgeBaseItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between py-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`checkbox-${item.id}`}
+                                  checked={selectedAgent?.knowledgeBaseIds?.includes(item.id)}
+                                  disabled={selectedAgent?.dataSources?.includes('all')}
+                                  onCheckedChange={(checked) => {
+                                    if (!selectedAgent) return;
+                                    const newIds = checked
+                                      ? [...(selectedAgent.knowledgeBaseIds || []), item.id]
+                                      : selectedAgent.knowledgeBaseIds?.filter(id => id !== item.id) || [];
+                                    
+                                    console.log('Checkbox changed:', {
+                                      itemId: item.id,
+                                      checked,
+                                      newIds,
+                                      previousIds: selectedAgent.knowledgeBaseIds
+                                    });
+                                    
+                                    setSelectedAgent({
+                                      ...selectedAgent,
+                                      dataSources: newIds.length > 0 ? ['specific'] : [],
+                                      knowledgeBaseIds: newIds,
+                                    });
+                                  }}
+                                />
+                                <label 
+                                  htmlFor={`checkbox-${item.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  {item.title}
+                                </label>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
                                 {item.data_type}
                               </span>
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    )}
+                          ))}
+                        </>
+                      )}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
