@@ -7,6 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface ChatBotMiniProps {
   agentId: string;
+  userId: string;
   isStreaming: boolean;
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
   isLiveKitActive: boolean;
@@ -24,6 +25,7 @@ interface ChatBotMiniProps {
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
+  userId,
   isStreaming,
   setIsStreaming,
   isLiveKitActive,
@@ -48,8 +50,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
-
-  const userId = "donkeykong";
 
   useEffect(() => {
     if (liveKitRoom) {

@@ -23,7 +23,8 @@ class AgentFunctions(llm.FunctionContext):
     
     """ to be updated with agent's dataSources in database. Perhaps store in mem from SB """
     tag_filter = {
-        "e8b64819-7c2c-432f-9f80-05a72bd49787" : ["english_car_mechanic"]
+        "e8b64819-7c2c-432f-9f80-05a72bd49787": ["english_car_mechanic"],
+        "f401e4aa-e49e-48b7-81f9-6690c96f2106": ["OBC"],  # Add new agent ID
     }
 
     @llm.ai_callable(
@@ -85,8 +86,9 @@ class AgentFunctions(llm.FunctionContext):
         print(f"Searching products/services with query: {query}, category: {category}")
 
         try:
-
-            results = await similarity_search(query, self.tag_filter[agent_id])
+            # Use get() method with default fallback for tag filter
+            tags = self.tag_filter.get(agent_id, None)
+            results = await similarity_search(query, tags)
             return f"Found matching products/services: {results}"
             
         except Exception as e:
