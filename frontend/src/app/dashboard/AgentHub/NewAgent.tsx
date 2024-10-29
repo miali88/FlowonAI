@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
+import { AgentFeatures } from './AgentFeatures';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -87,6 +88,7 @@ export function NewAgent() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
   const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
+  const [agentFeatures, setAgentFeatures] = useState({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -164,7 +166,11 @@ export function NewAgent() {
     setResponseMessage("");
 
     try {
-      const dataToSend = { ...formData, userId: user.id };
+      const dataToSend = { 
+        ...formData, 
+        userId: user.id,
+        features: agentFeatures 
+      };
       
       if (dataToSend.dataSource === "all") {
         delete dataToSend.tag;
@@ -353,6 +359,17 @@ export function NewAgent() {
                 </Button>
               ))}
             </div>
+          </div>
+          <div className="border-t border-border mt-4 pt-4">
+            <AgentFeatures
+              selectedAgent={formData}
+              setSelectedAgent={(agent) => {
+                if (agent?.features) {
+                  setAgentFeatures(agent.features);
+                }
+              }}
+              handleSaveFeatures={async () => {}} // Empty function since saving happens with form submit
+            />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white">
