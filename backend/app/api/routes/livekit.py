@@ -72,11 +72,14 @@ async def new_agent_handler(request: Request):
     try:
         data = await request.json()
         logger.debug(f"Received data: {data}")
+
+        # TODO: add system prompt to agent 
         new_agent = await create_agent(data)
         return new_agent
     except Exception as e:
         logger.error(f"Error creating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.get("/agents")
 async def get_agents_handler(current_user: str = Depends(get_current_user)):
