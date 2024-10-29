@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { NewAgent } from './NewAgent';
 import Workspace from './Workspace';
 import { LocalParticipant } from 'livekit-client';
+import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -21,6 +22,11 @@ const Lab = () => {
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
+  const [knowledgeBaseItems, setKnowledgeBaseItems] = useState<Array<{
+    id: string;
+    title: string;
+    data_type: string;
+  }>>([]);
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -106,6 +112,38 @@ const Lab = () => {
     setIsConnecting(false);
   }, []);
 
+  const fetchKnowledgeBase = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/knowledge_base`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.items) {
+          const formattedItems = data.items.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            data_type: item.data_type,
+          }));
+          setKnowledgeBaseItems(formattedItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching knowledge base:', error);
+    }
+  };
+
+  // Add useEffect to fetch knowledge base on component mount
+  React.useEffect(() => {
+    fetchKnowledgeBase();
+  }, [userId]);
+
   return (
     <div className="flex flex-col h-full p-6">
       <div className="flex flex-col space-y-6">
@@ -133,6 +171,7 @@ const Lab = () => {
             handleStreamStart={handleStreamStart}
             localParticipant={localParticipant}
             setLocalParticipant={setLocalParticipant}
+            knowledgeBaseItems={knowledgeBaseItems}
           />
         ) : (
           <p>Select or create an agent to get started.</p>

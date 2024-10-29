@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel, SelectGroup } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +34,11 @@ interface WorkspaceProps {
   handleStreamStart: () => void;
   localParticipant: LocalParticipant | null;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
+  knowledgeBaseItems: Array<{
+    id: string;
+    title: string;
+    data_type: string;
+  }>;
 }
 
 interface ProspectSettings {
@@ -97,6 +102,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleStreamStart,
   localParticipant,
   setLocalParticipant,
+  knowledgeBaseItems,
 }) => {
   const [activeTab, setActiveTab] = useState('preview');
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
@@ -357,43 +363,42 @@ frameborder="0"
                     setSelectedAgent({
                       ...selectedAgent,
                       dataSource: value,
-                      // Only clear the tag if switching away from 'tagged'
-                      tag: value === 'tagged' ? selectedAgent.tag : undefined
+                      // Clear the knowledgeBaseId if not selecting a specific item
+                      knowledgeBaseId: value.startsWith('kb_') ? value.replace('kb_', '') : undefined
                     });
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue>
-                      {selectedAgent?.dataSource === 'tagged' 
-                        ? `Tagged: ${selectedAgent.tag}` 
+                      {selectedAgent?.dataSource?.startsWith('kb_')
+                        ? knowledgeBaseItems.find(item => `kb_${item.id}` === selectedAgent.dataSource)?.title
                         : selectedAgent?.dataSource || 'Select data source'}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="tagged">Items with tag...</SelectItem>
-                    <SelectItem value="natural-language">Describe using natural language</SelectItem>
+                    <SelectGroup>
+                      <SelectItem value="all">All Knowledge Base Items</SelectItem>
+                    </SelectGroup>
+                    
+                    {knowledgeBaseItems.length > 0 && (
+                      <SelectGroup>
+                        <SelectSeparator />
+                        <SelectLabel>Specific Knowledge Base Items</SelectLabel>
+                        {knowledgeBaseItems.map((item) => (
+                          <SelectItem key={item.id} value={`kb_${item.id}`}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{item.title}</span>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {item.data_type}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
                   </SelectContent>
                 </Select>
-                {selectedAgent?.dataSource === "natural-language" && (
-                  <p className="text-sm text-muted-foreground mt-1">Feature coming soon</p>
-                )}
               </div>
-              {/* Show tag input only when dataSource is "tagged" */}
-              {selectedAgent?.dataSource === "tagged" && (
-                <div>
-                  <Label htmlFor="tag" className="block text-sm font-medium mb-1">Tag</Label>
-                  <Input 
-                    id="tag"
-                    placeholder="Enter tag..."
-                    value={selectedAgent.tag || ''} 
-                    onChange={(e) => setSelectedAgent({
-                      ...selectedAgent,
-                      tag: e.target.value
-                    })}
-                  />
-                </div>
-              )}
               <div>
                 <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
                 <Input 

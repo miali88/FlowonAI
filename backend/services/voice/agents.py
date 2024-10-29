@@ -94,7 +94,6 @@ async def update_agent(agent_id: int, data: dict):
         logger.error(f"Error updating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 async def get_agent_content(agent_id: str):
     content = supabase.table('agents').select('*').eq('id', agent_id).execute()
     return content
