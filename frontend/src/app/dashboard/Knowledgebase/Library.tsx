@@ -45,7 +45,20 @@ export function Library({
           <div className="h-full">
             <h3 className="text-xl font-semibold mb-4">{selectedItem.title}</h3>
             <ScrollArea className="h-[calc(100vh-200px)]">
-              <p className="whitespace-pre-wrap">{selectedItem.content}</p>
+              {selectedItem.data_type === 'web' && Array.isArray(selectedItem.content) ? (
+                <div className="space-y-4">
+                  {selectedItem.content.map((urlItem: any) => (
+                    <div key={urlItem.id} className="border-b pb-2">
+                      <p className="text-sm font-medium">{urlItem.url}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Token count: {urlItem.token_count}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap">{selectedItem.content}</p>
+              )}
             </ScrollArea>
           </div>
         ) : (

@@ -50,7 +50,8 @@ async def get_kb_items(current_user):
                     'content': item.get('content', ''),
                     'user_id': current_user,
                     'data_type': item.get('data_type'),
-                    'tag': item.get('tag', '')
+                    'tag': item.get('tag', ''),
+                    'token_count': item.get('token_count', 0)
                 }
                 for item in items.data
             ]
@@ -81,6 +82,7 @@ def group_by_root_url(items):
                 'id': item['id'],
                 'token_count': item.get('token_count', 0)
             } for item in group_list],
+            'url_tokens': sum(item.get('token_count', 0) for item in group_list),  # Sum of all tokens
             'created_at': next(iter(group_list)).get('created_at', ''),  # Take created_at from first item
             'data_type': 'web',
             'user_id': group_list[0].get('user_id')  # Assuming user_id is consistent within group

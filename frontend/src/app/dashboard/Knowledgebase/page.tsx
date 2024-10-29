@@ -21,6 +21,8 @@ import { Library } from './Library';
 import "@/components/loading.css"; // Adjust the path as necessary
 import { Insert } from './Insert';
 
+import { WebContent, KnowledgeBaseItem } from './types'
+
 function Loader() {
   return <div className="loader"></div>;
 }
@@ -30,7 +32,7 @@ function KnowledgeBaseContent() {
     const { user } = useUser();
     const { getToken } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
-    const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+    const [savedItems, setSavedItems] = useState<KnowledgeBaseItem[]>([]);
     const [newItemContent, setNewItemContent] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
     const [alertType, setAlertType] = useState("success");
@@ -73,11 +75,13 @@ function KnowledgeBaseContent() {
           const formattedItems = response.data.items.map(item => ({
             id: item.id,
             title: item.title,
-            content: item.content || "Content not available",
+            content: item.content,
             data_type: item.data_type,
             tag: item.tag || "",
             tokens: item.token_count || 0,
+            url_tokens: item.url_tokens || 0,
             created_at: item.created_at || new Date().toISOString(),
+            root_url: item.data_type === 'web' ? item.root_url : undefined,
           }));
           
           // Use the total_tokens directly from the response
@@ -86,7 +90,12 @@ function KnowledgeBaseContent() {
           
           // Log each item's title and data_type
           formattedItems.forEach((item, index) => {
-            console.log(`Item ${index} title:`, item.title, `data_type:`, item.data_type);
+            console.log(`Item ${index}:`, {
+              title: item.title,
+              data_type: item.data_type,
+              tokens: item.tokens,
+              url_tokens: item.url_tokens
+            });
           });
         } else {
           console.error("Unexpected response structure:", response.data);

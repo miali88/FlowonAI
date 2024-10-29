@@ -26,16 +26,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { TokenCounter } from './TokenCounter'
 import { Edit, Trash2 } from "lucide-react"
-
-export type KnowledgeBaseItem = {
-  id: number
-  title: string
-  content: string
-  data_type: string
-  tag: string
-  tokens: number
-  created_at: string
-}
+import { KnowledgeBaseItem } from './types'
 
 interface KnowledgeBaseTableProps {
   data: KnowledgeBaseItem[]
@@ -71,6 +62,10 @@ export function KnowledgeBaseTable({
           </Button>
         )
       },
+      cell: ({ row }) => {
+        const item = row.original;
+        return <div className="font-medium">{item.title}</div>;
+      },
     },
     {
       accessorKey: "data_type",
@@ -84,9 +79,13 @@ export function KnowledgeBaseTable({
     {
       accessorKey: "tokens",
       header: "Tokens",
-      cell: ({ row }) => (
-        <div className="text-right">{row.getValue("tokens")}</div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const tokenCount = item.data_type === 'web' ? item.url_tokens : item.tokens;
+        return (
+          <div className="text-right">{tokenCount}</div>
+        );
+      },
     },
     {
       accessorKey: "created_at",
