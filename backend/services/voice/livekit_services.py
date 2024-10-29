@@ -1,5 +1,4 @@
 import os, random, uuid
-from typing import Annotated
 from dotenv import load_dotenv
 from asyncio import Lock
 import logging
@@ -198,7 +197,8 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
             interrupt_min_words=2,
-            min_endpointing_delay=1)
+            min_endpointing_delay=1,
+            before_tts_cb=remove_special_characters)
             
         logger.info("Voice assistant created successfully")
         return assistant, agent['openingLine']
@@ -208,6 +208,30 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         raise
 
 
+import re
+from typing import Union, AsyncIterable
+
+def remove_special_characters(agent, text: Union[str, AsyncIterable[str]]) -> Union[str, AsyncIterable[str]]:
+    url_pattern = re.compile(r'https?://\S+|www\.\S+')
+
+    def clean_text(input_text: str) -> str:
+        # Remove URLs
+        text_without_urls = url_pattern.sub('', input_text)
+        # Remove special characters but keep grammatical punctuation
+        return re.sub(r'[^A-Za-z0-9\s.,!?\'"-]', '', text_without_urls)
+
+    if isinstance(text, str):
+        return clean_text(text)
+    elif isinstance(text, AsyncIterable):
+        # If the text is an AsyncIterable, process each string in the iterable
+        async def clean_async_iterable():
+            async for part in text:
+                yield clean_text(part)
+                print(f"Cleaned text: {clean_text(part)}")
+        return clean_async_iterable()
+    else:
+        raise ValueError("Unsupported text type")
+    
 async def get_agent(agent_id):
     response = supabase.table('agents') \
         .select('*') \
