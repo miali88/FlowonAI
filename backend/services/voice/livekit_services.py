@@ -2,6 +2,8 @@ import os, random, uuid
 from dotenv import load_dotenv
 from asyncio import Lock
 import logging
+import re
+from typing import Union, AsyncIterable
 
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
@@ -185,7 +187,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
-            llm=openai.LLM(temperature=0.1),   
+            llm=openai.LLM(temperature=0.2),   
             tts=cartesia.TTS(
                 language=lang_options[agent['language']]['cartesia'],
                 model=lang_options[agent['language']]['cartesia_model'],
@@ -207,10 +209,6 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         logger.error(f"Error creating voice assistant: {str(e)}", exc_info=True)
         raise
 
-
-import re
-from typing import Union, AsyncIterable
-
 def remove_special_characters(agent, text: Union[str, AsyncIterable[str]]) -> Union[str, AsyncIterable[str]]:
     url_pattern = re.compile(r'https?://\S+|www\.\S+')
 
@@ -227,7 +225,6 @@ def remove_special_characters(agent, text: Union[str, AsyncIterable[str]]) -> Un
         async def clean_async_iterable():
             async for part in text:
                 yield clean_text(part)
-                print(f"Cleaned text: {clean_text(part)}")
         return clean_async_iterable()
     else:
         raise ValueError("Unsupported text type")

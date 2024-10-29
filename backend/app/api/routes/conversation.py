@@ -28,6 +28,26 @@ chat_messages = defaultdict(list)
 event_broadcasters = {}
 conversation_logs = defaultdict(list)
 
+# In-memory cache for agent_ids and user_ids
+agent_user_cache = {}
+
+def load_agent_user_cache():
+    print("\n\n loading agent-user cache\n\n")
+    print(f"agent_user_cache: {agent_user_cache}")
+    """Load agent_id and user_id pairs from the agents table into the in-memory cache."""
+    try:
+        response = supabase.table("agents").select("id, userId").execute()
+        if response.data:
+            for record in response.data:
+                agent_user_cache[record['id']] = record['userId']
+            logger.info("Agent-user cache loaded successfully")
+        else:
+            logger.warning("No data found in agents table")
+    except Exception as e:
+        logger.error(f"Error loading agent-user cache: {str(e)}")
+load_agent_user_cache()
+
+
 async def get_user_id(request: Request) -> str:
     user_id = request.headers.get("X-User-ID")
     if not user_id:
@@ -67,7 +87,7 @@ async def livekit_room_webhook(request: Request):
             "job_id": data['job_id'],
             "participant_identity": data['participant_identity'],
             "room_name": data['room_name'],
-            "user_id": data['user_id'],
+            "user_id": agent_user_cache[data['agent_id']],
             "agent_id": data['agent_id'],
             "lead": data['prospect_status'], 
             "call_duration": data['call_duration']
