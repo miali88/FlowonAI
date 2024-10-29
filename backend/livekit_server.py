@@ -14,6 +14,7 @@ from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, Wo
 
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
+from services.nylas_service import send_email
 
 load_dotenv()
 
@@ -49,7 +50,7 @@ async def entrypoint(ctx: JobContext):
         last_audio_time = time.time()  # Track when we last received any audio
         last_participant_audio = time.time()  # Track participant's last audio
         last_agent_audio = time.time()  # Track agent's last audio
-        SILENCE_TIMEOUT = 80  # Timeout in seconds
+        SILENCE_TIMEOUT = 90  # Timeout in seconds
         room_name = ctx.room.name
         room = ctx.room
         
@@ -229,7 +230,7 @@ async def entrypoint(ctx: JobContext):
                                              prospect_status: str,
                                              call_duration: CallDuration):  # Update type hint
             print("store_conversation_history method called")
-            
+
             # Parse chat context into simplified format
             conversation_history = []
             for message in agent.chat_ctx.messages:
@@ -271,9 +272,13 @@ async def entrypoint(ctx: JobContext):
                             print("Successfully stored conversation history")
                         else:
                             print(f"Failed to store conversation history. Status: {response.status}")
-                            
+            
             except Exception as e:
                 print(f"Error storing conversation history: {str(e)}")
+            if prospect_status == "yes":
+                print("prospect_status is yes, sending email")
+                await send_email(participant_identity, conversation_history, agent_id)
+
 
         def format_duration(start_time):
             duration = datetime.now() - start_time

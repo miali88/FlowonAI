@@ -41,7 +41,7 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
     lastName: initialSettings?.lastName || user.lastName || '',
     businessName: initialSettings?.businessName || '',
     businessDomain: initialSettings?.businessDomain || '',
-    email: initialSettings?.email || user.primaryEmailAddress?.emailAddress || '',
+    email: user.primaryEmailAddress?.emailAddress || '',
     phone: initialSettings?.phone || ''
   });
 
@@ -158,7 +158,8 @@ export default function AccountTab({ user, initialSettings }: AccountTabProps) {
               id="email" 
               type="email" 
               value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
+              disabled
+              className="bg-gray-100 text-black"
             />
           </div>
           <div>
