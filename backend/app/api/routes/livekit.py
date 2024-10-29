@@ -1,5 +1,4 @@
 import logging
-from asyncio import Lock
 
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends, Header
 from supabase import create_client, Client
@@ -9,8 +8,6 @@ from services.voice.livekit_services import token_gen, token_embed_gen, start_ag
 from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content, update_agent
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-
-agent_creation_locks = {}
 
 router = APIRouter()
 

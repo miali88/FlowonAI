@@ -32,8 +32,7 @@ conversation_logs = defaultdict(list)
 agent_user_cache = {}
 
 def load_agent_user_cache():
-    print("\n\n loading agent-user cache\n\n")
-    print(f"agent_user_cache: {agent_user_cache}")
+    print("loading agent-user cache")
     """Load agent_id and user_id pairs from the agents table into the in-memory cache."""
     try:
         response = supabase.table("agents").select("id, userId").execute()

@@ -1,18 +1,11 @@
 import secrets
-import warnings
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 from pydantic import (
-    AnyUrl,
-    BeforeValidator,
     HttpUrl,
-    PostgresDsn,
     computed_field,
-    model_validator,
 )
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -60,6 +53,11 @@ class Settings(BaseSettings):
     VAPI_API_KEY: str = ""
 
     CAL_API_KEY: str = ""
+
+    NYLAS_CLIENT_ID: str = ""
+    NYLAS_API_KEY: str = ""
+    NYLAS_API_URI: str = ""
+    NYLAS_CALLBACK_URI: str = ""
 
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
