@@ -28,3 +28,6 @@ openapi.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/.env
+
+# Sentry Config File
+.env.sentry-build-plugin
