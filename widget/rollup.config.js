@@ -8,6 +8,9 @@ import postcss from 'rollup-plugin-postcss';
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
+import postcssImport from 'postcss-import';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 export default defineConfig({
   input: 'src/main.tsx',
@@ -16,11 +19,7 @@ export default defineConfig({
     format: 'iife',
     name: 'EmbeddedChatbot',
     sourcemap: true,
-    globals: {
-      // Remove or ensure react and react-dom are bundled
-      // react: 'React',
-      // 'react-dom': 'ReactDOM'
-    }
+    globals: {}
   },
   plugins: [
     replace({
@@ -56,6 +55,13 @@ export default defineConfig({
       modules: {
         exclude: /node_modules/,
       },
+      extract: true,
+      autoModules: true,
+      plugins: [
+        postcssImport(),
+        tailwindcss(),
+        autoprefixer(),
+      ]
     }),
     terser(),
   ],
