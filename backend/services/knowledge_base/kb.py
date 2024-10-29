@@ -1,13 +1,9 @@
-import asyncio
-
 import logging
-from typing import List
 from dotenv import load_dotenv
+from itertools import groupby
+from operator import itemgetter
+from typing import List, Dict
 
-from tiktoken import encoding_for_model
-
-import spacy
-from firecrawl import FirecrawlApp
 from supabase import create_client, Client
 from openai import AsyncOpenAI
 
@@ -40,20 +36,9 @@ async def get_kb_items(current_user):
                               .eq('user_id', current_user) \
                               .execute()
             
-            formatted_items = [
-                {
-                    'id': item['id'],
-                    'title': item.get('url', 'No Title'),
-                    'root_url': item.get('root_url', ''),
-                    'content': 'Content not available',
-                    'user_id': current_user,
-                    'data_type': 'web',
-                    'created_at': item.get('created_at', ''),
-                    'token_count': item.get('token_count', 0)
-                }
-                for item in results.data
-            ]
-            all_items.extend(formatted_items)
+            grouped: List[Dict] = group_by_root_url(results.data)
+            
+            all_items.extend(grouped)
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
         elif table == "user_text_files":
@@ -72,5 +57,34 @@ async def get_kb_items(current_user):
             all_items.extend(formatted_items)
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
-
     return all_items, total_tokens
+
+
+def group_by_root_url(items):
+    if not isinstance(items, list):
+        raise TypeError(f"Expected a list, got {type(items)}")
+    
+    # Sort items by root_url
+    sorted_items = sorted(items, key=itemgetter('root_url'))
+    
+    # Group items and create consolidated records
+    result = []
+    for root_url, group in groupby(sorted_items, key=itemgetter('root_url')):
+        group_list = list(group)
+        
+        # Create consolidated record
+        consolidated = {
+            'title': root_url,  # Using root_url as title
+            'root_url': root_url,
+            'content': [{  # Group of URLs and their fields
+                'url': item.get('url', ''),
+                'id': item['id'],
+                'token_count': item.get('token_count', 0)
+            } for item in group_list],
+            'created_at': next(iter(group_list)).get('created_at', ''),  # Take created_at from first item
+            'data_type': 'web',
+            'user_id': group_list[0].get('user_id')  # Assuming user_id is consistent within group
+        }
+        result.append(consolidated)
+    
+    return result
