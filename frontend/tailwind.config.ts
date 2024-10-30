@@ -63,7 +63,8 @@ const config: Config = {
   			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
   			orbit: 'orbit calc(var(--duration)*1s) linear infinite',
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
   		},
   		keyframes: {
   			shine: {
@@ -121,7 +122,17 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+  			'pulse-slow': {
+  				'0%, 100%': {
+  					opacity: '0.4',
+  					transform: 'scale(0.98)',
+  				},
+  				'50%': {
+  					opacity: '0.8',
+  					transform: 'scale(1.02)',
+  				},
+  			},
   		}
   	}
   },
