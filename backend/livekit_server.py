@@ -279,7 +279,6 @@ async def entrypoint(ctx: JobContext):
                 print("prospect_status is yes, sending email")
                 await send_email(participant_identity, conversation_history, agent_id)
 
-
         @ctx.room.on("track_published")
         async def on_track_published(publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
             # Ensure new tracks follow the same isolation rules

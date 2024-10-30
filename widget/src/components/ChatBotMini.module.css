@@ -10,13 +10,13 @@
 
 .chatbot {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  right: var(--flowon-spacing-md);
+  bottom: var(--flowon-spacing-md);
   z-index: 2147483647;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-radius: 20px;
+  border-radius: var(--flowon-border-radius);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   display: flex;
@@ -24,7 +24,7 @@
   pointer-events: auto;
   isolation: isolate;
   opacity: 1;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity var(--flowon-transition-duration) ease-in-out;
 }
 
 .minimized {
@@ -71,8 +71,8 @@
 /* ChatBot Header */
 .header {
   background: linear-gradient(135deg, 
-    rgba(45, 45, 45, 0.95), 
-    rgba(75, 75, 75, 0.95));
+    var(--flowon-gradient-start), 
+    var(--flowon-gradient-end));
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   padding: 20px 0;
@@ -295,29 +295,6 @@
   background-color: #ff2222;
 }
 
-.chatbot-widget {
-  /* Reset all inherited styles */
-  all: initial;
-  
-  /* Contain everything inside this element */
-  contain: content;
-  
-  /* Prevent CSS inheritance */
-  isolation: isolate;
-  
-  /* Base styles */
-  font-family: system-ui, -apple-system, sans-serif;
-  box-sizing: border-box;
-  
-  /* Custom properties for easy theming */
-  --chatbot-primary: #0baadf;
-  --chatbot-background: #ffffff;
-  --chatbot-text: #000000;
-  
-  /* Ensure widget stays on top */
-  z-index: 2147483647;
-}
-
 /* Ensure all child elements use the widget's box-sizing */
 .chatbot-widget *,
 .chatbot-widget *:before,
@@ -331,6 +308,12 @@
     height: 80vh;
     right: 5vw;
     bottom: 10vh;
+    border-radius: 0;
+  }
+  
+  .header,
+  .footer {
+    border-radius: 0;
   }
 }
 
@@ -368,10 +351,6 @@
   object-fit: contain;
 }
 
-.minimizedContent .minimizedLogo:hover {
-  /* Remove hover effect */
-}
-
 .minimizedContent .minimizedLogo {
   opacity: 1;
 }
@@ -407,3 +386,4 @@
 .expanding {
   opacity: 0;
 }
+

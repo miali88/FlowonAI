@@ -51,15 +51,17 @@ export default defineConfig({
     postcss({
       extensions: ['.css'],
       minimize: true,
-      inject: true,
+      inject: {
+        insertAt: 'top' // Ensures our styles take precedence
+      },
       modules: {
+        generateScopedName: 'ecb-[hash:base64:5]', // Add prefix to CSS modules
         exclude: /node_modules/,
       },
-      extract: true,
-      autoModules: true,
+      extract: 'styles.css', // Extract to separate CSS file
       plugins: [
         postcssImport(),
-        tailwindcss(),
+        tailwindcss('./tailwind.config.js'),
         autoprefixer(),
       ]
     }),

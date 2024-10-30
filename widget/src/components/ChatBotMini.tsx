@@ -28,7 +28,7 @@ interface ChatBotMiniProps {
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
 }
 
-const userId = "donkeykong";
+const userId = "visitor";
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,

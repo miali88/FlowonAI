@@ -2,16 +2,48 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-#embedded-chatbot-container {
+:root {
+  /* Combine and standardize custom properties */
+  --flowon-primary: #0baadf;
+  --flowon-secondary: #0b8aaf;
+  --flowon-background: #ffffff;
+  --flowon-text: #000000;
+  --flowon-border: #eeeeee;
+  
+  /* Add theme variables */
+  --flowon-gradient-start: rgba(45, 45, 45, 0.95);
+  --flowon-gradient-end: rgba(75, 75, 75, 0.95);
+  --flowon-shadow: rgba(0, 0, 0, 0.2);
+  --flowon-border-radius: 20px;
+  --flowon-spacing-sm: 10px;
+  --flowon-spacing-md: 20px;
+  --flowon-transition-duration: 0.3s;
+}
+
+.flowon-widget-root {
+  /* Reset all properties */
+  all: initial;
+  
+  /* Isolation */
+  contain: content;
+  isolation: isolate;
+  
+  /* Base styles */
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  
+  /* Positioning */
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: auto;
-  height: auto;
-  pointer-events: none;
   z-index: 2147483647;
+  
+  /* Prevent pointer events on container */
+  pointer-events: none;
 }
 
-#embedded-chatbot-container > div {
-  pointer-events: all;
+/* Enable pointer events only on interactive elements */
+.flowon-widget-root * {
+  pointer-events: auto;
 }
+
