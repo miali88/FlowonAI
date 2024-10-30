@@ -58,6 +58,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -178,76 +179,100 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [localParticipant, isMuted]);
 
   return (
-    <div className={styles.chatbot}>
-      <header className={styles.header}>
-        <h2>Flowon</h2>
-      </header>
-      <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
-        <MorphingStreamButton
-          onStreamToggle={handleStreamToggle}
-          isStreaming={isStreaming}
-          showTextBox={false}
-          isConnecting={isConnecting}
-        />
-        {isLiveKitActive && token && url && roomName && (
-          <>
-            <LiveKitEntry 
-              token={token} 
-              url={url} 
-              roomName={roomName}
-              isStreaming={isStreaming} 
-              onStreamEnd={onStreamEnd} 
-              onStreamStart={onStreamStart}
-              setRoom={setLiveKitRoom}
-              setLocalParticipant={setLocalParticipant}
-              setParticipantIdentity={setParticipantIdentity}
-            />
-            {isStreaming && localParticipant && (
-              <button
-                onClick={handleMuteToggle}
-                className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
-              >
-                {isMuted ? 'Unmute' : 'Mute'}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-      {(showChatInput || bypassShowChatInputCondition) && (
-        <div className={styles.chatInput}>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full Name"
-              required
-            />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email Address"
-              required
-            />
-            <input
-              type="tel"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              placeholder="Contact Number (optional)"
-            />
-            <button type="submit" className={styles.submitBtn}>
-              Submit
+    <div 
+      className={`${styles.chatbot} ${isExpanded ? styles.expanded : styles.minimized}`}
+      onClick={() => !isExpanded && setIsExpanded(true)}
+    >
+      {isExpanded ? (
+        <>
+          <header className={styles.header}>
+            <h2>Flowon</h2>
+            <button 
+              className={styles.closeButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+              }}
+            >
+              ×
             </button>
-          </form>
+          </header>
+          <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
+            <MorphingStreamButton
+              onStreamToggle={handleStreamToggle}
+              isStreaming={isStreaming}
+              showTextBox={false}
+              isConnecting={isConnecting}
+            />
+            {isLiveKitActive && token && url && roomName && (
+              <>
+                <LiveKitEntry 
+                  token={token} 
+                  url={url} 
+                  roomName={roomName}
+                  isStreaming={isStreaming} 
+                  onStreamEnd={onStreamEnd} 
+                  onStreamStart={onStreamStart}
+                  setRoom={setLiveKitRoom}
+                  setLocalParticipant={setLocalParticipant}
+                  setParticipantIdentity={setParticipantIdentity}
+                />
+                {isStreaming && localParticipant && (
+                  <button
+                    onClick={handleMuteToggle}
+                    className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
+                  >
+                    {isMuted ? 'Unmute' : 'Mute'}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+          {(showChatInput || bypassShowChatInputCondition) && (
+            <div className={styles.chatInput}>
+              <form onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Full Name"
+                  required
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email Address"
+                  required
+                />
+                <input
+                  type="tel"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="Contact Number (optional)"
+                />
+                <button type="submit" className={styles.submitBtn}>
+                  Submit
+                </button>
+              </form>
+            </div>
+          )}
+          
+          {/* Update the footer */}
+          <footer className={styles.footer}>
+            <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+            <span className={styles.footerText}>Powered by Flowon.AI</span>
+          </footer>
+        </>
+      ) : (
+        <div className={styles.minimizedContent}>
+          <img 
+            src="/flowon_see_though_v2.png"
+            alt="Flowon" 
+            className={styles.minimizedLogo}
+          />
         </div>
       )}
-      
-      {/* Update the footer */}
-      <footer className={styles.footer}>
-        <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
-        <span className={styles.footerText}>Powered by Flowon.AI</span>
-      </footer>
     </div>
   );
 };
