@@ -59,6 +59,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMinimizing, setIsMinimizing] = useState(false);
+  const minimizeTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -178,9 +180,29 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [localParticipant, isMuted]);
 
+  const handleMinimize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMinimizing(true);
+    
+    minimizeTimer.current = setTimeout(() => {
+      setIsExpanded(false);
+      setIsMinimizing(false);
+    }, 300); // Match the CSS transition duration
+  };
+
+  useEffect(() => {
+    return () => {
+      if (minimizeTimer.current) {
+        clearTimeout(minimizeTimer.current);
+      }
+    };
+  }, []);
+
   return (
     <div 
-      className={`${styles.chatbot} ${isExpanded ? styles.expanded : styles.minimized}`}
+      className={`${styles.chatbot} 
+        ${isExpanded ? styles.expanded : styles.minimized}
+        ${isMinimizing ? styles.minimizing : ''}`}
       onClick={() => !isExpanded && setIsExpanded(true)}
     >
       {isExpanded ? (
@@ -189,10 +211,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
             <h2>Flowon</h2>
             <button 
               className={styles.closeButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(false);
-              }}
+              onClick={handleMinimize}
             >
               ×
             </button>
