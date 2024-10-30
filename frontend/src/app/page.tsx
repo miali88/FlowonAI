@@ -6,6 +6,7 @@ import { Pricing } from "@/components/pricing";
 import { CtaSection } from "@/components/cta-section";
 import { Testimonials } from "@/components/testimonials";
 import { Footer } from "@/components/footer";
+// import { Widget } from "@/components/widget";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
       <CtaSection />
       <Testimonials />
       <Footer />
+      {/* <Widget /> */}
     </div>
   );
 }

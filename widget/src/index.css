@@ -48,6 +48,11 @@
   right: var(--flowon-spacing-md);
   z-index: var(--flowon-z-index-base);
   pointer-events: none;
+  
+  /* Add stronger isolation */
+  all: initial !important;
+  contain: content !important;
+  isolation: isolate !important;
 }
 
 /* Scoped reset for all widget elements */

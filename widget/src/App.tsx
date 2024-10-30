@@ -25,7 +25,7 @@ function App({ agentId, domain }: AppProps) {
 
   return ( 
     <Layout>
-      <div className="App">
+      <div id="flowon-widget-root" className="flowon-isolate">
         <ErrorBoundary>
           <ChatBotMini
             agentId={agentId}

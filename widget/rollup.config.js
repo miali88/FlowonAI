@@ -17,9 +17,12 @@ export default defineConfig({
   output: {
     file: 'dist/embed.min.js',
     format: 'iife',
-    name: 'EmbeddedChatbot',
+    name: 'FlowonWidget',
     sourcemap: true,
-    globals: {}
+    globals: {},
+    banner: '/* Flowon Widget v' + process.env.npm_package_version + ' */',
+    intro: '(function() { "use strict"; var global = typeof window !== "undefined" ? window : this;',
+    outro: '})();'
   },
   plugins: [
     replace({
@@ -52,16 +55,19 @@ export default defineConfig({
       extensions: ['.css'],
       minimize: true,
       inject: {
-        insertAt: 'top' // Ensures our styles take precedence
+        insertAt: 'top'
       },
       modules: {
-        generateScopedName: 'ecb-[hash:base64:5]', // Add prefix to CSS modules
-        exclude: /node_modules/,
+        generateScopedName: 'flowon-widget-[hash:base64:8]',
+        scopeBehaviour: 'local',
       },
-      extract: 'styles.css', // Extract to separate CSS file
+      extract: false,
       plugins: [
         postcssImport(),
-        tailwindcss('./tailwind.config.js'),
+        tailwindcss({
+          prefix: 'flowon-',
+          important: '#flowon-widget-root',
+        }),
         autoprefixer(),
       ]
     }),
