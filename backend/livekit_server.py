@@ -280,6 +280,35 @@ async def entrypoint(ctx: JobContext):
                 await send_email(participant_identity, conversation_history, agent_id)
 
 
+        @ctx.room.on("track_published")
+        async def on_track_published(publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
+            # Ensure new tracks follow the same isolation rules
+            if participant != available_participant:
+                publication.set_subscribe_allowed(False)
+
+        # Add explicit subscription management
+        @ctx.room.on("participant_connected")
+        async def on_participant_connected(participant: rtc.RemoteParticipant):
+            print(f"New participant connected: {participant.identity}")
+            # Ensure other participants can't subscribe to each other's tracks
+            for track_pub in participant.track_publications.values():
+                track_pub.set_subscribe_allowed(False)
+                
+        # Update the participant handling logic
+        for rp in room.remote_participants.values():
+            if not any(pub.subscribed for pub in rp.track_publications.values()):
+                available_participant = rp
+                # Explicitly set subscription permissions
+                for track_pub in available_participant.track_publications.values():
+                    # Only allow the agent to subscribe to this participant's tracks
+                    track_pub.set_subscribe_allowed(True)
+                    # Ensure this participant can't subscribe to other participants
+                    for other_participant in room.remote_participants.values():
+                        if other_participant != available_participant:
+                            for other_track in other_participant.track_publications.values():
+                                other_track.set_subscribe_allowed(False)
+                break
+
         def format_duration(start_time):
             duration = datetime.now() - start_time
             total_seconds = duration.total_seconds()
