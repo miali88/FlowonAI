@@ -21,7 +21,10 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
     <Card className="w-full max-w-[300px] bg-transparent border-none shadow-none">
       <CardContent className="p-6 flex flex-col items-center">
         <Button
-          className="w-[120px] h-[120px] rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+          className="w-[120px] h-[120px] rounded-full bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800 
+            hover:from-gray-300 hover:to-gray-500 focus:ring-2 focus:ring-gray-300 focus:outline-none
+            shadow-lg backdrop-blur-md border border-gray-300
+            transition-all duration-200 ease-in-out"
           onClick={handleClick}
           disabled={isConnecting}
         >
