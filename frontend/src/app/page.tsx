@@ -1,6 +1,5 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { SocialProof } from "@/components/social-proof";
 import { FeaturesSection } from "@/components/features-section";
 import { Pricing } from "@/components/pricing";
 import { CtaSection } from "@/components/cta-section";
@@ -12,7 +11,6 @@ export default function HomePage() {
     <div className="mx-auto max-w-7xl">
       <Header />
       <Hero />
-      <SocialProof />
       <FeaturesSection />
       <Pricing />
       <CtaSection />
