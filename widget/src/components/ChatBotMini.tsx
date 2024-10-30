@@ -85,12 +85,19 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [participantIdentity]);
 
+  useEffect(() => {
+    if (!isStreaming) {
+      setShowChatInput(false);
+    }
+  }, [isStreaming]);
+
   const handleStreamToggle = useCallback(async () => {
     if (isStreaming) {
       setIsStreaming(false);
       setIsLiveKitActive(false);
       setLiveKitRoom(null);
       setRoomName(null);
+      setShowChatInput(false);
     } else {
       setIsConnecting(true);
       try {
@@ -220,7 +227,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
             <MorphingStreamButton
               onStreamToggle={handleStreamToggle}
               isStreaming={isStreaming}
-              showTextBox={false}
               isConnecting={isConnecting}
             />
             {isLiveKitActive && token && url && roomName && (
@@ -247,7 +253,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               </>
             )}
           </div>
-          {(showChatInput || bypassShowChatInputCondition) && (
+          {(showChatInput && isStreaming) && (
             <div className={styles.chatInput}>
               <form onSubmit={handleSubmit}>
                 <input

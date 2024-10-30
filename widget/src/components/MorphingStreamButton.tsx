@@ -5,7 +5,6 @@ import { Card, CardContent } from "./ui/card";
 interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
   isStreaming: boolean;
-  showTextBox: boolean;
   isConnecting: boolean;
 }
 
