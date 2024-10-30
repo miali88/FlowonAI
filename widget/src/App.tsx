@@ -6,9 +6,10 @@ import Layout from './components/Layout';
 interface AppProps {
   agentId: string;
   domain: string;
+  containerId?: string;
 }
 
-function App({ agentId, domain }: AppProps) {
+function App({ agentId, domain, containerId = 'flowon-widget-root' }: AppProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -25,7 +26,11 @@ function App({ agentId, domain }: AppProps) {
 
   return ( 
     <Layout>
-      <div id="flowon-widget-root" className="flowon-isolate">
+      <div 
+        id={containerId} 
+        className="flowon-widget" 
+        style={{ isolation: 'isolate' }}
+      >
         <ErrorBoundary>
           <ChatBotMini
             agentId={agentId}
