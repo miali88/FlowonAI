@@ -2,16 +2,71 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-#embedded-chatbot-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: auto;
-  height: auto;
-  pointer-events: none;
-  z-index: 2147483647;
+:root {
+  /* Theme */
+  --flowon-colors-primary: #0baadf;
+  --flowon-colors-secondary: #0b8aaf;
+  --flowon-colors-background: #ffffff;
+  --flowon-colors-text: #000000;
+  --flowon-colors-border: #eeeeee;
+  --flowon-colors-gradient-start: rgba(45, 45, 45, 0.95);
+  --flowon-colors-gradient-end: rgba(75, 75, 75, 0.95);
+  --flowon-colors-shadow: rgba(0, 0, 0, 0.2);
+  
+  /* Spacing */
+  --flowon-spacing-xs: 8px;
+  --flowon-spacing-sm: 10px;
+  --flowon-spacing-md: 20px;
+  --flowon-spacing-lg: 32px;
+  
+  /* Border */
+  --flowon-border-radius-sm: 10px;
+  --flowon-border-radius-md: 20px;
+  --flowon-border-radius-full: 9999px;
+  
+  /* Animation */
+  --flowon-transition-duration: 0.3s;
+  --flowon-transition-timing: ease-in-out;
+  
+  /* Z-index */
+  --flowon-z-index-base: 2147483647;
+  --flowon-z-index-overlay: 2147483648;
 }
 
-#embedded-chatbot-container > div {
-  pointer-events: all;
+/* Widget Root Container */
+.flowon-widget-root {
+  all: initial;
+  contain: content;
+  isolation: isolate;
+  
+  /* Scoped styles reset */
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  
+  position: fixed;
+  bottom: var(--flowon-spacing-md);
+  right: var(--flowon-spacing-md);
+  z-index: var(--flowon-z-index-base);
+  pointer-events: none;
+  
+  /* Add stronger isolation */
+  all: initial !important;
+  contain: content !important;
+  isolation: isolate !important;
 }
+
+/* Scoped reset for all widget elements */
+.flowon-widget-root * {
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+/* Prevent external styles from affecting our widget */
+.flowon-widget-root,
+.flowon-widget-root *,
+.flowon-widget-root *::before,
+.flowon-widget-root *::after {
+  all: revert;
+  font-family: inherit;
+}
+

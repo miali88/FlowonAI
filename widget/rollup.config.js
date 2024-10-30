@@ -8,19 +8,21 @@ import postcss from 'rollup-plugin-postcss';
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
+import postcssImport from 'postcss-import';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 export default defineConfig({
   input: 'src/main.tsx',
   output: {
     file: 'dist/embed.min.js',
     format: 'iife',
-    name: 'EmbeddedChatbot',
+    name: 'FlowonWidget',
     sourcemap: true,
-    globals: {
-      // Remove or ensure react and react-dom are bundled
-      // react: 'React',
-      // 'react-dom': 'ReactDOM'
-    }
+    globals: {},
+    banner: '/* Flowon Widget v' + process.env.npm_package_version + ' */',
+    intro: '(function() { "use strict"; var global = typeof window !== "undefined" ? window : this;',
+    outro: '})();'
   },
   plugins: [
     replace({
@@ -52,10 +54,22 @@ export default defineConfig({
     postcss({
       extensions: ['.css'],
       minimize: true,
-      inject: true,
-      modules: {
-        exclude: /node_modules/,
+      inject: {
+        insertAt: 'top'
       },
+      modules: {
+        generateScopedName: 'flowon-widget-[hash:base64:8]',
+        scopeBehaviour: 'local',
+      },
+      extract: false,
+      plugins: [
+        postcssImport(),
+        tailwindcss({
+          prefix: 'flowon-',
+          important: '#flowon-widget-root',
+        }),
+        autoprefixer(),
+      ]
     }),
     terser(),
   ],

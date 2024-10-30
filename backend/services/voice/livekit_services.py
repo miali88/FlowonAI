@@ -37,7 +37,7 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         logger.error("Missing required parameters: agent_id or user_id")
         raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
 
-    room_name = f"agent_{agent_id}_room_{user_id}"
+    room_name = f"agent_{agent_id}_room_{user_id}_{uuid.uuid4()}"
     logger.debug(f"Generated room name: {room_name}")
 
     # Use a lock to ensure only one token generation process happens at a time for this room
@@ -121,7 +121,9 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
         livekit_api = await create_livekit_api()
 
         # Create a room if it doesn't exist
-        create_request = CreateRoomRequest(name=room_name)
+        create_request = CreateRoomRequest(name=room_name,
+                                           empty_timeout=120,
+                                           max_participants=2)
         room = await livekit_api.room.create_room(create_request)
         print(f"Created room: {room.name} with SID: {room.sid}")
 

@@ -42,7 +42,7 @@ class AgentFunctions(llm.FunctionContext):
         ]
     ) -> str:
         logger.info(f"Personal data request triggered with message: {message}")
-        return "<tool>request_personal_data</tool><outcome>The form has now been presented to the user</outcome>"
+        return "Form presented to user. Waiting for user to complete and submit form."
 
     @llm.ai_callable(
         name="search_products_and_services",

@@ -5,6 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
+    <link rel="stylesheet" href="dist/embed.min.css">
     <style>
       #root {
         width: 100%;
@@ -16,7 +17,7 @@
       .landing {
         height: 100vh;
         display: flex;
-        justify-content: center;  
+        justify-content: center;
         align-items: center;
         background-color: #f5f5f5;
       }
@@ -40,8 +41,8 @@
       // Add debugging
       console.log('Config initialization...');
       window.embeddedChatbotConfig = {
-        agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
-        domain: 'http://localhost:3001'
+        agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
+        domain: 'http://localhost:3000'
       };
       console.log('Config loaded:', window.embeddedChatbotConfig);
     </script>
@@ -49,17 +50,24 @@
     <div id="embedded-chatbot-container">
       <script>
         (function() {
+          // Load CSS first
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = 'dist/embed.min.css';
+          document.head.appendChild(cssLink);
+
+          // Then load JS
           const script = document.createElement('script');
           script.type = 'module';
-          script.src = 'src/main.tsx';
+          script.src = 'dist/embed.min.js';
           script.async = true;
           script.onload = () => {
             console.log('Widget script loaded');
-            if (window.initializeWidget) {
-              window.initializeWidget('embedded-chatbot-container');
+            if (window.EmbeddedChatbot && window.EmbeddedChatbot.initialize) {
+              window.EmbeddedChatbot.initialize('embedded-chatbot-container');
             }     
           };
-          script.onerror = () => console.error('Widget failed to load');
+          script.onerror = (e) => console.error('Widget failed to load:', e);
           document.body.appendChild(script);
         })();
       </script>

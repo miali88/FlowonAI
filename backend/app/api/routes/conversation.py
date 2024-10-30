@@ -29,7 +29,7 @@ event_broadcasters = {}
 conversation_logs = defaultdict(list)
 
 # In-memory cache for agent_ids and user_ids
-agent_user_cache = {}
+agent_user_cache: Dict[str, str] = {}
 
 def load_agent_user_cache():
     print("loading agent-user cache")
