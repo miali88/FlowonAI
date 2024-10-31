@@ -64,7 +64,7 @@ export function LiveKitEntry({
           autoGainControl: true,
         }
       }}
-      roomOptions={{
+      options={{
         adaptiveStream: true,
         dynacast: true,
         element: document.querySelector('flowon-widget')?.shadowRoot?.getElementById('flowon-shadow-root') || undefined,
