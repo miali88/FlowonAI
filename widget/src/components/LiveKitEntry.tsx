@@ -1,4 +1,3 @@
-
 /* VERSION 2.0.0 */
 import {
   LiveKitRoom,
@@ -51,7 +50,25 @@ export function LiveKitEntry({
       token={token}
       serverUrl={url}
       name={roomName}
-      connectOptions={{ autoSubscribe: true }}
+      connectOptions={{
+        autoSubscribe: true,
+        publishDefaults: {
+          simulcast: true,
+          videoSimulcastLayers: [
+            { width: 640, height: 360, fps: 30 },
+          ],
+        },
+        audioCaptureDefaults: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }
+      }}
+      roomOptions={{
+        adaptiveStream: true,
+        dynacast: true,
+        element: document.querySelector('flowon-widget')?.shadowRoot?.getElementById('flowon-shadow-root') || undefined,
+      }}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
