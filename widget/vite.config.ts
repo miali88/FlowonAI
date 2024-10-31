@@ -10,15 +10,16 @@ export default defineConfig({
   css: {
     modules: {
       localsConvention: 'camelCase',
+      scopeBehaviour: 'local',  // Shadow DOM scoping
     },
     postcss: {
       plugins: [autoprefixer],
     },
   },
   build: {
-    cssCodeSplit: false,
+    cssCodeSplit: false,  // Keep as false for your widget use case
   },
   define: {
     'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
-  },
+  }
 });
