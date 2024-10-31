@@ -35,34 +35,13 @@
     <div class="landing">
       <h1>Welcome to the Conversational Web</h1>
     </div>
-    <div id="root"></div>
-    <script>
-      // Add debugging
-      console.log('Config initialization...');
+    <div id="embedded-chatbot-container"></div>
+    <script defer>
       window.embeddedChatbotConfig = {
         agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
         domain: 'http://localhost:3001'
       };
-      console.log('Config loaded:', window.embeddedChatbotConfig);
     </script>
-    <!-- Add a container for the widget -->
-    <div id="embedded-chatbot-container">
-      <script>
-        (function() {
-          const script = document.createElement('script');
-          script.type = 'module';
-          script.src = 'src/main.tsx';
-          script.async = true;
-          script.onload = () => {
-            console.log('Widget script loaded');
-            if (window.initializeWidget) {
-              window.initializeWidget('embedded-chatbot-container');
-            }     
-          };
-          script.onerror = () => console.error('Widget failed to load');
-          document.body.appendChild(script);
-        })();
-      </script>
-    </div>
+    <script defer type="module" src="/src/main.tsx"></script>
   </body>
 </html>

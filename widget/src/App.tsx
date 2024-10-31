@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ChatBotMini from './components/ChatBotMini';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
@@ -24,12 +24,17 @@ function App({ agentId, domain, containerId = 'flowon-widget-root' }: AppProps) 
     console.log('Stream started');
   };
 
-  return ( 
+  return (
     <Layout>
-      <div 
-        id={containerId} 
-        className="flowon-widget" 
-        style={{ isolation: 'isolate' }}
+      <div
+        id={containerId}
+        className="flowon-widget-container"
+        style={{
+          isolation: 'isolate',
+          all: 'unset',
+          fontFamily: 'inherit',
+          boxSizing: 'border-box',
+        }}
       >
         <ErrorBoundary>
           <ChatBotMini

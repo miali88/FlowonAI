@@ -9,7 +9,6 @@ import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
 import postcssImport from 'postcss-import';
-import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 
 export default defineConfig({
@@ -64,10 +63,6 @@ export default defineConfig({
       extract: false,
       plugins: [
         postcssImport(),
-        tailwindcss({
-          prefix: 'flowon-',
-          important: '#flowon-widget-root',
-        }),
         autoprefixer(),
       ]
     }),

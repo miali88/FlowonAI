@@ -145,21 +145,15 @@ frameborder="0"
 ></iframe>`;
 
   const scriptCode = `
-  
-<div id="embedded-chatbot-container">
-  <script>
-    window.embeddedAgentConfig = {
-      agentId: "${selectedAgent?.id}",
-      domain: "www.flowonwidget.pages.dev"
-    }
-  </script>
-  <script
-    src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"
-    agentId="${selectedAgent?.id}"
-    domain="www.flowonwidget.pages.dev"
-    defer
-  ></script>
-</div>`;
+    <div id="embedded-chatbot-container"></div>
+    <script defer>
+      window.embeddedChatbotConfig = {
+        agentId: "${selectedAgent?.id}",
+        domain: "www.flowonwidget.pages.dev"
+      };
+    </script>
+    <script defer type="module" src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"></script>
+`;
 
   const handleConfigureFeature = (featureId: string) => {
     setCurrentFeature(featureId);
