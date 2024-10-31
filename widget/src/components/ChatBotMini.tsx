@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
-import ShadowDOM from 'react-shadow';
 import '../styles.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
