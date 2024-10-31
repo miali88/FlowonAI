@@ -8,9 +8,15 @@ export default defineConfig({
     port: 3000,
   },
   css: {
+    modules: {
+      localsConvention: 'camelCase',
+    },
     postcss: {
       plugins: [autoprefixer],
     },
+  },
+  build: {
+    cssCodeSplit: false,
   },
   define: {
     'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),

@@ -1,13 +1,11 @@
-/* VERSION 2.0.0 */
-
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import styles from './ChatBotMini.module.css';
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import ShadowDOM from 'react-shadow';
+import '../styles.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const API_BASE_URL = 'https://app.flowon.ai/api/v1';
-console.log('API_BASE_URL:', API_BASE_URL); // Add this line temporarily
+const DEFAULT_API_BASE_URL = 'https://app.flowon.ai/api/v1';
 
 interface ChatBotMiniProps {
   agentId: string;
@@ -30,6 +28,7 @@ interface ChatBotMiniProps {
   bypassShowChatInputCondition?: boolean;
   localParticipant: LocalParticipant | null;
   setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
+  apiBaseUrl?: string;
 }
 
 const userId = "visitor";
@@ -37,6 +36,7 @@ const userId = "visitor";
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
   eventBridge,
+  apiBaseUrl = DEFAULT_API_BASE_URL,
   isStreaming,
   setIsStreaming,
   isLiveKitActive,
@@ -50,6 +50,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   onStreamEnd,
   onStreamStart,
   bypassShowChatInputCondition = false,
+  localParticipant,
+  setLocalParticipant,
 }) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
@@ -59,11 +61,13 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [email, setEmail] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
-  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isMinimizing, setIsMinimizing] = useState(false);
   const minimizeTimer = useRef<NodeJS.Timeout>();
+  const [isError, setIsError] = useState<string | null>(null);
+
+  const apiUrl = useMemo(() => apiBaseUrl, [apiBaseUrl]);
 
   useEffect(() => {
     if (liveKitRoom) {
@@ -73,7 +77,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   useEffect(() => {
     if (participantIdentity) {
-      const eventSource = new EventSource(`${API_BASE_URL}/conversation/events/${participantIdentity}`);
+      const eventSource = new EventSource(`${apiUrl}/conversation/events/${participantIdentity}`);
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -86,7 +90,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         eventSource.close();
       };
     }
-  }, [participantIdentity]);
+  }, [participantIdentity, apiUrl]);
 
   useEffect(() => {
     if (!isStreaming) {
@@ -94,7 +98,24 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     }
   }, [isStreaming]);
 
+  useEffect(() => {
+    setIsExpanded(true);
+  }, []);
+
+  // Add component lifecycle logging
+  useEffect(() => {
+    console.log('ChatBotMini mounted');
+    return () => {
+      console.log('ChatBotMini unmounted');
+      // Cleanup any active connections
+      if (liveKitRoom) {
+        liveKitRoom.disconnect();
+      }
+    };
+  }, []);
+
   const handleStreamToggle = useCallback(async () => {
+    setIsError(null); // Reset error state
     if (isStreaming) {
       setIsStreaming(false);
       setIsLiveKitActive(false);
@@ -110,7 +131,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     } else {
       setIsConnecting(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
+        const response = await fetch(`${apiUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -148,18 +169,17 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           timestamp: new Date().toISOString()
         });
       } catch (error) {
-        console.error('Failed to connect:', error);
-        // Add error event dispatch
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setIsError(errorMessage);
         eventBridge.dispatchHostEvent('flowon-error', {
-          error: 'Failed to connect to streaming service',
+          error: errorMessage,
           timestamp: new Date().toISOString()
         });
-        alert('Failed to connect to the streaming service. Please try again later.');
       } finally {
         setIsConnecting(false);
       }
     }
-  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, eventBridge]);
+  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, eventBridge, apiUrl]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +188,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/conversation/chat_message`, {
+      const response = await fetch(`${apiUrl}/conversation/chat_message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +217,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity]);
+  }, [fullName, email, contactNumber, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity, apiUrl]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -226,103 +246,109 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, []);
 
   return (
-    <div 
-      className={`${styles.chatbot} 
-        ${isExpanded ? styles.expanded : styles.minimized}
-        ${isMinimizing ? styles.minimizing : ''}`}
-      onClick={() => !isExpanded && setIsExpanded(true)}
-    >
-      {isExpanded ? (
-        <>
-          <header className={styles.header}>
-            <h2>Flowon</h2>
-            <button 
-              className={styles.closeButton}
-              onClick={handleMinimize}
-            >
-            </button>
-          </header>
-          <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
-            <MorphingStreamButton
-              onStreamToggle={handleStreamToggle}
-              isStreaming={isStreaming}
-              isConnecting={isConnecting}
-            />
-            {isLiveKitActive && token && url && roomName && (
-              <>
-                <LiveKitEntry 
-                  token={token} 
-                  url={url} 
-                  roomName={roomName}
-                  isStreaming={isStreaming} 
-                  onStreamEnd={onStreamEnd} 
-                  onStreamStart={onStreamStart}
-                  setRoom={setLiveKitRoom}
-                  setLocalParticipant={setLocalParticipant}
-                  setParticipantIdentity={setParticipantIdentity}
-                  options={{
-                    adaptiveStream: true,
-                    dynacast: true,
-                    element: eventBridge.getLiveKitContainer?.() || null
-                  }}
-                />
-                {isStreaming && localParticipant && (
-                  <button
-                    onClick={handleMuteToggle}
-                    className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
-                  >
-                    {isMuted ? 'Unmute' : 'Mute'}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-          {(showChatInput && isStreaming) && (
-            <div className={styles.chatInput}>
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                  required
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email Address"
-                  required
-                />
-                <input
-                  type="tel"
-                  value={contactNumber}
-                  onChange={(e) => setContactNumber(e.target.value)}
-                  placeholder="Contact Number (optional)"
-                />
-                <button type="submit" className={styles.submitBtn}>
-                  Submit
-                </button>
-              </form>
+      <div className="flowon-widget-wrapper">
+        <div 
+          className={`chatbot 
+            ${isExpanded ? 'expanded' : 'minimized'}
+            ${isMinimizing ? 'minimizing' : ''}`}
+          onClick={() => !isExpanded && setIsExpanded(true)}
+        >
+          {isError && (
+            <div className="error-message">
+              {isError}
             </div>
           )}
-          
-          {/* Update the footer */}
-          <footer className={styles.footer}>
-            <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
-            <span className={styles.footerText}>Powered by Flowon.AI</span>
-          </footer>
-        </>
-      ) : (
-        <div className={styles.minimizedContent}>
-          <img 
-            src="/flowon_see_though_v2.png"
-            alt="Flowon" 
-            className={styles.minimizedLogo}
-          />
+          {isExpanded ? (
+            <>
+              <header className="header">
+                <h2>Flowon</h2>
+                <button 
+                  className="closeButton"
+                  onClick={handleMinimize}
+                >
+                </button>
+              </header>
+              <div className="chatbox flex items-center justify-center" ref={chatboxRef}>
+                <MorphingStreamButton
+                  onStreamToggle={handleStreamToggle}
+                  isStreaming={isStreaming}
+                  isConnecting={isConnecting}
+                />
+                {isLiveKitActive && token && url && roomName && (
+                  <>
+                    <LiveKitEntry 
+                      token={token} 
+                      url={url} 
+                      roomName={roomName}
+                      isStreaming={isStreaming} 
+                      onStreamEnd={onStreamEnd} 
+                      onStreamStart={onStreamStart}
+                      setRoom={setLiveKitRoom}
+                      setLocalParticipant={setLocalParticipant}
+                      setParticipantIdentity={setParticipantIdentity}
+                      options={{
+                        adaptiveStream: true,
+                        dynacast: true,
+                        element: eventBridge.getLiveKitContainer?.() || null
+                      }}
+                    />
+                    {isStreaming && localParticipant && (
+                      <button
+                        onClick={handleMuteToggle}
+                        className={`muteButton ${isMuted ? 'muted' : ''}`}
+                      >
+                        {isMuted ? 'Unmute' : 'Mute'}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              {(showChatInput && isStreaming) && (
+                <div className="chatInput">
+                  <form onSubmit={handleSubmit}>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Full Name"
+                      required
+                    />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email Address"
+                      required
+                    />
+                    <input
+                      type="tel"
+                      value={contactNumber}
+                      onChange={(e) => setContactNumber(e.target.value)}
+                      placeholder="Contact Number (optional)"
+                    />
+                    <button type="submit" className="submitBtn">
+                      Submit
+                    </button>
+                  </form>
+                </div>
+              )}
+              
+              <footer className="footer">
+                <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className="footerLogo" />
+                <span className="footerText">Powered by Flowon.AI</span>
+              </footer>
+            </>
+          ) : (
+            <div className="minimizedContent">
+              <img 
+                src="/flowon_see_though_v2.png"
+                alt="Flowon" 
+                className="minimizedLogo"
+              />
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
   );
 };
 

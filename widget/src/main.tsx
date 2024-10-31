@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import ChatBotMini from './components/ChatBotMini';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
-// import './index.css';
 import './styles.css';
 
 const WIDGET_NAMESPACE = 'FlowonWidget';
@@ -18,42 +17,83 @@ const ShadowContainer: React.FC<{
 
   useEffect(() => {
     if (hostRef.current && !shadowRef.current) {
-      shadowRef.current = hostRef.current.attachShadow({ mode: 'open' });
-      
-      const linkElement = document.createElement('link');
-      linkElement.rel = 'stylesheet';
-      linkElement.href = new URL('./styles.css', import.meta.url).href;
-      shadowRef.current.appendChild(linkElement);
+      try {
+        shadowRef.current = hostRef.current.attachShadow({ mode: 'open' });
+        
+        // Create wrapper div with class for scoping
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flowon-widget-wrapper';
+        
+        // Create and inject styles
+        const styles = document.createElement('style');
+        
+        // Load styles and ensure they're injected before rendering
+        import('./styles.css?inline')
+          .then(module => {
+            // Directly use the imported CSS
+            styles.textContent = module.default;
+            wrapper.appendChild(styles);
+            
+            // Create container for React content
+            const container = document.createElement('div');
+            container.id = 'flowon-shadow-root';
+            wrapper.appendChild(container);
+            
+            // Append wrapper to shadow root
+            shadowRef.current?.appendChild(wrapper);
 
-      const container = document.createElement('div');
-      container.id = 'flowon-shadow-root';
-      shadowRef.current.appendChild(container);
+            // Setup event bridge
+            const eventBridge = {
+              dispatchHostEvent: (eventName: string, detail: any) => {
+                const event = new CustomEvent(eventName, {
+                  bubbles: true,
+                  composed: true,
+                  detail
+                });
+                hostRef.current?.dispatchEvent(event);
+              },
+              getLiveKitContainer: () => container
+            };
 
-      const eventBridge = {
-        dispatchHostEvent: (eventName: string, detail: any) => {
-          const event = new CustomEvent(eventName, {
-            bubbles: true,
-            composed: true,
-            detail
+            // Render React app only after styles are injected
+            const root = createRoot(container);
+            root.render(
+              <React.StrictMode>
+                <Layout>
+                  <ErrorBoundary>
+                    <WidgetContent 
+                      agentId={agentId} 
+                      domain={domain}
+                      eventBridge={eventBridge}
+                    />
+                  </ErrorBoundary>
+                </Layout>
+              </React.StrictMode>
+            );
+          })
+          .catch(error => {
+            console.error('Failed to load styles:', error);
+            throw error;
           });
-          hostRef.current?.dispatchEvent(event);
-        }
-      };
-
-      const root = createRoot(container);
-      root.render(
-        <React.StrictMode>
-          <Layout>
-            <ErrorBoundary>
-              <WidgetContent 
-                agentId={agentId} 
-                domain={domain}
-                eventBridge={eventBridge}
-              />
-            </ErrorBoundary>
-          </Layout>
-        </React.StrictMode>
-      );
+      } catch (error) {
+        console.error('Failed to attach Shadow DOM:', error);
+        const eventBridge = {
+          dispatchHostEvent: (eventName: string, detail: any) => {
+            const event = new CustomEvent(eventName, {
+              bubbles: true,
+              composed: true,
+              detail
+            });
+            hostRef.current?.dispatchEvent(event);
+          }
+        };
+        
+        eventBridge.dispatchHostEvent('flowon-error', {
+          error: 'Failed to attach Shadow DOM',
+          details: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   }, [agentId, domain]);
 
@@ -110,65 +150,77 @@ function WidgetContent({ agentId, domain, eventBridge }: WidgetContentProps) {
       bypassShowChatInputCondition={true}
       localParticipant={null}
       setLocalParticipant={() => {}}
-      userId="test-user-id"
       eventBridge={eventBridge}
     />
   );
 }
-
 // Update initializeWidget function
 const initializeWidget = (containerId: string) => {
-  // Prevent multiple initializations
-  if ((window as any)[WIDGET_NAMESPACE]?.initialized) {
-    console.warn('Widget already initialized');
-    return;
+  try {
+    console.debug('Initializing widget...');
+    
+    // Prevent multiple initializations
+    if ((window as any)[WIDGET_NAMESPACE]?.initialized) {
+      throw new Error('Widget already initialized');
+    }
+
+    const container = document.getElementById(containerId);
+    if (!container) {
+      throw new Error(`Container with id "${containerId}" not found`);
+    }
+
+    const config = (window as any).embeddedChatbotConfig;
+    if (!config?.agentId || !config?.domain) {
+      throw new Error('Invalid or missing embeddedChatbotConfig');
+    }
+
+    const root = createRoot(container);
+    root.render(
+      <React.StrictMode>
+        <ShadowContainer 
+          agentId={config.agentId} 
+          domain={config.domain} 
+        />
+      </React.StrictMode>
+    );
+
+    // Mark as initialized
+    (window as any)[WIDGET_NAMESPACE] = {
+      initialized: true,
+      initialize: initializeWidget,
+      version: process.env.WIDGET_VERSION
+    };
+
+    setupGlobalEventListeners();
+
+    console.debug('Widget initialized successfully');
+  } catch (error) {
+    console.error('Widget initialization failed:', error);
+    document.dispatchEvent(new CustomEvent('flowon-error', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        error: 'Widget initialization failed',
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      }
+    }));
   }
-
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`Container with id "${containerId}" not found`);
-    return;
-  }
-
-  const config = (window as any).embeddedChatbotConfig;
-  if (!config || !config.agentId || !config.domain) {
-    console.error('EmbeddedChatbotConfig is missing or incomplete.');
-    return;
-  }
-
-  const root = createRoot(container);
-  root.render(
-    <React.StrictMode>
-      <ShadowContainer 
-        agentId={config.agentId} 
-        domain={config.domain} 
-      />
-    </React.StrictMode>
-  );
-
-  // Mark as initialized
-  (window as any)[WIDGET_NAMESPACE] = {
-    initialized: true,
-    initialize: initializeWidget,
-    version: process.env.WIDGET_VERSION
-  };
-
-  setupGlobalEventListeners();
 };
 
 // Add setupGlobalEventListeners function
 const setupGlobalEventListeners = () => {
-  document.addEventListener('flowon-stream-start', (e: CustomEvent) => {
-    console.log('Stream started:', e.detail);
-  });
+  document.addEventListener('flowon-stream-start', ((e: Event) => {
+    console.log('Stream started:', (e as CustomEvent).detail);
+  }) as EventListener);
 
-  document.addEventListener('flowon-stream-end', (e: CustomEvent) => {
-    console.log('Stream ended:', e.detail);
-  });
+  document.addEventListener('flowon-stream-end', ((e: Event) => {
+    console.log('Stream ended:', (e as CustomEvent).detail);
+  }) as EventListener);
 
-  document.addEventListener('flowon-error', (e: CustomEvent) => {
-    console.error('Flowon error:', e.detail);
-  });
+  document.addEventListener('flowon-error', ((e: Event) => {
+    console.error('Flowon error:', (e as CustomEvent).detail);
+  }) as EventListener);
 };
 
 // Initialize the widget after the DOM is fully loaded
@@ -182,3 +234,4 @@ if (document.readyState === 'loading') {
 (window as any).EmbeddedChatbot = {
   initialize: initializeWidget,
 };
+

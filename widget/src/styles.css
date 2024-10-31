@@ -1,288 +1,199 @@
-/* Import Google Fonts via @import within shadow root */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,700&display=swap");
-
-/* Root/Theme Variables - Scoped to shadow root */
+/* Reset styles for shadow DOM */
 :host {
-  /* Theme Colors */
-  --flowon-colors-primary: #0baadf;
-  --flowon-colors-secondary: #0b8aaf;
-  --flowon-colors-background: #ffffff;
-  --flowon-colors-text: #000000;
-  --flowon-colors-border: #eeeeee;
-  --flowon-colors-gradient-start: rgba(45, 45, 45, 0.95);
-  --flowon-colors-gradient-end: rgba(75, 75, 75, 0.95);
-  --flowon-colors-shadow: rgba(0, 0, 0, 0.2);
-  --flowon-colors-error: #721c24;
-  --flowon-colors-error-bg: #f8d7da;
-  
-  /* Spacing */
-  --flowon-spacing-xs: 8px;
-  --flowon-spacing-sm: 10px;
-  --flowon-spacing-md: 20px;
-  --flowon-spacing-lg: 32px;
-  
-  /* Border */
-  --flowon-border-radius-sm: 10px;
-  --flowon-border-radius-md: 20px;
-  --flowon-border-radius-full: 9999px;
-  
-  /* Animation */
-  --flowon-transition-duration: 0.3s;
-  --flowon-transition-timing: ease-in-out;
-  
-  /* Z-index */
-  --flowon-z-index-base: 2147483647;
-  --flowon-z-index-overlay: 2147483648;
-
-  /* Component Specific */
-  --flowon-chat-min-size: 60px;
-  --flowon-chat-expanded-width: 350px;
-  --flowon-chat-expanded-height: 500px;
-
-  /* Reset all inherited styles */
   all: initial;
-  
-  /* Base styles for the host */
   display: block;
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  box-sizing: border-box;
-  contain: content;
 }
 
-/* Ensure all elements inside shadow DOM inherit box-sizing */
-*, *::before, *::after {
-  box-sizing: inherit;
-  margin: 0;
-  padding: 0;
+/* CSS Custom Properties */
+.flowon-widget-wrapper {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: rgba(31, 38, 135, 0.15);
+  --text-primary: #333;
+  --accent-color: #666;
 }
 
-/* Main chatbot container */
-.chatbot {
+/* Scope all other styles to the wrapper */
+.flowon-widget-wrapper .chatbot {
   position: fixed;
-  right: var(--flowon-spacing-md);
-  bottom: var(--flowon-spacing-md);
-  z-index: var(--flowon-z-index-base);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-radius: var(--flowon-border-radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 var(--flowon-colors-shadow);
+  bottom: 20px;
+  right: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  width: 360px;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.flowon-widget-wrapper .chatbot.minimized {
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.flowon-widget-wrapper .chatbot.minimizing {
+  transform: scale(0.3);
+  opacity: 0.8;
+}
+
+.flowon-widget-wrapper .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.flowon-widget-wrapper .header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.flowon-widget-wrapper .closeButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  position: relative;
+}
+
+.flowon-widget-wrapper .closeButton::before,
+.flowon-widget-wrapper .closeButton::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background: var(--accent-color);
+  top: 50%;
+  left: 50%;
+}
+
+.flowon-widget-wrapper .closeButton::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.flowon-widget-wrapper .closeButton::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.flowon-widget-wrapper .chatbox {
+  padding: 20px;
+  min-height: 300px;
   display: flex;
   flex-direction: column;
-  pointer-events: auto;
-  isolation: isolate;
-  opacity: 1;
-  transition: opacity var(--flowon-transition-duration) ease-in-out;
-  overflow: hidden;
+  gap: 15px;
 }
 
-/* Minimized State */
-.minimized {
-  width: var(--flowon-chat-min-size);
-  height: var(--flowon-chat-min-size);
-  border-radius: calc(var(--flowon-chat-min-size) / 2);
-  cursor: pointer;
-  overflow: hidden;
-  background: var(--flowon-colors-background);
-  box-shadow: 0 4px 12px var(--flowon-colors-shadow);
+.flowon-widget-wrapper .chatInput {
+  padding: 15px;
+  border-top: 1px solid var(--glass-border);
 }
 
-.minimized:hover {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.minimized .header,
-.minimized .chatbox,
-.minimized .chatInput,
-.minimized .footer {
-  display: none;
-}
-
-/* Expanded State */
-.expanded {
-  width: var(--flowon-chat-expanded-width);
-  height: var(--flowon-chat-expanded-height);
-  max-width: 90vw;
-  max-height: 90vh;
-}
-
-/* Header Styles */
-.header {
-  background: linear-gradient(135deg, 
-    var(--flowon-gradient-start), 
-    var(--flowon-gradient-end));
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  padding: 20px 0;
-  text-align: center;
-  border-radius: 20px 20px 0 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.header h2 {
-  color: rgba(105, 105, 105, 0.9);
-  font-size: 1.6rem;
-  font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Chatbox */
-.chatbox {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 20px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-
-/* Chat Messages */
-.chat {
+.flowon-widget-wrapper .chatInput form {
   display: flex;
-  list-style: none;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.outgoing {
-  justify-content: flex-end;
-  margin: 20px 0;
-}   
-
-.incoming {
-  margin: 20px 0;
+.flowon-widget-wrapper .chatInput input {
+  padding: 10px 15px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(5px);
+  font-size: 14px;
 }
 
-.chat p {
-  white-space: pre-wrap;
-  padding: 12px 16px;
-  border-radius: 10px 10px 0 10px;
-  max-width: 75%;
-  color: #fff;
-  font-size: 0.95rem;
-  background: linear-gradient(135deg, 
-    rgba(100, 100, 100, 0.9), 
-    rgba(80, 80, 80, 0.9));
+.flowon-widget-wrapper .submitBtn {
+  background: rgba(100, 100, 100, 0.2);
+  border: 1px solid var(--glass-border);
+  padding: 10px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.incoming p {
-  color: #000;
-  background: #f0f0f0;
-  border-radius: 10px 10px 10px 0;
+.flowon-widget-wrapper .submitBtn:hover {
+  background: rgba(100, 100, 100, 0.3);
 }
 
-.chat p.error {
-  color: var(--flowon-colors-error);
-  background: var(--flowon-colors-error-bg);
+.flowon-widget-wrapper .muteButton {
+  padding: 8px 16px;
+  background: rgba(100, 100, 100, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* Footer */
-.footer {
+.flowon-widget-wrapper .muteButton.muted {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.2);
+}
+
+.flowon-widget-wrapper .footer {
+  padding: 10px 20px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flowon-widget-wrapper .footerLogo {
+  height: 24px;
+  width: auto;
+}
+
+.flowon-widget-wrapper .footerText {
+  color: var(--accent-color);
+  font-size: 12px;
+}
+
+.flowon-widget-wrapper .error-message {
+  background: rgba(255, 0, 0, 0.1);
+  color: #d32f2f;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin: 10px;
+  font-size: 14px;
+}
+
+.flowon-widget-wrapper .minimizedContent {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 10px;
-  background: rgba(240, 240, 240, 0.5);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0 0 20px 20px;
 }
 
-.footerLogo {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-}
-
-.footerText {
-  font-size: 12px;
-  color: #666;
-}
-
-/* Mute Button */
-.muteButton {
-  margin-top: 10px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.muteButton:not(.muted) {
-  background: rgba(255, 255, 255, 0.9);
-  color: #666;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(200, 200, 200, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.muteButton.muted {
-  background-color: #ff4444;
-  color: white;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .chatbot {
-    width: 90vw;
-    height: 80vh;
-    right: 5vw;
-    bottom: 10vh;
-    border-radius: 0;
-  }
-  
-  .header,
-  .footer {
-    border-radius: 0;
-  }
-}
-
-/* Minimize/Expand Transitions */
-.minimizing {
-  opacity: 0;
-}
-
-.minimizedContent {
+.flowon-widget-wrapper .minimizedLogo {
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-}
-
-.minimized .minimizedContent {
-  opacity: 1;
-}
-
-.minimizedContent .minimizedLogo {
-  width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
-  opacity: 1;
 }
 
-/* Close Button */
-.closeButton {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  background: none;
-  border: none;
-  color: rgba(105, 105, 105, 0.9);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 5px;
-  line-height: 1;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+/* Animation for expanded state */
+.flowon-widget-wrapper .chatbot.expanded {
+  animation: slideIn 0.3s ease-out;
 }
 
-.closeButton:hover {
-  opacity: 1;
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
