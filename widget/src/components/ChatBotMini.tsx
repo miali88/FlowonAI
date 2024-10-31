@@ -11,6 +11,10 @@ console.log('API_BASE_URL:', API_BASE_URL); // Add this line temporarily
 
 interface ChatBotMiniProps {
   agentId: string;
+  eventBridge: {
+    dispatchHostEvent: (eventName: string, detail: any) => void;
+    getLiveKitContainer?: () => Element | null;
+  };
   isStreaming: boolean;
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
   isLiveKitActive: boolean;
@@ -32,6 +36,7 @@ const userId = "visitor";
 
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
+  eventBridge,
   isStreaming,
   setIsStreaming,
   isLiveKitActive,
@@ -47,8 +52,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   bypassShowChatInputCondition = false,
 }) => {
   const chatboxRef = useRef<HTMLUListElement>(null);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
-  const sendBtnRef = useRef<HTMLSpanElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [showChatInput, setShowChatInput] = useState(false);
@@ -98,6 +101,12 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       setLiveKitRoom(null);
       setRoomName(null);
       setShowChatInput(false);
+      
+      // Add event dispatch for stream end
+      eventBridge.dispatchHostEvent('flowon-stream-end', {
+        agentId,
+        timestamp: new Date().toISOString()
+      });
     } else {
       setIsConnecting(true);
       try {
@@ -131,15 +140,26 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setRoomName(roomName);
         setIsLiveKitActive(true);
         setIsStreaming(true);
+
+        // Add event dispatch for stream start
+        eventBridge.dispatchHostEvent('flowon-stream-start', {
+          agentId,
+          roomName,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Failed to connect:', error);
-        // Add user-friendly error handling
+        // Add error event dispatch
+        eventBridge.dispatchHostEvent('flowon-error', {
+          error: 'Failed to connect to streaming service',
+          timestamp: new Date().toISOString()
+        });
         alert('Failed to connect to the streaming service. Please try again later.');
       } finally {
         setIsConnecting(false);
       }
     }
-  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting]);
+  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, eventBridge]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,7 +240,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               className={styles.closeButton}
               onClick={handleMinimize}
             >
-              ×
             </button>
           </header>
           <div className={`${styles.chatbox} flex items-center justify-center`} ref={chatboxRef}>
@@ -241,6 +260,11 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
                   setRoom={setLiveKitRoom}
                   setLocalParticipant={setLocalParticipant}
                   setParticipantIdentity={setParticipantIdentity}
+                  options={{
+                    adaptiveStream: true,
+                    dynacast: true,
+                    element: eventBridge.getLiveKitContainer?.() || null
+                  }}
                 />
                 {isStreaming && localParticipant && (
                   <button
