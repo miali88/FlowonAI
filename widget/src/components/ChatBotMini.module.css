@@ -1,13 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,700&display=swap");
 
-:root {
-  --flowon-primary: #0baadf;
-  --flowon-secondary: #0b8aaf;
-  --flowon-background: #fff;
-  --flowon-text: #000;
-  --flowon-border: #eee;
-} 
-
 .chatbot {
   position: fixed;
   right: var(--flowon-spacing-md);
@@ -16,7 +8,7 @@
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-radius: 20px;
+  border-radius: var(--flowon-border-radius-md);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px 0 var(--flowon-colors-shadow);
   display: flex;
@@ -29,13 +21,13 @@
 }
 
 .minimized {
-  width: 60px;
-  height: 60px;
-  border-radius: 30px;
+  width: var(--flowon-chat-min-size);
+  height: var(--flowon-chat-min-size);
+  border-radius: calc(var(--flowon-chat-min-size) / 2);
   cursor: pointer;
   overflow: hidden;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--flowon-colors-background);
+  box-shadow: 0 4px 12px var(--flowon-colors-shadow);
   opacity: 1;
 }
 
@@ -54,8 +46,8 @@
 }
 
 .expanded {
-  width: 350px;
-  height: 500px;
+  width: var(--flowon-chat-expanded-width);
+  height: var(--flowon-chat-expanded-height);
   max-width: 90vw;
   max-height: 90vh;
   opacity: 1;
@@ -136,8 +128,8 @@
 }
 
 .chat p.error {
-  color: #721c24;
-  background: #f8d7da;
+  color: var(--flowon-colors-error);
+  background: var(--flowon-colors-error-bg);
 }
 
 .incoming span {

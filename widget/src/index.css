@@ -1,5 +1,5 @@
 :root {
-  /* Theme */
+  /* Theme Colors */
   --flowon-colors-primary: #0baadf;
   --flowon-colors-secondary: #0b8aaf;
   --flowon-colors-background: #ffffff;
@@ -8,6 +8,8 @@
   --flowon-colors-gradient-start: rgba(45, 45, 45, 0.95);
   --flowon-colors-gradient-end: rgba(75, 75, 75, 0.95);
   --flowon-colors-shadow: rgba(0, 0, 0, 0.2);
+  --flowon-colors-error: #721c24;
+  --flowon-colors-error-bg: #f8d7da;
   
   /* Spacing */
   --flowon-spacing-xs: 8px;
@@ -27,6 +29,11 @@
   /* Z-index */
   --flowon-z-index-base: 2147483647;
   --flowon-z-index-overlay: 2147483648;
+
+  /* Component Specific */
+  --flowon-chat-min-size: 60px;
+  --flowon-chat-expanded-width: 350px;
+  --flowon-chat-expanded-height: 500px;
 }
 
 /* Widget Root Container */
