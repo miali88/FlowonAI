@@ -39,7 +39,7 @@ import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
 import KnowledgeBaseContent from "./Knowledgebase/page";
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
-import Integrations from "@/app/dashboard/Integrations/page";
+import IntegrationsPage from "@/app/dashboard/Integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 
 // Add this interface at the top of your file 
@@ -241,7 +241,7 @@ function AdminDashboard() {
       case "Agent Hub":
         return <Lab />;
       case "Integrations":
-        return <Integrations />;
+        return <IntegrationsPage />;
       default:
         return <Lab />; // Change default to Lab (Agent Hub)
     }
