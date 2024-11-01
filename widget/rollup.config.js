@@ -10,6 +10,7 @@ import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
 import postcssImport from 'postcss-import';
 import autoprefixer from 'autoprefixer';
+import fs from 'fs';
 
 export default defineConfig({
   input: 'src/main.tsx',
@@ -28,7 +29,58 @@ export default defineConfig({
       preventAssignment: true,
       'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.WIDGET_VERSION': JSON.stringify(process.env.npm_package_version),
+      include: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx']
     }),
+    postcss({
+      extensions: ['.css'],
+      minimize: true,
+      inject: true,
+      modules: {
+        generateScopedName: 'flowon-widget-[hash:base64:8]',
+        scopeBehaviour: 'local',
+      },
+      extract: true,
+      sourceMap: true,
+      plugins: [
+        postcssImport(),
+        autoprefixer(),
+      ],
+      exclude: ['**/*.css?inline'],
+      onExtract(getExtracted) {
+        const extracted = getExtracted();
+        if (extracted) {
+          const cssText = extracted.code;
+          return {
+            id: 'generated-styles',
+            code: `export default ${JSON.stringify(cssText)};`,
+            map: { mappings: '' }
+          };
+        }
+      }
+    }),
+    {
+      name: 'css-inline',
+      resolveId(source, importer) {
+        if (source.endsWith('.css?inline')) {
+          const path = source.replace('?inline', '');
+          return this.resolve(path, importer)
+            .then(resolved => resolved?.id);
+        }
+        return null;
+      },
+      async load(id) {
+        if (id.endsWith('.css')) {
+          try {
+            const css = await fs.promises.readFile(id, 'utf-8');
+            return `export default \`${css.replace(/`/g, '\\`')}\`;`;
+          } catch (error) {
+            console.error('Error loading CSS file:', id, error);
+            return null;
+          }
+        }
+        return null;
+      }
+    },
     strip({
       include: '**/*.mjs',
       comments: 'none',
@@ -39,7 +91,13 @@ export default defineConfig({
     }),
     commonjs(),
     json(),
-    typescript({ tsconfig: './tsconfig.app.json' }),
+    typescript({
+      tsconfig: './tsconfig.app.json',
+      compilerOptions: {
+        allowImportingTsExtensions: true,
+        noEmit: true,
+      }
+    }),
     babel({
       babelHelpers: 'bundled',
       exclude: 'node_modules/**',
@@ -49,22 +107,6 @@ export default defineConfig({
         ['@babel/preset-react', { runtime: 'automatic' }],
         '@babel/preset-typescript',
       ],
-    }),
-    postcss({
-      extensions: ['.css'],
-      minimize: true,
-      inject: {
-        insertAt: 'top'
-      },
-      modules: {
-        generateScopedName: 'flowon-widget-[hash:base64:8]',
-        scopeBehaviour: 'local',
-      },
-      extract: false,
-      plugins: [
-        postcssImport(),
-        autoprefixer(),
-      ]
     }),
     terser(),
   ],
