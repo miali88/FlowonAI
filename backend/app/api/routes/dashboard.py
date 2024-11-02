@@ -81,7 +81,7 @@ async def upload_file_handler(
         logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
-        new_item = supabase.table('knowledge_base').insert({
+        new_item = supabase.table('user_text_files').insert({
             "title": file.filename,
             "content": content,
             "user_id": x_user_id  # Use the user ID from the header
@@ -113,6 +113,7 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.post("/knowledge_base")
 async def create_item_handler(request: Request, 

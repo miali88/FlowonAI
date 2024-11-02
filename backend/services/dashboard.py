@@ -44,58 +44,72 @@ def sliding_window_chunking(text, max_window_size=600, overlap=200):
     return chunks
 
 async def insert_chunk(parent_id, content, chunk_index, embedding, user_id):
-    print("func insert_chunk...")
-    # Run the synchronous Supabase operation in a separate thread
-    await asyncio.to_thread(
-        supabase.table('chunks').insert({
-            'parent_id': parent_id,
-            'content': content,
-            'chunk_index': chunk_index,
-            'jina_embedding': embedding,
-            'user_id': user_id,
-        }).execute
-    )
+    logger.info(f"Inserting chunk {chunk_index} for document {parent_id}")
+    try:
+        await asyncio.to_thread(
+            supabase.table('chunks').insert({
+                'parent_id': parent_id,
+                'content': content,
+                'chunk_index': chunk_index,
+                'jina_embedding': embedding,
+                'user_id': user_id,
+            }).execute
+        )
+        logger.debug(f"Successfully inserted chunk {chunk_index}")
+    except Exception as e:
+        logger.error(f"Failed to insert chunk {chunk_index}: {str(e)}")
+        raise
 
 async def get_embedding(text):
-    # """ OPENAI EMBEDDINGS """
-    # response = await openai.embeddings.create(
-    #     input=text,
-    #     model="text-embedding-3-small"
-    # )
-    # return response.data[0].embedding
-
-    """ JINA EMBEDDINGS """
-    url = 'https://api.jina.ai/v1/embeddings'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {settings.JINA_API_KEY}'
-    }
-    data = {
-        "model": "jina-embeddings-v3",
-        "task": "retrieval.passage",
-        "dimensions": 1024,
-        "late_chunking": False,
-        "embedding_type": "float",
-        "input": text
-    }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    return response.json()['data'][0]['embedding']
-
+    logger.info("Requesting embedding from Jina AI")
+    try:
+        url = 'https://api.jina.ai/v1/embeddings'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {settings.JINA_API_KEY}'
+        }
+        data = {
+            "model": "jina-embeddings-v3",
+            "task": "retrieval.passage",
+            "dimensions": 1024,
+            "late_chunking": False,
+            "embedding_type": "float",
+            "input": text
+        }
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()  # Raise exception for non-200 status codes
+        logger.debug("Successfully received embedding from Jina AI")
+        return response.json()['data'][0]['embedding']
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to get embedding from Jina AI: {str(e)}")
+        raise
 
 async def process_item(item_id, content, user_id):
-    print("func process_item...")
-    chunks = sliding_window_chunking(content) 
+    logger.info(f"Processing item {item_id} for user {user_id}")
+    chunks = sliding_window_chunking(content)
+    logger.info(f"Created {len(chunks)} chunks for processing")
+    
     for index, chunk in enumerate(chunks):
-        embedding = await get_embedding(chunk)
-        print("index", index)
-        print("chunk", chunk)
-        await insert_chunk(item_id, chunk, index, embedding, user_id)
+        logger.debug(f"Processing chunk {index}/{len(chunks)}")
+        try:
+            embedding = await get_embedding(chunk)
+            await insert_chunk(item_id, chunk, index, embedding, user_id)
+        except Exception as e:
+            logger.error(f"Failed to process chunk {index}: {str(e)}")
+            raise
 
 async def kb_item_to_chunks(data_id, data_content, user_id):
-    print("func kb_item_to_chunks...")
+    logger.info(f"Starting knowledge base item processing for ID {data_id}")
     cleaned_text = clean_data(data_content)
+    logger.debug(f"Cleaned text length: {len(cleaned_text)} characters")
+    
     if cleaned_text:
-        print("text cleaned")
-    await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
-    print("kb item embedded")
+        try:
+            await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
+            logger.info(f"Successfully processed knowledge base item {data_id}")
+        except Exception as e:
+            logger.error(f"Failed to process knowledge base item {data_id}: {str(e)}")
+            raise
+    else:
+        logger.warning(f"No valid text content for item {data_id}")
 

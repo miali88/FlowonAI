@@ -45,9 +45,9 @@ async def process_pdf(file: UploadFile) -> str:
     content = "\n".join(page.extract_text() for page in pdf_reader.pages)
     logger.info(f"PDF processed. Number of pages: {len(pdf_reader.pages)}")
 
-    print(f"Processed content length: {len(content)} characters")
-    print("First 500 characters of content:")
-    print(content)
+    # print(f"Processed content length: {len(content)} characters")
+    # print("First 500 characters of content:")
+    # print(content)
 
     return content
 
