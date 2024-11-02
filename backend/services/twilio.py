@@ -1,12 +1,9 @@
-from fastapi import FastAPI, Request, HTTPException, APIRouter
+from fastapi import Request, HTTPException
 from fastapi.responses import Response, JSONResponse
 
 from twilio.rest import Client 
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 
-from services.retellai import retellai
-from services.db_queries import get_admin_tel_number
-from services.in_memory_cache import in_memory_cache
 from services.db.supabase_ops import supabase_ops
 
 from app.core.config import settings

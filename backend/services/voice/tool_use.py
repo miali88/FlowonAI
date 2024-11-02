@@ -108,7 +108,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
             await asyncio.sleep(2)
 
             # Poll for the chat message with a timeout
-            max_attempts = 30  # 30 seconds total (1 second intervals)
+            max_attempts = 45  # 45 seconds total (1 second intervals)
             attempt = 0
             
             while attempt < max_attempts:

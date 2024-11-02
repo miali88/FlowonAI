@@ -43,7 +43,6 @@ async def oauth_exchange(code: str):
     """Handle OAuth2 callback from Nylas"""
     if not code:
         raise HTTPException(status_code=400, detail="No authorization code returned from Nylas")
-
     try:
         exchange = nylas.auth.exchange_code_for_token({
             "redirect_uri": nylas_config["callback_uri"],

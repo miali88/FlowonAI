@@ -194,7 +194,6 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
             else:
                 raise e 
 
-
 tables = ["user_web_data", "user_text_files"]
 async def similarity_search(query: str, tag: List[str] = None, table_names: List[str] = tables,
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 

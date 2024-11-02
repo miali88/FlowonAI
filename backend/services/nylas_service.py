@@ -1,7 +1,7 @@
 import os 
-import asyncio
 from dotenv import load_dotenv
 from nylas import Client
+
 from app.api.routes.conversation import agent_user_cache
 from services.db.supabase_services import supabase
 

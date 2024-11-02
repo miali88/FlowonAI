@@ -726,7 +726,6 @@ frameborder="0"
           </CardContent>
         </Card>
       </TabsContent>
-
     </Tabs>
   );
 };
