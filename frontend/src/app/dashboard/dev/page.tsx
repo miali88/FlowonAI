@@ -3,26 +3,48 @@
 import { MultiSelect } from "@/components/multiselect";
 import { useState } from 'react';
 
-export default function DevPage() {
-  const [selectedItems, setSelectedItems] = useState<Array<{
-    id: string;
-    title: string;
-    data_type: string;
-  }>>([]);
+// Define reusable type for items
+export type SelectItem = {
+  id: string;
+  title: string;
+  data_type: string;
+};
 
-  const options = [
-    { id: "1", title: "Option 1", data_type: "Tag 1" },
-    { id: "2", title: "Option 2", data_type: "Tag 2" },
-    { id: "3", title: "Option 3", data_type: "Tag 3" },
-  ];
+// Create a reusable component
+export function SelectWrapper({
+  options,
+  initialSelected = [],
+  onChange,
+}: {
+  options: SelectItem[];
+  initialSelected?: SelectItem[];
+  onChange?: (items: SelectItem[]) => void;
+}) {
+  const [selectedItems, setSelectedItems] = useState<SelectItem[]>(initialSelected);
+
+  const handleChange = (items: SelectItem[]) => {
+    setSelectedItems(items);
+    onChange?.(items);
+  };
 
   return (
     <div className="p-4 max-w-md">
       <MultiSelect 
         items={options}
         selectedItems={selectedItems}
-        onChange={setSelectedItems}
+        onChange={handleChange}
       />
     </div>
   );
+}
+
+// Example usage in the page component
+export default function DevPage() {
+  const options: SelectItem[] = [
+    { id: "190299", title: "Flowon.ai/dev", data_type: "web" },
+    { id: "290299", title: "Flowon.ai/prod", data_type: "pdf" },
+    { id: "390299", title: "Flowon.ai/test", data_type: "excel" },
+  ];
+
+  return <SelectWrapper options={options} />;
 }

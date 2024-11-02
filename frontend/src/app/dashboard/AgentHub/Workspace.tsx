@@ -364,22 +364,25 @@ frameborder="0"
               </div>
               <div>
                 <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
-                <MultiSelect
-                  options={[
-                    { value: 'all', label: 'All Knowledge Base Items' },
+                <MultiSelect 
+                  items={[
+                    { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
                     ...(knowledgeBaseItems?.map(item => ({
-                      value: item.id,
-                      label: item.title,
-                      metadata: item.data_type
+                      id: item.id,
+                      title: item.title,
+                      data_type: item.data_type
                     })) || [])
                   ]}
-                  value={selectedAgent?.dataSources?.includes('all') 
-                    ? ['all']
-                    : selectedAgent?.knowledgeBaseIds || []}
-                  onChange={(values) => {
+                  selectedItems={selectedAgent?.dataSources?.includes('all') 
+                    ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                    : knowledgeBaseItems?.filter(item => 
+                        selectedAgent?.knowledgeBaseIds?.includes(item.id)
+                      ) || []}
+                  onChange={(items) => {
                     if (!selectedAgent) return;
                     
-                    if (values.includes('all')) {
+                    const hasAllOption = items.some(item => item.id === 'all');
+                    if (hasAllOption) {
                       setSelectedAgent({
                         ...selectedAgent,
                         dataSources: ['all'],
@@ -389,12 +392,11 @@ frameborder="0"
                     } else {
                       setSelectedAgent({
                         ...selectedAgent,
-                        dataSources: values.length > 0 ? ['specific'] : [],
-                        knowledgeBaseIds: values,
+                        dataSources: items.length > 0 ? ['specific'] : [],
+                        knowledgeBaseIds: items.map(item => item.id),
                       });
                     }
                   }}
-                  placeholder="Select data sources"
                 />
               </div>
               <div>
