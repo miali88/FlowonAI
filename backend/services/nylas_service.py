@@ -1,43 +1,45 @@
-import os 
-from dotenv import load_dotenv
-from nylas import Client
+# import os 
+# from dotenv import load_dotenv
+# from nylas import Client
 
-from app.api.routes.conversation import agent_user_cache
-from services.db.supabase_services import supabase
+# from services.db.supabase_services import supabase_client
+# from services.cache import get_agent_metadata
 
-load_dotenv()
+# supabase = supabase_client()
 
-NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
-NYLAS_API_URI = os.getenv("NYLAS_API_URI")
+# load_dotenv()
 
-nylas = Client(
-    api_key=NYLAS_API_KEY,
-    api_uri=NYLAS_API_URI
-)
+# NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
+# NYLAS_API_URI = os.getenv("NYLAS_API_URI")
 
-# Fetch additional user data from Supabase
-expanded_agent_user_cache = {}
-user_ids = list(agent_user_cache.values())
-response = supabase.table('users').select('id, account_settings').in_('id', user_ids).execute()
+# nylas = Client(
+#     api_key=NYLAS_API_KEY,
+#     api_uri=NYLAS_API_URI
+# )
 
-if response.data:
-    # Create a mapping of user_id to their settings
-    user_settings_map = {user['id']: user.get('account_settings', {}) for user in response.data}
+# # Fetch additional user data from Supabase
+# expanded_agent_user_cache = {}
+# user_ids = list(agent_user_cache.values())
+# response = supabase.table('users').select('id, account_settings').in_('id', user_ids).execute()
+
+# if response.data:
+#     # Create a mapping of user_id to their settings
+#     user_settings_map = {user['id']: user.get('account_settings', {}) for user in response.data}
     
-    # Map the settings back to agent_ids
-    for agent_id, user_id in agent_user_cache.items():
-        user_settings = user_settings_map.get(user_id, {})
-        expanded_agent_user_cache[agent_id] = {
-            'user_id': user_id,
-            'email': user_settings.get('email'),
-            'account_settings': user_settings
-        }
+#     # Map the settings back to agent_ids
+#     for agent_id, user_id in agent_user_cache.items():
+#         user_settings = user_settings_map.get(user_id, {})
+#         expanded_agent_user_cache[agent_id] = {
+#             'user_id': user_id,
+#             'email': user_settings.get('email'),
+#             'account_settings': user_settings
+#         }
 
-# Replace the original cache with expanded version
-agent_user_cache.clear()
-agent_user_cache.update(expanded_agent_user_cache)
+# # Replace the original cache with expanded version
+# agent_user_cache.clear()
+# agent_user_cache.update(expanded_agent_user_cache)
 
-print("recipient_email:", agent_user_cache["a14205e6-4b73-43d0-90f8-ea0a38da0112"]["email"])
+# print("recipient_email:", agent_user_cache["a14205e6-4b73-43d0-90f8-ea0a38da0112"]["email"])
 
 async def send_email(participant_identity, conversation_history, agent_id):
     #await asyncio.sleep(10)

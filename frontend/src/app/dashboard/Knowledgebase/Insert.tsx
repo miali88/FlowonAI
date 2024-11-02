@@ -113,48 +113,64 @@ export function Insert({
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
             {selectedTab === 'text' && (
-              <Textarea 
-                placeholder="Type or paste anything that will help Flowon learn more about your business"
-                className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
-                value={newItemContent}
-                onChange={(e) => setNewItemContent(e.target.value)}
-              />
+              <>
+                <Textarea 
+                  placeholder="Type or paste anything that will help Flowon learn more about your business"
+                  className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
+                  value={newItemContent}
+                  onChange={(e) => setNewItemContent(e.target.value)}
+                />
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleNewItemWrapper}>
+                    <SendIcon className="h-4 w-4 mr-2" />
+                    Add to Knowledge Base
+                  </Button>
+                </div>
+              </>
             )}
             {selectedTab === 'files' && (
-              <div 
-                {...getRootProps()} 
-                className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
-              >
-                <input {...getInputProps()} />
-                <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
-                {selectedFile ? (
-                  <div className="text-center">
-                    <p className="font-semibold mb-2">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Type: {selectedFile.type || 'Unknown'}
+              <>
+                <div 
+                  {...getRootProps()} 
+                  className={`flex flex-col items-center justify-center h-[calc(100vh-400px)] border-2 border-dashed ${isDragActive ? 'border-primary' : 'border-gray-300'} rounded-lg transition-colors duration-300 cursor-pointer`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'} mb-4`} />
+                  {selectedFile ? (
+                    <div className="text-center">
+                      <p className="font-semibold mb-2">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-600">
+                        Type: {selectedFile.type || 'Unknown'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Size: {(selectedFile.size / 1024 / 1024).toFixed(2)}MB
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(null);
+                        }}
+                      >
+                        Remove File
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 text-center">
+                      {isDragActive 
+                        ? "Drop the files here" 
+                        : "Drag and drop files here, or click to select files"}
                     </p>
-                    <p className="text-sm text-gray-600">
-                      Size: {(selectedFile.size / 1024 / 1024).toFixed(2)}MB
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedFile(null);
-                      }}
-                    >
-                      Remove File
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-600 text-center">
-                    {isDragActive 
-                      ? "Drop the files here" 
-                      : "Drag and drop files here, or click to select files"}
-                  </p>
-                )}
-              </div>
+                  )}
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleNewItemWrapper} disabled={!selectedFile}>
+                    <SendIcon className="h-4 w-4 mr-2" />
+                    Add to Knowledge Base
+                  </Button>
+                </div>
+              </>
             )}
             {selectedTab === 'web' && (
               <div className="flex flex-col h-[calc(100vh-400px)]">

@@ -1,23 +1,17 @@
 import asyncio
-
 import logging
-from typing import List
-from dotenv import load_dotenv
-
 from tiktoken import encoding_for_model
+import requests
+import json
 
 import spacy
-from firecrawl import FirecrawlApp
-from supabase import create_client, Client
 from openai import AsyncOpenAI
 
 from app.core.config import settings
+from services.db.supabase_services import supabase_client
 
-load_dotenv()
-
+supabase = supabase_client()
 openai = AsyncOpenAI()
-
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -57,17 +51,36 @@ async def insert_chunk(parent_id, content, chunk_index, embedding, user_id):
             'parent_id': parent_id,
             'content': content,
             'chunk_index': chunk_index,
-            'embedding': embedding,
+            'jina_embedding': embedding,
             'user_id': user_id,
         }).execute
     )
 
 async def get_embedding(text):
-    response = await openai.embeddings.create(
-        input=text,
-        model="text-embedding-3-small"
-    )
-    return response.data[0].embedding
+    # """ OPENAI EMBEDDINGS """
+    # response = await openai.embeddings.create(
+    #     input=text,
+    #     model="text-embedding-3-small"
+    # )
+    # return response.data[0].embedding
+
+    """ JINA EMBEDDINGS """
+    url = 'https://api.jina.ai/v1/embeddings'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {settings.JINA_API_KEY}'
+    }
+    data = {
+        "model": "jina-embeddings-v3",
+        "task": "retrieval.passage",
+        "dimensions": 1024,
+        "late_chunking": False,
+        "embedding_type": "float",
+        "input": text
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    return response.json()['data'][0]['embedding']
+
 
 async def process_item(item_id, content, user_id):
     print("func process_item...")
@@ -76,7 +89,6 @@ async def process_item(item_id, content, user_id):
         embedding = await get_embedding(chunk)
         print("index", index)
         print("chunk", chunk)
-        #print("embedding", embedding)
         await insert_chunk(item_id, chunk, index, embedding, user_id)
 
 async def kb_item_to_chunks(data_id, data_content, user_id):

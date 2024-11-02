@@ -45,15 +45,6 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_NUMBER: str = ""
 
-    RETELL_API_KEY: str = ""
-    AGENT_FIRST: str = ""
-    AGENT_SECOND: str = ""
-    AGENT_FF: str = ""
-
-    VAPI_API_KEY: str = ""
-
-    CAL_API_KEY: str = ""
-
     NYLAS_CLIENT_ID: str = ""
     NYLAS_API_KEY: str = ""
     NYLAS_API_URI: str = ""
@@ -66,6 +57,8 @@ class Settings(BaseSettings):
     #BASE_URL: str = "http://localhost:8000"
 
    
+    JINA_API_KEY: str = ""
+    
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""

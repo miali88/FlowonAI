@@ -1,29 +1,20 @@
 from typing import Optional, List
 from pydantic import BaseModel
-import json, logging, os
-from dotenv import load_dotenv
-
+import json, logging
+import tiktoken
 
 from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks, WebSocket
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
-from supabase import create_client, Client
-import tiktoken
-
+from services.db.supabase_services import supabase_client
 from app.core.config import settings
 from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items
 from services.knowledge_base.web_scrape import map_url, scrape_url
 
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+supabase = supabase_client()
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)

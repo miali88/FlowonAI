@@ -9,9 +9,12 @@ from fastapi import Request, HTTPException, APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import run_in_threadpool
-from supabase import create_client, Client
 
+from services.cache import get_agent_metadata
 from services.chat.chat import llm_response
+from services.db.supabase_services import supabase_client
+
+supabase = supabase_client()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -19,33 +22,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize Supabase client
-supabase_url = os.environ.get("SUPABASE_URL")
-supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase: Client = create_client(supabase_url, supabase_key)
-
 chat_messages = defaultdict(list)
 event_broadcasters = {}
 conversation_logs = defaultdict(list)
-
-# In-memory cache for agent_ids and user_ids
-agent_user_cache: Dict[str, str] = {}
-
-def load_agent_user_cache():
-    print("loading agent-user cache")
-    """Load agent_id and user_id pairs from the agents table into the in-memory cache."""
-    try:
-        response = supabase.table("agents").select("id, userId").execute()
-        if response.data:
-            for record in response.data:
-                agent_user_cache[record['id']] = record['userId']
-            logger.info("Agent-user cache loaded successfully")
-        else:
-            logger.warning("No data found in agents table")
-    except Exception as e:
-        logger.error(f"Error loading agent-user cache: {str(e)}")
-load_agent_user_cache()
-
 
 async def get_user_id(request: Request) -> str:
     user_id = request.headers.get("X-User-ID")
@@ -75,6 +54,7 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 @router.post("/store_history")
 async def livekit_room_webhook(request: Request):
     data = await request.json()
+    user_id = await get_agent_metadata(data['agent_id'])['userId']
     #print(f"\n /store_history Received webhook data: {data}")
     print(f"\n\n\n call_duration: {data['call_duration']}\n\n")
 
@@ -86,7 +66,7 @@ async def livekit_room_webhook(request: Request):
             "job_id": data['job_id'],
             "participant_identity": data['participant_identity'],
             "room_name": data['room_name'],
-            "user_id": agent_user_cache[data['agent_id']],
+            "user_id": user_id,
             "agent_id": data['agent_id'],
             "lead": data['prospect_status'], 
             "call_duration": data['call_duration']
@@ -99,7 +79,6 @@ async def livekit_room_webhook(request: Request):
     except Exception as e:
         logger.error(f"Error saving to Supabase: {str(e)}")
     return {"message": "Webhook received successfully"}
-
 
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     print("\n\n transcript_summary func called\n\n")
@@ -129,7 +108,6 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     except Exception as e:
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
-
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
@@ -192,7 +170,6 @@ async def trigger_show_chat_input(request: Request):
         logger.warning(f"No event broadcaster found for participant_identity: {participant_identity}")
     
     return JSONResponse(content={"status": "success"})
-
 
 @router.get("/events/{participant_identity}")  # Changed route parameter
 async def events(participant_identity: str):  # Changed parameter

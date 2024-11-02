@@ -4,62 +4,61 @@ import logging
 import os 
 import requests
 import asyncio
-from typing import List
+from typing import List, Dict
 import random
 import re
 import json
 
-from supabase import create_client, Client
+from app.core.config import settings
+from services.db.supabase_services import supabase_client
 from openai import OpenAI
 from anthropic import AsyncAnthropic
 
+supabase = supabase_client()
+
 logger = logging.getLogger(__name__)
 load_dotenv()
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+
 openai = OpenAI()
 anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 conversation_histories = {}
 
-async def get_embedding(text, table):
-    if table == "user_text_files":
-        """ OPENAI EMBEDDINGS """
-        response = openai.embeddings.create(
-            input=text,
-            model="text-embedding-3-small")
-        return response.data[0].embedding
+async def get_embedding(text):
+    # if table == "user_text_files":
+    #     """ OPENAI EMBEDDINGS """
+    #     response = openai.embeddings.create(
+    #         input=text,
+    #         model="text-embedding-3-large")
+    #     return response.data[0].embedding
 
     # """ VOYAGE EMBEDDINGS """
     # response = vo.embed(text, model="voyage-law-2", input_type="query")
     # return response.embeddings[0]
 
-    elif table == "user_web_data":
-        """ JINA EMBEDDINGS """
-        url = 'https://api.jina.ai/v1/embeddings'
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {JINA_API_KEY}'
-        }
-        data = {
-            "model": "jina-embeddings-v3",
-            "task": "retrieval.query",
-            "dimensions": 1024,
-            "late_chunking": False,
-            "embedding_type": "float",
-            "input": text
-        }
-        response = requests.post(url, headers=headers, data=json.dumps(data))
-        return response.json()['data'][0]['embedding']
-
+    """ JINA EMBEDDINGS """
+    url = 'https://api.jina.ai/v1/embeddings'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {settings.JINA_API_KEY}'
+    }
+    data = {
+        "model": "jina-embeddings-v3",
+        "task": "retrieval.query",
+        "dimensions": 1024,
+        "late_chunking": False,
+        "embedding_type": "float",
+        "input": text
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    return response.json()['data'][0]['embedding']
 
 async def rerank_documents(user_query: str, top_n: int, docs: List):
-    JINA_API_KEY = os.getenv("JINA_API_KEY")
     print("func rerank_documents..")
     url = 'https://api.jina.ai/v1/rerank'
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {JINA_API_KEY}'
+        'Authorization': f'Bearer {settings.JINA_API_KEY}'
     }
     data = {
         "model": "jina-reranker-v2-base-multilingual",
@@ -195,7 +194,7 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                 raise e 
 
 tables = ["user_web_data", "user_text_files"]
-async def similarity_search(query: str, tag: List[str] = None, table_names: List[str] = tables,
+async def similarity_search(query: str, data_source: Dict = None, table_names: List[str] = tables,
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 
                             embedding_column: str = "jina_embedding", max_results: int = 15):
     print("\n\nsimilarity_search...")
@@ -213,7 +212,7 @@ async def similarity_search(query: str, tag: List[str] = None, table_names: List
     for table in table_names:
         try:
             if table == "user_web_data":
-                query_embedding = await get_embedding(query, table)
+                query_embedding = await get_embedding(query)
 
                 response = supabase.rpc(
                     "user_web_data",
@@ -222,12 +221,12 @@ async def similarity_search(query: str, tag: List[str] = None, table_names: List
                         'embedding_column': embedding_column,
                         'similarity_threshold': similarity_threshold,
                         'max_results': max_results,
-                        'tag_filter': tag  # Add tag filtering parameter
+                        'root_url_filter': data_source['web'] 
                     }
                 ).execute()
             
             elif table == "user_text_files":
-                query_embedding = await get_embedding(query, table)
+                query_embedding = await get_embedding(query)
 
                 response = supabase.rpc(
                     "search_chunks",
@@ -235,7 +234,7 @@ async def similarity_search(query: str, tag: List[str] = None, table_names: List
                         'query_embedding': query_embedding,
                         'similarity_threshold': similarity_threshold,
                         'max_results': max_results,
-                        'tag_filter': tag  # Add tag filtering parameter
+                        'tag_filter': data_source['text_files']
                     }
                 ).execute()
             

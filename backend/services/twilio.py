@@ -4,8 +4,6 @@ from fastapi.responses import Response, JSONResponse
 from twilio.rest import Client 
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
 
-from services.db.supabase_ops import supabase_ops
-
 from app.core.config import settings
 
 from pydantic import BaseModel

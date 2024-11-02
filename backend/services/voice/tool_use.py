@@ -1,12 +1,12 @@
-from typing import Annotated, Optional, Literal, Union
-
+from typing import Annotated, Optional, Literal, Union, Dict, List
+import json
 import aiohttp, os, logging, asyncio
 from dotenv import load_dotenv
 
 from livekit.agents import llm
-from livekit.agents import JobContext
 
 from services.chat.chat import similarity_search
+from services.cache import get_agent_metadata
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +20,6 @@ class AgentFunctions(llm.FunctionContext):
     def __init__(self, job_ctx):
         self.job_ctx = job_ctx
         super().__init__()
-    
-    """ to be updated with agent's dataSources in database. Perhaps store in mem from SB """
-    tag_filter = {
-        "e8b64819-7c2c-432f-9f80-05a72bd49787": ["english_car_mechanic"],
-        "f401e4aa-e49e-48b7-81f9-6690c96f2106": ["OBC"],  # Add new agent ID
-    }
 
     @llm.ai_callable(
         name="request_personal_data",
@@ -80,15 +74,21 @@ class AgentFunctions(llm.FunctionContext):
         user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
 
-
         print("\n\n\n\n FUNCTION CALL: search_products_and_services")
         print(f"job_id: {job_id}, room_name: {room_name}, user_id: {user_id}")
         print(f"Searching products/services with query: {query}, category: {category}")
 
         try:
-            # Use get() method with default fallback for tag filter
-            tags = self.tag_filter.get(agent_id, None)
-            results = await similarity_search(query, tags)
+
+            data_source = await get_agent_metadata(agent_id)
+            data_source: str = data_source.get('dataSource', None)
+            data_source: Dict = json.loads(data_source)
+            data_source: Dict = {
+                "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
+                "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
+            }
+
+            results = await similarity_search(query, data_source)
             return f"Found matching products/services: {results}"
             
         except Exception as e:
@@ -104,7 +104,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
             await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', 
                              json={'room_name': room_name, 'job_id': job_id, 'participant_identity': participant_identity})
             
-            # Wait 3 seconds before starting to poll
+            # Wait 2 seconds before starting to poll
             await asyncio.sleep(2)
 
             # Poll for the chat message with a timeout
@@ -140,7 +140,6 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                         extra={'room_name': room_name, 'job_id': job_id}, 
                         exc_info=True)
             raise
-
 
 async def send_lead_notification(chat_message: dict):
     """ nylas email send here """

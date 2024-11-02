@@ -20,7 +20,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-
 async def get_kb_items(current_user):
     kb_tables = ["user_web_data", "user_text_files"]
     print(f"Fetching items for user: {current_user}")
@@ -59,7 +58,6 @@ async def get_kb_items(current_user):
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
     return all_items, total_tokens
-
 
 def group_by_root_url(items):
     if not isinstance(items, list):

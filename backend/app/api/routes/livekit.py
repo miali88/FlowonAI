@@ -99,7 +99,6 @@ async def update_agent_handler(agent_id: str, request: Request):
         logger.error(f"Error updating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 @router.get("/agent_content/{agent_id}")
 async def get_agent_content_handler(agent_id: str):
     try:
