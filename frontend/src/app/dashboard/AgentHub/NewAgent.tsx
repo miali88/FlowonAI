@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { MultiSelect } from "@/components/multiselect"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { AgentFeatures } from './AgentFeatures';
@@ -94,10 +95,13 @@ export function NewAgent() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const handleSelectChange = (field: string, values: string | string[]) => {
     if (field === "dataSource") {
-      setDataSource(value);
+      const valueArray = Array.isArray(values) ? values : [values];
+      setFormData({ ...formData, [field]: valueArray });
+      setDataSource(valueArray[0] || "");
+    } else {
+      setFormData({ ...formData, [field]: values });
     }
   };
 
@@ -250,16 +254,19 @@ export function NewAgent() {
               <Label htmlFor="dataSource" className="text-right text-foreground">
                 Data Source
               </Label>
-              <Select onValueChange={(value) => handleSelectChange("dataSource", value)}>
-                <SelectTrigger className="col-span-3 bg-background text-foreground border-muted-foreground">
-                  <SelectValue placeholder="Select data source" />
-                </SelectTrigger>
-                <SelectContent className="bg-background text-foreground">
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="tagged">Items with tag...</SelectItem>
-                  <SelectItem value="natural-language">Describe using natural language</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <MultiSelect 
+                  options={[
+                    { value: "all", label: "All", metadata: "Access everything" },
+                    { value: "tagged", label: "Items with tag", metadata: "Tag-based filtering" },
+                    { value: "natural-language", label: "Describe using natural language", metadata: "Natural language filtering" }
+                  ]}
+                  placeholder="Select data sources"
+                  onChange={(values) => handleSelectChange("dataSource", values)}
+                  value={Array.isArray(formData.dataSource) ? formData.dataSource : []}
+                  className="bg-background text-foreground border-muted-foreground"
+                />
+              </div>
             </div>
             {/* Conditional Tag Input */}
             {dataSource === "tagged" && (

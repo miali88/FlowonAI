@@ -4,7 +4,7 @@ import json, logging, os
 from dotenv import load_dotenv
 
 
-from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
+from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks, WebSocket
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
@@ -185,18 +185,22 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/scrape_web")
-async def scrape_url_handler(request: Request, current_user: str = Depends(get_current_user)):
+async def scrape_url_handler(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    current_user: str = Depends(get_current_user)
+):
     try:
         request_data = await request.json()
         request_data = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
         
-        scrape_result = await scrape_url(urls, current_user)
-        return {"message": "completed", "count": len(scrape_result)}
-
+        # Schedule scraping to run in the background
+        background_tasks.add_task(scrape_url, urls, current_user)
+        
+        return {"message": "Scraping started in background", "urls": len(urls)}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error scraping URL: {str(e)}")
-
+        raise HTTPException(status_code=400, detail=f"Error processing URLs: {str(e)}")
 
 @router.post("/crawl_url")
 async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):

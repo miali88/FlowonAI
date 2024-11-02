@@ -27,10 +27,6 @@ async def get_current_user(x_user_id: str = Header(...)):
     # For now, we'll just return the user ID from the header
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
-#
-@router.get("/")
-async def trigger_error():
-    division_by_zero = 1 / 0
 
 @router.get("/token")
 async def get_token(request: Request, background_tasks: BackgroundTasks):

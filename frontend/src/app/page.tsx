@@ -17,10 +17,10 @@ export default function HomePage() {
       <CtaSection />
       <Testimonials />
       <Footer />
-      <Widget 
+      {/* <Widget 
         agentId="10433ad9-ddfc-4592-b316-7e3b2082ec30"
         domain="www.flowonwidget.pages.dev"
-      />
+      /> */}
     </div>
   );
 }

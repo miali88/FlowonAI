@@ -3,6 +3,8 @@ import json
 import os 
 from typing import List, Dict
 from urllib.parse import urlparse
+import asyncio
+from datetime import datetime
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -70,6 +72,9 @@ async def map_url(url):
     return map_result
 
 async def scrape_url(urls: List[str], user_id: str = None):
+    print(f"Starting scrape process for user {user_id} at {datetime.now()}")
+    #await asyncio.sleep(1)  # Simulated long process
+    print(f"Finished sleep for user {user_id} at {datetime.now()}")
     # Extract root URL from the first URL in the list
     parsed_url = urlparse(urls[0])
     root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"

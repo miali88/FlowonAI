@@ -15,6 +15,7 @@ import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from './AgentFeatures';
 import { Separator } from "@/components/ui/separator";
+import { MultiSelect } from '@/components/multiselect';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -363,91 +364,38 @@ frameborder="0"
               </div>
               <div>
                 <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
-                <Select 
-                  value={selectedAgent?.dataSources?.[0] || "placeholder"}
-                  onValueChange={() => {}}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select data sources">
-                      {selectedAgent?.dataSources?.includes('all') 
-                        ? "All Knowledge Base Items"
-                        : selectedAgent?.knowledgeBaseIds?.length 
-                          ? `${selectedAgent.knowledgeBaseIds.length} items selected`
-                          : "Select data sources"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <div className="flex items-center space-x-2 py-2">
-                        <Checkbox
-                          id="checkbox-all"
-                          checked={selectedAgent?.dataSources?.includes('all')}
-                          onCheckedChange={(checked) => {
-                            if (!selectedAgent) return;
-                            setSelectedAgent({
-                              ...selectedAgent,
-                              dataSources: checked ? ['all'] : [],
-                              knowledgeBaseIds: [],
-                              dataSource: checked ? 'kb_all' : undefined
-                            });
-                          }}
-                        />
-                        <label 
-                          htmlFor="checkbox-all"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          All Knowledge Base Items
-                        </label>
-                      </div>
-
-                      {knowledgeBaseItems.length > 0 && (
-                        <>
-                          <Separator className="my-2" />
-                          <div className="text-sm text-muted-foreground mb-2">Specific Knowledge Base Items</div>
-                          {knowledgeBaseItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between py-2">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`checkbox-${item.id}`}
-                                  checked={selectedAgent?.knowledgeBaseIds?.includes(item.id)}
-                                  disabled={selectedAgent?.dataSources?.includes('all')}
-                                  onCheckedChange={(checked) => {
-                                    if (!selectedAgent) return;
-                                    const newIds = checked
-                                      ? [...(selectedAgent.knowledgeBaseIds || []), item.id]
-                                      : selectedAgent.knowledgeBaseIds?.filter(id => id !== item.id) || [];
-                                    
-                                    console.log('Checkbox changed:', {
-                                      itemId: item.id,
-                                      checked,
-                                      newIds,
-                                      previousIds: selectedAgent.knowledgeBaseIds
-                                    });
-                                    
-                                    setSelectedAgent({
-                                      ...selectedAgent,
-                                      dataSources: newIds.length > 0 ? ['specific'] : [],
-                                      knowledgeBaseIds: newIds,
-                                    });
-                                  }}
-                                />
-                                <label 
-                                  htmlFor={`checkbox-${item.id}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  {item.title}
-                                </label>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {item.data_type}
-                              </span>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={[
+                    { value: 'all', label: 'All Knowledge Base Items' },
+                    ...(knowledgeBaseItems?.map(item => ({
+                      value: item.id,
+                      label: item.title,
+                      metadata: item.data_type
+                    })) || [])
+                  ]}
+                  value={selectedAgent?.dataSources?.includes('all') 
+                    ? ['all']
+                    : selectedAgent?.knowledgeBaseIds || []}
+                  onChange={(values) => {
+                    if (!selectedAgent) return;
+                    
+                    if (values.includes('all')) {
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        dataSources: ['all'],
+                        knowledgeBaseIds: [],
+                        dataSource: 'kb_all'
+                      });
+                    } else {
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        dataSources: values.length > 0 ? ['specific'] : [],
+                        knowledgeBaseIds: values,
+                      });
+                    }
+                  }}
+                  placeholder="Select data sources"
+                />
               </div>
               <div>
                 <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>

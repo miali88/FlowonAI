@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const integrations = [
   {
     name: "Calendar",
@@ -61,7 +63,6 @@ export default function IntegrationsPage() {
           className="w-full bg-background"
         />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {integrations.map((integration) => (
           <div
@@ -91,6 +92,11 @@ export default function IntegrationsPage() {
               variant={integration.status === "Connected" ? "secondary" : "default"}
               className="w-full"
               disabled={integration.status === "Coming soon"}
+              onClick={() => {
+                if (integration.name === "Calendar") {
+                  window.location.href = `${API_BASE_URL}/nylas/auth`
+                }
+              }}
             >
               {integration.status}
             </Button>

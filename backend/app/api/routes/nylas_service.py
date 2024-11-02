@@ -1,8 +1,8 @@
 import logging
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Request
 from supabase import create_client, Client
 from nylas import Client as NylasClient
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 
 from app.core.config import settings
 
@@ -22,6 +22,11 @@ nylas = NylasClient(
     api_key=nylas_config["api_key"],
     api_uri=nylas_config["api_uri"],
 )
+
+@router.api_route("/webhook", methods=["POST", "GET"])
+async def webhook(request: Request):
+    print("\n\n nylas/webhook \n\n")
+    return JSONResponse(content={"message": "Hello, World!"}, status_code=200)
 
 @router.get("/auth")
 async def nylas_auth():
@@ -54,7 +59,7 @@ async def oauth_exchange(code: str):
         <!DOCTYPE html>
         <html>
             <head>
-                <meta http-equiv="refresh" content="5;url=https://flowon.ai">
+                <meta http-equiv="refresh" content="5;url=https://flowon.ai/dashboard">
                 <style>
                     body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
                 </style>

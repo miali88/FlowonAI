@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html class="h-full bg-white" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nylas Scheduling Component</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+      type="module"
+      src="./node_modules/@nylas/web-elements/dist/nylas-web-elements/nylas-web-elements.esm.js"
+    ></script>
+
+    <style type="text/css">
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="grid gap-0 h-full place-items-center">
+      <div class="grid gap-4">
+        <!-- A button to view the scheduler editor -->
+        <a
+          href="scheduler-editor.html"
+          class="w-fit border border-blue-500 hover:bg-blue-100 text-blue-500 font-bold py-2 px-4 rounded"
+        >
+          View Scheduler Editor
+        </a>
+
+        <!-- Add the Nylas Scheduling Component -->
+        <nylas-scheduling></nylas-scheduling>
+      </div>
+    </div>
+
+    <!-- Configure the Nylas Scheduling Component with a scheduler configuration ID -->
+    <script type="module">
+      const nylasScheduling = document.querySelector("nylas-scheduling");
+
+      // Set the scheduler api url based on the data center
+      nylasScheduling.schedulerApiUrl = "https://api.us.nylas.com/v3"; // or 'https://api.eu.nylas.com/v3' for EU data center
+
+      // Get the scheduler configuration ID from the URL ?config_id=NYLAS_SCHEDULER_CONFIGURATION_ID
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // If not config_id exists, throw a console.error
+      if (!urlParams.has("config_id")) {
+        console.error(
+          "No scheduler configuration ID found in the URL. Please provide a scheduler configuration ID."
+        );
+      }
+
+      // Set the scheduler configuration ID
+      nylasScheduling.configurationId = urlParams.get("config_id");
+    </script>
+  </body>
+</html>   
