@@ -244,13 +244,13 @@ frameborder="0"
   const handleSaveFeatures = async () => {
     if (selectedAgent) {
       console.log('Before save - Selected Agent State:', {
-        dataSources: selectedAgent.dataSources,
+        dataSource: selectedAgent.dataSource,
         knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
       });
 
       const agentToSave = {
         ...selectedAgent,
-        knowledgeBaseIds: selectedAgent.dataSources?.includes('all')
+        knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
           ? undefined
           : selectedAgent.knowledgeBaseIds
       };
@@ -301,7 +301,7 @@ frameborder="0"
     if (items.some(item => item.id === 'all')) {
       setSelectedAgent({
         ...selectedAgent,
-        dataSources: ['all'],
+        dataSource: ['all'],
         knowledgeBaseIds: [], // Clear specific selections when "all" is chosen
       });
     } 
@@ -309,7 +309,7 @@ frameborder="0"
     else {
       setSelectedAgent({
         ...selectedAgent,
-        dataSources: items.map(item => item), // Send the actual selected item IDs
+        dataSource: items.map(item => item), // Send the actual selected item IDs
         knowledgeBaseIds: items.map(item => item.id),
       });
     }
@@ -399,7 +399,7 @@ frameborder="0"
                     ...knowledgeBaseItems
                   ]}
                   selectedItems={
-                    selectedAgent?.dataSources?.includes('all') 
+                    selectedAgent?.dataSource?.includes('all') 
                       ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
                       : knowledgeBaseItems.filter(item => 
                           selectedAgent?.knowledgeBaseIds?.includes(item.id)
