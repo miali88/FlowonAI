@@ -286,6 +286,35 @@ frameborder="0"
     }
   }, [selectedAgent]);
 
+  // Add a useEffect to log the knowledge base items when they change
+  useEffect(() => {
+    console.log('Knowledge Base Items:', knowledgeBaseItems);
+  }, [knowledgeBaseItems]);
+
+  // The MultiSelect component looks correct, but let's add some logging
+  const handleDataSourceChange = (items: Array<{ id: string; title: string; data_type: string }>) => {
+    if (!selectedAgent) return;
+    
+    console.log('Selected items:', items);
+    
+    // If "All" is selected
+    if (items.some(item => item.id === 'all')) {
+      setSelectedAgent({
+        ...selectedAgent,
+        dataSources: ['all'],
+        knowledgeBaseIds: [], // Clear specific selections when "all" is chosen
+      });
+    } 
+    // If specific items are selected
+    else {
+      setSelectedAgent({
+        ...selectedAgent,
+        dataSources: items.map(item => item), // Send the actual selected item IDs
+        knowledgeBaseIds: items.map(item => item.id),
+      });
+    }
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="mb-4 h-12">
@@ -367,36 +396,16 @@ frameborder="0"
                 <MultiSelect 
                   items={[
                     { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
-                    ...(knowledgeBaseItems?.map(item => ({
-                      id: item.id,
-                      title: item.title,
-                      data_type: item.data_type
-                    })) || [])
+                    ...knowledgeBaseItems
                   ]}
-                  selectedItems={selectedAgent?.dataSources?.includes('all') 
-                    ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                    : knowledgeBaseItems?.filter(item => 
-                        selectedAgent?.knowledgeBaseIds?.includes(item.id)
-                      ) || []}
-                  onChange={(items) => {
-                    if (!selectedAgent) return;
-                    
-                    const hasAllOption = items.some(item => item.id === 'all');
-                    if (hasAllOption) {
-                      setSelectedAgent({
-                        ...selectedAgent,
-                        dataSources: ['all'],
-                        knowledgeBaseIds: [],
-                        dataSource: 'kb_all'
-                      });
-                    } else {
-                      setSelectedAgent({
-                        ...selectedAgent,
-                        dataSources: items.length > 0 ? ['specific'] : [],
-                        knowledgeBaseIds: items.map(item => item.id),
-                      });
-                    }
-                  }}
+                  selectedItems={
+                    selectedAgent?.dataSources?.includes('all') 
+                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                      : knowledgeBaseItems.filter(item => 
+                          selectedAgent?.knowledgeBaseIds?.includes(item.id)
+                        )
+                  }
+                  onChange={handleDataSourceChange}
                 />
               </div>
               <div>

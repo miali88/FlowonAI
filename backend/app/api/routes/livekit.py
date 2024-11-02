@@ -77,7 +77,6 @@ async def new_agent_handler(request: Request):
         logger.error(f"Error creating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 @router.get("/agents")
 async def get_agents_handler(current_user: str = Depends(get_current_user)):
     try:
@@ -91,12 +90,15 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
 async def update_agent_handler(agent_id: str, request: Request):
     try:
         data = await request.json()
-        logger.debug(f"Received data: {data}")
+        print(f"\n\nReceived data: {data}")
+        #logger.debug(f"Received data: {data}")
+
         updated_agent = await update_agent(agent_id, data)
         return updated_agent
     except Exception as e:
         logger.error(f"Error updating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.get("/agent_content/{agent_id}")
 async def get_agent_content_handler(agent_id: str):

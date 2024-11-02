@@ -6,7 +6,7 @@ from typing import List, Dict
 
 from supabase import create_client, Client
 from openai import AsyncOpenAI
-
+import uuid
 from app.core.config import settings
 
 load_dotenv()
@@ -75,6 +75,7 @@ def group_by_root_url(items):
         
         # Create consolidated record
         consolidated = {
+            'id': f'web_{uuid.uuid4()}',
             'title': root_url,  # Using root_url as title
             'root_url': root_url,
             'content': [{  # Group of URLs and their fields
