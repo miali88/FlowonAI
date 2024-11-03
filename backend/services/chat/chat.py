@@ -227,17 +227,17 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
             
             elif table == "user_text_files":
                 query_embedding = await get_embedding(query)
-
                 response = supabase.rpc(
                     "search_chunks",
                     {
                         'query_embedding': query_embedding,
+                        'embedding_column': "jina_embedding",
                         'similarity_threshold': similarity_threshold,
                         'max_results': max_results,
-                        'tag_filter': data_source['text_files']
+                        'parent_id_filter': data_source['text_files']
                     }
                 ).execute()
-            
+                
             # Check if response exists and has data
             if response and hasattr(response, 'data') and response.data:
                 all_results.extend(response.data)

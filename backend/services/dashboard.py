@@ -53,7 +53,7 @@ async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, toke
                 'chunk_index': chunk_index,
                 'jina_embedding': embedding,
                 'user_id': user_id,
-                'chunk_tokens' : token_count
+                'token_count' : token_count
             }).execute
         )
         logger.debug(f"Successfully inserted chunk {chunk_index}")

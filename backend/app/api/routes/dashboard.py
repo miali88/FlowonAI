@@ -83,6 +83,7 @@ async def upload_file_handler(
         # Insert the processed content into the knowledge base
         new_item = supabase.table('user_text_files').insert({
             "title": file.filename, # TODO: replace with user's entered title
+            "heading": file.filename,
             "file_name": file.filename,
             "content": content,
             "user_id": x_user_id,  # Use the user ID from the header
