@@ -210,35 +210,35 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         max_results = 5
 
     async def fetch_table_data(table, query_embedding):
-        #try:
-        if table == "user_web_data":
-            return supabase.rpc(
-                "user_web_data",
-                {
-                    'query_embedding': query_embedding,
-                    'embedding_column': embedding_column,
-                    'similarity_threshold': similarity_threshold,
-                    'max_results': max_results,
-                    'root_url_filter': data_source['web'],
-                    'user_id_filter': user_id
-                }
-            ).execute()
-        
-        elif table == "user_text_files":
-            return supabase.rpc(
-                "search_chunks",
-                {
-                    'query_embedding': query_embedding,
-                    'embedding_column': embedding_column,
-                    'similarity_threshold': similarity_threshold,
-                    'max_results': max_results,
-                    'parent_id_filter': data_source['text_files'], 
-                    'filter_user_id': user_id
-                }
-            ).execute()
-        # except Exception as e:
-        #     logger.error(f"Error querying table {table}: {str(e)}")
-        #     return None
+        try:
+            if table == "user_web_data":
+                return supabase.rpc(
+                    "user_web_data",
+                    {
+                        'query_embedding': query_embedding,
+                        'embedding_column': embedding_column,
+                        'similarity_threshold': similarity_threshold,
+                        'max_results': max_results,
+                        'root_url_filter': data_source['web'],
+                        'user_id_filter': user_id
+                    }
+                ).execute()
+            
+            elif table == "user_text_files":
+                return supabase.rpc(
+                    "search_chunks",
+                    {
+                        'query_embedding': query_embedding,
+                        'embedding_column': embedding_column,
+                        'similarity_threshold': similarity_threshold,
+                        'max_results': max_results,
+                        'parent_id_filter': data_source['text_files'], 
+                        'filter_user_id': user_id
+                    }
+                ).execute()
+        except Exception as e:
+            logger.error(f"Error querying table {table}: {str(e)}")
+            return None
 
     # Get embedding once for both queries
     query_embedding = await get_embedding(query)
