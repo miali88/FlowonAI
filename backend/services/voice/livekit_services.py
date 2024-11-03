@@ -201,7 +201,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
             interrupt_min_words=2,
-            min_endpointing_delay=1,
+            min_endpointing_delay=0.5,
             before_tts_cb=remove_special_characters)
             
         logger.info("Voice assistant created successfully")
