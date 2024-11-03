@@ -1,49 +1,52 @@
-# import os 
-# from dotenv import load_dotenv
-# from nylas import Client
+import os 
+from dotenv import load_dotenv
+from nylas import Client
 
-# from services.db.supabase_services import supabase_client
-# from services.cache import get_agent_metadata
+from services.db.supabase_services import supabase_client
+from services.cache import get_all_agents
 
-# supabase = supabase_client()
+supabase = supabase_client()
 
-# load_dotenv()
+load_dotenv()
 
-# NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
-# NYLAS_API_URI = os.getenv("NYLAS_API_URI")
+NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
+NYLAS_API_URI = os.getenv("NYLAS_API_URI")
 
-# nylas = Client(
-#     api_key=NYLAS_API_KEY,
-#     api_uri=NYLAS_API_URI
-# )
+nylas = Client(
+    api_key=NYLAS_API_KEY,
+    api_uri=NYLAS_API_URI
+)
 
-# # Fetch additional user data from Supabase
-# expanded_agent_user_cache = {}
-# user_ids = list(agent_user_cache.values())
-# response = supabase.table('users').select('id, account_settings').in_('id', user_ids).execute()
-
-# if response.data:
-#     # Create a mapping of user_id to their settings
-#     user_settings_map = {user['id']: user.get('account_settings', {}) for user in response.data}
+async def get_agent_user_cache():
+    agents = await get_all_agents()
+    # Convert list of agents to a dictionary mapping agent_id to user_id
+    agent_user_cache = {agent['id']: agent['userId'] for agent in agents}
     
-#     # Map the settings back to agent_ids
-#     for agent_id, user_id in agent_user_cache.items():
-#         user_settings = user_settings_map.get(user_id, {})
-#         expanded_agent_user_cache[agent_id] = {
-#             'user_id': user_id,
-#             'email': user_settings.get('email'),
-#             'account_settings': user_settings
-#         }
+    # Fetch additional user data from Supabase
+    expanded_agent_user_cache = {}
+    user_ids = list(agent_user_cache.values())
+    response = supabase.table('users').select('id, account_settings').in_('id', user_ids).execute()
 
-# # Replace the original cache with expanded version
-# agent_user_cache.clear()
-# agent_user_cache.update(expanded_agent_user_cache)
+    if response.data:
+        # Create a mapping of user_id to their settings
+        user_settings_map = {user['id']: user.get('account_settings', {}) for user in response.data}
+        
+        # Map the settings back to agent_ids
+        for agent_id, user_id in agent_user_cache.items():
+            user_settings = user_settings_map.get(user_id, {})
+            expanded_agent_user_cache[agent_id] = {
+                'user_id': user_id,
+                'email': user_settings.get('email'),
+                'account_settings': user_settings
+            }
 
-# print("recipient_email:", agent_user_cache["a14205e6-4b73-43d0-90f8-ea0a38da0112"]["email"])
+    return expanded_agent_user_cache
 
 async def send_email(participant_identity, conversation_history, agent_id):
-    #await asyncio.sleep(10)
     try:
+        # Get the agent-user cache first
+        agent_user_cache = await get_agent_user_cache()
+        
         # Initialize user_data as None
         user_data = None
         
@@ -58,6 +61,7 @@ async def send_email(participant_identity, conversation_history, agent_id):
         if not user_data:
             raise ValueError("No user data found in conversation history")
 
+        # Now this line will work because we have the cache
         recipient_email = agent_user_cache[agent_id]["email"]
 
         print("recipient_email:", recipient_email)
@@ -81,8 +85,9 @@ async def send_email(participant_identity, conversation_history, agent_id):
         ).eq('participant_identity', participant_identity).execute()
 
         # Send email, grant_id default from michael@flowon.ai
+        # c9e0a3fa-69b2-46fd-8626-ec25ed85b6ee
         message = nylas.messages.send(
-            identifier="c9e0a3fa-69b2-46fd-8626-ec25ed85b6ee",
+            identifier="5ef0555c-25ab-4b4e-b4a1-02fd8ba4d255",
             request_body=request_body
         )
         return message

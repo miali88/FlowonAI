@@ -54,7 +54,8 @@ async def delete_conversation_history(conversation_id: str, user_id: Annotated[s
 @router.post("/store_history")
 async def livekit_room_webhook(request: Request):
     data = await request.json()
-    user_id = await get_agent_metadata(data['agent_id'])['userId']
+    user_id = await get_agent_metadata(data['agent_id'])
+    user_id = user_id['userId']
     #print(f"\n /store_history Received webhook data: {data}")
     print(f"\n\n\n call_duration: {data['call_duration']}\n\n")
 

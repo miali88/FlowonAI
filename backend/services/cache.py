@@ -6,6 +6,10 @@ supabase = supabase_client()
 # The main cache dictionary
 agent_metadata_cache: Dict[str, dict] = {}
 
+async def get_all_agents() -> list:
+    response = supabase.table("agents").select("*").execute()
+    return response.data
+
 async def get_agent_metadata(agent_id: str) -> Optional[dict]:
     """Get agent metadata from cache"""
     response = supabase.table("agents").select("*").execute()
