@@ -11,12 +11,15 @@ interface MultiSelectProps {
   items: Item[];
   selectedItems: Item[];
   onChange: (items: Item[]) => void;
+  defaultValue?: string;
 }
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange }) => {
+export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, defaultValue }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const initialSelectionMade = useRef(false);
+  const previousDefaultValue = useRef(defaultValue);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +42,21 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, []);
+
+  useEffect(() => {
+    if (defaultValue !== previousDefaultValue.current) {
+      initialSelectionMade.current = false;
+      previousDefaultValue.current = defaultValue;
+    }
+
+    if (defaultValue && selectedItems.length === 0 && !initialSelectionMade.current) {
+      const initialSelection = items.filter(item => 
+        defaultValue === 'all' ? item.id === 'all' : defaultValue.includes(item.id)
+      );
+      initialSelectionMade.current = true;
+      onChange(initialSelection);
+    }
+  }, [defaultValue, items, onChange, selectedItems]);
 
   const toggleItem = (item: Item) => {
     onChange(

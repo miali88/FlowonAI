@@ -406,6 +406,7 @@ frameborder="0"
                         )
                   }
                   onChange={handleDataSourceChange}
+                  defaultValue={selectedAgent?.dataSource}
                 />
               </div>
               <div>
