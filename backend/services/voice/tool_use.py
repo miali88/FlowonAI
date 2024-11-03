@@ -82,10 +82,11 @@ class AgentFunctions(llm.FunctionContext):
 
             data_source = await get_agent_metadata(agent_id)
             data_source: str = data_source.get('dataSource', None)
-            data_source: Dict = json.loads(data_source)
-            data_source: Dict = {
-                "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
-                "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
+            if data_source != "all":
+                data_source: Dict = json.loads(data_source)
+                data_source: Dict = {
+                    "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
+                    "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
             }
 
             results = await similarity_search(query, data_source)

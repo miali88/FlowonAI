@@ -208,13 +208,10 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         similarity_threshold = 0.35
         max_results = 5
 
-    # Query each table separately
-    for table in table_names:
+    async def fetch_table_data(table, query_embedding):
         try:
             if table == "user_web_data":
-                query_embedding = await get_embedding(query)
-
-                response = supabase.rpc(
+                return supabase.rpc(
                     "user_web_data",
                     {
                         'query_embedding': query_embedding,
@@ -226,8 +223,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
                 ).execute()
             
             elif table == "user_text_files":
-                query_embedding = await get_embedding(query)
-                response = supabase.rpc(
+                return supabase.rpc(
                     "search_chunks",
                     {
                         'query_embedding': query_embedding,
@@ -237,14 +233,21 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
                         'parent_id_filter': data_source['text_files']
                     }
                 ).execute()
-                
-            # Check if response exists and has data
-            if response and hasattr(response, 'data') and response.data:
-                all_results.extend(response.data)
-                
         except Exception as e:
             logger.error(f"Error querying table {table}: {str(e)}")
-            continue
+            return None
+
+    # Get embedding once for both queries
+    query_embedding = await get_embedding(query)
+    
+    # Run queries concurrently
+    tasks = [fetch_table_data(table, query_embedding) for table in table_names]
+    responses = await asyncio.gather(*tasks)
+    
+    # Process results
+    for response in responses:
+        if response and hasattr(response, 'data') and response.data:
+            all_results.extend(response.data)
     
     return all_results
 
@@ -312,7 +315,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: str):
     else:
         raise ValueError("No relevant documents found for the given query.")
 
-async def chat_process(user_message, session_id="dev", user_id='user_2lKpUPRJD4g5IErIdhbO7rBMn3K', user_search_type="Quick Search"):
+async def chat_process(user_message, session_id="dev", user_id=None, user_search_type="Quick Search"):
     print("\nfunc chat_process...")
     try:
         
