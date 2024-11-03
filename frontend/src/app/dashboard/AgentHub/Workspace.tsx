@@ -399,14 +399,14 @@ frameborder="0"
                     ...knowledgeBaseItems
                   ]}
                   selectedItems={
-                    selectedAgent?.dataSource?.includes('all') 
+                    selectedAgent?.dataSource === 'all' 
                       ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
                       : knowledgeBaseItems.filter(item => 
                           selectedAgent?.knowledgeBaseIds?.includes(item.id)
-                        )
+                        ) || []
                   }
                   onChange={handleDataSourceChange}
-                  defaultValue={selectedAgent?.dataSource}
+                  defaultValue={selectedAgent?.dataSource || ''}
                 />
               </div>
               <div>

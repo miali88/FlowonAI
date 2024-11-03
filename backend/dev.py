@@ -16,6 +16,10 @@ async def get_weather(location: str, unit: Optional[str] = "celsius") -> str:
     # Mock implementation
     return f"The weather in {location} is 22°{unit[0].upper()}"
 
+
+
+
+
 async def test_llm_function_calls():
     llm_instance = openai.LLM()
     

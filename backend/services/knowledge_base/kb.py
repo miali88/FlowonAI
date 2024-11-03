@@ -24,7 +24,6 @@ async def get_kb_items(current_user):
     kb_tables = ["user_web_data", "user_text_files"]
     print(f"Fetching items for user: {current_user}")
     all_items = []
-    seen_titles = set()  # To keep track of unique titles
 
     total_tokens: int = 0
 
@@ -60,6 +59,7 @@ async def get_kb_items(current_user):
     return all_items, total_tokens
 
 def group_by_root_url(items):
+    id_root = 0
     if not isinstance(items, list):
         raise TypeError(f"Expected a list, got {type(items)}")
     
@@ -71,9 +71,10 @@ def group_by_root_url(items):
     for root_url, group in groupby(sorted_items, key=itemgetter('root_url')):
         group_list = list(group)
         
+        id_root += 1
         # Create consolidated record
         consolidated = {
-            'id': f'web_{uuid.uuid4()}',
+            'id': id_root,
             'title': root_url,  # Using root_url as title
             'root_url': root_url,
             'content': [{  # Group of URLs and their fields

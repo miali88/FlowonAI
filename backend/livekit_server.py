@@ -41,6 +41,10 @@ class CallDuration:
         }
 
 async def entrypoint(ctx: JobContext):
+
+    # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+    # agent, opening_line = await create_voice_assistant(agent_id, ctx)
+
     try:
         # Add call start time tracking
         call_start_time = datetime.now()

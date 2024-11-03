@@ -53,8 +53,10 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
       const initialSelection = items.filter(item => 
         defaultValue === 'all' ? item.id === 'all' : defaultValue.includes(item.id)
       );
-      initialSelectionMade.current = true;
-      onChange(initialSelection);
+      if (initialSelection.length > 0) {
+        initialSelectionMade.current = true;
+        onChange(initialSelection);
+      }
     }
   }, [defaultValue, items, onChange, selectedItems]);
 
