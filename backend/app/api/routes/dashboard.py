@@ -77,14 +77,16 @@ async def upload_file_handler(
         if not authorization or not authorization.startswith('Bearer '):
             raise HTTPException(status_code=401, detail="Invalid or missing token")
 
-        content = await file_processing.process_file(file)
+        content, file_extension = await file_processing.process_file(file)
         logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
         new_item = supabase.table('user_text_files').insert({
-            "title": file.filename,
+            "title": file.filename, # TODO: replace with user's entered title
+            "file_name": file.filename,
             "content": content,
-            "user_id": x_user_id  # Use the user ID from the header
+            "user_id": x_user_id,  # Use the user ID from the header
+            "data_type": file_extension
         }).execute()
 
         # Schedule the kb_item_to_chunks function to run in the background

@@ -32,7 +32,7 @@ async def process_file(file: UploadFile) -> str:
             raise ValueError(f"Unsupported file type: {file_extension}")
         
         logger.info(f"File processed successfully. Content length: {len(content)}")
-        return content
+        return content, file_extension
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}")
         raise
