@@ -87,9 +87,12 @@ class AgentFunctions(llm.FunctionContext):
                 data_source: Dict = {
                     "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
                     "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
-            }
+                }
+                results = await similarity_search(query, data_source=data_source, user_id=user_id)
+            elif data_source == "all":
+                data_source = {"web": ["all"], "text_files": ["all"]}
+                results = await similarity_search(query, data_source=data_source, user_id=user_id)
 
-            results = await similarity_search(query, data_source)
             return f"Found matching products/services: {results}"
             
         except Exception as e:
