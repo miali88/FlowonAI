@@ -4,6 +4,7 @@ import axios from "axios"
 import { useUser } from "@clerk/nextjs"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -55,6 +56,14 @@ interface AgentCardsProps {
   setSelectedAgent: (agent: Agent) => void
 }
 
+function Loader() {
+  return (
+    <div className="relative w-full h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="loader"></div>
+    </div>
+  );
+}
+
 export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
   const { user } = useUser()
   const [agents, setAgents] = useState<Agent[]>([])
@@ -103,7 +112,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
     setFilteredAgents(filtered)
   }, [searchTerm, agents])
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <Loader />;
   if (error) return <div>Error: {error}</div>
 
   return (

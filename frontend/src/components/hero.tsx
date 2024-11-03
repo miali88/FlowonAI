@@ -80,6 +80,7 @@ export function Hero() {
         </Button>
       </div>
 
+
       {/* Demo section - Adjusted to be more visible when scrolling */}
       <div className="min-h-[80vh] pt-14 animate-fade-up opacity-0 [--animation-delay:400ms]">
         <div className="flex flex-row items-stretch justify-center">

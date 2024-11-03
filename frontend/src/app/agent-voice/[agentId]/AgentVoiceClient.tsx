@@ -3,6 +3,9 @@
 import { AgentHub } from '@/app/dashboard/agenthub/iframe';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import "@/components/loading.css";
+  }
+}";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -13,6 +16,14 @@ type Agent = {
   // Add other specific properties you expect from the API
   [key: string]: string | undefined;  // Allow string properties while maintaining type safety
 };
+
+function Loader() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="loader"></div>
+    </div>
+  );
+}
 
 export default function AgentVoiceClient() {
   const params = useParams();
@@ -39,7 +50,7 @@ export default function AgentVoiceClient() {
   };
 
   if (!agent) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return <AgentHub selectedAgent={agent} embedMode={true} />;

@@ -37,6 +37,7 @@ import {
 import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs"
+import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -66,6 +67,15 @@ export type ConversationLog = {
 // Update the component props
 interface LibraryTableProps {
   setSelectedConversation: (conversation: ConversationLog | null) => void;
+}
+
+// Update the Loader component
+function Loader() {
+  return (
+    <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center bg-background">
+      <div className="loader"></div>
+    </div>
+  );
 }
 
 export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
@@ -292,7 +302,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     setSelectedConversation(conversation);
   };
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <Loader />;
   if (error) return <div>Error: {error}</div>
 
   return (

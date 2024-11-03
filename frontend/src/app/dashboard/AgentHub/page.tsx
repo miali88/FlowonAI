@@ -8,8 +8,17 @@ import { NewAgent } from './NewAgent';
 import Workspace from './Workspace';
 import { LocalParticipant } from 'livekit-client';
 import axios from 'axios';
+import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+function Loader() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="loader" />
+    </div>
+  );
+}
 
 const Lab = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -27,6 +36,7 @@ const Lab = () => {
     title: string;
     data_type: string;
   }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -116,6 +126,7 @@ const Lab = () => {
     if (!userId) return;
     
     try {
+      setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/dashboard/knowledge_base`, {
         headers: {
           'Content-Type': 'application/json',
@@ -136,13 +147,18 @@ const Lab = () => {
       }
     } catch (error) {
       console.error('Error fetching knowledge base:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Add useEffect to fetch knowledge base on component mount
   React.useEffect(() => {
     fetchKnowledgeBase();
   }, [userId]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="flex flex-col h-full p-6">

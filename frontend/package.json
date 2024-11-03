@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.4.1",
+    "@frank-mayer/react-tag-cloud": "^1.2.1",
     "@livekit/components-react": "^2.5.2",
     "@livekit/components-styles": "^1.1.1",
     "@radix-ui/react-accordion": "^1.2.1",
@@ -39,6 +40,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "embla-carousel-react": "^8.3.0",
+    "flag-icons": "^7.2.3",
     "framer-motion": "^11.11.10",
     "livekit-client": "^2.5.1",
     "livekit-server-sdk": "^2.6.1",
@@ -50,8 +52,11 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.2.3",
+    "react-icon-cloud": "^4.1.4",
     "react-markdown": "^9.0.1",
     "react-resizable-panels": "^2.1.4",
+    "react-tagcloud": "^2.3.3",
+    "tag-cloud": "^2.0.2",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },

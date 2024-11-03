@@ -28,7 +28,8 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
           transition={{ duration: 0.5 }}
         >
           <Button
-            className="w-full h-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-400 focus:outline-none overflow-hidden"
+            className="w-full h-full rounded-full bg-[#000000b3] backdrop-blur-[5px] text-white 
+            hover:bg-black/80 focus:ring-2 focus:ring-white/20 focus:outline-none overflow-hidden"
             onClick={handleClick}
             disabled={isLoading}  // Changed from isConnecting to isLoading
           >

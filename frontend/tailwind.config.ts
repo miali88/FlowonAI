@@ -65,6 +65,7 @@ const config: Config = {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+  			'glow': 'glow 3s ease-in-out infinite alternate',
   		},
   		keyframes: {
   			shine: {
@@ -125,12 +126,22 @@ const config: Config = {
   			},
   			'pulse-slow': {
   				'0%, 100%': {
-  					opacity: '0.4',
-  					transform: 'scale(0.98)',
+  					opacity: '0.3',
+  					transform: 'scale(0.95)',
   				},
   				'50%': {
   					opacity: '0.8',
-  					transform: 'scale(1.02)',
+  					transform: 'scale(1.05)',
+  				},
+  			},
+  			'glow': {
+  				'0%': {
+  					opacity: '0.5',
+  					transform: 'scale(0.95)',
+  				},
+  				'100%': {
+  					opacity: '1',
+  					transform: 'scale(1.05)',
   				},
   			},
   		}

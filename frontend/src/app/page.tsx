@@ -1,11 +1,11 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
+import { SetupSection } from "@/components/SetupSection";
 import { Pricing } from "@/components/pricing";
 import { CtaSection } from "@/components/cta-section";
 import { Testimonials } from "@/components/testimonials";
 import { Footer } from "@/components/footer";
-import { Widget } from "@/components/widget";
 
 export default function HomePage() {
   return (
@@ -13,6 +13,7 @@ export default function HomePage() {
       <Header />
       <Hero />
       <FeaturesSection />
+      <SetupSection />
       <Pricing />
       <CtaSection />
       <Testimonials />

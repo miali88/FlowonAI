@@ -24,7 +24,11 @@ import { Insert } from './Insert';
 import { WebContent, KnowledgeBaseItem } from './types'
 
 function Loader() {
-  return <div className="loader"></div>;
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="loader"></div>
+    </div>
+  );
 }
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';  // Provide default empty string
 
