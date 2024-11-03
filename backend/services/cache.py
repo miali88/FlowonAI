@@ -3,6 +3,15 @@ from services.db.supabase_services import supabase_client
 
 supabase = supabase_client()
 
+
+""" DATABASE CACHE """
+
+kb_cache: Dict[str, dict] = {}
+
+# async def get_kb_cache(agent_id: str) -> Optional[dict]:
+
+
+""" AGENT METADATA CACHE """
 # The main cache dictionary
 agent_metadata_cache: Dict[str, dict] = {}
 

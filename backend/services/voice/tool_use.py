@@ -88,6 +88,8 @@ class AgentFunctions(llm.FunctionContext):
                     "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
                     "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
                 }
+                # data_source: Dict[str, List[Union[str, int]]]
+                # data_source = {"web": "https://flowon.ai", "text_files": [59,61]}
                 results = await similarity_search(query, data_source=data_source, user_id=user_id)
             elif data_source == "all":
                 data_source = {"web": ["all"], "text_files": ["all"]}
