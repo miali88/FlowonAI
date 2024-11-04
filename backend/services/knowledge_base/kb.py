@@ -65,16 +65,17 @@ def group_by_root_url(items):
     
     # Sort items by root_url
     sorted_items = sorted(items, key=itemgetter('root_url'))
+    id_item = 0
     
     # Group items and create consolidated records
     result = []
     for root_url, group in groupby(sorted_items, key=itemgetter('root_url')):
+        id_item += 1
         group_list = list(group)
-        
         id_root += 1
         # Create consolidated record
         consolidated = {
-            'id': id_root,
+            'id': id_item,
             'title': root_url,  # Using root_url as title
             'root_url': root_url,
             'content': [{  # Group of URLs and their fields

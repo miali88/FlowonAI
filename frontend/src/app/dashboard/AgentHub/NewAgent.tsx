@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { MultiSelect } from "@/components/multiselect"
+import { MultiSelect } from "./multiselect_newagent"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { AgentFeatures } from './AgentFeatures';
@@ -60,7 +60,7 @@ const VOICE_OPTIONS = {
 interface FormData {
   agentName: string;
   agentPurpose: string;
-  dataSource: string;
+  dataSource: string[];
   tag?: string;  // Make tag optional with '?'
   openingLine: string;
   voice: string;
@@ -68,19 +68,22 @@ interface FormData {
   language: string;
 }
 
-export function NewAgent() {
+interface NewAgentProps {
+  knowledgeBaseItems?: Array<{
+    id: string | number;
+    title: string;
+    data_type: string;
+  }>;
+}
+
+export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [dataSource, setDataSource] = useState<string>("");
-  const [formData, setFormData] = useState<FormData>({
-    agentName: "",
-    agentPurpose: "",
-    dataSource: "",
-    tag: "",
-    openingLine: "",
-    voice: "",
-    instructions: "",
-    language: "",
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    dataSource: [] as string[],
+    // ... other form fields
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
@@ -91,19 +94,21 @@ export function NewAgent() {
   const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
   const [agentFeatures, setAgentFeatures] = useState({});
 
+  // Move state updates to useEffect
+  useEffect(() => {
+    console.log('Knowledge base items:', knowledgeBaseItems);
+  }, [knowledgeBaseItems]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSelectChange = (field: string, values: string | string[]) => {
-    if (field === "dataSource") {
-      const valueArray = Array.isArray(values) ? values : [values];
-      setFormData({ ...formData, [field]: valueArray });
-      setDataSource(valueArray[0] || "");
-    } else {
-      setFormData({ ...formData, [field]: values });
-    }
-  };
+  const handleSelectChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
 
   const handleVoiceChange = (value: string) => {
     setSelectedVoice(value);
@@ -256,20 +261,28 @@ export function NewAgent() {
               </Label>
               <div className="col-span-3">
                 <MultiSelect 
-                  options={[
-                    { value: "all", label: "All", metadata: "Access everything" },
-                    { value: "tagged", label: "Items with tag", metadata: "Tag-based filtering" },
-                    { value: "natural-language", label: "Describe using natural language", metadata: "Natural language filtering" }
+                  items={[
+                    { id: -1, title: 'All Knowledge Base Items', data_type: 'all' },
+                    ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
                   ]}
-                  placeholder="Select data sources"
-                  onChange={(values) => handleSelectChange("dataSource", values)}
-                  value={Array.isArray(formData.dataSource) ? formData.dataSource : []}
-                  className="bg-background text-foreground border-muted-foreground"
+                  selectedItems={
+                    formData.dataSource.includes(-1)
+                      ? [{ id: -1, title: 'All Knowledge Base Items', data_type: 'all' }]
+                      : knowledgeBaseItems.filter(item => formData.dataSource.includes(Number(item.id)))
+                  }
+                  onChange={(selectedItems) => {
+                    console.log('Selected items:', selectedItems);
+                    const newIds = selectedItems.map(item => Number(item.id));
+                    setFormData(prev => ({
+                      ...prev,
+                      dataSource: newIds
+                    }));
+                  }}
                 />
               </div>
             </div>
             {/* Conditional Tag Input */}
-            {dataSource === "tagged" && (
+            {formData.dataSource === "tagged" && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="tag" className="text-right text-foreground">
                   Tag

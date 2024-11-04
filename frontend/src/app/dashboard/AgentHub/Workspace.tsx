@@ -9,13 +9,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatBotMini from './ChatBotMini';
 import { Agent } from './AgentCards';
-import { ChevronRight, Plus, Trash2, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from './AgentFeatures';
-import { Separator } from "@/components/ui/separator";
-import { MultiSelect } from '@/components/multiselect';
+import { MultiSelect } from './multiselect_settings';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;

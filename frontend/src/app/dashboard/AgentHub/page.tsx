@@ -32,7 +32,7 @@ const Lab = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
   const [knowledgeBaseItems, setKnowledgeBaseItems] = useState<Array<{
-    id: string;
+    id: string | number;
     title: string;
     data_type: string;
   }>>([]);
@@ -164,7 +164,7 @@ const Lab = () => {
     <div className="flex flex-col h-full p-6">
       <div className="flex flex-col space-y-6">
         <div className="w-full flex flex-col items-start space-y-4">
-          <NewAgent />
+          <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
           <AgentCards setSelectedAgent={handleAgentSelect} />
         </div>
         {selectedAgent ? (
