@@ -28,7 +28,6 @@ async def get_current_user(x_user_id: str = Header(...)):
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
 
-
 @router.get("/token")
 async def get_token(request: Request, background_tasks: BackgroundTasks):
     """ 
