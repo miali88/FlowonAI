@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
-import '../styles.css';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';

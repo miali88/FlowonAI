@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import ChatBotMini from './components/ChatBotMini';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
-import styles from './styles.css?inline';
+import styles from './styles.css?raw';
 
 const WIDGET_NAMESPACE = 'FlowonWidget';
 
