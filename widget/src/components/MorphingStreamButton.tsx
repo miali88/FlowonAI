@@ -1,4 +1,7 @@
+'use client'
+
 import React from "react";
+import { Mic } from 'lucide-react';
 
 interface MorphingStreamButtonProps {
   onStreamToggle: () => void;
@@ -9,6 +12,7 @@ interface MorphingStreamButtonProps {
 const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({ 
   onStreamToggle, 
   isConnecting,
+  isStreaming 
 }) => {
   const handleClick = () => {
     onStreamToggle();
@@ -18,15 +22,30 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
     <div className="w-full max-w-[300px]">
       <div className="p-6 flex flex-col items-center">
         <button
-          className="w-[120px] h-[120px] rounded-full bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800 
-            hover:from-gray-300 hover:to-gray-500 focus:ring-2 focus:ring-gray-300 focus:outline-none
-            shadow-lg backdrop-blur-md border border-gray-300
-            transition-all duration-200 ease-in-out
-            disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleClick}
           disabled={isConnecting}
+          className={`
+            relative overflow-hidden transition-all duration-300 ease-in-out
+            ${isStreaming ? 'w-32 bg-blue-500' : 'w-12 bg-white hover:bg-gray-100'}
+            h-12 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+          `}
         >
-          Start Chat
+          <div
+            className={`
+              absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out
+              ${isStreaming ? 'opacity-0 scale-50' : 'opacity-100 scale-100'}
+            `}
+          >
+            <Mic className="w-6 h-6 text-gray-700" />
+          </div>
+          <div
+            className={`
+              absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out
+              ${isStreaming ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}
+            `}
+          >
+            <span className="text-white font-medium">Chatting...</span>
+          </div>
         </button>
       </div>
     </div>

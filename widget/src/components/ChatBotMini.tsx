@@ -227,9 +227,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
             </div>
           )}
           <>
-            <header className="header">
-              <h2>Flowon</h2>
-            </header>
             <div className="chatbox flex items-center justify-center" ref={chatboxRef}>
               <MorphingStreamButton
                 onStreamToggle={handleStreamToggle}
@@ -265,6 +262,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
                 </>
               )}
             </div>
+            
             {(showChatInput && isStreaming) && (
               <div className="chatInput">
                 <form onSubmit={handleSubmit}>
@@ -295,9 +293,16 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               </div>
             )}
             
-            <footer className="footer">
-              <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className="footerLogo" />
-              <span className="footerText">Powered by Flowon.AI</span>
+            <footer className="footer w-full flex items-center justify-center">
+              <a 
+                href="https://flowon.ai" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center justify-center gap-3 no-underline"
+              >
+                <img src="/flowon_see_though_v2.png" alt="Flowon.AI Logo" className="footerLogo" />
+                <span className="footerText">Powered by Flowon.AI</span>
+              </a>
             </footer>
           </>
         </div>

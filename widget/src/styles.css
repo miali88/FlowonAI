@@ -21,6 +21,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
+  background: transparent;
 }
 
 /* Reset styles for shadow DOM */
@@ -31,7 +32,7 @@ body {
 
 /* CSS Custom Properties */
 .flowon-widget-wrapper {
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg: transparent;
   --glass-border: rgba(255, 255, 255, 0.3);
   --glass-shadow: rgba(31, 38, 135, 0.15);
   --text-primary: #333;
@@ -46,9 +47,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
@@ -159,21 +158,30 @@ body {
 }
 
 .flowon-widget-wrapper .footer {
-  padding: 10px 20px;
+  padding: 15px 20px;
   border-top: 1px solid var(--glass-border);
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
 }
 
 .flowon-widget-wrapper .footerLogo {
   height: 24px;
   width: auto;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .flowon-widget-wrapper .footerText {
   color: var(--accent-color);
-  font-size: 12px;
+  font-size: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .flowon-widget-wrapper .error-message {
@@ -207,4 +215,17 @@ body {
 
 @keyframes slideIn {
   /* Can be removed */
+}
+
+.flowon-widget-wrapper .footer a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 0.2s ease;
+}
+
+.flowon-widget-wrapper .footer a:hover {
+  opacity: 0.8;
 }
