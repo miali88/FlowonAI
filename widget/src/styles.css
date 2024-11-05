@@ -1,3 +1,28 @@
+/* Reset and root styles */
+:root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Layout container */
+.layout-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
 /* Reset styles for shadow DOM */
 :host {
   all: initial;
@@ -11,33 +36,25 @@
   --glass-shadow: rgba(31, 38, 135, 0.15);
   --text-primary: #333;
   --accent-color: #666;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Scope all other styles to the wrapper */
 .flowon-widget-wrapper .chatbot {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
+  position: relative;
+  width: 100%;
+  height: 100%;
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border: none;
+  border-radius: 0;
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
-  width: 360px;
-  transition: all 0.3s ease;
   z-index: 1000;
-}
-
-.flowon-widget-wrapper .chatbot.minimized {
-  width: 60px;
-  height: 60px;
-  cursor: pointer;
-}
-
-.flowon-widget-wrapper .chatbot.minimizing {
-  transform: scale(0.3);
-  opacity: 0.8;
+  margin: 0;
+  padding: 0;
 }
 
 .flowon-widget-wrapper .header {
@@ -84,8 +101,9 @@
 }
 
 .flowon-widget-wrapper .chatbox {
+  height: calc(100% - 110px);
+  overflow-y: auto;
   padding: 20px;
-  min-height: 300px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -184,16 +202,9 @@
 
 /* Animation for expanded state */
 .flowon-widget-wrapper .chatbot.expanded {
-  animation: slideIn 0.3s ease-out;
+  animation: none;
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  /* Can be removed */
 }

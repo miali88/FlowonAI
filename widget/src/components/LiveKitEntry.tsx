@@ -1,4 +1,3 @@
-/* VERSION 2.0.0 */
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -13,6 +12,12 @@ interface LiveKitEntryProps {
   url: string;
   roomName: string;
   isStreaming: boolean;
+  options: {
+    element?: Element;
+    adaptiveStream?: boolean;
+    dynacast?: boolean;
+    // ... other options can be added here
+  };
   onStreamEnd: () => void;
   onStreamStart: () => void;
   setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
@@ -24,7 +29,8 @@ export function LiveKitEntry({
   token, 
   url, 
   roomName, 
-  isStreaming, 
+  isStreaming,
+  options,
   onStreamEnd, 
   onStreamStart, 
   setRoom, 
@@ -64,11 +70,7 @@ export function LiveKitEntry({
           autoGainControl: true,
         }
       }}
-      options={{
-        adaptiveStream: true,
-        dynacast: true,
-        element: document.querySelector('flowon-widget')?.shadowRoot?.getElementById('flowon-shadow-root') || undefined,
-      }}
+      options={options}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >
