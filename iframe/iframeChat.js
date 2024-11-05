@@ -121,17 +121,17 @@ class ChatWidget {
       this.container.setAttribute('data-theme', 'dark');
     }
 
-    // Create header and iframe with permissions
+    // Create header and iframe with correct permissions
     this.container.innerHTML = `
       <div class="chat-widget-header">
         <span>Chat</span>
         <span class="chat-widget-close">×</span>
       </div>
-      <iframe 
+  <iframe 
         class="chat-widget-iframe"
-        src="http://localhost:3001"
-        allow="microphone; camera; display-capture"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        src="http://localhost:3001/index.html"
+        allow="microphone *; camera *"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
       ></iframe>
     `;
 
@@ -152,4 +152,4 @@ class ChatWidget {
 }
 
 // Make it globally available
-window.ChatWidget = ChatWidget; 
+window.ChatWidget = ChatWidget;

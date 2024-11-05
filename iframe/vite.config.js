@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-    server: {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Permissions-Policy': 'microphone=self, camera=self'  // Note: changed from () to self
-      }
+  server: {
+    headers: {
+      'Permissions-Policy': 'microphone=self, camera=self',
+      'Access-Control-Allow-Origin': '*'
     }
-  })
+  }
+})
