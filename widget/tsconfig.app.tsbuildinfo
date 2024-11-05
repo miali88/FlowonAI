@@ -1,0 +1,1 @@
+{"root":["./src/embed.ts","./src/main.tsx","./src/vite-env.d.ts","./src/components/chatbotmini.tsx","./src/components/errorboundary.tsx","./src/components/layout.tsx","./src/components/livekitentry.tsx","./src/components/morphingstreambutton.tsx","./src/lib/utils.ts"],"errors":true,"version":"5.6.3"}

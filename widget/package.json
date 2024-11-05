@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "build:rollup": "rollup -c",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "debug:css": "cat src/styles.css"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.2.1",
@@ -18,7 +17,6 @@
     "livekit-client": "^2.5.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-shadow": "^20.5.0",
     "styled-components": "^6.1.0"
   },
   "devDependencies": {
@@ -49,13 +47,9 @@
     "postcss-custom-properties": "^13.0.0",
     "postcss-import": "^16.1.0",
     "postcss-nesting": "^12.0.0",
-    "postcss-preset-env": "^8.5.1",
-    "postcss-safe-parser": "^7.0.1",
-    "postcss-scss": "^4.0.9",
+    "postcss-preset-env": "^8.0.0",
     "rollup": "^4.24.0",
     "rollup-plugin-postcss": "^4.0.2",
-    "stylelint": "^16.10.0",
-    "stylelint-config-standard": "^36.0.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.7.0",
     "vite": "^5.4.9"

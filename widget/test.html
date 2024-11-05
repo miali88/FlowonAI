@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Widget Test Page</title>
+    <script type="module">
+      import RefreshRuntime from "/@react-refresh"
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+      window.__vite_plugin_react_preamble_installed__ = true
+    </script>
+    <script type="module" src="/@vite/client"></script>
+</head>
+<body>
+    <h1>Widget Test Page</h1>
+    
+    <script>
+      window.embeddedChatbotConfig = {
+        agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
+        domain: 'http://localhost:5173'
+      };
+    </script>
+    <script type="module" src="/src/embed.ts"></script>
+</body>
+</html>
