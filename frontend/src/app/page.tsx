@@ -20,7 +20,7 @@ export default function HomePage() {
           <SetupSection />
           <Pricing />
           <CtaSection />
-          <Testimonials />
+          {/* <Testimonials /> */}
         </div>
       </main>
       <Footer />
