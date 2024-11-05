@@ -30,8 +30,8 @@ export function FeaturesSection() {
   );
 
   return (
-    <section className="container py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+    <section className="container px-4 sm:px-6 py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto w-[90%] sm:w-full">
         {Object.entries(featureDetails).map(([title, description]) => (
           <FeatureCard key={title} title={title} description={description} />
         ))}

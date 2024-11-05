@@ -43,11 +43,11 @@ export function Hero() {
     // Add any stream start logic if needed
   };
 
-  return (
-    <section className="relative mx-auto px-4 sm:px-6 text-center md:px-8 max-w-[100rem]">
-      {/* Top content group - increased spacing and sizing */}
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center py-16 sm:py-20">
-        <div className="inline-flex h-10 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-4 text-sm transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in mb-8">
+  // Mobile Component (only shows below sm breakpoint)
+  const MobileHero = () => (
+    <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center py-8">
+        <div className="inline-flex h-10 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-4 text-sm transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in mb-6">
           <TextShimmer className="inline-flex items-center justify-center">
             <span className="text-sm text-secondary-foreground/60">
               ✨ Forms, a new way to collect info from callers
@@ -55,59 +55,25 @@ export function Hero() {
           </TextShimmer>
         </div>
         
-        {/* Increased heading size */}
-        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-6 sm:py-10 text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] font-medium font-heading leading-tight tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[90vw] sm:max-w-[95vw]">
-          <span className="whitespace-normal sm:whitespace-nowrap">Give Your Website a Voice That</span>{" "}
-          <WordRotate
-            words={[
-              "Converts",
-              "Answers Questions",
-              "Engages With Visitors",
-              "Books Appointments"
-            ]}
-          />
+        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-5xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
+          <span className="whitespace-normal">Give Your Website a Voice That</span>{" "}
+          <WordRotate words={["Converts", "Answers Questions", "Engages With Visitors", "Books Appointments"]} />
         </h1>
 
-        {/* Increased paragraph size and spacing */}
-        <p className="mb-12 sm:mb-20 text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-4xl mx-auto px-4">
+        <p className="mb-8 text-base tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
           Easily deploy AI agents to your website to assist with prospecting, appointment booking,
           customer service, and more
         </p>
 
-        {/* Made button larger */}
-        <div className="scale-110 sm:scale-125">
+        <div className="scale-100">
           <OnboardingButton />
         </div>
       </div>
 
-      {/* Demo section - increased height */}
-      <div className="min-h-[90vh] pt-10 sm:pt-16 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-stretch justify-center">
-          {/* Adjusted glow effects */}
-          <div className="absolute inset-0 -z-10">
-            {/* Primary glow */}
-            <div className="absolute inset-0">
-              <div className="absolute inset-0 bg-gradient-radial from-purple-500/50 via-purple-500/20 to-transparent blur-[120px] animate-glow" />
-              <div className="absolute inset-0 bg-gradient-radial from-blue-500/50 via-blue-500/20 to-transparent blur-[120px] animate-pulse-slow delay-150" />
-            </div>
-            
-            {/* Secondary subtle glows */}
-            <div className="absolute inset-0 opacity-60">
-              <div className="absolute inset-0 bg-gradient-radial from-indigo-500/30 via-transparent to-transparent blur-[100px] animate-pulse-slow" />
-              <div className="absolute inset-0 bg-gradient-radial from-cyan-500/30 via-transparent to-transparent blur-[100px] animate-glow delay-300" />
-            </div>
-          </div>
-          
-          {/* Adjusted glass container for mobile */}
-          <div className="flex flex-col sm:flex-row rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
-            {/* Inner glow effect */}
-            <div className="absolute inset-0">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent" />
-              <div className="absolute inset-0 bg-gradient-radial from-white/[0.08] via-transparent to-transparent" />
-            </div>
-            
-            {/* Adjusted content containers for mobile */}
-            <div className="w-full sm:w-[500px] p-3 sm:p-5 relative">
+      <div className="min-h-[70vh] pt-6 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
+        <div className="flex flex-col items-stretch justify-center">
+          <div className="flex flex-col rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
+            <div className="w-full p-3 relative">
               <ChatBotMini
                 title={chatTitle}
                 agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
@@ -126,7 +92,87 @@ export function Hero() {
                 bypassShowChatInputCondition={false}
               />
             </div>
-            <div className="w-full sm:w-[400px] p-3 sm:p-5 relative">
+            <div className="w-full p-3 relative">
+              <BentoDemo onAgentSelect={handleGridClick} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Desktop Component (your current working version)
+  const DesktopHero = () => (
+    <section className="relative mx-auto px-4 sm:px-6 text-center md:px-8 max-w-[100rem] hidden sm:block">
+      <div className="h-screen flex flex-col items-center justify-center">
+        <div className="inline-flex h-7 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-3 text-xs transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in">
+          <TextShimmer className="inline-flex items-center justify-center">
+            <span className="text-xs text-secondary-foreground/60">
+              ✨ Forms, a new way to collect info from callers
+            </span>
+          </TextShimmer>
+        </div>
+        
+        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-6xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-7xl md:text-8xl lg:text-9xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
+          <span className="whitespace-nowrap">Give Your Website a Voice That</span>{" "}
+          <WordRotate
+            words={[
+              "Converts",
+              "Answers Questions",
+              "Engages With Visitors",
+              "Books Appointments"
+            ]}
+          />
+        </h1>
+
+        <p className="mb-16 text-lg tracking-tight text-muted-foreground md:text-xl lg:text-2xl text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-3xl mx-auto">
+          Easily deploy AI agents to your website to assist with prospecting, appointment booking,
+          customer service, and more
+        </p>
+
+        <OnboardingButton />
+      </div>
+
+      <div className="min-h-[80vh] pt-14 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
+        <div className="flex flex-row items-stretch justify-center">
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-gradient-radial from-purple-500/50 via-purple-500/20 to-transparent blur-[120px] animate-glow" />
+              <div className="absolute inset-0 bg-gradient-radial from-blue-500/50 via-blue-500/20 to-transparent blur-[120px] animate-pulse-slow delay-150" />
+            </div>
+            
+            <div className="absolute inset-0 opacity-60">
+              <div className="absolute inset-0 bg-gradient-radial from-indigo-500/30 via-transparent to-transparent blur-[100px] animate-pulse-slow" />
+              <div className="absolute inset-0 bg-gradient-radial from-cyan-500/30 via-transparent to-transparent blur-[100px] animate-glow delay-300" />
+            </div>
+          </div>
+          
+          <div className="flex rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-radial from-white/[0.08] via-transparent to-transparent" />
+            </div>
+            
+            <div className="w-[500px] p-5 relative">
+              <ChatBotMini
+                title={chatTitle}
+                agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
+                isStreaming={isStreaming}
+                setIsStreaming={setIsStreaming}
+                isLiveKitActive={isLiveKitActive}
+                setIsLiveKitActive={setIsLiveKitActive}
+                token={token}
+                setToken={setToken}
+                url={url}
+                setUrl={setUrl}
+                isConnecting={isConnecting}
+                setIsConnecting={setIsConnecting}
+                onStreamEnd={handleStreamEnd}
+                onStreamStart={handleStreamStart}
+                bypassShowChatInputCondition={false}
+              />
+            </div>
+            <div className="w-[400px] p-5 relative">
               <BentoDemo onAgentSelect={handleGridClick} />
             </div>
           </div>
@@ -142,5 +188,12 @@ export function Hero() {
         className="absolute inset-0 -z-10 h-full"
       />
     </section>
+  );
+
+  return (
+    <>
+      <MobileHero />
+      <DesktopHero />
+    </>
   );
 }

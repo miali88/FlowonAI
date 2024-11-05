@@ -27,10 +27,10 @@ export const SetupSection = () => {
   ];
 
   return (
-    <section className="py-24">
-      <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold mb-12 text-white">How it works</h2>
-        <div className="max-w-2xl">
+    <section className="py-24 w-full">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <h2 className="text-4xl font-bold mb-12 text-white text-center">How it works</h2>
+        <div className="mx-auto max-w-3xl">
           <Accordion type="single" collapsible>
             {steps.map((step) => (
               <AccordionItem key={step.number} value={step.number}>

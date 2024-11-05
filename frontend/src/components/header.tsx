@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AnimatedMobileNavbar } from "@/components/animated-mobile-navbar";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -25,13 +26,13 @@ export function Header() {
         <div className="flex h-[4.5rem] items-center justify-between pt-2">
           {/* Left side - Logo + Name */}
           <Link href="/" className="flex items-center">
-            <img 
-              src="/flowon.png" 
+            <Image 
+              src="/assets/flowon.png"
               alt="Flowon AI Logo"
               width={32}
               height={32}
-              className="h-8 w-8 invert"
-              sizes="(max-width: 768px) 32px, 32px"
+              className="h-8 w-8"
+              priority
             />
             <span className="ml-2 text-xl font-medium">Flowon AI</span>
           </Link>
