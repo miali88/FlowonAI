@@ -41,6 +41,7 @@ import KnowledgeBaseContent from "./Knowledgebase/page";
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import IntegrationsPage from "@/app/dashboard/Integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
+import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
 
 // Add this interface at the top of your file 
 // interface SavedItem {
@@ -248,26 +249,29 @@ function AdminDashboard() {
   };
 
   return (
-    <div className={`flex h-screen bg-background text-foreground transition-colors duration-200 ${isDarkMode ? 'dark' : ''}`}>
-      <Sidebar 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed} 
-        activeItem={activeItem}
-        setActiveItem={handleSetActiveItem}  // Make sure this prop is passed
-        activePanel={activePanel}
-        setActivePanel={setActivePanel}
-      />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          activeItem={activeItem} 
-          selectedFeature={selectedFeature} 
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
+    <div className="relative flex h-screen bg-background text-foreground transition-colors duration-200">
+      <BackgroundPattern />
+      <div className="relative z-10 flex w-full">
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          setIsCollapsed={setIsCollapsed} 
+          activeItem={activeItem}
+          setActiveItem={handleSetActiveItem}
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
         />
-        <div className="flex-1 overflow-auto">
-          {renderContent()}
-        </div>
-      </main>
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <Header 
+            activeItem={activeItem} 
+            selectedFeature={selectedFeature} 
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+          />
+          <div className="flex-1 overflow-auto">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,20 @@ import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
+// Update the glassStyles to preserve background effects
+const glassStyles = `
+  relative
+  bg-gradient-to-br from-white/40 to-white/20 
+  dark:from-gray-800/40 dark:to-gray-800/20
+  backdrop-blur-lg saturate-180
+  border border-white/30 dark:border-gray-700/30
+  shadow-[0_8px_32px_0_rgba(31,38,135,0.15)]
+  transition-all duration-300
+  hover:from-white/50 hover:to-white/30
+  dark:hover:from-gray-800/50 dark:hover:to-gray-800/30
+  hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.25)]
+`;
+
 // Move the Agent type definition here
 export interface Agent {
   id: string;
@@ -123,9 +137,12 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
         {filteredAgents.map((agent) => (
           <div key={agent.id} className="relative h-full">
             <Card 
-              className={`cursor-pointer hover:shadow-md transition-shadow h-full flex flex-col ${
-                selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg' : ''
-              }`} 
+              className={`
+                ${glassStyles}
+                cursor-pointer
+                h-full flex flex-col
+                ${selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg scale-[1.02] from-white/60 to-white/40 dark:from-gray-800/60 dark:to-gray-800/40' : ''}
+              `} 
               onClick={() => handleAgentSelect(agent)}
             >
               <CardHeader>

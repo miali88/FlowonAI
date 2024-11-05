@@ -25,7 +25,7 @@ const Lab = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
-  const { userId, user } = useAuth();
+  const { userId, user, isLoaded } = useAuth();
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -39,15 +39,19 @@ const Lab = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
-    console.log('Clerk user object:', user);
+    if (!isLoaded) {
+      console.log('Still loading user data...');
+      return;
+    }
+
     if (user) {
       console.log('User Name:', user.fullName);
       console.log('First Name:', user.firstName);
       console.log('Last Name:', user.lastName);
     } else {
-      console.log('User is not loaded yet or undefined');
+      console.log('User is authenticated: false');
     }
-  }, [user]);
+  }, [user, isLoaded]);
 
   const handleAgentSelect = (agent: Agent) => {
     setSelectedAgent(agent);

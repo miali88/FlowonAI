@@ -34,9 +34,7 @@ export function MultiSelect({ items, selectedItems, onChange }: MultiSelectProps
     
     let newSelection;
     if (isSelected) {
-      newSelection = selectedItems.filter(
-        selected => selected.id !== item.id
-      );
+      newSelection = selectedItems.filter(selected => selected.id !== item.id);
     } else {
       if (item.id === -1) {
         newSelection = [item];

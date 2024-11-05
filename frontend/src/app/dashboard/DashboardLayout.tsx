@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { BackgroundPattern } from './BackgroundPattern';
 
 export default function DashboardLayout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -16,7 +17,8 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className={`flex h-screen bg-background text-foreground transition-colors duration-200 ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`relative flex h-screen bg-background text-foreground transition-colors duration-200 ${isDarkMode ? 'dark' : ''}`}>
+      <BackgroundPattern />
       <Sidebar 
         isCollapsed={isCollapsed} 
         setIsCollapsed={setIsCollapsed} 
