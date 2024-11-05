@@ -51,7 +51,11 @@ export function Pricing({ currentPlan }: PricingProps) {
           </p>
         </div>
         <div className="flex w-full items-center justify-center space-x-2 mx-2 my-6">
-          <Switch id="interval" onCheckedChange={(checked) => setIsAnnual(checked)} />
+          <Switch 
+            id="interval" 
+            checked={isAnnual}
+            onCheckedChange={(checked) => setIsAnnual(checked)}
+          />
           <span>Annual</span>
           <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
             Get 5 months free ✨

@@ -9,7 +9,7 @@ class ChatWidget {
       buttonColor: config.buttonColor || '#2563eb',
       theme: config.theme || 'light',
       position: config.position || 'right',
-      buttonIcon: config.buttonIcon || '💬',
+      buttonIcon: config.buttonIcon || '<i class="fa-solid fa-microphone-lines"></i>',
     };
     
     this.isOpen = false;
@@ -45,14 +45,14 @@ class ChatWidget {
       }
 
       .chat-widget-button:hover {
-        transform: scale(1.1);
+        transform: scale(1.5) !important;
       }
 
       .chat-widget-icon {
-        width: 25px;
-        height: 25px;
+        width: 50px;
+        height: 50px;
         color: white;
-        font-size: 24px;
+        font-size: 35px;
       }
 
       .chat-widget-container {
@@ -71,16 +71,17 @@ class ChatWidget {
 
       .chat-widget-header {
         padding: 15px;
-        background: ${this.config.buttonColor};
+        background: linear-gradient(135deg, #000000, #333333, #808080);
         color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
 
       .chat-widget-close {
         cursor: pointer;
-        font-size: 20px;
+        font-size: 40px;
       }
 
       .chat-widget-iframe {
@@ -111,7 +112,7 @@ class ChatWidget {
     // Create button
     this.button = document.createElement('div');
     this.button.className = 'chat-widget-button';
-    this.button.innerHTML = `<div class="chat-widget-icon">${this.config.buttonIcon}</div>`;
+    this.button.innerHTML = this.config.buttonIcon;
     
     // Create iframe chat container
     this.container = document.createElement('div');
