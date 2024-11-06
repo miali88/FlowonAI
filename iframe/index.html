@@ -1,17 +1,14 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <title>Flowon</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="UTF-8">
-  </head>
   <body>
     <script src="./iframeChat.js"></script>
     <script>
-      new ChatWidget({
+      // Store config in window object so it's accessible to other scripts
+      window.chatConfig = {
         agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
         domain: 'http://localhost:3001'
-      });
+      };
+      new ChatWidget(window.chatConfig);
     </script>
   </body>
 </html>
