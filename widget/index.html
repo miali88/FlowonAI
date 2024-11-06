@@ -1,22 +1,9 @@
+    </div>
     <div id="embedded-chatbot-container"></div>
-    <script>
-      // Initialize with default config
-      window.embeddedChatbotConfig = {
-        agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
+    <script defer>
+      window.embeddedChatbotConfig = window.parent.chatConfig || {
+        agentId: 'null',
         domain: 'http://localhost:3001'
       };
-
-      // Listen for config from parent
-      window.addEventListener('message', function(event) {
-        console.log('Received message:', event.data); // Debug log
-
-        if (event.data.type === 'CONFIG_INIT') {
-          console.log('Updating config:', event.data.config); // Debug log
-          window.embeddedChatbotConfig = {
-            ...window.embeddedChatbotConfig,  // Preserve any existing config
-            ...event.data.config              // Override with new values
-          };
-        }
-      });
     </script>
     <script defer type="module" src="/src/main.tsx"></script>

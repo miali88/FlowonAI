@@ -12,7 +12,7 @@ class ChatWidget {
 
 
     this.config = {
-      agentId: config.agentId || null,
+      agentId: config.agentId || 'null',
       domain: config.domain || 'http://localhost:3001',
       position: config.position || 'right',
       buttonIcon: config.buttonIcon || '<i class="fa-solid fa-microphone-lines"></i>',
@@ -21,15 +21,11 @@ class ChatWidget {
     this.isOpen = false;
     this.init();
 
-    // Listen for messages from the iframe
+    // Add error handling
     window.addEventListener('message', (event) => {
-      // Verify the origin
-      if (event.origin !== this.config.domain) {
-        return;
-      }
-
       if (event.data.type === 'PERMISSION_ERROR') {
         console.warn('Permission denied:', event.data.error);
+        // Handle the error appropriately
       }
     });
   }
@@ -170,34 +166,19 @@ class ChatWidget {
         <span>Flowon</span>
       </div>
       <iframe 
-        id="chat-widget-iframe"
         class="chat-widget-iframe"
-        src="${this.config.domain}/index.html"
+        src="${this.config.domain}/chat-widget/${this.config.agentId}"
         allow="microphone *; camera *"
         sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
       ></iframe>
     `;
 
-    // Append elements to DOM first
-    document.body.appendChild(this.button);
-    document.body.appendChild(this.container);
-
-    // THEN set up the iframe onload handler after it's in the DOM
-    const iframe = this.container.querySelector('#chat-widget-iframe');
-    if (iframe) {
-      iframe.onload = () => {
-        iframe.contentWindow.postMessage({
-          type: 'CONFIG_INIT',
-          config: {
-            agentId: this.config.agentId,
-            domain: this.config.domain
-          }
-        }, this.config.domain);
-      };
-    }
-
     // Add event listeners
     this.button.addEventListener('click', () => this.toggleChat());
+
+    // Append elements to DOM
+    document.body.appendChild(this.button);
+    document.body.appendChild(this.container);
   }
 
   toggleChat() {
