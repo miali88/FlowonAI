@@ -33,7 +33,7 @@ import {
   Settings,
   X,
   Plug,
-
+  Calendar,
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
@@ -42,6 +42,8 @@ import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import IntegrationsPage from "@/app/dashboard/Integrations/page";
 import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
+import ContactFounders from "@/app/dashboard/ContactFounders/page";
+import Analytics from '@/app/dashboard/analytics/page';
 
 // Add this interface at the top of your file 
 // interface SavedItem {
@@ -78,12 +80,13 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
 
 function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
   const sidebarItems = [
-    //{ icon: HomeIcon, label: "Dashboard" },
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
     { icon: Plug, label: "Integrations" },
     { icon: BarChart3, label: "Analytics" },
+    { icon: Calendar, label: "Contact Founders" },
+
   ];
 
   return (
@@ -243,8 +246,12 @@ function AdminDashboard() {
         return <Lab />;
       case "Integrations":
         return <IntegrationsPage />;
+      case "Contact Founders":
+        return <ContactFounders />;
+      case "Analytics":
+        return <Analytics />;
       default:
-        return <Lab />; // Change default to Lab (Agent Hub)
+        return <Lab />;
     }
   };
 
