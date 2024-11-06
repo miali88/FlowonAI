@@ -19,36 +19,32 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[300px]">
-      <div className="p-6 flex flex-col items-center">
-        <button
-          onClick={handleClick}
-          disabled={isConnecting}
-          className={`
-            relative overflow-hidden transition-all duration-300 ease-in-out
-            ${isStreaming ? 'w-32 bg-blue-500' : 'w-12 bg-white hover:bg-gray-100'}
-            h-12 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
-          `}
-        >
-          <div
-            className={`
-              absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out
-              ${isStreaming ? 'opacity-0 scale-50' : 'opacity-100 scale-100'}
-            `}
-          >
-            <Mic className="w-6 h-6 text-gray-700" />
-          </div>
-          <div
-            className={`
-              absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out
-              ${isStreaming ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}
-            `}
-          >
-            <span className="text-white font-medium">Chatting...</span>
-          </div>
-        </button>
+    <button
+      onClick={handleClick}
+      disabled={isConnecting}
+      className={`
+        relative overflow-hidden transition-all duration-300 ease-in-out
+        ${isStreaming ? 'w-12 bg-blue-500/30' : 'w-12 bg-white/30'}
+        h-12 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+        backdrop-blur-md border border-white/20
+        hover:bg-white/40
+        flex items-center justify-center
+      `}
+    >
+      <div
+        className={`
+          absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out
+          ${isStreaming ? 'opacity-0 scale-50' : 'opacity-100 scale-100'}
+        `}
+      >
+        <Mic className="w-6 h-6 text-gray-700" />
       </div>
-    </div>
+      {isStreaming && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 whitespace-nowrap">
+          <span className="text-sm font-medium text-gray-700">Chatting...</span>
+        </div>
+      )}
+    </button>
   );
 };
 

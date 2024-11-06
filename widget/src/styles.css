@@ -105,7 +105,10 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
   gap: 15px;
+  padding-bottom: 80px;
 }
 
 .flowon-widget-wrapper .chatInput {
@@ -168,7 +171,9 @@ body {
   width: 100%;
   position: absolute;
   bottom: 0;
+  left: 0;
   background: var(--glass-bg);
+  z-index: 10;
 }
 
 .flowon-widget-wrapper .footerLogo {
@@ -230,4 +235,15 @@ body {
 
 .flowon-widget-wrapper .footer a:hover {
   opacity: 0.8;
+}
+
+/* Add specific styles for the morphing button */
+.flowon-widget-wrapper button[class*="rounded-full"] {
+  min-width: 48px;
+  min-height: 48px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
 }

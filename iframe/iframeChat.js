@@ -30,22 +30,42 @@ class ChatWidget {
       .chat-widget-button {
         position: fixed;
         ${this.config.position}: 20px;
-        bottom: 20px;
+        bottom: 100px;
         width: 55px;
         height: 55px;
         border-radius: 50%;
-        background-color: ${this.config.buttonColor};
+        background-color: rgba(108, 117, 125, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
         z-index: 9999;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        animation: ${this.isOpen ? 'none' : 'pulse 2s infinite'};
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 25px rgba(108, 117, 125, 0.5);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
       }
 
       .chat-widget-button:hover {
-        transform: scale(1.5) !important;
+        transform: scale(1.3) !important;
+        animation: none;
       }
 
       .chat-widget-icon {
@@ -55,15 +75,23 @@ class ChatWidget {
         font-size: 35px;
       }
 
+      i.fa-solid.fa-microphone-lines,
+      i.fa-solid.fa-xmark {
+        color: white;
+      }
+
       .chat-widget-container {
         position: fixed;
         ${this.config.position}: 20px;
-        bottom: 90px;
+        bottom: 170px;
         width: 450px;
         height: 600px;
-        background: white;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-radius: 12px;
-        box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         display: none;
         z-index: 9999;
         overflow: hidden;
@@ -71,23 +99,27 @@ class ChatWidget {
 
       .chat-widget-header {
         padding: 15px;
-        background: linear-gradient(135deg, #000000, #333333, #808080);
+        background: linear-gradient(135deg, 
+          rgba(0, 0, 0, 0.6), 
+          rgba(51, 51, 51, 0.6), 
+          rgba(128, 128, 128, 0.6)
+        );
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         color: white;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
-
-      .chat-widget-close {
-        cursor: pointer;
-        font-size: 40px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: 60px;
+        box-sizing: border-box;
       }
 
       .chat-widget-iframe {
         width: 100%;
-        height: calc(100% - 50px);
+        height: calc(100% - 60px);
         border: none;
+        display: block;
       }
 
       @media (max-width: 640px) {
@@ -101,7 +133,8 @@ class ChatWidget {
       }
 
       [data-theme="dark"] .chat-widget-container {
-        background: #1f2937;
+        background: rgba(31, 41, 55, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
       }
     `;
 
@@ -124,10 +157,9 @@ class ChatWidget {
     // Create header and iframe with correct permissions
     this.container.innerHTML = `
       <div class="chat-widget-header">
-        <span>Chat</span>
-        <span class="chat-widget-close">×</span>
+        <span>Flowon</span>
       </div>
-  <iframe 
+      <iframe 
         class="chat-widget-iframe"
         src="http://localhost:3001/index.html"
         allow="microphone *; camera *"
@@ -137,8 +169,6 @@ class ChatWidget {
 
     // Add event listeners
     this.button.addEventListener('click', () => this.toggleChat());
-    this.container.querySelector('.chat-widget-close')
-      .addEventListener('click', () => this.toggleChat());
 
     // Append elements to DOM
     document.body.appendChild(this.button);
@@ -148,6 +178,14 @@ class ChatWidget {
   toggleChat() {
     this.isOpen = !this.isOpen;
     this.container.style.display = this.isOpen ? 'block' : 'none';
+    
+    // Toggle button icon between microphone and X
+    this.button.innerHTML = this.isOpen 
+      ? '<i class="fa-solid fa-xmark"></i>' 
+      : this.config.buttonIcon;
+    
+    // Toggle animation
+    this.button.style.animation = this.isOpen ? 'none' : 'pulse 2s infinite';
   }
 }
 
