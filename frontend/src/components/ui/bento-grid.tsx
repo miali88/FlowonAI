@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 const BentoGrid = ({
   children,
   className,
+  onAgentSelect,
 }: {
   children: ReactNode;
   className?: string;
+  onAgentSelect?: (title: string) => void;
 }) => {
   return (
     <div
@@ -30,6 +32,7 @@ const BentoCard = ({
   href,
   features,
   Icon,
+  onSelect,
 }: {
   name: string;
   className?: string;
@@ -38,6 +41,7 @@ const BentoCard = ({
   href: string;
   features?: string[];
   Icon?: React.ComponentType<{ className?: string }>;
+  onSelect?: () => void;
 }) => (
   <div
     key={name}
@@ -49,6 +53,9 @@ const BentoCard = ({
       "transform-gpu dark:bg-black dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
       className,
     )}
+    onClick={onSelect}
+    role="button"
+    tabIndex={0}
   >
     <div>{background}</div>
     <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 p-6 transition-all duration-300 group-hover:-translate-y-10">
