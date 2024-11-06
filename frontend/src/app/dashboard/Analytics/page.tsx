@@ -2,32 +2,80 @@ import React from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/card"; // Assuming you're using shadcn/ui or similar
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'; // For charts
 
-export default function Page() {
+interface AnalyticsMetric {
+  label: string;
+  value: string | number;
+  change?: string;
+}
+
+const AnalyticsDashboard = () => {
+  // Example data - replace with actual API calls
+  const metrics: AnalyticsMetric[] = [
+    { label: "Total Talk Time", value: "328h 45m", change: "+12.3%" },
+    { label: "Number of Calls", value: 1247, change: "+5.8%" },
+    { label: "Average Call Duration", value: "15m 47s", change: "-2.1%" },
+    { label: "Unique Callers", value: 856, change: "+8.4%" },
+    { label: "Repeating Callers", value: 391, change: "+15.2%" },
+  ];
+
+  const popularAgents = [
+    { name: "Sales Assistant", calls: 450 },
+    { name: "Support Agent", calls: 380 },
+    { name: "Lead Qualifier", calls: 290 },
+    { name: "Appointment Setter", calls: 270 },
+  ];
+
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Analytics</h3>
-      <p className="text-muted-foreground mb-6">
-        View and analyze your data here.
-      </p>
-      <Card className="w-full mb-6">
+    <div className="p-6 space-y-6">
+      <h1 className="text-3xl font-bold mb-8">Analytics Dashboard</h1>
+      
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {metrics.map((metric) => (
+          <Card key={metric.label}>
+            <CardHeader className="pb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                {metric.label}
+              </h3>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metric.value}</div>
+              {metric.change && (
+                <p className={`text-sm ${
+                  metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {metric.change} from last month
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Popular Agents Chart */}
+      <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Logs</CardTitle>
-          <CardDescription>Recent system logs and activities</CardDescription>
+          <h3 className="text-lg font-semibold">Most Popular Agents</h3>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[200px]">
-            <p className="mb-2">2023-06-15 10:30:22 - User login: admin@example.com</p>
-            <p className="mb-2">2023-06-15 10:35:15 - New project created: Project X</p>
-            <p className="mb-2">2023-06-15 11:02:47 - Feature update: Analytics module v2.1</p>
-          </ScrollArea>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={popularAgents}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="calls" fill="#4f46e5" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default AnalyticsDashboard;
