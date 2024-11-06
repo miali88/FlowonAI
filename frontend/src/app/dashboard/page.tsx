@@ -143,7 +143,7 @@ function LogoutMenuItem() {
 
 function Header({ activeItem, selectedFeature }) {
   const { user } = useUser();
-  const [userPlan] = useState("broke boi plan...");
+  const [userPlan] = useState("Pro");
   
   const renderTitle = () => {
     if (selectedFeature) {

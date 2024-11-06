@@ -46,6 +46,55 @@ const integrations = [
     category: "Communication",
     status: "Coming soon",
   },
+  {
+    name: "News API",
+    icon: "/icons/newsapi.png",
+    description: "Connect with News API.",
+    category: "News",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Scholar API",
+    icon: "/icons/googlescholar.png",
+    description: "Connect with Google Scholar API.",
+    category: "News",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Trends API",
+    icon: "/icons/googletrends.png",
+    description: "Connect with Google Trends API.",
+    category: "News",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Finance API",
+    icon: "/icons/googlefinance.png",
+    description: "Connect with Google Finance API.",
+    category: "Finance",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Flight API",
+    icon: "/icons/googleflight.png",
+    description: "Connect with Google Flight API.",
+    category: "Travel",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Foods API",
+    icon: "/icons/googlefoods.png",
+    description: "Connect with Google Foods API.",
+    category: "Food",
+    status: "Coming soon",
+  },
+  {
+    name: "Google Hotels API",
+    icon: "/icons/googlehotels.png",
+    description: "Connect with Google Hotels API.",
+    category: "Travel",
+    status: "Coming soon",
+  },
 ]
 
 export default function IntegrationsPage() {

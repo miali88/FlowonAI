@@ -19,7 +19,7 @@ const AnalyticsDashboard = () => {
     { label: "Number of Calls", value: 1247, change: "+5.8%" },
     { label: "Average Call Duration", value: "15m 47s", change: "-2.1%" },
     { label: "Unique Callers", value: 856, change: "+8.4%" },
-    { label: "Repeating Callers", value: 391, change: "+15.2%" },
+    { label: "Repeat Callers", value: 391, change: "+15.2%" },
   ];
 
   const popularAgents = [
@@ -68,7 +68,7 @@ const AnalyticsDashboard = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="calls" fill="#4f46e5" />
+                <Bar dataKey="calls" fill="#06b6d4" />
               </BarChart>
             </ResponsiveContainer>
           </div>
