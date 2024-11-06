@@ -8,7 +8,7 @@ export function Footer() {
         <div className="md:flex md:justify-between px-8 py-16 sm:pb-16 gap-4">
           <div className="mb-12 flex-col flex gap-4">
             <Link href="/" className="flex gap-2">
-              <img alt="Flowon AI Logo" src="/flowonn.png" className="size-8 invert" />
+              <img alt="Flowon AI Logo" src="/flowon.png" className="size-8 invert" />
             </Link>
             <p className="max-w-xs"> </p>
           </div>

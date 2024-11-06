@@ -4,10 +4,16 @@ class ChatWidget {
       return; // Exit if we're inside an iframe
     }
 
+    // Add Font Awesome CSS
+    const fontAwesomeLink = document.createElement('link');
+    fontAwesomeLink.rel = 'stylesheet';
+    fontAwesomeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+    document.head.appendChild(fontAwesomeLink);
+
+
     this.config = {
-      chatbotId: config.chatbotId || 'default',
-      buttonColor: config.buttonColor || '#2563eb',
-      theme: config.theme || 'light',
+      agentId: config.agentId || 'null',
+      domain: config.domain || 'http://localhost:3001',
       position: config.position || 'right',
       buttonIcon: config.buttonIcon || '<i class="fa-solid fa-microphone-lines"></i>',
     };
@@ -161,7 +167,7 @@ class ChatWidget {
       </div>
       <iframe 
         class="chat-widget-iframe"
-        src="http://localhost:3001/index.html"
+        src="${this.config.domain}/${this.config.apiBase}/${this.config.agentId}/index.html"
         allow="microphone *; camera *"
         sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
       ></iframe>
