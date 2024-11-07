@@ -27,6 +27,37 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  margin-bottom: 80px;
+}
+
+.streamButton {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  z-index: 2;
+}
+
+.streamButtonRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
 }
 
 .footer {
@@ -34,7 +65,6 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
   background: var(--widget-bg-color);
   border-top: 1px solid var(--widget-border-color);
   display: flex;
@@ -48,17 +78,25 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  color: inherit;
 }
 
 .footerLogo {
   width: 24px;
   height: 24px;
   object-fit: contain;
+  display: flex;
 }
 
 .footerText {
   font-size: 14px;
   color: var(--widget-text-color);
+  display: flex;
+  align-items: center;
 }
 
-/* ... rest of your existing styles ... */
+.streamStatus {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.25rem;
+}

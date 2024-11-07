@@ -162,9 +162,6 @@ class ChatWidget {
 
     // Create header and iframe with correct permissions
     this.container.innerHTML = `
-      <div class="chat-widget-header">
-        <span>Flowon</span>
-      </div>
       <iframe 
         class="chat-widget-iframe"
         src="${this.config.domain}/chat-widget/${this.config.agentId}"

@@ -77,11 +77,113 @@ const ShadowContainer: React.FC<{
           }
           
           .${styles.streamButtonContainer} {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
             position: absolute;
-            bottom: 80px;
+            top: 60%;
             left: 50%;
             transform: translateX(-50%);
             z-index: 5;
+          }
+          
+          .${styles.streamButtonContainer} button {
+            position: relative;
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: linear-gradient(
+              45deg,
+              rgba(19, 100, 246, 0.6),
+              rgba(147, 51, 234, 0.6),
+              rgba(236, 12, 153, 0.6)
+            );
+            background-size: 300% 300%;
+            animation: gradientMove 5s ease infinite;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 300ms ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(31, 41, 55, 0.2);
+          }
+          
+          @keyframes gradientMove {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+          
+          .${styles.streamButtonContainer} button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+          }
+          
+          .${styles.streamButtonContainer} button:focus {
+            outline: none;
+            ring: 2px solid rgba(59, 130, 246, 0.5);
+          }
+          
+          .${styles.streamButtonContainer} button svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+            transition: all 300ms ease-in-out;
+          }
+          
+          .${styles.streamButtonContainer} button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+          
+          .${styles.streamButtonContainer} button.streaming {
+            background: rgba(59, 130, 246, 0.3);
+          }
+          
+          .${styles.streamButtonContainer} button.streaming svg {
+            opacity: 0.5;
+          }
+          
+          .${styles.streamButtonRing} {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: pulse 2s infinite;
+          }
+          
+          @keyframes pulse {
+            0% {
+              transform: translate(-50%, -50%) scale(1);
+              opacity: 1;
+            }
+            100% {
+              transform: translate(-50%, -50%) scale(1.5);
+              opacity: 0;
+            }
+          }
+          
+          .${styles.footerContent} {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: inherit;
           }
         `;
         shadowRef.current.appendChild(styleSheet);
@@ -95,7 +197,7 @@ const ShadowContainer: React.FC<{
           --widget-shadow-color: rgba(0, 0, 0, 0.1);
           --widget-text-color: #1f2937;
           --widget-accent-color: #000000;
-          --widget-radius: 16px;
+          --widget-radius: 0px;
           --widget-padding: 20px;
           display: block;
           width: 100%;

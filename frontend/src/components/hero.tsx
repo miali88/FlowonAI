@@ -1,12 +1,8 @@
 'use client';
 
-import { ArrowRight } from "lucide-react";
-import ChatBotMini from "@/app/dashboard/AgentHub/ChatBotMini";
+import ChatBotMini from "@/app/dashboard/agenthub/ChatBotMini";
 import { useState } from "react";
-import Link from "next/link";
-
 import { TextShimmer } from "@/components/magicui/text-shimmer";
-import { Button } from "@/components/ui/button";
 import { Particles } from "@/components/magicui/particles";
 import { BentoDemo } from "@/components/AgentDemo";
 import WordRotate from "@/components/ui/word-rotate";
@@ -57,7 +53,7 @@ export function Hero() {
         
         <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-5xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
           <span className="whitespace-normal">Give Your Website a Voice That</span>{" "}
-          <WordRotate words={["Converts", "Answers Questions", "Engages With Visitors", "Books Appointments"]} />
+          <WordRotate words={["Drives Conversion", "Answers Questions", "Engages With Visitors", "Books Appointments"]} />
         </h1>
 
         <p className="mb-8 text-base tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
@@ -117,7 +113,7 @@ export function Hero() {
           <span className="whitespace-nowrap">Give Your Website a Voice That</span>{" "}
           <WordRotate
             words={[
-              "Converts",
+              "Drives Conversion",
               "Answers Questions",
               "Engages With Visitors",
               "Books Appointments"

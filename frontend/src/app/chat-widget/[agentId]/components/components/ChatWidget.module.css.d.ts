@@ -13,6 +13,8 @@ declare const styles: {
   readonly footerText: string;
   readonly footerContent: string;
   readonly streamButtonContainer: string;
+  readonly streamButton: string;
+  readonly streamButtonRing: string;
 };
 
 export default styles;
