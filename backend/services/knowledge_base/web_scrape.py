@@ -5,6 +5,7 @@ from typing import List, Dict
 from urllib.parse import urlparse
 import asyncio
 from datetime import datetime
+import logging
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -15,6 +16,12 @@ load_dotenv()
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=FIRECRAWL_API)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 async def count_tokens(text, model="gpt-4o"):
     encoder = encoding_for_model(model)
@@ -64,12 +71,17 @@ async def insert_to_db(data):
     print("inserting to db")
     supabase.table('user_web_data').insert(data).execute()
 
-
 async def map_url(url):
-    map_result: List[str] = app.map_url(url, params={
-        'includeSubdomains': True
-    })
-    return map_result
+    logger.info(f"Starting URL mapping for: {url}")
+    try:
+        map_result: List[str] = app.map_url(url, params={
+            'includeSubdomains': True
+        })
+        logger.info(f"Successfully mapped URL. Found {len(map_result)} URLs")
+        return map_result
+    except Exception as e:
+        logger.error(f"Error mapping URL {url}: {str(e)}")
+        raise
 
 async def scrape_url(urls: List[str], user_id: str = None):
     print(f"Starting scrape process for user {user_id} at {datetime.now()}")

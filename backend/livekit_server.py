@@ -8,10 +8,12 @@ from datetime import datetime, timedelta  # Update import
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('hpack').setLevel(logging.WARNING)  # Add this line
+logging.getLogger('httpx').setLevel(logging.WARNING)  # Add this
+logging.getLogger('httpcore').setLevel(logging.WARNING)  # Add this
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
-
+from livekit.plugins import silero
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
@@ -41,67 +43,79 @@ class CallDuration:
         }
 
 async def entrypoint(ctx: JobContext):
-
+    print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
     # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
     # agent, opening_line = await create_voice_assistant(agent_id, ctx)
+    room_name = ctx.room.name
+    room = ctx.room
+    print("room_name:", room_name)
+
+    print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
+
+    # Add call start time tracking
+    call_start_time = datetime.now()
+    
+    # Add participant tracking dictionary and last_audio_time
+    participant_prospects = {}
+    last_audio_time = time.time()  # Track when we last received any audio
+    last_participant_audio = time.time()  # Track participant's last audio
+    last_agent_audio = time.time()  # Track agent's last audio
+    SILENCE_TIMEOUT = 90  # Timeout in seconds
 
     try:
-        # Add call start time tracking
-        call_start_time = datetime.now()
-        
-        # Add participant tracking dictionary and last_audio_time
-        participant_prospects = {}
-        last_audio_time = time.time()  # Track when we last received any audio
-        last_participant_audio = time.time()  # Track participant's last audio
-        last_agent_audio = time.time()  # Track agent's last audio
-        SILENCE_TIMEOUT = 90  # Timeout in seconds
-        room_name = ctx.room.name
-        room = ctx.room
-        
-        print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-        await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
-        print(f"Room name: {room_name}")
+        """ TEL CALL INIT """
+        if room_name.startswith("call-"):
+            print("telephone call detected")
+            # TODO: extract phone number from room_name and get agent_id from database
 
-        print("iterating through room.remote_participants")
-        for rp in room.remote_participants.values():
-            print("rp.identity", rp.identity)
+            agent_id = "e8b64819-7c2c-432f-9f80-05a72bd49787"
+            agent, opening_line = await create_voice_assistant(agent_id, ctx)
+            agent.start(room)
+            await agent.say(opening_line, allow_interruptions=False)
 
-        # Find an available participant that is not subscribed to any track
+
+        else:
+            """ WEB CALL INIT """
+            print("web call detected")
+
+            print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
+
+            print("iterating through room.remote_participants")
+            for rp in room.remote_participants.values():
+                print("rp.identity", rp.identity)
+
+            agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+            user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
+            agent, opening_line = await create_voice_assistant(agent_id, ctx)
+            agent.start(room)
+            await agent.say(opening_line, allow_interruptions=False)
+
+
+        await asyncio.sleep(1)
+
+        print("iterating through room.remote_participants to find available participant")
         available_participant = None
         for rp in room.remote_participants.values():
             print("remote participant:",rp)
-            if not any(pub.subscribed for pub in rp.track_publications.values()):
-                print("available participant found:",rp)
-                available_participant = rp
-                break
+            available_participant = rp
+            break
 
         if available_participant:
             # Add the participant to tracking dictionary with empty prospect status
             participant_prospects[available_participant.sid] = ""
             print(f"Added participant {available_participant.sid} to tracking with empty prospect status")
             print(f"Found available participant: {available_participant.identity}")            
-            for publication in available_participant.track_publications.values():
-                print("publication", publication)
-                if publication.kind == rtc.TrackKind.KIND_AUDIO and publication.source == rtc.TrackSource.SOURCE_MICROPHONE:
-                    publication.set_subscribed(True)
-                    print(f"Subscribed to audio track: {publication.sid}")
-                    break
-            
-            agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-            user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
-            agent, opening_line = await create_voice_assistant(agent_id, ctx)
-            agent.start(room, available_participant)
-            await agent.say(opening_line, allow_interruptions=False)
-
         else:
             print("No available participants found.")
-            await ctx.shutdown(reason="No available participants")
+            ctx.shutdown(reason="No available participants")
 
         #room_sid = await ctx.room.sid
         """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
-            if participant.identity == available_participant.identity:
+            # Check if available_participant exists before comparing identities
+            if available_participant and participant.identity == available_participant.identity:
                 call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
                 print(f"Call duration: {call_duration}")
                 ctx.add_shutdown_callback(
@@ -110,24 +124,26 @@ async def entrypoint(ctx: JobContext):
                                                    ctx.job.id, 
                                                    available_participant.identity, 
                                                    participant_prospects[available_participant.sid],
-                                                   call_duration)  # Pass CallDuration object
+                                                   call_duration)
                 )
                 ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
+            else:
+                print(f"Participant disconnected but was not the available participant: {participant.identity}")
 
-        @ctx.room.on("track_subscribed")
-        def on_track_subscribed(
-            track: rtc.Track,
-            publication: rtc.TrackPublication,
-            participant: rtc.RemoteParticipant,
-        ):
-            if track.kind == rtc.TrackKind.KIND_AUDIO:
-                audio_stream = rtc.AudioStream(track)
-                for event in audio_stream:
-                    nonlocal last_audio_time, last_participant_audio
-                    current_time = time.time()
-                    last_audio_time = current_time  # Update overall last audio time
-                    last_participant_audio = current_time  # Update participant's last audio time
-                    print(event.frame)
+        # @ctx.room.on("track_subscribed")
+        # def on_track_subscribed(
+        #     track: rtc.Track,
+        #     publication: rtc.TrackPublication,
+        #     participant: rtc.RemoteParticipant,
+        # ):
+        #     if track.kind == rtc.TrackKind.KIND_AUDIO:
+        #         audio_stream = rtc.AudioStream(track)
+        #         for event in audio_stream:
+        #             nonlocal last_audio_time, last_participant_audio
+        #             current_time = time.time()
+        #             last_audio_time = current_time  # Update overall last audio time
+        #             last_participant_audio = current_time  # Update participant's last audio time
+        #             print(event.frame)
 
         # Add handler for agent's audio
         # Replace the previous agent.on("speaking_started") with these handlers
@@ -283,34 +299,20 @@ async def entrypoint(ctx: JobContext):
                 print("prospect_status is yes, sending email")
                 await send_email(participant_identity, conversation_history, agent_id)
 
-        @ctx.room.on("track_published")
-        async def on_track_published(publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
-            # Ensure new tracks follow the same isolation rules
-            if participant != available_participant:
-                publication.set_subscribe_allowed(False)
+        # @ctx.room.on("track_published")
+        # async def on_track_published(publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
+        #     # Ensure new tracks follow the same isolation rules
+        #     if participant != available_participant:
+        #         publication.set_subscribe_allowed(False)
 
-        # Add explicit subscription management
-        @ctx.room.on("participant_connected")
-        async def on_participant_connected(participant: rtc.RemoteParticipant):
-            print(f"New participant connected: {participant.identity}")
-            # Ensure other participants can't subscribe to each other's tracks
-            for track_pub in participant.track_publications.values():
-                track_pub.set_subscribe_allowed(False)
-                
-        # Update the participant handling logic
-        for rp in room.remote_participants.values():
-            if not any(pub.subscribed for pub in rp.track_publications.values()):
-                available_participant = rp
-                # Explicitly set subscription permissions
-                for track_pub in available_participant.track_publications.values():
-                    # Only allow the agent to subscribe to this participant's tracks
-                    track_pub.set_subscribe_allowed(True)
-                    # Ensure this participant can't subscribe to other participants
-                    for other_participant in room.remote_participants.values():
-                        if other_participant != available_participant:
-                            for other_track in other_participant.track_publications.values():
-                                other_track.set_subscribe_allowed(False)
-                break
+        # # Add explicit subscription management
+        # @ctx.room.on("participant_connected")
+        # async def on_participant_connected(participant: rtc.RemoteParticipant):
+        #     print(f"New participant connected: {participant.identity}")
+        #     # Ensure other participants can't subscribe to each other's tracks
+        #     for track_pub in participant.track_publications.values():
+        #         track_pub.set_subscribe_allowed(False)
+ 
 
         def format_duration(start_time):
             duration = datetime.now() - start_time
@@ -372,9 +374,9 @@ async def entrypoint(ctx: JobContext):
 #     print("request_fnc called")
 #     return True
 
-# def prewarm_fnc(ctx: JobProcess):
-#     print("prewarm_fnc called")
-#     return True
+def prewarm_fnc(proc: JobProcess):
+    # load silero weights and store to process userdata
+    proc.userdata["vad"] = silero.VAD.load()
 
 # async def load_fnc(proc: JobProcess):
 #     print("load_fnc called")
@@ -386,11 +388,11 @@ if __name__ == "__main__":
         # entrypoint function is called when a job is assigned to this worker
         entrypoint_fnc=entrypoint,
         # the type of worker to create, either JT_ROOM or JT_PUBLISHER
-        worker_type=WorkerType.PUBLISHER,
+        worker_type=WorkerType.ROOM,
         # # inspect the request and decide if the current worker should handle it.
         # request_fnc=request_fnc,
         # a function to perform any necessary initialization in a new process.
-        # prewarm_fnc=prewarm_fnc,
+        prewarm_fnc=prewarm_fnc,
     )
 
     cli.run_app(opts)

@@ -1,0 +1,10 @@
+{
+"trunk_ids": ["ST_WCmfQowTZB2J"],
+"hide_phone_number": false,
+"rule": {
+    "dispatchRuleIndividual": {
+    "roomPrefix": "call-",
+    "pin": ""
+    }
+}
+}

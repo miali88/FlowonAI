@@ -117,7 +117,6 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 @router.post("/knowledge_base")
 async def create_item_handler(request: Request, 
                             background_tasks: BackgroundTasks,

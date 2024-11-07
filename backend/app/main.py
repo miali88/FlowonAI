@@ -2,7 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-from services.twilio import cleanup
+#from services.twilio import cleanup
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -42,8 +42,8 @@ app = FastAPI(
 )
 
 origins = ["flowon.ai",
-           "https://flowon.ai"
-           "https://www.flowon.ai"
+           "https://flowon.ai",
+           "https://www.flowon.ai",
            "http://localhost:3000", 
            "https://localhost:3000", 
            ]

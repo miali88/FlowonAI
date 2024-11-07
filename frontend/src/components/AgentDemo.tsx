@@ -30,7 +30,13 @@ const demoAgents: DemoAgent[] = [
     title: "Booking Agent",
     description: "An agent that can handle appointment scheduling and calendar management",
     example: "I'd like to schedule a consultation"
-  }
+  },
+  {
+    id: "receptionist",
+    title: "Receptionist",
+    description: "Link your telephone number to an agent for intelligent call handling and routing.",
+    example: "Hello, I'd like to speak to support"
+  },
 ];
 
 interface BentoDemoProps {
