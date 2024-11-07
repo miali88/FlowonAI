@@ -9,6 +9,8 @@ import Workspace from './Workspace';
 import { LocalParticipant } from 'livekit-client';
 import axios from 'axios';
 import "@/components/loading.css";
+import { Slash } from "lucide-react"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -171,18 +173,51 @@ const Lab = () => {
     fetchKnowledgeBase();
   }, [userId]);
 
+  const handleNavigateToHub = useCallback(() => {
+    setSelectedAgent(null);
+    setIsStreaming(false);
+    setIsLiveKitActive(false);
+    setToken(null);
+    setUrl(null);
+    setIsConnecting(false);
+    setLocalParticipant(null);
+  }, []);
+
   if (isLoading) {
     return <Loader />;
   }
 
   return (
     <div className="flex flex-col h-full p-6">
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink onClick={handleNavigateToHub} className="cursor-pointer">
+              Agent Hub
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          {selectedAgent && (
+            <>
+              <BreadcrumbSeparator>
+                <Slash className="h-4 w-4" />
+              </BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbLink>{selectedAgent.agentName}</BreadcrumbLink>
+              </BreadcrumbItem>
+            </>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="flex flex-col space-y-6">
-        <div className="w-full flex flex-col items-start space-y-4">
-          <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
-          <AgentCards setSelectedAgent={handleAgentSelect} />
-        </div>
-        {selectedAgent ? (
+        {!selectedAgent ? (
+          // Show agent list when no agent is selected
+          <div className="w-full flex flex-col items-start space-y-4">
+            <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
+            <AgentCards setSelectedAgent={handleAgentSelect} />
+          </div>
+        ) : (
+          // Show workspace when agent is selected
           <Workspace
             selectedAgent={selectedAgent}
             setSelectedAgent={setSelectedAgent}
@@ -204,10 +239,9 @@ const Lab = () => {
             setLocalParticipant={setLocalParticipant}
             knowledgeBaseItems={knowledgeBaseItems}
           />
-        ) : (
-          <p>Select or create an agent to get started.</p>
         )}
       </div>
+
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

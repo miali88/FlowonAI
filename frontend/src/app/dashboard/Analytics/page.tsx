@@ -20,6 +20,7 @@ const AnalyticsDashboard = () => {
     { label: "Average Call Duration", value: "15m 47s", change: "-2.1%" },
     { label: "Unique Callers", value: 856, change: "+8.4%" },
     { label: "Repeat Callers", value: 391, change: "+15.2%" },
+    { label: "Languages Used", value: 5, change: "+25%" },
   ];
 
   const popularAgents = [

@@ -8,18 +8,19 @@ import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-// Update the glassStyles to preserve background effects
+// Update the glassStyles to achieve a darker, greyer, and more transparent look
 const glassStyles = `
   relative
-  bg-gradient-to-br from-white/40 to-white/20 
-  dark:from-gray-800/40 dark:to-gray-800/20
-  backdrop-blur-lg saturate-180
-  border border-white/30 dark:border-gray-700/30
-  shadow-[0_8px_32px_0_rgba(31,38,135,0.15)]
+  bg-gray-700 bg-opacity-15
+  dark:bg-gray-900 dark:bg-opacity-15
+  backdrop-blur-lg saturate-220
+  border border-gray-600 border-opacity-15
+  dark:border-gray-800 dark:border-opacity-15
+  shadow-[0_8px_32px_0_rgba(31,38,135,0.1)]
   transition-all duration-300
-  hover:from-white/50 hover:to-white/30
-  dark:hover:from-gray-800/50 dark:hover:to-gray-800/30
-  hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.25)]
+  hover:bg-opacity-50
+  dark:hover:bg-opacity-50
+  hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.2)]
 `;
 
 // Move the Agent type definition here
@@ -132,6 +133,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
+        <h2 className="text-xl font-semibold mb-4">Select, or create a new agent</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAgents.map((agent) => (

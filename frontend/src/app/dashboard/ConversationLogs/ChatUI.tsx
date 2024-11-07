@@ -13,6 +13,19 @@ interface ChatUIProps {
   selectedConversation: ConversationLog | null;
 }
 
+// Add this helper function before the ChatUI component
+const generateRoomSummary = (fullRoomName: string): string => {
+  if (!fullRoomName) return 'Visitor Chat';
+  
+  // Extract the first part (visitor or agent)
+  const match = fullRoomName.match(/^(visitor|agent)/);
+  if (match) {
+    return match[1] === 'visitor' ? 'Visitor Chat' : 'Agent Chat';
+  }
+  
+  return 'Visitor Chat'; // Default fallback
+};
+
 const renderChatBubble = (message: ChatMessage, index: number) => {
   const isUser = 'user_message' in message;
   const content = isUser ? message.user_message : message.assistant_message;
@@ -22,7 +35,11 @@ const renderChatBubble = (message: ChatMessage, index: number) => {
         <Avatar className="w-8 h-8">
           {isUser ? '👤' : <Image src="/assets/flowon.png" alt="Flowon" width={32} height={32} className="object-cover" />}
         </Avatar>
-        <div className={`mx-2 py-2 px-4 rounded-lg ${isUser ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
+        <div className={`mx-2 py-2 px-4 rounded-lg ${
+          isUser 
+            ? 'bg-green-500 text-white' 
+            : 'bg-gray-200 text-gray-900'
+        }`}>
           {content}
         </div>
       </div>
@@ -40,7 +57,9 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedConversation }) => {
     <div className="p-4 h-full flex flex-col">
       {selectedConversation ? (
         <>
-          <h3 className="text-xl font-semibold mb-4">{selectedConversation.room_name}</h3>
+          <h3 className="text-xl font-semibold mb-4">
+            {generateRoomSummary(selectedConversation.room_name)}
+          </h3>
           <div className="mb-2">
             <p><strong>Job ID:</strong> {selectedConversation.job_id}</p>
             <p><strong>Created At:</strong> {new Date(selectedConversation.created_at).toLocaleString()}</p>

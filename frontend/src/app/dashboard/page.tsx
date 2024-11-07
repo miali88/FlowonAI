@@ -34,16 +34,19 @@ import {
   X,
   Plug,
   Calendar,
+  Sidebar,
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
 import KnowledgeBaseContent from "./Knowledgebase/page";
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import IntegrationsPage from "@/app/dashboard/Integrations/page";
-import DashboardContent from "@/app/dashboard/DashboardContent"; // Add this import
 import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
 import ContactFounders from "@/app/dashboard/ContactFounders/page";
-import Analytics from '@/app/dashboard/analytics/page';
+import Analytics from '@/app/dashboard/Analytics/page';
+import { Particles } from '@/components/magicui/particles'; // Correct the import path
+//import { Sidebar } from './Sidebar';
+//console.log(Sidebar); // Should log a function or class, not an object
 
 // Add this interface at the top of your file 
 // interface SavedItem {
@@ -55,75 +58,15 @@ import Analytics from '@/app/dashboard/analytics/page';
 //   // Add other properties as needed
 // }
 
-function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full justify-start",
-              isActive && "bg-secondary"
-            )}
-            onClick={onClick}
-          >
-            <Icon className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">{label}</span>}
-          </Button>
-        </TooltipTrigger>
-        {isCollapsed && <TooltipContent side="right">{label}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
+// Add this import at the top
+import { AppSidebar } from "@/components/app-sidebar";
 
-function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
-  const sidebarItems = [
-    { icon: Mic, label: "Agent Hub" },
-    { icon: BookOpen, label: "Knowledge Base" },
-    { icon: MessageSquare, label: "Conversation Logs" },
-    { icon: Plug, label: "Integrations" },
-    { icon: BarChart3, label: "Analytics" },
-    { icon: Calendar, label: "Contact Founders" },
-
-  ];
-
-  return (
-    <div className={cn(
-      "flex flex-col h-screen bg-background border-r transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64"
-    )}>
-      <div className="flex items-center justify-between p-4">
-        {!isCollapsed && (
-          <span className="text-sm font-medium">Flowon AI (beta)</span>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? <Menu /> : <X />}
-        </Button>
-      </div>
-      <Separator />
-      <ScrollArea className="flex-1">
-        <nav className="flex flex-col gap-2 p-2">
-          {sidebarItems.map((item) => (
-            <SidebarItem
-              key={item.label}
-              icon={item.icon}
-              label={item.label}
-              isActive={activeItem === item.label}
-              onClick={() => setActiveItem(item.label)}
-              isCollapsed={isCollapsed}
-            />
-          ))}
-        </nav>
-      </ScrollArea>
-    </div>
-  );
-}
+// Add this CSS at the top of your file after imports
+const layoutStyles = {
+  wrapper: "relative flex h-screen min-h-[600px] w-full bg-background text-foreground transition-colors duration-200 overflow-hidden",
+  mainContainer: "relative z-10 flex w-full min-w-0",
+  mainContent: "flex-1 flex flex-col overflow-hidden min-w-0 transition-all duration-300",
+};
 
 function LogoutMenuItem() {
   const { signOut } = useClerk();
@@ -141,7 +84,7 @@ function LogoutMenuItem() {
   );
 }
 
-function Header({ activeItem, selectedFeature }) {
+function Header({ activeItem, selectedFeature, isCollapsed, setIsCollapsed }) {
   const { user } = useUser();
   const [userPlan] = useState("Pro");
   
@@ -160,7 +103,15 @@ function Header({ activeItem, selectedFeature }) {
 
   return (
     <header className="flex items-center justify-between p-4 border-b">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="lg:hidden"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
         <h2 className="text-2xl font-bold">{renderTitle()}</h2>
       </div>
       <div className="flex items-center space-x-4">
@@ -168,12 +119,6 @@ function Header({ activeItem, selectedFeature }) {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8 w-64" />
         </div>
-        {/* <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button> */}
-        {/* <Button variant="outline" size="icon">
-          <Bell className="h-4 w-4" />
-        </Button> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
@@ -212,7 +157,9 @@ function AdminDashboard() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activePanel, setActivePanel] = useState('admin');
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobileView, setIsMobileView] = useState(false);
+
   const handleSetActiveItem = (item: string) => {
     setActiveItem(item);
     setSelectedFeature(null);
@@ -233,6 +180,85 @@ function AdminDashboard() {
       document.documentElement.style.removeProperty('--foreground');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    // Simulate a minimum loading time to prevent flash
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1024); // 1024px is the lg breakpoint
+      if (window.innerWidth >= 1024) {
+        setIsCollapsed(false);
+      }
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSetCollapsed = (value: boolean) => {
+    console.log('Setting collapsed to:', value);
+    setIsCollapsed(value);
+  };
+
+  useEffect(() => {
+    console.log('isCollapsed changed to:', isCollapsed);
+  }, [isCollapsed]);
+
+  if (isLoading) {
+    return (
+      <div className={layoutStyles.wrapper}>
+        <div className="absolute inset-0">
+          <BackgroundPattern />
+          <Particles
+            options={{
+              particles: {
+                number: { value: 50 },
+                size: { value: 3 },
+              },
+            }}
+            className="absolute inset-0"
+          />
+        </div>
+        <div className={layoutStyles.mainContainer}>
+          {/* Skeleton sidebar with fixed width */}
+          <div className={layoutStyles.sidebar}>
+            <div className="p-4">
+              <div className="h-6 w-24 bg-muted rounded animate-pulse mb-4" />
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-10 bg-muted rounded animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Skeleton main content */}
+          <div className={layoutStyles.mainContent}>
+            {/* Skeleton header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-64 bg-muted rounded animate-pulse" />
+                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+            
+            {/* Skeleton content */}
+            <div className="flex-1 p-6">
+              <div className="h-32 w-full bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeItem) {
@@ -256,23 +282,63 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="relative flex h-screen bg-background text-foreground transition-colors duration-200">
-      <BackgroundPattern />
-      <div className="relative z-10 flex w-full">
-        <Sidebar 
-          isCollapsed={isCollapsed} 
-          setIsCollapsed={setIsCollapsed} 
-          activeItem={activeItem}
-          setActiveItem={handleSetActiveItem}
-          activePanel={activePanel}
-          setActivePanel={setActivePanel}
+    <div className={layoutStyles.wrapper}>
+      {/* Background elements */}
+      <div className="absolute inset-0">
+        <BackgroundPattern />
+        <Particles
+          className="absolute inset-0"
+          options={{
+            particles: {
+              number: { value: 50 },
+              size: { value: 3 },
+              color: { value: "#93c5fd" },
+              opacity: { value: 0.3 },
+              move: {
+                direction: "none",
+                enable: true,
+                outModes: "bounce",
+                random: false,
+                speed: 1,
+                straight: false,
+              },
+            },
+          }}
         />
-        <main className="flex-1 flex flex-col overflow-hidden">
+      </div>
+
+      {/* Main content container */}
+      <div className={cn(
+        layoutStyles.mainContainer,
+        "relative z-10 flex" // Add relative and z-10 to keep content above particles
+      )}>
+        {/* Sidebar */}
+        <div className={cn(
+          "fixed inset-y-0 left-0 z-50 lg:relative",
+          "transition-all duration-300 ease-in-out",
+          "flex",
+          isMobileView && isCollapsed ? "-translate-x-full" : "translate-x-0"
+        )}>
+          <AppSidebar 
+            activeItem={activeItem}
+            setActiveItem={setActiveItem}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+          />
+        </div>
+
+        {/* Main Content */}
+        <main className={cn(
+          layoutStyles.mainContent,
+          "transition-all duration-300 ease-in-out",
+          "flex-1",
+          isCollapsed && "-ml-[170px]"
+        )}>
           <Header 
             activeItem={activeItem} 
-            selectedFeature={selectedFeature} 
-            isDarkMode={isDarkMode}
-            toggleDarkMode={toggleDarkMode}
+            selectedFeature={selectedFeature}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
           />
           <div className="flex-1 overflow-auto">
             {renderContent()}
