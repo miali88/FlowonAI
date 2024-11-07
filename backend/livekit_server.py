@@ -4,19 +4,21 @@ import logging  # Add this import
 import time  # Add this import
 from datetime import datetime, timedelta  # Update import
 
+from livekit import agents, rtc
+from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
+from livekit.plugins import silero
+
+from services.voice.livekit_services import create_voice_assistant
+from services.voice.tool_use import trigger_show_chat_input
+from services.nylas_service import send_email
+from services.cache import get_all_agents, call_data
+
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('hpack').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('httpx').setLevel(logging.WARNING)  # Add this
 logging.getLogger('httpcore').setLevel(logging.WARNING)  # Add this
-
-from livekit import agents, rtc
-from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
-from livekit.plugins import silero
-from services.voice.livekit_services import create_voice_assistant
-from services.voice.tool_use import trigger_show_chat_input
-from services.nylas_service import send_email
 
 load_dotenv()
 
@@ -67,13 +69,36 @@ async def entrypoint(ctx: JobContext):
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
             print("telephone call detected")
-            # TODO: extract phone number from room_name and get agent_id and user_id from database
+            
 
-            agent_id = "e8b64819-7c2c-432f-9f80-05a72bd49787"
+
+            async def get_agent_id(room_name: str):
+                agents = await get_all_agents()
+                def get_agent_id_by_phone(data, phone_number):
+                    for agent in data:
+                        if agent.get('assigned_telephone') == phone_number:
+                            return agent.get('id')
+                    return None
+                
+                # import re
+                # pattern = r'(?:\+)?(\d{12})'
+                # match = re.search(pattern, room_name)
+                # if match:
+                #     caller_number = match.group(1)
+                print("\n\n\n\n\nroom_name:", room_name)
+                print("call_data:", call_data)
+                twilio_number = call_data.get(room_name)
+                print(f"twilio_number: {twilio_number}")
+                agent_id = get_agent_id_by_phone(agents, twilio_number)
+                print(f"agent_id: {agent_id}")
+                return agent_id
+            
+
+            agent_id = await get_agent_id(room_name)
+
             agent, opening_line = await create_voice_assistant(agent_id, ctx)
             agent.start(room)
             await agent.say(opening_line, allow_interruptions=False)
-
 
         else:
             """ WEB CALL INIT """
@@ -92,7 +117,7 @@ async def entrypoint(ctx: JobContext):
             await agent.say(opening_line, allow_interruptions=False)
 
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(3)
 
         print("iterating through room.remote_participants to find available participant")
         available_participant = None
@@ -283,7 +308,8 @@ async def entrypoint(ctx: JobContext):
                     "user_id": user_id,
                     "agent_id": agent_id,
                     "prospect_status": prospect_status,
-                    "call_duration": call_duration.to_dict()  # Send structured duration data
+                    "call_duration": call_duration.to_dict(),  # Send structured duration data
+                    "call_type": "tel" if room_name.startswith("call-") else "web"
                 }
                 
                 async with aiohttp.ClientSession() as session:

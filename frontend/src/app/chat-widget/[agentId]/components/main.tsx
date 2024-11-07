@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import ChatBotMini from './components/ChatBotMini';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
-import styles from './styles.css?raw';
+import styles from './components/ChatWidget.module.css';
 
 const WIDGET_NAMESPACE = 'FlowonWidget';
 
@@ -19,17 +19,63 @@ const ShadowContainer: React.FC<{
       try {
         shadowRef.current = hostRef.current.attachShadow({ mode: 'open' });
         
-        const styleElement = document.createElement('style');
-        styleElement.textContent = styles;
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+          :host {
+            display: block;
+            width: 100%;
+            height: 100%;
+          }
+          
+          /* Inject the CSS Module styles directly */
+          .${styles.widgetWrapper} {
+            all: initial;
+            font-family: var(--widget-font-family);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+          
+          .${styles.chatContainer} {
+            width: 100%;
+            height: 100vh;
+            background: var(--widget-bg-color);
+            border: 1px solid var(--widget-border-color);
+            border-radius: var(--widget-radius);
+            box-shadow: 0 8px 32px var(--widget-shadow-color);
+            display: flex;
+            flex-direction: column;
+          }
+          
+          /* Add all other styles from ChatWidget.module.css here */
+        `;
+        shadowRef.current.appendChild(styleSheet);
         
         const wrapper = document.createElement('div');
-        wrapper.className = 'flowon-widget-wrapper';
+        wrapper.className = `${styles.widgetTheme} ${styles.widgetWrapper}`;
+        wrapper.style.cssText = `
+          --widget-font-family: system-ui, -apple-system, sans-serif;
+          --widget-bg-color: #ffffff;
+          --widget-border-color: rgba(0, 0, 0, 0.1);
+          --widget-shadow-color: rgba(0, 0, 0, 0.1);
+          --widget-text-color: #1f2937;
+          --widget-accent-color: #000000;
+          --widget-radius: 16px;
+          --widget-padding: 20px;
+          display: block;
+          width: 100%;
+          height: 100%;
+        `;
         
         const container = document.createElement('div');
         container.id = 'flowon-shadow-root';
-        wrapper.appendChild(container);
+        container.style.cssText = `
+          display: block;
+          width: 100%;
+          height: 100%;
+        `;
         
-        shadowRef.current.appendChild(styleElement);
+        wrapper.appendChild(container);
         shadowRef.current.appendChild(wrapper);
 
         const eventBridge = {

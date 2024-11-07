@@ -20,10 +20,16 @@ export default function ChatWidgetPage() {
   }, [params.agentId])
   
   return (
-    <>
-      <div id="embedded-chatbot-container"></div>
+    <div id="embedded-chatbot-container" style={{
+      width: '400px', 
+      height: '600px',
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      zIndex: 9999
+    }}>
       <ChatWidget />
-    </>
+    </div>
   )
 }
 
