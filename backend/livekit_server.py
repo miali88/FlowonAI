@@ -67,7 +67,7 @@ async def entrypoint(ctx: JobContext):
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
             print("telephone call detected")
-            # TODO: extract phone number from room_name and get agent_id from database
+            # TODO: extract phone number from room_name and get agent_id and user_id from database
 
             agent_id = "e8b64819-7c2c-432f-9f80-05a72bd49787"
             agent, opening_line = await create_voice_assistant(agent_id, ctx)
