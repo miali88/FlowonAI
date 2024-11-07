@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedMobileNavbar } from "@/components/animated-mobile-navbar";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Link as ScrollLink } from "react-scroll";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -37,7 +38,27 @@ export function Header() {
             <span className="ml-2 text-xl font-medium">Flowon AI</span>
           </Link>
 
-          {/* Right side - Desktop Nav */}
+          {/* Center Navigation */}
+          <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
+            <ScrollLink
+              to="pricing"
+              spy={true}
+              smooth={true}
+              offset={-80}
+              duration={250}
+              className="text-base font-medium hover:text-gray-900 cursor-pointer"
+            >
+              Pricing
+            </ScrollLink>
+            <Link 
+              href="#"
+              className="text-base font-medium hover:text-gray-900"
+            >
+              Resources
+            </Link>
+          </div>
+
+          {/* Right side - Auth buttons */}
           <div className="ml-auto hidden md:flex items-center gap-4">
             <Link 
               href="/dashboard" 
@@ -50,6 +71,7 @@ export function Header() {
             </Button>
           </div>
 
+          {/* Mobile Navigation */}
           <AnimatedMobileNavbar>
             <motion.nav
               exit={{ scale: 1, opacity: 0 }}
@@ -80,12 +102,16 @@ export function Header() {
                   transition={{ ease: "easeOut", duration: 0.2 }}
                   className="pl-6 py-0.5 border-b md:border-none"
                 >
-                  <Link
-                    href="#"
-                    className="flex h-[3.5rem] w-full items-center text-xl transition-[color,transform] duration-300 md:translate-y-0 md:text-sm md:transition-colors"
+                  <ScrollLink
+                    to="pricing"
+                    spy={true}
+                    smooth={true}
+                    offset={-70}
+                    duration={500}
+                    className="text-sm font-medium hover:text-gray-900 cursor-pointer"
                   >
                     Pricing
-                  </Link>
+                  </ScrollLink>
                 </motion.li>
                 <motion.li
                   exit={{ y: "-20px", opacity: 0 }}

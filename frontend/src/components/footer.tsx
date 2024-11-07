@@ -3,16 +3,16 @@ import { Youtube, Twitter } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="container">
-      <div className="mx-auto w-full max-w-screen-xl xl:pb-2">
-        <div className="md:flex md:justify-between px-8 py-16 sm:pb-16 gap-4">
-          <div className="mb-12 flex-col flex gap-4">
+    <footer className="w-full">
+      <div className="mx-auto max-w-4xl px-4">
+        <div className="flex flex-col md:flex-row justify-between py-8 gap-8">
+          <div className="flex flex-col gap-4 items-center md:items-start">
             <Link href="/" className="flex gap-2">
               <img alt="Flowon AI Logo" src="/flowon.png" className="size-8 invert" />
             </Link>
             <p className="max-w-xs"> </p>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:gap-10 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:gap-6 sm:grid-cols-3">
             <div>
               <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Product</h2>
               <ul className="gap-2 grid list-none">
@@ -94,19 +94,13 @@ export function Footer() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-start sm:flex-row sm:flex sm:items-center sm:justify-between rounded-md border-neutral-700/20 py-4 px-8 gap-2">
-          <div className="flex space-x-5 sm:justify-center sm:mt-0">
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-muted-foreground/80 fill-muted-foreground hover:fill-muted-foreground/80"
-            >
+        <div className="flex flex-col items-center justify-center gap-4 border-t border-neutral-700/20 py-4">
+          <div className="flex space-x-5 justify-center">
+            <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
               <Youtube size={15} />
               <span className="sr-only">Youtube</span>
             </a>
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-muted-foreground/80 fill-muted-foreground hover:fill-muted-foreground/80"
-            >
+            <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
               <Twitter size={15} />
               <span className="sr-only">Twitter</span>
             </a>

@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   :root {
     --background: 0 0% 0%;      /* Black background */
     --foreground: 0 0% 88%;     /* Light gray text */
@@ -147,4 +154,37 @@ html {
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* Add these styles for the MultiSelect component */
+.multiselect-container {
+  @apply relative w-full;
+}
+
+.multiselect-button {
+  @apply w-full px-3 py-2 text-sm text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+.multiselect-dropdown {
+  @apply absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md;
+}
+
+.multiselect-search {
+  @apply w-full px-3 py-2 text-sm border-b focus:outline-none focus:ring-2 focus:ring-ring;
+}
+
+.multiselect-item {
+  @apply flex items-center px-3 py-2 text-sm hover:bg-accent cursor-pointer;
+}
+
+.multiselect-checkbox {
+  @apply h-4 w-4 rounded border-input mr-2;
+}
+
+.multiselect-label {
+  @apply flex-grow;
+}
+
+.multiselect-type {
+  @apply text-xs text-muted-foreground;
 }

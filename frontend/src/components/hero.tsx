@@ -178,15 +178,6 @@ export function Hero() {
           </div>
         </div>
       </div>
-
-      <Particles
-        ease={70}
-        size={0.05}
-        color="#ffffff"
-        quantity={250}
-        staticity={40}
-        className="absolute inset-0 -z-10 h-full"
-      />
     </section>
   );
 

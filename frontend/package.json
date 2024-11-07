@@ -55,6 +55,7 @@
     "react-icon-cloud": "^4.1.4",
     "react-markdown": "^9.0.1",
     "react-resizable-panels": "^2.1.4",
+    "react-scroll": "^1.9.0",
     "react-tagcloud": "^2.3.3",
     "recharts": "^2.13.3",
     "tag-cloud": "^2.0.2",

@@ -35,6 +35,7 @@ interface InsertProps {
   setSelectedUrls: React.Dispatch<React.SetStateAction<string[]>>;
   handleScrapeAllWrapper: () => void;
   isScrapingUrls: boolean;
+  isMappingWebsite?: boolean;
 }
 
 export function Insert({ 
@@ -56,7 +57,8 @@ export function Insert({
   selectedUrls,
   setSelectedUrls,
   handleScrapeAllWrapper,
-  isScrapingUrls
+  isScrapingUrls,
+  isMappingWebsite
 }: InsertProps) {
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -188,8 +190,17 @@ export function Insert({
                       onChange={(e) => setScrapeUrl(e.target.value)}
                       className="mb-4"
                     />
-                    <Button onClick={handleScrapeWrapper} className="self-start px-4 py-2">
-                      Map Website
+                    <Button 
+                      onClick={handleScrapeWrapper} 
+                      className={`self-start px-4 py-2 ${isMappingWebsite ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isMappingWebsite}
+                    >
+                      <div className="flex items-center gap-2">
+                        {isMappingWebsite && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-white" />
+                        )}
+                        {isMappingWebsite ? "Mapping..." : "Map Website"}
+                      </div>
                     </Button>
                     {mappedUrls.length > 0 && (
                       <div className="mt-4">

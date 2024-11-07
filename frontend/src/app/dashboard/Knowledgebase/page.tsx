@@ -53,6 +53,7 @@ function KnowledgeBaseContent() {
     const [mappedUrls, setMappedUrls] = useState<string[]>([]);
     const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
     const [isScrapingUrls, setIsScrapingUrls] = useState(false);
+    const [isMappingWebsite, setIsMappingWebsite] = useState(false);
   
     const fetchUserSpecificData = useCallback(async () => {
       if (!user) {
@@ -247,6 +248,7 @@ function KnowledgeBaseContent() {
               setSelectedUrls={setSelectedUrls}
               handleScrapeAllWrapper={handleScrapeAllWrapper}
               isScrapingUrls={isScrapingUrls}
+              isMappingWebsite={isMappingWebsite}
             />
           );
         default:
@@ -262,20 +264,25 @@ function KnowledgeBaseContent() {
         return;
       }
 
-      await handleScrape({
-        scrapeUrl,
-        setScrapeError,
-        getToken: async () => token,
-        user: { id: user.id },
-        API_BASE_URL,
-        setNewItemContent,
-        setShowScrapeInput,
-        setScrapeUrl,
-        setAlertMessage,
-        setAlertType,
-        setMappedUrls,  // Add this
-        selectedUrls    // Add this
-      });
+      setIsMappingWebsite(true);
+      try {
+        await handleScrape({
+          scrapeUrl,
+          setScrapeError,
+          getToken: async () => token,
+          user: { id: user.id },
+          API_BASE_URL,
+          setNewItemContent,
+          setShowScrapeInput,
+          setScrapeUrl,
+          setAlertMessage,
+          setAlertType,
+          setMappedUrls,
+          selectedUrls
+        });
+      } finally {
+        setIsMappingWebsite(false);
+      }
     };
 
     const handleScrapeAllWrapper = async () => {

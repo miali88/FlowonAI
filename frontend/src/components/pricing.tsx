@@ -61,7 +61,7 @@ export function Pricing({ currentPlan }: PricingProps) {
             Get 5 months free ✨
           </span>
         </div>
-        <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-4 flex-col gap-4">
+        <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-3 flex-col gap-4 place-items-center">
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">

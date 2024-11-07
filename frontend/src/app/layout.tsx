@@ -4,7 +4,6 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from 'next-themes';
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,14 +18,14 @@ const geistMono = localFont({
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen min-w-[320px]`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
         >
           <ThemeProvider
             attribute="class"
@@ -34,9 +33,7 @@ export default function RootLayout({
             enableSystem
             suppressHydrationWarning
           >
-            <SidebarProvider>
-              {children}
-            </SidebarProvider>
+            {children}
           </ThemeProvider>
         </body>
       </html>

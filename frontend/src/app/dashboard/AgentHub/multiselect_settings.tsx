@@ -78,39 +78,39 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
 
   return (
     <div className="relative w-full" ref={containerRef}>
-      {/* Dropdown trigger button */}
+      {/* Dropdown trigger button - fixed padding and alignment */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2 text-left bg-white border rounded-lg flex items-center justify-between hover:bg-gray-50"
+        className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
-        <span className="truncate">
+        <span className="truncate text-sm">
           {selectedItems.length === 0
             ? "Select items..."
             : selectedItems.map(item => item.title).join(', ')}
         </span>
-        <ChevronsUpDown className="h-4 w- 4 shrink-0 opacity-50" />
+        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
 
-      {/* Dropdown menu */}
+      {/* Dropdown menu - improved styling */}
       {open && (
-        <div className="absolute mt-1 w-full bg-white rounded-lg border shadow-lg z-10">
-          {/* Search input */}
-          <div className="p-2 border-b">
+        <div className="absolute mt-2 w-full bg-background rounded-md border border-input shadow-lg z-50 max-h-[80vh] flex flex-col">
+          {/* Search input - improved padding and border */}
+          <div className="p-2 border-b border-input sticky top-0 bg-background">
             <input
               type="text"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-2 py-1 text-sm border rounded"
+              className="w-full px-3 py-1.5 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
 
-          {/* Items list */}
-          <div className="max-h-60 overflow-auto">
+          {/* Items list - improved scrolling and spacing */}
+          <div className="overflow-y-auto flex-1">
             {filteredItems.length === 0 ? (
-              <div className="p-2 text-sm text-gray-500 text-center">
+              <div className="p-3 text-sm text-muted-foreground text-center">
                 No items found.
               </div>
             ) : (
@@ -118,19 +118,19 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
                 <div
                   key={item.id}
                   onClick={() => toggleItem(item)}
-                  className="px-2 py-1.5 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center gap-3"
                 >
-                  <div className={`flex h-4 w-4 items-center justify-center rounded border ${
+                  <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
                     selectedItems.some(selected => selected.id === item.id) 
-                      ? 'bg-blue-500 border-blue-500' 
-                      : 'border-gray-300'
+                      ? 'bg-primary border-primary' 
+                      : 'border-input'
                   }`}>
                     {selectedItems.some(selected => selected.id === item.id) && (
-                      <Check className="h-3 w-3 text-white" />
+                      <Check className="h-3 w-3 text-primary-foreground" />
                     )}
                   </div>
-                  <span className="text-sm">{item.title}</span>
-                  <span className="text-xs text-gray-500">{item.data_type}</span>
+                  <span className="text-sm flex-1">{item.title}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{item.data_type}</span>
                 </div>
               ))
             )}
