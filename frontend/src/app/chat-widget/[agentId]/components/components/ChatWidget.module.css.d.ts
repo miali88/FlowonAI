@@ -11,6 +11,8 @@ declare const styles: {
   readonly submitBtn: string;
   readonly footerLogo: string;
   readonly footerText: string;
+  readonly footerContent: string;
+  readonly streamButtonContainer: string;
 };
 
 export default styles;

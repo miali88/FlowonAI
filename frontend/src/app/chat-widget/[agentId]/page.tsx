@@ -21,12 +21,10 @@ export default function ChatWidgetPage() {
   
   return (
     <div id="embedded-chatbot-container" style={{
-      width: '400px', 
-      height: '600px',
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      zIndex: 9999
+      width: '100%',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       <ChatWidget />
     </div>

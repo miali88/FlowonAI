@@ -22,15 +22,15 @@ const ShadowContainer: React.FC<{
         const styleSheet = document.createElement('style');
         styleSheet.textContent = `
           :host {
+            all: initial;
             display: block;
             width: 100%;
             height: 100%;
           }
           
-          /* Inject the CSS Module styles directly */
           .${styles.widgetWrapper} {
             all: initial;
-            font-family: var(--widget-font-family);
+            font-family: system-ui, -apple-system, sans-serif;
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -45,9 +45,44 @@ const ShadowContainer: React.FC<{
             box-shadow: 0 8px 32px var(--widget-shadow-color);
             display: flex;
             flex-direction: column;
+            position: relative;
           }
           
-          /* Add all other styles from ChatWidget.module.css here */
+          .${styles.footer} {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            padding: 0 16px;
+            background: var(--widget-bg-color);
+            border-top: 1px solid var(--widget-border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+          }
+          
+          .${styles.footerLogo} {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+          }
+          
+          .${styles.footerText} {
+            color: var(--widget-text-color);
+            font-size: 14px;
+            margin-left: 8px;
+            font-family: var(--widget-font-family);
+          }
+          
+          .${styles.streamButtonContainer} {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+          }
         `;
         shadowRef.current.appendChild(styleSheet);
         

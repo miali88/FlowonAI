@@ -299,10 +299,16 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               href="https://flowon.ai" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="flex items-center justify-center gap-3 no-underline"
+              className={styles.footerContent}
             >
-              <img src="/flowon.png" alt="Flowon.AI Logo" className="footerLogo" />
-              <span className="footerText">Powered by Flowon.AI</span>
+              <img 
+                src="/flowon.png" 
+                alt="Flowon.AI Logo" 
+                className={styles.footerLogo} 
+              />
+              <span className={styles.footerText}>
+                Powered by Flowon.AI
+              </span>
             </a>
           </footer>
         </>
