@@ -11,7 +11,7 @@ export function Information() {
           Our advanced knowledge base system transforms raw information into structured intelligence. 
           Through semantic analysis and context-aware processing, your AI agent doesn't just store data—it 
           comprehends relationships, extracts key insights, and delivers precise responses based on your 
-          curated knowledge, whether from documents, websites, or direct input.
+          curated knowledge base, whether from documents, websites, or direct input.
         </p>
       </div>
 
@@ -48,14 +48,6 @@ export function Information() {
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="text-center mt-12 max-w-3xl mx-auto px-4">
-        <p className="text-gray-400">
-          Transform your Flowon AI agent into a knowledgeable assistant that understands your 
-          business inside and out. From company policies to technical documentation, your agent 
-          learns and adapts to become an invaluable part of your team.
-        </p>
       </div>
     </section>
   );

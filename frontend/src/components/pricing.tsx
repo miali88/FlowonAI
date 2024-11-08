@@ -119,8 +119,11 @@ export function Pricing({ currentPlan }: PricingProps) {
               </ul>
             </CardContent>
           </Card>
-          <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
-            <CardContent className="flex flex-col gap-8 p-4">
+          <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border bg-primary/5 border-primary">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground rounded-full text-sm font-medium">
+              Most Popular
+            </div>
+            <CardContent className="flex flex-col gap-8 p-4 pt-12">
               <div className="flex flex-col pl-4">
                 <h2 className="text-base font-semibold leading-7">Startup</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
@@ -134,8 +137,11 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">£{isAnnual ? '698.00' : '97'}</span>
+                <span className="text-4xl font-bold leading-7">£{isAnnual ? '1,690' : '169'}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
+                {isAnnual && (
+                  <span className="text-xs text-green-500 mb-1 ml-1">2 months free</span>
+                )}
               </motion.div>
               <Button 
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
@@ -175,6 +181,20 @@ export function Pricing({ currentPlan }: PricingProps) {
                     className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
                   />
                   <span className="flex">Unlimited knowledge base size</span>
+                </li>
+                <li className="flex items-center gap-3 text-xs font-medium">
+                  <Check
+                    size={16}
+                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
+                  />
+                  <span className="flex">Twilio integration</span>
+                </li>
+                <li className="flex items-center gap-3 text-xs font-medium">
+                  <Check
+                    size={16}
+                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
+                  />
+                  <span className="flex">Web Widget</span>
                 </li>
               </ul>
             </CardContent>
