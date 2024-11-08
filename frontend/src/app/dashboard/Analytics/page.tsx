@@ -1,4 +1,6 @@
 import React from "react";
+import getUnicodeFlagIcon from 'country-flag-icons/unicode'
+import { US, ES, FR, DE, IT } from 'country-flag-icons/react/3x2'
 import {
   Card,
   CardContent,
@@ -10,7 +12,16 @@ interface AnalyticsMetric {
   label: string;
   value: string | number;
   change?: string;
+  languages?: { code: string; count: number }[];
 }
+
+const FLAGS_COMPONENTS = {
+  'US': US,
+  'ES': ES,
+  'FR': FR,
+  'DE': DE,
+  'IT': IT,
+};
 
 const AnalyticsDashboard = () => {
   // Example data - replace with actual API calls
@@ -20,7 +31,18 @@ const AnalyticsDashboard = () => {
     { label: "Average Call Duration", value: "15m 47s", change: "-2.1%" },
     { label: "Unique Callers", value: 856, change: "+8.4%" },
     { label: "Repeat Callers", value: 391, change: "+15.2%" },
-    { label: "Languages Used", value: 5, change: "+25%" },
+    { 
+      label: "Languages Used", 
+      value: 5, 
+      change: "+25%",
+      languages: [
+        { code: "US", count: 523 }, // English
+        { code: "ES", count: 231 }, // Spanish
+        { code: "FR", count: 156 }, // French
+        { code: "DE", count: 89 },  // German
+        { code: "IT", count: 45 },  // Italian
+      ]
+    },
   ];
 
   const popularAgents = [
@@ -51,6 +73,19 @@ const AnalyticsDashboard = () => {
                 }`}>
                   {metric.change} from last month
                 </p>
+              )}
+              {metric.languages && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {metric.languages.map((lang) => {
+                    const FlagIcon = FLAGS_COMPONENTS[lang.code.toUpperCase()];
+                    return (
+                      <div key={lang.code} className="flex items-center gap-1 text-sm">
+                        {FlagIcon && <FlagIcon className="w-4 h-4" />}
+                        <span>{lang.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
