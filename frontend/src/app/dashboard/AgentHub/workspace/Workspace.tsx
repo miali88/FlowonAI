@@ -7,10 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Agent } from '../AgentCards';
+import { Agent } from '../../AgentHub/AgentCards';
 import { Play } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AgentFeatures } from '../AgentFeatures';
+import { AgentFeatures } from '../../AgentHub/AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';

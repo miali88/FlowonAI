@@ -1,25 +1,45 @@
-# from fastapi import Request, HTTPException
-# from fastapi.responses import Response, JSONResponse
+from pydantic import BaseModel
+from typing import Optional, Dict, Any, List
+import logging
 
-# from twilio.rest import Client 
-# from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
+from fastapi import Request, HTTPException
+from fastapi.responses import Response, JSONResponse
 
-# from app.core.config import settings
+from app.core.config import settings
+from twilio.rest import Client
+from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
+client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
-# from pydantic import BaseModel
-# from typing import Optional, Dict, Any
-# import logging
+# Add this near the top of the file, after imports
+logger = logging.getLogger(__name__)
 
-# class Event(BaseModel):
-#     name: str
-#     args: Optional[Dict[str, Any]] = None
+class Event(BaseModel):
+    name: str
+    args: Optional[Dict[str, Any]] = None
 
-# from twilio.rest import Client
-# from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
-# client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
-# # Add this near the top of the file, after imports
-# logger = logging.getLogger(__name__)
+def get_country_codes() -> List[str]:
+    countries = client.available_phone_numbers.list()
+    return [country.country_code for country in countries]
+
+def get_available_numbers(client: Client, country_code: str) -> Dict[str, List[str]]:
+    number_types = ['local', 'toll_free', 'mobile', 'national']
+    available_numbers: Dict[str, List[str]] = {}
+    
+    for number_type in number_types:
+        try:
+            # Try to list up to 5 numbers of each type
+            numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
+            numbers_list = [number.phone_number for number in numbers]
+            
+            # Only add to dictionary if numbers were found
+            if numbers_list:
+                available_numbers[number_type] = numbers_list
+                
+        except Exception as e:
+            continue
+            
+    return available_numbers
 
 
 # """ WEBHOOK HANDLER """
@@ -227,8 +247,8 @@
 #         print('No calls in progress')
 
 # def generate_twiml() -> Response:
-#     response = VoiceResponse()
-#     dial = Dial()
-#     dial.conference('MyConferenceRoom')
-#     response.append(dial)
-#     return Response(content=str(response), media_type='text/xml')
+    # response = VoiceResponse()
+    # dial = Dial()
+    # dial.conference('MyConferenceRoom')
+    # response.append(dial)
+    # return Response(content=str(response), media_type='text/xml')

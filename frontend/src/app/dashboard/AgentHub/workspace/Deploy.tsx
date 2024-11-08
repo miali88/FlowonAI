@@ -6,13 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import Image from 'next/image';
 import { Agent } from '../AgentCards';
 import { MultiSelect } from './multiselect_deploy';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useEffect, useState } from 'react';
 
 interface DeployProps {
   selectedAgent: Agent | null;
@@ -30,34 +24,45 @@ const Deploy: React.FC<DeployProps> = ({
   handleSaveChanges,
   userInfo,
 }) => {
-  React.useEffect(() => {
-    console.log('Deploy component userInfo:', userInfo);
-  }, [userInfo]);
+  const [countryCodes, setCountryCodes] = useState<Record<string, string[]>>({});
+  const [isLoadingCountryCodes, setIsLoadingCountryCodes] = useState(true);
+
+  useEffect(() => {
+    const fetchCountryCodes = async () => {
+      setIsLoadingCountryCodes(true);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/country_codes`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch country codes');
+        }
+        const data = await response.json();
+        setCountryCodes(data);
+      } catch (error) {
+        console.error('Error fetching country codes:', error);
+      } finally {
+        setIsLoadingCountryCodes(false);
+      }
+    };
+
+    fetchCountryCodes();
+  }, []);
 
   const renderPhoneNumbers = () => {
     if (!userInfo) {
       return <div className="text-sm text-muted-foreground">Loading user information...</div>;
     }
 
-    console.log('Telephony numbers:', userInfo.telephony_numbers);
-    
-    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => {
-      console.log('Creating item for number:', number);
-      return {
-        id: number,
-        title: number,
-        data_type: 'phone_number'
-      };
-    });
-
-    console.log('Phone number items created:', phoneNumberItems);
+    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => ({
+      id: number,
+      title: number,
+      data_type: 'phone_number'
+    }));
 
     return (
       <MultiSelect
         items={phoneNumberItems}
         selectedItems={selectedAgent?.twilioConfig?.phoneNumbers || []}
         onChange={(items) => {
-          console.log('MultiSelect onChange called with:', items);
           setSelectedAgent({
             ...selectedAgent,
             twilioConfig: {
@@ -66,6 +71,7 @@ const Deploy: React.FC<DeployProps> = ({
             }
           });
         }}
+        countryCodes={countryCodes}
       />
     );
   };

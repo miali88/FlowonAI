@@ -8,6 +8,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PurchaseNumber } from './PurchaseNumber';
 
 interface Item {
   id: string;
@@ -20,16 +28,27 @@ interface MultiSelectProps {
   selectedItems: Item[];
   onChange: (items: Item[]) => void;
   defaultValue?: string;
+  countryCodes: {
+    countries: string[];
+  };
 }
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange }) => {
+const getCountryFlag = (countryCode: string): string => {
+  // Convert country code to regional indicator symbols
+  // Each letter needs to be converted to the corresponding regional indicator symbol
+  // by adding 127397 to its UTF-16 code unit
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  
+  return String.fromCodePoint(...codePoints);
+};
+
+export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, countryCodes = {} }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    console.log('MultiSelect items:', items);
-    console.log('MultiSelect selectedItems:', selectedItems);
-  }, [items, selectedItems]);
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,17 +61,17 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleItem = (item: Item) => {
+  const toggleItem = (item: Item, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const isSelected = selectedItems.some(selected => selected.id === item.id);
     if (isSelected) {
-      onChange(selectedItems.filter(selected => selected.id !== item.id));
+      onChange([]);
     } else {
-      onChange([...selectedItems, item]);
+      onChange([item]);
     }
   };
 
   const handleOpenClick = () => {
-    console.log('Opening dropdown. Available items:', items);
     setOpen(!open);
   };
 
@@ -60,13 +79,13 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
     <div className="relative w-full" ref={containerRef}>
       <button
         type="button"
-        onClick={handleOpenClick}
+        onClick={() => setOpen(!open)}
         className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
         <span className="truncate text-sm">
           {selectedItems.length === 0
-            ? "Select items..."
-            : selectedItems.map(item => item.title).join(', ')}
+            ? "Select a phone number..."
+            : selectedItems[0].title}
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
@@ -79,30 +98,21 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
                top: containerRef.current?.getBoundingClientRect().bottom + window.scrollY + 5
              }}>
           <div className="p-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className="w-full px-3 py-2 hover:bg-accent cursor-pointer flex items-center gap-2 rounded-sm">
-                  <Plus className="h-4 w-4" />
-                  <span className="text-sm">Purchase a new number</span>
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Purchase Phone Number</DialogTitle>
-                  <DialogDescription>
-                    Select a phone number to purchase for your agent.
-                  </DialogDescription>
-                </DialogHeader>
-                {/* Add your phone number purchase form here */}
-              </DialogContent>
-            </Dialog>
+            <PurchaseNumber 
+              countryCodes={countryCodes}
+              onNumberPurchased={(number) => {
+                // Handle purchased number
+                console.log('Number purchased:', number);
+                // You might want to refresh the list of available numbers here
+              }}
+            />
           </div>
 
           <div className="max-h-[300px] overflow-y-auto">
             {items.map((item, index) => (
               <div
                 key={item.id}
-                onClick={() => toggleItem(item)}
+                onClick={(e) => toggleItem(item, e)}
                 className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center gap-3"
                 data-index={index}
               >
