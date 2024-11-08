@@ -6,18 +6,56 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from 'next/image';
 import { Agent } from '../AgentCards';
+import { MultiSelect } from './multiselect_deploy';
 
 interface DeployProps {
   selectedAgent: Agent | null;
   setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
   handleSaveChanges: (agent: Agent) => Promise<void>;
+  userInfo: {
+    telephony_numbers?: Record<string, any>;
+    [key: string]: any;
+  } | null;
 }
 
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
+  userInfo,
 }) => {
+  React.useEffect(() => {
+    console.log('Deploy component userInfo:', userInfo);
+  }, [userInfo]);
+
+  const renderPhoneNumbers = () => {
+    if (!userInfo) {
+      return <div className="text-sm text-muted-foreground">Loading user information...</div>;
+    }
+
+    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => ({
+      id: number,
+      title: number,
+      data_type: 'phone_number'
+    }));
+
+    return (
+      <MultiSelect
+        items={phoneNumberItems}
+        selectedItems={selectedAgent?.twilioConfig?.phoneNumbers || []}
+        onChange={(items) => {
+          setSelectedAgent({
+            ...selectedAgent,
+            twilioConfig: {
+              ...selectedAgent?.twilioConfig,
+              phoneNumbers: items
+            }
+          });
+        }}
+      />
+    );
+  };
+
   const iframeCode = `<iframe
 src="https://www.flowon.ai/embed/${selectedAgent?.id}"
 width="100%"
@@ -111,6 +149,13 @@ frameborder="0"
             <AccordionContent>
               <div className="space-y-4">
                 <div>
+                  <Label htmlFor="twilioPhoneNumber">Assigned Number</Label>
+                  <div className="space-y-2">
+                    {renderPhoneNumbers()}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="twilioAccountSid">Twilio Account SID</Label>
                   <Input
                     id="twilioAccountSid"
@@ -138,22 +183,6 @@ frameborder="0"
                       twilioConfig: {
                         ...selectedAgent?.twilioConfig,
                         authToken: e.target.value
-                      }
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="twilioPhoneNumber">Twilio Phone Number</Label>
-                  <Input
-                    id="twilioPhoneNumber"
-                    placeholder="+1234567890"
-                    value={selectedAgent?.twilioConfig?.phoneNumber || ''}
-                    onChange={(e) => setSelectedAgent({
-                      ...selectedAgent,
-                      twilioConfig: {
-                        ...selectedAgent?.twilioConfig,
-                        phoneNumber: e.target.value
                       }
                     })}
                   />

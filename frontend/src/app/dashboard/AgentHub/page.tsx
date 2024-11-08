@@ -39,6 +39,40 @@ const Lab = () => {
     data_type: string;
   }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [isLoadingUserInfo, setIsLoadingUserInfo] = useState(true);
+
+  const fetchUserInfo = async () => {
+    if (!userId) return;
+    
+    setIsLoadingUserInfo(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched user info:', data);
+        setUserInfo(data);
+      } else {
+        console.error('Failed to fetch user info');
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    } finally {
+      setIsLoadingUserInfo(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (userId) {
+      fetchUserInfo();
+    }
+  }, [userId]);
 
   React.useEffect(() => {
     if (!isLoaded) {
@@ -188,59 +222,38 @@ const Lab = () => {
   }
 
   return (
-    <div className="flex flex-col h-full p-6">
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink onClick={handleNavigateToHub} className="cursor-pointer">
-              Agent's
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {selectedAgent && (
-            <>
-              <BreadcrumbSeparator>
-                <Slash className="h-4 w-4" />
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <BreadcrumbLink>{selectedAgent.agentName}</BreadcrumbLink>
-              </BreadcrumbItem>
-            </>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex flex-col space-y-6">
-        {!selectedAgent ? (
-          // Show agent list when no agent is selected
-          <div className="w-full flex flex-col items-start space-y-4">
-            <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
-            <AgentCards setSelectedAgent={handleAgentSelect} />
-          </div>
-        ) : (
-          // Show workspace when agent is selected
-          <Workspace
-            selectedAgent={selectedAgent}
-            setSelectedAgent={setSelectedAgent}
-            handleSaveChanges={handleSaveChanges}
-            handleDeleteAgent={handleDeleteAgent}
-            isStreaming={isStreaming}
-            setIsStreaming={setIsStreaming}
-            isLiveKitActive={isLiveKitActive}
-            setIsLiveKitActive={setIsLiveKitActive}
-            token={token}
-            setToken={setToken}
-            url={url}
-            setUrl={setUrl}
-            isConnecting={isConnecting}
-            setIsConnecting={setIsConnecting}
-            handleStreamEnd={handleStreamEnd}
-            handleStreamStart={handleStreamStart}
-            localParticipant={localParticipant}
-            setLocalParticipant={setLocalParticipant}
-            knowledgeBaseItems={knowledgeBaseItems}
-          />
-        )}
-      </div>
+    <div className="flex flex-col space-y-6">
+      {!selectedAgent ? (
+        // Show agent list when no agent is selected
+        <div className="w-full flex flex-col items-start space-y-4">
+          <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
+          <AgentCards setSelectedAgent={handleAgentSelect} />
+        </div>
+      ) : (
+        // Show workspace when agent is selected
+        <Workspace
+          selectedAgent={selectedAgent}
+          setSelectedAgent={setSelectedAgent}
+          handleSaveChanges={handleSaveChanges}
+          handleDeleteAgent={handleDeleteAgent}
+          isStreaming={isStreaming}
+          setIsStreaming={setIsStreaming}
+          isLiveKitActive={isLiveKitActive}
+          setIsLiveKitActive={setIsLiveKitActive}
+          token={token}
+          setToken={setToken}
+          url={url}
+          setUrl={setUrl}
+          isConnecting={isConnecting}
+          setIsConnecting={setIsConnecting}
+          handleStreamEnd={handleStreamEnd}
+          handleStreamStart={handleStreamStart}
+          localParticipant={localParticipant}
+          setLocalParticipant={setLocalParticipant}
+          knowledgeBaseItems={knowledgeBaseItems}
+          userInfo={userInfo}
+        />
+      )}
 
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
         <AlertDialogContent>

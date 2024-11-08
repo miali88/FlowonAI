@@ -40,6 +40,7 @@ interface WorkspaceProps {
     title: string;
     data_type: string;
   }>;
+  userInfo: any;
 }
 
 interface ProspectSettings {
@@ -104,6 +105,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   localParticipant,
   setLocalParticipant,
   knowledgeBaseItems,
+  userInfo,
 }) => {
   const [activeTab, setActiveTab] = useState('playground');
   const [setIsConfigureDialogOpen] = useState(false);
@@ -211,6 +213,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
       });
     }
   };
+
+  // Add useEffect for debugging
+  React.useEffect(() => {
+    console.log('Workspace received userInfo:', userInfo);
+  }, [userInfo]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -460,6 +467,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           selectedAgent={selectedAgent}
           setSelectedAgent={setSelectedAgent}
           handleSaveChanges={handleSaveChanges}
+          userInfo={userInfo}
         />
       </TabsContent>
       <TabsContent value="share">

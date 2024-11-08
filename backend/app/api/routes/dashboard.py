@@ -215,6 +215,14 @@ async def calculate_tokens_handler(request: Request, current_user: str = Depends
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/users")
+async def user_info(current_user: str = Depends(get_current_user)):
+    try:
+        user_info = supabase.table('users').select('*').eq('id', current_user).execute()
+        return user_info.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error updating user: {str(e)}")
+
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.get_encoding(encoding_name)
