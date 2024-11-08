@@ -7,16 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ChatBotMini from '../ChatBotMini';
 import { Agent } from '../AgentCards';
 import { Play } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
-import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';
+import Ui from './Ui';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -438,104 +436,24 @@ const Workspace: React.FC<WorkspaceProps> = ({
         </Card>
       </TabsContent>
       <TabsContent value="ui">
-        <Card>
-          <CardHeader>
-            <CardTitle>UI Customization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex space-x-4">
-              <div className="w-1/2 space-y-6">
-                <div>
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <ColorPicker
-                    value={selectedAgent?.uiConfig?.primaryColor || DEFAULT_COLOR}
-                    onChange={(color) => setSelectedAgent({
-                      ...selectedAgent,
-                      uiConfig: { ...selectedAgent?.uiConfig, primaryColor: color }
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <ColorPicker
-                    value={selectedAgent?.uiConfig?.secondaryColor || DEFAULT_COLOR}
-                    onChange={(color) => setSelectedAgent({
-                      ...selectedAgent,
-                      uiConfig: { ...selectedAgent?.uiConfig, secondaryColor: color }
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fontSize">Font Size</Label>
-                  <Slider
-                    id="fontSize"
-                    min={12}
-                    max={24}
-                    step={1}
-                    value={[selectedAgent?.uiConfig?.fontSize || 16]}
-                    onValueChange={(value) => setSelectedAgent({
-                      ...selectedAgent,
-                      uiConfig: { ...selectedAgent?.uiConfig, fontSize: value[0] }
-                    })}
-                  />
-                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.fontSize || 16}px</span>
-                </div>
-                <div>
-                  <Label htmlFor="borderRadius">Border Radius</Label>
-                  <Slider
-                    id="borderRadius"
-                    min={0}
-                    max={20}
-                    step={1}
-                    value={[selectedAgent?.uiConfig?.borderRadius || 4]}
-                    onValueChange={(value) => setSelectedAgent({
-                      ...selectedAgent,
-                      uiConfig: { ...selectedAgent?.uiConfig, borderRadius: value[0] }
-                    })}
-                  />
-                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.borderRadius || 4}px</span>
-                </div>
-                <div>
-                  <Label htmlFor="chatboxHeight">Chatbox Height</Label>
-                  <Slider
-                    id="chatboxHeight"
-                    min={300}
-                    max={800}
-                    step={10}
-                    value={[selectedAgent?.uiConfig?.chatboxHeight || 500]}
-                    onValueChange={(value) => setSelectedAgent({
-                      ...selectedAgent,
-                      uiConfig: { ...selectedAgent?.uiConfig, chatboxHeight: value[0] }
-                    })}
-                  />
-                  <span className="text-sm text-muted-foreground">{selectedAgent?.uiConfig?.chatboxHeight || 500}px</span>
-                </div>
-              </div>
-              <div className="w-1/2">
-                <div className="border rounded-lg p-4" style={{ height: `${selectedAgent?.uiConfig?.chatboxHeight || 500}px` }}>
-                  <ChatBotMini
-                    agentId={selectedAgent?.id || ''}
-                    isStreaming={isStreaming}
-                    setIsStreaming={setIsStreaming}
-                    isLiveKitActive={isLiveKitActive}
-                    setIsLiveKitActive={setIsLiveKitActive}
-                    token={token}
-                    setToken={setToken}
-                    url={url}
-                    setUrl={setUrl}
-                    isConnecting={isConnecting}
-                    setIsConnecting={setIsConnecting}
-                    onStreamEnd={handleStreamEnd}
-                    onStreamStart={handleStreamStart}
-                    bypassShowChatInputCondition={true}
-                    localParticipant={localParticipant}
-                    setLocalParticipant={setLocalParticipant}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Ui
+          selectedAgent={selectedAgent}
+          setSelectedAgent={setSelectedAgent}
+          isStreaming={isStreaming}
+          setIsStreaming={setIsStreaming}
+          isLiveKitActive={isLiveKitActive}
+          setIsLiveKitActive={setIsLiveKitActive}
+          token={token}
+          setToken={setToken}
+          url={url}
+          setUrl={setUrl}
+          isConnecting={isConnecting}
+          setIsConnecting={setIsConnecting}
+          handleStreamEnd={handleStreamEnd}
+          handleStreamStart={handleStreamStart}
+          localParticipant={localParticipant}
+          setLocalParticipant={setLocalParticipant}
+        />
       </TabsContent>
       <TabsContent value="deploy">
         <Deploy 
