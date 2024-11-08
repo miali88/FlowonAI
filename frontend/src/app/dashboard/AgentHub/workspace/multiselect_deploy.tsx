@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronsUpDown, X, Plus } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,44 +27,40 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log('MultiSelect items:', items);
+    console.log('MultiSelect selectedItems:', selectedItems);
+  }, [items, selectedItems]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
 
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscapeKey);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const toggleItem = (item: Item) => {
-    onChange(
-      selectedItems.find(selected => selected.id === item.id)
-        ? selectedItems.filter(selected => selected.id !== item.id)
-        : [...selectedItems, item]
-    );
+    const isSelected = selectedItems.some(selected => selected.id === item.id);
+    if (isSelected) {
+      onChange(selectedItems.filter(selected => selected.id !== item.id));
+    } else {
+      onChange([...selectedItems, item]);
+    }
   };
 
-  const removeItem = (itemToRemove: Item) => {
-    onChange(selectedItems.filter(item => item.id !== itemToRemove.id));
+  const handleOpenClick = () => {
+    console.log('Opening dropdown. Available items:', items);
+    setOpen(!open);
   };
 
   return (
     <div className="relative w-full" ref={containerRef}>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={handleOpenClick}
         className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
         <span className="truncate text-sm">
@@ -76,7 +72,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
       </button>
 
       {open && (
-        <div className="absolute mt-2 w-full bg-background rounded-md border border-input shadow-lg z-50">
+        <div className="fixed inset-x-0 top-full mt-2 w-full bg-background rounded-md border border-input shadow-lg z-[100]"
+             style={{
+               maxWidth: containerRef.current?.offsetWidth,
+               left: containerRef.current?.getBoundingClientRect().left,
+               top: containerRef.current?.getBoundingClientRect().bottom + window.scrollY + 5
+             }}>
           <div className="p-2">
             <Dialog>
               <DialogTrigger asChild>
@@ -98,11 +99,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
           </div>
 
           <div className="max-h-[300px] overflow-y-auto">
-            {items.filter(item => item.id !== 'purchase').map((item) => (
+            {items.map((item, index) => (
               <div
                 key={item.id}
                 onClick={() => toggleItem(item)}
                 className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center gap-3"
+                data-index={index}
               >
                 <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
                   selectedItems.some(selected => selected.id === item.id) 

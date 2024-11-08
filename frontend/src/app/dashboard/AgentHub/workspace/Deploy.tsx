@@ -1,12 +1,18 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from 'next/image';
 import { Agent } from '../AgentCards';
 import { MultiSelect } from './multiselect_deploy';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DeployProps {
   selectedAgent: Agent | null;
@@ -33,17 +39,25 @@ const Deploy: React.FC<DeployProps> = ({
       return <div className="text-sm text-muted-foreground">Loading user information...</div>;
     }
 
-    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => ({
-      id: number,
-      title: number,
-      data_type: 'phone_number'
-    }));
+    console.log('Telephony numbers:', userInfo.telephony_numbers);
+    
+    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => {
+      console.log('Creating item for number:', number);
+      return {
+        id: number,
+        title: number,
+        data_type: 'phone_number'
+      };
+    });
+
+    console.log('Phone number items created:', phoneNumberItems);
 
     return (
       <MultiSelect
         items={phoneNumberItems}
         selectedItems={selectedAgent?.twilioConfig?.phoneNumbers || []}
         onChange={(items) => {
+          console.log('MultiSelect onChange called with:', items);
           setSelectedAgent({
             ...selectedAgent,
             twilioConfig: {
@@ -154,40 +168,6 @@ frameborder="0"
                     {renderPhoneNumbers()}
                   </div>
                 </div>
-
-                <div>
-                  <Label htmlFor="twilioAccountSid">Twilio Account SID</Label>
-                  <Input
-                    id="twilioAccountSid"
-                    placeholder="Enter your Twilio Account SID"
-                    value={selectedAgent?.twilioConfig?.accountSid || ''}
-                    onChange={(e) => setSelectedAgent({
-                      ...selectedAgent,
-                      twilioConfig: {
-                        ...selectedAgent?.twilioConfig,
-                        accountSid: e.target.value
-                      }
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="twilioAuthToken">Twilio Auth Token</Label>
-                  <Input
-                    id="twilioAuthToken"
-                    type="password"
-                    placeholder="Enter your Twilio Auth Token"
-                    value={selectedAgent?.twilioConfig?.authToken || ''}
-                    onChange={(e) => setSelectedAgent({
-                      ...selectedAgent,
-                      twilioConfig: {
-                        ...selectedAgent?.twilioConfig,
-                        authToken: e.target.value
-                      }
-                    })}
-                  />
-                </div>
-
                 <Button 
                   className="mt-4"
                   onClick={() => handleSaveChanges(selectedAgent)}
@@ -199,29 +179,6 @@ frameborder="0"
                   <p className="text-sm text-muted-foreground">
                     After saving your Twilio configuration, your agent will be accessible via phone calls to your Twilio number.
                   </p>
-                  <div>
-                    <Label className="text-sm font-medium">Webhook URL</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Configure this URL in your Twilio Voice webhook settings:
-                    </p>
-                    <div className="relative">
-                      <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
-                        <code className="text-sm">
-                          {`https://api.flowon.ai/twilio/voice/${selectedAgent?.id}`}
-                        </code>
-                      </pre>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => navigator.clipboard.writeText(
-                          `https://api.flowon.ai/twilio/voice/${selectedAgent?.id}`
-                        )}
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </AccordionContent>

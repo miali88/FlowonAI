@@ -107,7 +107,9 @@ async def upload_file_handler(
 @router.get("/knowledge_base")
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
-        items, total_tokens = await get_kb_items(current_user)
+        #items, total_tokens = await get_kb_items(current_user)
+        items = []
+        total_tokens = 0
         print("\n\ntotal_tokens:", total_tokens)
         return JSONResponse(content={
             "items": items,
