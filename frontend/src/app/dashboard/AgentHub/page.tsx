@@ -286,55 +286,24 @@ const Lab = () => {
                 localParticipant={localParticipant}
                 setLocalParticipant={setLocalParticipant}
                 knowledgeBaseItems={knowledgeBaseItems}
+                userInfo={userInfo}
               />
             )}
-          </div>
-    <div className="flex flex-col space-y-6">
-      {!selectedAgent ? (
-        // Show agent list when no agent is selected
-        <div className="w-full flex flex-col items-start space-y-4">
-          <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
-          <AgentCards setSelectedAgent={handleAgentSelect} />
-        </div>
-      ) : (
-        // Show workspace when agent is selected
-        <Workspace
-          selectedAgent={selectedAgent}
-          setSelectedAgent={setSelectedAgent}
-          handleSaveChanges={handleSaveChanges}
-          handleDeleteAgent={handleDeleteAgent}
-          isStreaming={isStreaming}
-          setIsStreaming={setIsStreaming}
-          isLiveKitActive={isLiveKitActive}
-          setIsLiveKitActive={setIsLiveKitActive}
-          token={token}
-          setToken={setToken}
-          url={url}
-          setUrl={setUrl}
-          isConnecting={isConnecting}
-          setIsConnecting={setIsConnecting}
-          handleStreamEnd={handleStreamEnd}
-          handleStreamStart={handleStreamStart}
-          localParticipant={localParticipant}
-          setLocalParticipant={setLocalParticipant}
-          knowledgeBaseItems={knowledgeBaseItems}
-          userInfo={userInfo}
-        />
-      )}
 
-          <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Notification</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {alertDialogMessage}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogAction onClick={() => setAlertDialogOpen(false)}>OK</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Notification</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {alertDialogMessage}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction onClick={() => setAlertDialogOpen(false)}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </div>
     </>
