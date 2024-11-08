@@ -5,7 +5,7 @@ import { AgentCards, Agent } from './AgentCards';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { NewAgent } from './NewAgent';
-import Workspace from './Workspace';
+import Workspace from './workspace/Workspace';
 import { LocalParticipant } from 'livekit-client';
 import axios from 'axios';
 import "@/components/loading.css";

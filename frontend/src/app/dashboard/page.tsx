@@ -16,25 +16,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-  BookOpen,
   ChevronRight,
   LogOut,
-  BarChart3,
   Menu,
-  MessageSquare,
-  Mic,
   Search,
   Settings,
-  X,
-  Plug,
-  Calendar,
-  Sidebar,
 } from "lucide-react";
 import ChatHistory from '@/app/dashboard/ConversationLogs/page';
 
@@ -42,7 +31,7 @@ import KnowledgeBaseContent from "./Knowledgebase/page";
 import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
 import IntegrationsPage from "@/app/dashboard/Integrations/page";
 import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
-import ContactFounders from "@/app/dashboard/ContactFounders/page";
+import ContactFounders from "@/app/dashboard/contactfounders/page";
 import Analytics from '@/app/dashboard/Analytics/page';
 import { Particles } from '@/components/magicui/particles'; // Correct the import path
 //import { Sidebar } from './Sidebar';
@@ -156,7 +145,6 @@ function AdminDashboard() {
   const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [activePanel, setActivePanel] = useState('admin');
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
 
@@ -201,11 +189,6 @@ function AdminDashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const handleSetCollapsed = (value: boolean) => {
-    console.log('Setting collapsed to:', value);
-    setIsCollapsed(value);
-  };
 
   useEffect(() => {
     console.log('isCollapsed changed to:', isCollapsed);
