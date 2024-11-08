@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
+import Playground from './Playground';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -106,7 +107,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   setLocalParticipant,
   knowledgeBaseItems,
 }) => {
-  const [activeTab, setActiveTab] = useState('preview');
+  const [activeTab, setActiveTab] = useState('playground');
   const [setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [callTransferConfig, setCallTransferConfig] = useState({
@@ -137,6 +138,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     newAudioPlayer.play();
     setAudioPlayer(newAudioPlayer);
   };
+
 
   const handleSaveFeatures = async () => {
     if (selectedAgent) {
@@ -215,11 +217,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="mb-4 h-12">
-        <TabsTrigger value="preview">Playground</TabsTrigger>
+        <TabsTrigger value="playground">Playground</TabsTrigger>
         <TabsTrigger value="edit">Settings</TabsTrigger>
         <TabsTrigger value="advanced">Advanced</TabsTrigger>
         <TabsTrigger value="ui">UI</TabsTrigger>
-        <TabsTrigger value="embed">Deploy</TabsTrigger>
+        <TabsTrigger value="deploy">Deploy</TabsTrigger>
         <TabsTrigger value="share">Share</TabsTrigger>
       </TabsList>
       <TabsContent value="edit">
@@ -535,7 +537,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           </CardContent>
         </Card>
       </TabsContent>
-      <TabsContent value="embed">
+      <TabsContent value="deploy">
         <Deploy 
           selectedAgent={selectedAgent}
           setSelectedAgent={setSelectedAgent}
@@ -553,35 +555,24 @@ const Workspace: React.FC<WorkspaceProps> = ({
           </CardContent>
         </Card>
       </TabsContent>
-      <TabsContent value="preview">
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="min-h-[600px] flex items-center justify-center">
-            {selectedAgent && (
-              <div className="w-full max-w-md">
-                <ChatBotMini 
-                  agentId={selectedAgent.id}
-                  isStreaming={isStreaming}
-                  setIsStreaming={setIsStreaming}
-                  isLiveKitActive={isLiveKitActive}
-                  setIsLiveKitActive={setIsLiveKitActive}
-                  token={token}
-                  setToken={setToken}
-                  url={url}
-                  setUrl={setUrl}
-                  isConnecting={isConnecting}
-                  setIsConnecting={setIsConnecting}
-                  onStreamEnd={handleStreamEnd}
-                  onStreamStart={handleStreamStart}
-                  localParticipant={localParticipant}
-                  setLocalParticipant={setLocalParticipant}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <TabsContent value="playground">
+        <Playground 
+          selectedAgent={selectedAgent}
+          isStreaming={isStreaming}
+          setIsStreaming={setIsStreaming}
+          isLiveKitActive={isLiveKitActive}
+          setIsLiveKitActive={setIsLiveKitActive}
+          token={token}
+          setToken={setToken}
+          url={url}
+          setUrl={setUrl}
+          isConnecting={isConnecting}
+          setIsConnecting={setIsConnecting}
+          handleStreamEnd={handleStreamEnd}
+          handleStreamStart={handleStreamStart}
+          localParticipant={localParticipant}
+          setLocalParticipant={setLocalParticipant}
+        />
       </TabsContent>
     </Tabs>
   );
