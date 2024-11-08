@@ -1,6 +1,6 @@
 'use client';
 
-// import ChatBotMini from "@/app/dashboard/agenthub/ChatBotMini";
+// import ChatBotMini from "@/app/chat-widget/[agentId]/components/components/ChatBotMini";
 import { useState } from "react";
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Particles } from "@/components/magicui/particles";

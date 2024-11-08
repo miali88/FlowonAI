@@ -63,7 +63,7 @@ export function AppSidebar({
             className="invert"
           />
           {!isCollapsed && (
-            <span className="font-semibold">Flowon</span>
+            <span className="text-2xl font-semibold">Flowon</span>
           )}
         </Link>
       </SidebarHeader>
@@ -100,7 +100,7 @@ export function AppSidebar({
                   )}
                 >
                   <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
+                  {!isCollapsed && <span>{item.title}</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}

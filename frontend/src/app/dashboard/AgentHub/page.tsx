@@ -73,6 +73,7 @@ const Lab = () => {
       fetchUserInfo();
     }
   }, [userId]);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   React.useEffect(() => {
     if (!isLoaded) {
@@ -204,8 +205,21 @@ const Lab = () => {
   };
 
   React.useEffect(() => {
-    fetchKnowledgeBase();
-  }, [userId]);
+    const initializeData = async () => {
+      if (!isLoaded) return;
+      
+      if (userId) {
+        try {
+          await fetchKnowledgeBase();
+        } catch (error) {
+          console.error('Error initializing data:', error);
+        }
+      }
+      setIsPageLoading(false);
+    };
+
+    initializeData();
+  }, [userId, isLoaded]);
 
   const handleNavigateToHub = useCallback(() => {
     setSelectedAgent(null);
@@ -217,11 +231,64 @@ const Lab = () => {
     setLocalParticipant(null);
   }, []);
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
+    <>
+      <div className="flex flex-col h-full p-6">
+        {(isPageLoading || !isLoaded || isLoading) && <Loader />}
+        
+        <div style={{ visibility: isPageLoading || !isLoaded || isLoading ? 'hidden' : 'visible' }}>
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={handleNavigateToHub} className="cursor-pointer">
+                  Agent's
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {selectedAgent && (
+                <>
+                  <BreadcrumbSeparator>
+                    <Slash className="h-4 w-4" />
+                  </BreadcrumbSeparator>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink>{selectedAgent.agentName}</BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <div className="flex flex-col space-y-6">
+            {!selectedAgent ? (
+              // Show agent list when no agent is selected
+              <div className="w-full flex flex-col items-start space-y-4">
+                <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
+                <AgentCards setSelectedAgent={handleAgentSelect} />
+              </div>
+            ) : (
+              // Show workspace when agent is selected
+              <Workspace
+                selectedAgent={selectedAgent}
+                setSelectedAgent={setSelectedAgent}
+                handleSaveChanges={handleSaveChanges}
+                handleDeleteAgent={handleDeleteAgent}
+                isStreaming={isStreaming}
+                setIsStreaming={setIsStreaming}
+                isLiveKitActive={isLiveKitActive}
+                setIsLiveKitActive={setIsLiveKitActive}
+                token={token}
+                setToken={setToken}
+                url={url}
+                setUrl={setUrl}
+                isConnecting={isConnecting}
+                setIsConnecting={setIsConnecting}
+                handleStreamEnd={handleStreamEnd}
+                handleStreamStart={handleStreamStart}
+                localParticipant={localParticipant}
+                setLocalParticipant={setLocalParticipant}
+                knowledgeBaseItems={knowledgeBaseItems}
+              />
+            )}
+          </div>
     <div className="flex flex-col space-y-6">
       {!selectedAgent ? (
         // Show agent list when no agent is selected
@@ -255,20 +322,22 @@ const Lab = () => {
         />
       )}
 
-      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Notification</AlertDialogTitle>
-            <AlertDialogDescription>
-              {alertDialogMessage}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setAlertDialogOpen(false)}>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+          <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Notification</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {alertDialogMessage}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setAlertDialogOpen(false)}>OK</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+    </>
   );
 };
 

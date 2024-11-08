@@ -22,9 +22,16 @@ import {
 import { Agent } from './AgentCards';
 
 interface AgentFeaturesProps {
-  selectedAgent: Agent | null;
-  setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
-  handleSaveFeatures: () => Promise<void>;
+  selectedAgent: {
+    features: {
+      notifyOnInterest: boolean;
+      collectWrittenInformation: boolean;
+      transferCallToHuman: boolean;
+      bookCalendarSlot: boolean;
+    };
+  };
+  setSelectedAgent: (agent: any) => void;
+  handleSaveFeatures: (features: any) => Promise<void>;
 }
 
 interface FormField {
@@ -69,14 +76,16 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
     whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
   });
 
-  const handleFeatureToggle = (featureId: string, checked: boolean) => {
-    setSelectedAgent(prevAgent => ({
-      ...prevAgent,
-      features: {
-        ...prevAgent?.features,
-        [featureId]: checked ? {} : undefined
-      }
-    }));
+  const handleFeatureToggle = (featureId: string) => {
+    console.log("Toggling feature:", featureId); // For debugging
+    const updatedFeatures = {
+      ...selectedAgent.features,
+      [featureId]: !selectedAgent.features[featureId]
+    };
+    
+    console.log("Updated features:", updatedFeatures); // For debugging
+    
+    handleSaveFeatures(updatedFeatures);
   };
 
   const handleConfigureFeature = (featureId: string) => {
@@ -132,36 +141,18 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
     <div className="space-y-6">
       {/* Features List */}
       {[
-        { id: "prospects", label: "Notify you on interest" },
-        { id: "form", label: "Collect written information" },
-        { id: "callTransfer", label: "Transfer call to a human" },
-        { id: "appointmentBooking", label: "Book calendar slot" },
+        { id: "notifyOnInterest", label: "Notify you on interest" },
+        { id: "collectWrittenInformation", label: "Collect written information" },
+        { id: "transferCallToHuman", label: "Transfer call to a human" },
+        { id: "bookCalendarSlot", label: "Book calendar slot" }
       ].map((feature) => (
-        <div key={feature.id} className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor={feature.id}>{feature.label}</Label>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id={feature.id}
-                checked={!!selectedAgent?.features?.[feature.id]}
-                onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked)}
-              />
-              {selectedAgent?.features?.[feature.id] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleConfigureFeature(feature.id)}
-                >
-                  Configure <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-          {selectedAgent?.features?.[feature.id] && (
-            <p className="text-sm text-muted-foreground">
-              {getFeatureDescription(feature.id)}
-            </p>
-          )}
+        <div key={feature.id} className="flex items-center justify-between">
+          <Label htmlFor={feature.id}>{feature.label}</Label>
+          <Switch
+            id={feature.id}
+            checked={selectedAgent.features[feature.id]}
+            onCheckedChange={() => handleFeatureToggle(feature.id)}
+          />
         </div>
       ))}
 

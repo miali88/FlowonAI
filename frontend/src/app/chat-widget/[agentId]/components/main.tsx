@@ -398,9 +398,19 @@ const setupGlobalEventListeners = () => {
 
 const MainWidget = () => {
   useEffect(() => {
-    if (!(window as any)[WIDGET_NAMESPACE]?.initialized) {
-      initializeWidget('embedded-chatbot-container');
-    }
+    // Wait for the container and config to be available
+    const initInterval = setInterval(() => {
+      const container = document.getElementById('embedded-chatbot-container');
+      const config = window.embeddedChatbotConfig;
+      
+      if (container && config && !window[WIDGET_NAMESPACE]?.initialized) {
+        clearInterval(initInterval);
+        initializeWidget('embedded-chatbot-container');
+      }
+    }, 100);
+
+    // Cleanup
+    return () => clearInterval(initInterval);
   }, []);
 
   return null;

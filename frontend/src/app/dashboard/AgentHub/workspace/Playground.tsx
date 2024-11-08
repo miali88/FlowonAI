@@ -4,7 +4,7 @@ import { LocalParticipant } from "livekit-client";
 import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 
-const ChatWidget = dynamic(() => import('@/app/chat-widget/[agentId]/components/main'), {
+const MainWidget = dynamic(() => import('@/app/chat-widget/[agentId]/components/main'), {
   ssr: false
 });
 
@@ -30,12 +30,12 @@ const Playground: React.FC<PlaygroundProps> = ({
   selectedAgent,
 }) => {
   useEffect(() => {
-    if (selectedAgent) {
-      // Set the embedded chatbot config
+    if (selectedAgent && !window.embeddedChatbotConfig) {
       window.embeddedChatbotConfig = {
         agentId: selectedAgent.id,
-        domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
-      }
+        domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
+        persistAcrossTabs: true
+      };
     }
   }, [selectedAgent]);
 
@@ -45,9 +45,12 @@ const Playground: React.FC<PlaygroundProps> = ({
         <CardTitle>Chat With Agent</CardTitle>
       </CardHeader>
       <CardContent className="min-h-[600px] flex items-center justify-center">
-        {selectedAgent && (
-          <div id="embedded-chatbot-container" className="w-full max-w-md">
-            <ChatWidget />
+        {!selectedAgent ? (
+          <div className="text-gray-500">Please select an agent to start chatting</div>
+        ) : (
+          <div className="w-96 h-[600px] border rounded-lg overflow-hidden shadow-lg relative">
+            <div id="embedded-chatbot-container" style={{ width: '100%', height: '100%' }} />
+            <MainWidget />
           </div>
         )}
       </CardContent>
@@ -55,12 +58,12 @@ const Playground: React.FC<PlaygroundProps> = ({
   );
 };
 
-// Add TypeScript declaration if not already present
 declare global {
   interface Window {
     embeddedChatbotConfig: {
       agentId: string
       domain: string
+      persistAcrossTabs?: boolean
     }
   }
 }

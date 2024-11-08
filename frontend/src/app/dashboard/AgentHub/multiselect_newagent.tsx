@@ -6,18 +6,27 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Item {
-  id: number;
+  id: string | number;
   title: string;
-  data_type: string;
+  data_type?: string;
+  file?: string;
 }
 
 interface MultiSelectProps {
   items: Item[];
   selectedItems: Item[];
   onChange: (items: Item[]) => void;
+  placeholder?: string;
+  multiSelect?: boolean;
 }
 
-export function MultiSelect({ items, selectedItems, onChange }: MultiSelectProps) {
+export function MultiSelect({ 
+  items, 
+  selectedItems, 
+  onChange, 
+  placeholder = "Select items...", 
+  multiSelect = true 
+}: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
@@ -25,28 +34,26 @@ export function MultiSelect({ items, selectedItems, onChange }: MultiSelectProps
   console.log('MultiSelect render - selectedItems:', selectedItems);
 
   const handleSelect = (item: Item) => {
-    console.log('handleSelect called with item:', item);
-    
-    const isSelected = selectedItems.some(
-      selected => selected.id === item.id
-    );
-    console.log('isSelected:', isSelected);
-    
-    let newSelection;
-    if (isSelected) {
-      newSelection = selectedItems.filter(selected => selected.id !== item.id);
-    } else {
-      if (item.id === -1) {
-        newSelection = [item];
-      } else if (selectedItems.some(selected => selected.id === -1)) {
-        newSelection = [item];
+    if (multiSelect) {
+      const isSelected = selectedItems.some(selected => selected.id === item.id);
+      let newSelection;
+      
+      if (isSelected) {
+        newSelection = selectedItems.filter(selected => selected.id !== item.id);
       } else {
-        newSelection = [...selectedItems, item];
+        if (item.id === -1) {
+          newSelection = [item];
+        } else if (selectedItems.some(selected => selected.id === -1)) {
+          newSelection = [item];
+        } else {
+          newSelection = [...selectedItems, item];
+        }
       }
+      onChange(newSelection);
+    } else {
+      onChange([item]);
+      setOpen(false);
     }
-    
-    console.log('newSelection:', newSelection);
-    onChange(newSelection);
   };
 
   return (
@@ -56,22 +63,26 @@ export function MultiSelect({ items, selectedItems, onChange }: MultiSelectProps
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between bg-transparent text-foreground dark:text-gray-200 border-gray-600 focus:bg-gray-800"
         >
           {selectedItems.length > 0
-            ? selectedItems.map(item => item.title).join(', ')
-            : "Select data sources..."}
+            ? multiSelect
+              ? selectedItems.some(item => item.id === -1)
+                ? "All items selected"
+                : `${selectedItems.length} item${selectedItems.length === 1 ? '' : 's'} selected`
+              : selectedItems[0].title
+            : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
           <CommandInput
-            placeholder="Search data sources..."
+            placeholder="Search items..."
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandEmpty>No data sources found.</CommandEmpty>
+          <CommandEmpty>No items found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
             {items.map((item) => (
               <CommandItem

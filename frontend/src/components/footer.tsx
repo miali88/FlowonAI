@@ -1,7 +1,32 @@
+'use client';
+
 import Link from "next/link";
 import { Youtube, Twitter } from "lucide-react";
+import { useState, useEffect } from 'react';
+
+interface GeoData {
+  country: string;
+  country_code: string;
+}
 
 export function Footer() {
+  const [countryCode, setCountryCode] = useState<string>('');
+
+  useEffect(() => {
+    const fetchGeoData = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (!response.ok) throw new Error('Failed to fetch location data');
+        const data: GeoData = await response.json();
+        setCountryCode(data.country_code);
+      } catch (err) {
+        console.error('Error fetching location:', err);
+      }
+    };
+
+    fetchGeoData();
+  }, []);
+
   return (
     <footer className="w-full">
       <div className="mx-auto max-w-4xl px-4">
@@ -95,6 +120,11 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-col items-center justify-center gap-4 border-t border-neutral-700/20 py-4">
+          {countryCode && (
+            <div className="text-sm text-muted-foreground">
+              Connecting from: {countryCode}
+            </div>
+          )}
           <div className="flex space-x-5 justify-center">
             <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
               <Youtube size={15} />

@@ -22,6 +22,7 @@ import { MultiSelect } from "./multiselect_newagent"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { AgentFeatures } from './AgentFeatures';
+import styles from './NewAgent.module.css';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -66,6 +67,16 @@ interface FormData {
   voice: string;
   instructions: string;
   language: string;
+  features: {
+    notifyOnInterest: boolean;
+    collectWrittenInformation: boolean;
+    transferCallToHuman: boolean;
+    bookCalendarSlot: boolean;
+    prospects: boolean;
+    form: boolean;
+    callTransfer: boolean;
+    appointmentBooking: boolean
+  };
 }
 
 interface NewAgentProps {
@@ -76,6 +87,15 @@ interface NewAgentProps {
   }>;
 }
 
+// Format voice options to match MultiSelect interface
+const getVoiceOptionsFormatted = (voices: typeof VOICE_OPTIONS[keyof typeof VOICE_OPTIONS]) => {
+  return voices.map(voice => ({
+    id: voice.id,
+    title: voice.name,
+    file: voice.file // Keep the file property for voice samples
+  }));
+};
+
 export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -83,7 +103,19 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
     name: '',
     description: '',
     dataSource: [] as string[],
-    // ... other form fields
+    openingLine: '',
+    agentName: '',
+    agentPurpose: '',
+    features: {
+      notifyOnInterest: false,
+      collectWrittenInformation: false,
+      transferCallToHuman: false,
+      bookCalendarSlot: false,
+      prospects: false,
+      form: false,
+      callTransfer: false,
+      appointmentBooking: false
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
@@ -93,6 +125,9 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
   const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
   const [agentFeatures, setAgentFeatures] = useState({});
+  const [availableVoicesFormatted, setAvailableVoicesFormatted] = useState(
+    getVoiceOptionsFormatted(VOICE_OPTIONS["en-GB"])
+  );
 
   // Move state updates to useEffect
   useEffect(() => {
@@ -118,7 +153,9 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   const handleLanguageChange = (value: string) => {
     setSelectedLanguage(value);
     handleSelectChange("language", value);
-    setAvailableVoices(VOICE_OPTIONS[value as keyof typeof VOICE_OPTIONS] || []);
+    const newVoices = VOICE_OPTIONS[value as keyof typeof VOICE_OPTIONS] || [];
+    setAvailableVoices(newVoices);
+    setAvailableVoicesFormatted(getVoiceOptionsFormatted(newVoices));
     setSelectedVoice(""); // Reset voice selection when language changes
   };
 
@@ -210,12 +247,25 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
     }
   };
 
+  // Convert your existing options to the Item format
+  const AGENT_PURPOSE_OPTIONS = [
+    { id: "prospecting", title: "Prospecting" },
+    { id: "question-answer", title: "Question & Answer" },
+    { id: "customer-service", title: "Customer Service" },
+    { id: "product-recommendation", title: "Product Recommendation" },
+  ];
+
+  const LANGUAGE_OPTIONS_FORMATTED = LANGUAGE_OPTIONS.map(lang => ({
+    id: lang.id,
+    title: lang.name,
+  }));
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" onClick={() => setIsOpen(true)}>Create New Agent</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-background text-foreground dark:bg-gray-800 dark:text-gray-200">
+      <DialogContent className={`sm:max-w-[425px] ${styles.glassCard}`}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-foreground dark:text-gray-200">Create New Agent</DialogTitle>
@@ -232,7 +282,7 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
               <Input
                 id="agentName"
                 placeholder="Enter agent name"
-                className="col-span-3 bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input"
+                className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
                 value={formData.agentName}
                 onChange={handleInputChange}
               />
@@ -242,17 +292,15 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
               <Label htmlFor="agentPurpose" className="text-right text-foreground dark:text-gray-200">
                 Agent Purpose
               </Label>
-              <Select onValueChange={(value) => handleSelectChange("agentPurpose", value)}>
-                <SelectTrigger className="col-span-3 bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input">
-                  <SelectValue placeholder="Select agent purpose" />
-                </SelectTrigger>
-                <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
-                  <SelectItem value="prospecting">Prospecting</SelectItem>
-                  <SelectItem value="question-answer">Question & Answer</SelectItem>
-                  <SelectItem value="customer-service">Customer Service</SelectItem>
-                  <SelectItem value="product-recommendation">Product Recommendation</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <MultiSelect
+                  items={AGENT_PURPOSE_OPTIONS}
+                  selectedItems={formData.agentPurpose ? [{ id: formData.agentPurpose, title: AGENT_PURPOSE_OPTIONS.find(opt => opt.id === formData.agentPurpose)?.title || '' }] : []}
+                  onChange={(items) => handleSelectChange("agentPurpose", items[0]?.id)}
+                  placeholder="Select agent purpose"
+                  multiSelect={false}
+                />
+              </div>
             </div>
             {/* Data Source */}
             <div className="grid grid-cols-4 items-center gap-4">
@@ -311,71 +359,61 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
             </div> */}
             {/* Opening Line */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="openingLine" className="text-right text-foreground">
+              <Label htmlFor="openingLine" className="text-right text-foreground dark:text-gray-200">
                 Opening Line
               </Label>
               <Input
                 id="openingLine"
                 placeholder="Enter opening line"
-                className="col-span-3 bg-background text-foreground border-muted-foreground"
+                className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
                 value={formData.openingLine}
                 onChange={handleInputChange}
               />
             </div>
             {/* Language Selection */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="language" className="text-right text-foreground">
+              <Label htmlFor="language" className="text-right text-foreground dark:text-gray-200">
                 Language
               </Label>
               <div className="col-span-3">
-                <Select onValueChange={handleLanguageChange} value={selectedLanguage}>
-                  <SelectTrigger className="w-full bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input">
-                    <SelectValue placeholder="Select a language" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
-                    {LANGUAGE_OPTIONS.map((language) => (
-                      <SelectItem key={language.id} value={language.id}>
-                        {language.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  items={LANGUAGE_OPTIONS_FORMATTED}
+                  selectedItems={selectedLanguage ? [{ id: selectedLanguage, title: LANGUAGE_OPTIONS.find(lang => lang.id === selectedLanguage)?.name || '' }] : []}
+                  onChange={(items) => handleLanguageChange(items[0]?.id as string)}
+                  placeholder="Select a language"
+                  multiSelect={false}
+                />
               </div>
             </div>
             {/* Voice Selection */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="voice" className="text-right text-foreground">
+              <Label htmlFor="voice" className="text-right text-foreground dark:text-gray-200">
                 Voice
               </Label>
               <div className="col-span-3">
-                <Select onValueChange={handleVoiceChange} value={selectedVoice}>
-                  <SelectTrigger className="w-full bg-background text-foreground dark:bg-gray-700 dark:text-gray-200 border-input">
-                    <SelectValue placeholder="Select a voice" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background text-foreground dark:bg-gray-700 dark:text-gray-200">
-                    {availableVoices.map((voice) => (
-                      <SelectItem key={voice.id} value={voice.id}>
-                        {voice.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  items={availableVoicesFormatted}
+                  selectedItems={selectedVoice ? [availableVoicesFormatted.find(voice => voice.id === selectedVoice)!] : []}
+                  onChange={(items) => handleVoiceChange(items[0]?.id as string)}
+                  placeholder="Select a voice"
+                  multiSelect={false}
+                />
               </div>
             </div>
             {/* Voice Sample Buttons */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {availableVoices.map((voice) => (
+              {availableVoicesFormatted.map((voice) => (
                 <Button
                   key={voice.id}
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => playVoiceSample(voice.id, voice.file)}
+                  onClick={() => playVoiceSample(voice.id as string, voice.file!)}
                   className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
                     playingVoiceId === voice.id ? "bg-primary text-primary-foreground" : ""
                   }`}
                 >
-                  {playingVoiceId === voice.id ? "Stop" : `Play ${voice.name}`}
+                  {playingVoiceId === voice.id ? "Stop" : `Play ${voice.title}`}
                 </Button>
               ))}
             </div>
@@ -384,14 +422,28 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
             <AgentFeatures
               selectedAgent={formData}
               setSelectedAgent={(agent) => {
-                if (agent?.features) {
-                  setAgentFeatures(agent.features);
-                }
+                console.log("Updated agent:", agent);
+                setFormData(prev => ({
+                  ...prev,
+                  features: {
+                    ...prev.features,
+                    ...agent.features
+                  }
+                }));
               }}
-              handleSaveFeatures={async () => {}} // Empty function since saving happens with form submit
+              handleSaveFeatures={async (features) => {
+                console.log("Saving features:", features);
+                setFormData(prev => ({
+                  ...prev,
+                  features: {
+                    ...prev.features,
+                    ...features
+                  }
+                }));
+              }}
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-8">
             <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white">
               {isLoading ? (
                 <>
