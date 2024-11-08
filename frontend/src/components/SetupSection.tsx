@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { useState } from 'react';
 
 export const SetupSection = () => {
   const steps = [
@@ -26,14 +27,21 @@ export const SetupSection = () => {
     },
   ];
 
+  const [openItem, setOpenItem] = useState<string | undefined>(undefined);
+
   return (
     <section className="py-24 w-full">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h2 className="text-4xl font-bold mb-12 text-white text-center">How it works</h2>
         <div className="mx-auto max-w-3xl">
-          <Accordion type="single" collapsible>
+          <Accordion type="single" value={openItem}>
             {steps.map((step) => (
-              <AccordionItem key={step.number} value={step.number}>
+              <AccordionItem 
+                key={step.number} 
+                value={step.number}
+                onMouseEnter={() => setOpenItem(step.number)}
+                onMouseLeave={() => setOpenItem(undefined)}
+              >
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex gap-6 items-center">
                     <span className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full 
