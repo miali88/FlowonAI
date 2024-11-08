@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AgentCards, Agent } from './AgentCards';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -41,6 +41,9 @@ const Lab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoadingUserInfo, setIsLoadingUserInfo] = useState(true);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
 
   const fetchUserInfo = async () => {
     if (!userId) return;
@@ -91,6 +94,7 @@ const Lab = () => {
   }, [user, isLoaded]);
 
   const handleAgentSelect = (agent: Agent) => {
+    console.log('Selected Agent with features:', agent.features);
     setSelectedAgent(agent);
   };
 
@@ -204,13 +208,36 @@ const Lab = () => {
     }
   };
 
+  const fetchAgents = async () => {
+    if (!userId) return;
+    
+    setAgentsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+        headers: {
+          'x-user-id': userId
+        }
+      });
+      console.log('Fetched Agents Data:', response.data.data);
+      setAgents(response.data.data);
+    } catch (err) {
+      setAgentsError('Failed to fetch agents');
+      console.error('Error fetching agents:', err);
+    } finally {
+      setAgentsLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     const initializeData = async () => {
       if (!isLoaded) return;
       
       if (userId) {
         try {
-          await fetchKnowledgeBase();
+          await Promise.all([
+            fetchKnowledgeBase(),
+            fetchAgents()
+          ]);
         } catch (error) {
           console.error('Error initializing data:', error);
         }
@@ -230,6 +257,13 @@ const Lab = () => {
     setIsConnecting(false);
     setLocalParticipant(null);
   }, []);
+
+  useEffect(() => {
+    if (selectedAgent) {
+      console.log('Selected Agent:', selectedAgent);
+      console.log('Selected Agent Features:', selectedAgent.features);
+    }
+  }, [selectedAgent]);
 
   return (
     <>
@@ -262,7 +296,12 @@ const Lab = () => {
               // Show agent list when no agent is selected
               <div className="w-full flex flex-col items-start space-y-4">
                 <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
-                <AgentCards setSelectedAgent={handleAgentSelect} />
+                <AgentCards 
+                  setSelectedAgent={handleAgentSelect} 
+                  agents={agents}
+                  loading={agentsLoading}
+                  error={agentsError}
+                />
               </div>
             ) : (
               // Show workspace when agent is selected
@@ -287,6 +326,7 @@ const Lab = () => {
                 setLocalParticipant={setLocalParticipant}
                 knowledgeBaseItems={knowledgeBaseItems}
                 userInfo={userInfo}
+                features={selectedAgent.features}
               />
             )}
 

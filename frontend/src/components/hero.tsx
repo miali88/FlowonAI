@@ -1,6 +1,6 @@
 'use client';
 
-// import ChatBotMini from "@/app/chat-widget/[agentId]/components/components/ChatBotMini";
+import ChatBotMini from "@/app/dashboard/AgentHub/workspace/ChatbotMini/ChatBotMini";
 import { useState } from "react";
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Particles } from "@/components/magicui/particles";
@@ -69,7 +69,7 @@ export function Hero() {
       <div className="min-h-[70vh] pt-6 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
         <div className="flex flex-col items-stretch justify-center">
           <div className="flex flex-col rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
-            {/* <div className="w-full p-3 relative">
+            <div className="w-full p-3 relative">
               <ChatBotMini
                 title={chatTitle}
                 agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
@@ -87,7 +87,7 @@ export function Hero() {
                 onStreamStart={handleStreamStart}
                 bypassShowChatInputCondition={false}
               />
-            </div> */}
+            </div>
             <div className="w-full p-3 relative">
               <BentoDemo onAgentSelect={handleGridClick} />
             </div>
@@ -149,7 +149,7 @@ export function Hero() {
               <div className="absolute inset-0 bg-gradient-radial from-white/[0.08] via-transparent to-transparent" />
             </div>
             
-            {/* <div className="w-[500px] p-5 relative">
+            <div className="w-[500px] p-5 relative">
               <ChatBotMini
                 title={chatTitle}
                 agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
@@ -167,7 +167,7 @@ export function Hero() {
                 onStreamStart={handleStreamStart}
                 bypassShowChatInputCondition={false}
               />
-            </div> */}
+            </div>
             <div className="w-[400px] p-5 relative">
               <BentoDemo onAgentSelect={handleGridClick} />
             </div>

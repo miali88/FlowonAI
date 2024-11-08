@@ -68,7 +68,10 @@ interface FormField {
 }
 
 interface AgentCardsProps {
-  setSelectedAgent: (agent: Agent) => void
+  setSelectedAgent: (agent: Agent) => void;
+  agents: Agent[];
+  loading: boolean;
+  error: string | null;
 }
 
 function Loader() {
@@ -79,45 +82,10 @@ function Loader() {
   );
 }
 
-export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
-  const { user } = useUser()
-  const [agents, setAgents] = useState<Agent[]>([])
+export function AgentCards({ setSelectedAgent, agents, loading, error }: AgentCardsProps) {
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchTerm] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-
-  const handleAgentSelect = (agent: Agent) => {
-    setSelectedAgent(agent);
-    setSelectedAgentId(agent.id);
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!user) {
-          setError('User not authenticated')
-          setLoading(false)
-          return
-        }
-
-        const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
-          headers: {
-            'x-user-id': user.id
-          }
-        })
-        setAgents(response.data.data)
-        setFilteredAgents(response.data.data)
-        setLoading(false)
-      } catch (err) {
-        setError('Failed to fetch data')
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [user])
 
   useEffect(() => {
     const filtered = agents.filter(agent =>
@@ -145,7 +113,7 @@ export function AgentCards({ setSelectedAgent }: AgentCardsProps) {
                 h-full flex flex-col
                 ${selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg scale-[1.02] from-white/60 to-white/40 dark:from-gray-800/60 dark:to-gray-800/40' : ''}
               `} 
-              onClick={() => handleAgentSelect(agent)}
+              onClick={() => setSelectedAgent(agent)}
             >
               <CardHeader>
                 <CardTitle>{agent.agentName}</CardTitle>

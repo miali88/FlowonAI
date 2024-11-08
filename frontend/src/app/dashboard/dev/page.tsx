@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Import the chat widget component dynamically to avoid SSR issues
+const ChatBotMini = dynamic(
+  //() => import(''),
+  { ssr: false }
+);
 
 interface JoinCallProps {
   onJoin: (roomName: string) => void;
@@ -86,13 +93,42 @@ function JoinExistingCall({ onJoin }: JoinCallProps) {
 }
 
 function ChatWidgetPreview() {
+  useEffect(() => {
+    // Set up the required global config
+    window.embeddedChatbotConfig = {
+      agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
+      domain: window.location.origin
+    };
+  }, []);
+
   return (
-    <div className="w-96 h-[600px] border rounded-lg overflow-hidden shadow-lg">
-      <iframe
-        src="/chat-widget/test-agent-id"
-        className="w-full h-full border-0"
-        title="Chat Widget Preview"
-      />
+    <div className="w-96 h-[600px] border rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
+      <div className="p-4 border-b bg-gray-50">
+        <h3 className="font-semibold text-gray-800">Chat Widget Preview</h3>
+      </div>
+      <div className="flex-1">
+        <ChatBotMini
+          agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
+          isStreaming={false}
+          setIsStreaming={() => {}}
+          isLiveKitActive={false}
+          setIsLiveKitActive={() => {}}
+          token={null}
+          setToken={() => {}}
+          url={null}
+          setUrl={() => {}}
+          isConnecting={false}
+          setIsConnecting={() => {}}
+          onStreamEnd={() => {}}
+          onStreamStart={() => {}}
+          bypassShowChatInputCondition={true}
+          localParticipant={null}
+          setLocalParticipant={() => {}}
+          eventBridge={{
+            dispatchHostEvent: () => {}
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -1,12 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../../AgentHub/AgentCards';
 import { LocalParticipant } from "livekit-client";
-import dynamic from 'next/dynamic';
-import { useEffect } from 'react';
-
-const MainWidget = dynamic(() => import('@/app/chat-widget/[agentId]/components/main'), {
-  ssr: false
-});
+import ChatbotMini from './ChatbotMini/ChatBotMini';
 
 interface PlaygroundProps {
   selectedAgent: Agent | null;
@@ -29,16 +24,6 @@ interface PlaygroundProps {
 const Playground: React.FC<PlaygroundProps> = ({
   selectedAgent,
 }) => {
-  useEffect(() => {
-    if (selectedAgent && !window.embeddedChatbotConfig) {
-      window.embeddedChatbotConfig = {
-        agentId: selectedAgent.id,
-        domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
-        persistAcrossTabs: true
-      };
-    }
-  }, [selectedAgent]);
-
   return (
     <Card>
       <CardHeader>
@@ -49,23 +34,12 @@ const Playground: React.FC<PlaygroundProps> = ({
           <div className="text-gray-500">Please select an agent to start chatting</div>
         ) : (
           <div className="w-96 h-[600px] border rounded-lg overflow-hidden shadow-lg relative">
-            <div id="embedded-chatbot-container" style={{ width: '100%', height: '100%' }} />
-            <MainWidget />
+            <ChatbotMini agent={selectedAgent} />
           </div>
         )}
       </CardContent>
     </Card>
   );
 };
-
-declare global {
-  interface Window {
-    embeddedChatbotConfig: {
-      agentId: string
-      domain: string
-      persistAcrossTabs?: boolean
-    }
-  }
-}
 
 export default Playground;
