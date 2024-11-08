@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel, SelectGroup } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +15,6 @@ import { ColorPicker, DEFAULT_COLOR } from '@/components/ui/color-picker';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import Image from 'next/image';
 import Deploy from './Deploy';
 
 interface WorkspaceProps {
@@ -109,7 +107,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   knowledgeBaseItems,
 }) => {
   const [activeTab, setActiveTab] = useState('preview');
-  const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
+  const [setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [callTransferConfig, setCallTransferConfig] = useState({
     primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
@@ -138,109 +136,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     const newAudioPlayer = new Audio(voiceFile);
     newAudioPlayer.play();
     setAudioPlayer(newAudioPlayer);
-  };
-
-  const iframeCode = `<iframe
-src="https://www.flowon.ai/embed/${selectedAgent?.id}"
-width="100%"
-style="height: 100%; min-height: 700px"
-frameborder="0"
-></iframe>`;
-
-  const scriptCode = `
-    <div id="embedded-chatbot-container"></div>
-    <script defer>
-      window.embeddedChatbotConfig = {
-        agentId: "${selectedAgent?.id}",
-        domain: "www.flowonwidget.pages.dev"
-      };
-    </script>
-    <script defer type="module" src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"></script>
-`;
-
-  const handleConfigureFeature = (featureId: string) => {
-    setCurrentFeature(featureId);
-    setIsConfigureDialogOpen(true);
-  };
-
-  const handleCallTransferConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCallTransferConfig({
-      ...callTransferConfig,
-      [e.target.id]: e.target.value,
-    });
-  };
-
-  const handleAppointmentBookingConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAppointmentBookingConfig({
-      ...appointmentBookingConfig,
-      [e.target.id]: e.target.value,
-    });
-  };
-
-  const handleConfigureDone = () => {
-    setIsConfigureDialogOpen(false);
-    if (currentFeature === 'callTransfer') {
-      setSelectedAgent(prevAgent => ({
-        ...prevAgent,
-        features: {
-          ...prevAgent?.features,
-          callTransfer: { ...callTransferConfig }
-        }
-      }));
-    } else if (currentFeature === 'appointmentBooking') {
-      setSelectedAgent(prevAgent => ({
-        ...prevAgent,
-        features: {
-          ...prevAgent?.features,
-          appointmentBooking: { ...appointmentBookingConfig }
-        }
-      }));
-    } else if (currentFeature === 'form') {
-      setSelectedAgent(prevAgent => ({
-        ...prevAgent,
-        features: {
-          ...prevAgent?.features,
-          form: { fields: [...formFields] }
-        }
-      }));
-    } else if (currentFeature === 'prospects') {
-      setSelectedAgent(prevAgent => ({
-        ...prevAgent,
-        features: {
-          ...prevAgent?.features,
-          prospects: { ...prospectSettings }
-        }
-      }));
-    }
-    setCurrentFeature(null); // Reset current feature
-  };
-
-  const handleAddFormField = () => {
-    setFormFields([...formFields, { type: 'text', label: '', options: [] }]);
-  };
-
-  const handleRemoveFormField = (index: number) => {
-    setFormFields(formFields.filter((_, i) => i !== index));
-  };
-
-  const handleFormFieldChange = (index: number, field: Partial<FormField>) => {
-    const newFields = [...formFields];
-    newFields[index] = { ...newFields[index], ...field };
-    setFormFields(newFields);
-  };
-
-  const handleProspectSettingsChange = (field: keyof ProspectSettings, value: string | boolean) => {
-    setProspectSettings(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleFeatureToggle = (featureId: string, checked: boolean) => {
-    setSelectedAgent(prevAgent => ({
-      ...prevAgent,
-      features: {
-        ...prevAgent?.features,
-        [featureId]: checked ? {} : undefined
-      }
-    }));
   };
 
   const handleSaveFeatures = async () => {
