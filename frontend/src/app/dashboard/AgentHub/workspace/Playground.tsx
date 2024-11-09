@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../../AgentHub/AgentCards';
 import { LocalParticipant } from "livekit-client";
-import ChatbotMini from './ChatbotMini/ChatBotMini';
+import ChatWidget from './ChatWidget';
 
 interface PlaygroundProps {
   selectedAgent: Agent | null;
@@ -25,17 +25,22 @@ const Playground: React.FC<PlaygroundProps> = ({
   selectedAgent,
 }) => {
   return (
-    <Card>
+    <Card className="h-[800px]">
       <CardHeader>
         <CardTitle>Chat With Agent</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-[600px] flex items-center justify-center">
-        {!selectedAgent ? (
-          <div className="text-gray-500">Please select an agent to start chatting</div>
-        ) : (
-          <div className="w-96 h-[600px] border rounded-lg overflow-hidden shadow-lg relative">
-            <ChatbotMini agent={selectedAgent} />
+      <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center relative">
+        {selectedAgent ? (
+          <div className="w-full h-full flex justify-center">
+            <div className="w-full max-w-[800px] h-full">
+              <ChatWidget 
+                agentId={selectedAgent.id}
+                theme="light"
+              />
+            </div>
           </div>
+        ) : (
+          <p>Please select an agent to start chatting</p>
         )}
       </CardContent>
     </Card>

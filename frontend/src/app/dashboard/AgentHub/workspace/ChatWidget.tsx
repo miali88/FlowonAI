@@ -4,18 +4,12 @@ import { useEffect } from 'react';
 import styles from './ChatWidget.module.css';
 
 interface ChatWidgetProps {
-  agentId?: string;
+  agentId: string;
   domain?: string;
   theme?: 'light' | 'dark';
 }
 
-export default function DevPage() {
-  const config: ChatWidgetProps = {
-    agentId: 'e8b64819-7c2c-432f-9f80-05a72bd49787',
-    domain: 'http://localhost:3000',
-    theme: 'light'
-  };
-
+const ChatWidget: React.FC<ChatWidgetProps> = ({ agentId, domain = 'http://localhost:3000', theme = 'light' }) => {
   useEffect(() => {
     // Add Font Awesome CSS
     const fontAwesomeLink = document.createElement('link');
@@ -36,24 +30,26 @@ export default function DevPage() {
 
   return (
     <div style={{ 
-      position: 'relative', 
       width: '100%',
-      minHeight: '100dvh',
+      height: '100%',
+      position: 'relative',
       display: 'flex',
-      flexDirection: 'column'
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
       <div 
         className={styles.chatWidgetContainer}
-        data-theme={config.theme}
-        style={{ flex: 1 }}
+        data-theme={theme}
       >
         <iframe
           className={styles.chatWidgetIframe}
-          src={`${config.domain}/chat-widget/${config.agentId}`}
+          src={`${domain}/chat-widget/${agentId}`}
           allow="microphone *; camera *"
           sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
         />
       </div>
     </div>
   );
-}
+};
+
+export default ChatWidget;

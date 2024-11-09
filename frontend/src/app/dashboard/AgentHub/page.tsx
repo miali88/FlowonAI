@@ -327,6 +327,7 @@ const Lab = () => {
                 knowledgeBaseItems={knowledgeBaseItems}
                 userInfo={userInfo}
                 features={selectedAgent.features}
+                userId={userId}
               />
             )}
 

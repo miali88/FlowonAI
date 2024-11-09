@@ -3,6 +3,7 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 import styles from './ChatWidget.module.css';
+import Footer from './Footer';
 
 const DEFAULT_API_BASE_URL = 'https://app.flowon.ai/api/v1';
 
@@ -288,24 +289,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           </div>
         )}
       </div>
-      
-      <footer className={styles.footer}>
-        <a 
-          href="https://flowon.ai" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={styles.footerContent}
-        >
-          <img 
-            src="https://flowon.ai/logo.png" 
-            alt="Flowon.AI Logo" 
-            className={styles.footerLogo} 
-          />
-          <span className={styles.footerText}>
-            Powered by Flowon.AI
-          </span>
-        </a>
-      </footer>
+      <Footer />
     </div>
   );
 };

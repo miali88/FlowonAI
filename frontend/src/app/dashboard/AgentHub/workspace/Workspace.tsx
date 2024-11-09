@@ -41,6 +41,7 @@ interface WorkspaceProps {
     title: string;
     data_type: string;
   }>;
+  userId: string | null;
   features?: {
     form?: {
       fields: Array<{
@@ -120,6 +121,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   localParticipant,
   setLocalParticipant,
   knowledgeBaseItems,
+  userId,
   features,
 }) => {
   const [activeTab, setActiveTab] = useState('playground');
@@ -528,27 +530,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
         </TabsContent>
       </Tabs>
       
-      {/* Persistent widget container */}
-      <div 
-        style={{
-          position: 'fixed',
-          right: '20px',
-          bottom: '20px',
-          width: '400px',
-          height: '600px',
-          display: activeTab === 'playground' ? 'block' : 'none',
-          zIndex: 1000
-        }}
-      >
-        {selectedAgent && (
-          <iframe
-            id="chat-widget-iframe"
-            src={`${process.env.NEXT_PUBLIC_APP_URL}/chat-widget/${selectedAgent.id}`}
-            className="w-full h-full border-0"
-            title="Chat Widget"
-          />
-        )}
-      </div>
       <ChatBotMini
         agentId={selectedAgent.id}
         userId={userId}
