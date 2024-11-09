@@ -1,17 +1,18 @@
 import React from 'react';
 import styles from './ChatWidget.module.css';
 
+
 const Footer: React.FC = () => {
   return (
     <footer className={styles.footer}>
       <a 
-        href="https://flowon.ai" 
+        href={`${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}`}
         target="_blank" 
         rel="noopener noreferrer" 
         className={styles.footerContent}
       >
         <img 
-          src="https://flowon.ai/logo.png" 
+          src={`${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/flowon.png`}
           alt="Flowon.AI Logo" 
           className={styles.footerLogo} 
         />

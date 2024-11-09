@@ -6,6 +6,7 @@ import styles from './ChatWidget.module.css';
 import Footer from './Footer';
 
 const DEFAULT_API_BASE_URL = 'https://app.flowon.ai/api/v1';
+const API_DOMAIN = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 interface ChatBotMiniProps {
   agentId: string;
@@ -33,6 +34,12 @@ interface ChatBotMiniProps {
 
 const userId = "visitor";
 
+// Update FormField interface
+interface FormField {
+  type: string;
+  label: string;
+}
+
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
   eventBridge,
@@ -49,7 +56,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   setIsConnecting,
   onStreamEnd,
   onStreamStart,
-  bypassShowChatInputCondition = false,
+  bypassShowChatInputCondition = true,
   localParticipant,
   setLocalParticipant,
 }) => {
@@ -63,6 +70,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
   const [isError, setIsError] = useState<string | null>(null);
+  const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [formData, setFormData] = useState<Record<string, string>>({});
 
   const apiUrl = useMemo(() => apiBaseUrl, [apiBaseUrl]);
 
@@ -106,6 +115,25 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const fetchFormFields = async () => {
+      try {
+        const response = await fetch(`${API_DOMAIN}/conversation/form_fields/${agentId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch form fields');
+        }
+        const data = await response.json();
+        console.log('Retrieved form fields:', data);
+        console.log('Fields array:', data.fields);
+        setFormFields(data.fields || []);
+      } catch (error) {
+        console.error('Error fetching form fields:', error);
+      }
+    };
+
+    fetchFormFields();
+  }, [agentId]);
 
   const handleStreamToggle = useCallback(async () => {
     setIsError(null); // Reset error state
@@ -187,9 +215,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fullName,
-          email,
-          contactNumber,
+          ...formData,
           user_id: null,
           room_name: roomName,
           participant_identity: participantIdentity,
@@ -200,17 +226,15 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         throw new Error('Failed to submit form');
       }
 
-      console.log('Form submitted successfully:', { fullName, email, contactNumber });
-
-      // Clear form fields after submission
-      setFullName('');
-      setEmail('');
-      setContactNumber('');
+      console.log('Form submitted successfully:', formData);
+      
+      // Clear form data after submission
+      setFormData({});
     } catch (error) {
       console.error('Failed to submit form:', error);
       alert('Failed to submit form. Please try again.');
     }
-  }, [fullName, email, contactNumber, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity, apiUrl]);
+  }, [formData, roomName, showChatInput, bypassShowChatInputCondition, participantIdentity, apiUrl]);
 
   const handleMuteToggle = useCallback(() => {
     if (localParticipant) {
@@ -219,6 +243,14 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       setIsMuted(newMuteState);
     }
   }, [localParticipant, isMuted]);
+
+  // Add handler for input changes
+  const handleInputChange = useCallback((fieldLabel: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldLabel]: value
+    }));
+  }, []);
 
   return (
     <div data-widget="wrapper" className={styles.mainWrapper}>
@@ -259,29 +291,21 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           )}
         </div>
         
-        {(showChatInput && isStreaming) && (
+        {(bypassShowChatInputCondition || (showChatInput && isStreaming)) && (
           <div className={styles.chatInput}>
             <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name"
-                required
-              />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
-                required
-              />
-              <input
-                type="tel"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="Contact Number (optional)"
-              />
+              {formFields.map((field: FormField, index: number) => (
+                <input
+                  key={index}
+                  type={field.type}
+                  value={formData[field.label] || ''}
+                  onChange={(e) => handleInputChange(field.label, e.target.value)}
+                  placeholder={field.label}
+                  required={field.type !== 'tel'}
+                  className={styles.formInput}
+                  aria-label={field.label}
+                />
+              ))}
               <button type="submit" className="submitBtn">
                 Submit
               </button>

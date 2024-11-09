@@ -196,3 +196,14 @@ async def events(participant_identity: str):  # Changed parameter
             logger.info(f"SSE connection closed for participant_identity: {participant_identity}")
 
     return EventSourceResponse(event_generator())
+
+@router.get("/form_fields/{agent_id}")
+async def form_fields(agent_id: str):
+    try:
+        response = supabase.table("agents").select("features").eq("id", agent_id).execute()
+        if response.data:
+            return JSONResponse(content=response.data[0]['features'])
+        else:
+            return JSONResponse(content={}, status_code=404)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
