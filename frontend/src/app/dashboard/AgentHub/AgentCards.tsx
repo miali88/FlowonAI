@@ -72,6 +72,7 @@ interface AgentCardsProps {
   agents: Agent[];
   loading: boolean;
   error: string | null;
+  refreshAgents?: () => void;
 }
 
 function Loader() {
@@ -82,7 +83,7 @@ function Loader() {
   );
 }
 
-export function AgentCards({ setSelectedAgent, agents, loading, error }: AgentCardsProps) {
+export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAgents }: AgentCardsProps) {
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([])
   const [searchTerm] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -94,6 +95,10 @@ export function AgentCards({ setSelectedAgent, agents, loading, error }: AgentCa
     )
     setFilteredAgents(filtered)
   }, [searchTerm, agents])
+
+  useEffect(() => {
+    refreshAgents?.();
+  }, [refreshAgents]);
 
   if (loading) return <Loader />;
   if (error) return <div>Error: {error}</div>

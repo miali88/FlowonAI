@@ -30,8 +30,6 @@ export function MultiSelect({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  console.log('MultiSelect render - selectedItems:', selectedItems);
-
   const handleSelect = (item: Item) => {
     if (multiSelect) {
       const isSelected = selectedItems.some(selected => selected.id === item.id);
@@ -45,12 +43,22 @@ export function MultiSelect({
         } else if (selectedItems.some(selected => selected.id === -1)) {
           newSelection = [item];
         } else {
-          newSelection = [...selectedItems, item];
+          newSelection = [...selectedItems, {
+            id: item.id,
+            title: item.title,
+            data_type: item.data_type,
+            file: item.file
+          }];
         }
       }
       onChange(newSelection);
     } else {
-      onChange([item]);
+      onChange([{
+        id: item.id,
+        title: item.title,
+        data_type: item.data_type,
+        file: item.file
+      }]);
       setOpen(false);
     }
   };

@@ -54,11 +54,15 @@ const VOICE_OPTIONS = {
 interface FormData {
   agentName: string;
   agentPurpose: string;
-  instructions: string | null;
-  dataSource: string;  // Changed from string[] to string to match DB
-  openingLine: string | null;
-  voice: string | null;
-  language: string | null;
+  instructions: string;
+  dataSource: Array<{
+    id: string | number;
+    title: string;
+    data_type: string;
+  }>;  // Changed from string to array of objects
+  openingLine: string;
+  voice: string;
+  language: string;
   features: {
     notifyOnInterest: boolean;
     collectWrittenInformation: boolean;
@@ -88,17 +92,17 @@ const getVoiceOptionsFormatted = (voices: typeof VOICE_OPTIONS[keyof typeof VOIC
   }));
 };
 
-export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
+export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps & { onAgentCreated?: () => void }) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     agentName: '',
     agentPurpose: '',
-    instructions: null,
-    dataSource: '',  // Changed from array to string
-    openingLine: null,
-    voice: null,
-    language: null,
+    instructions: '',
+    dataSource: [],
+    openingLine: '',
+    voice: '',
+    language: '',
     features: {
       notifyOnInterest: false,
       collectWrittenInformation: false,
@@ -224,7 +228,9 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
       });
 
       if (response.ok) {
-        setResponseMessage('Agent created successfully. Please refresh the page.');
+        setResponseMessage('Agent created successfully.');
+        // Call the callback to refresh agents
+        onAgentCreated?.();
         // Close the dialog after a short delay
         setTimeout(() => {
           setIsOpen(false);
@@ -308,36 +314,22 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
                     { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
                     ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
                   ]}
-                  selectedItems={
-                    formData.dataSource === 'all'
-                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                      : knowledgeBaseItems.filter(item => formData.dataSource === String(item.id))
-                  }
+                  selectedItems={formData.dataSource}
                   onChange={(selectedItems) => {
-                    const newValue = selectedItems[0]?.id || '';
+                    // If "All" is selected, clear other selections
+                    const newSelection = selectedItems.some(item => item.id === 'all') 
+                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                      : selectedItems;
+                    
                     setFormData(prev => ({
                       ...prev,
-                      dataSource: String(newValue)
+                      dataSource: newSelection
                     }));
                   }}
+                  multiSelect={true}  // Enable multiselect
                 />
               </div>
             </div>
-            {/* Conditional Tag Input */}
-            {formData.dataSource === "tagged" && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tag" className="text-right text-foreground">
-                  Tag
-                </Label>
-                <Input
-                  id="tag"
-                  placeholder="Enter tag"
-                  className="col-span-3 bg-background text-foreground border-muted-foreground"
-                  value={formData.tag}
-                  onChange={handleInputChange}
-                />
-              </div>
-            )}
             {/* Instructions */}
             {/* <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="instructions" className="text-right text-foreground">

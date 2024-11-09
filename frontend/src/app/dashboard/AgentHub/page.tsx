@@ -265,6 +265,26 @@ const Lab = () => {
     }
   }, [selectedAgent]);
 
+  const refreshAgents = useCallback(async () => {
+    if (!userId) return;
+    
+    setAgentsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+        headers: {
+          'x-user-id': userId
+        }
+      });
+      console.log('Refreshed Agents Data:', response.data.data);
+      setAgents(response.data.data);
+    } catch (err) {
+      setAgentsError('Failed to fetch agents');
+      console.error('Error fetching agents:', err);
+    } finally {
+      setAgentsLoading(false);
+    }
+  }, [userId]);
+
   return (
     <>
       <div className="flex flex-col h-full p-6">
@@ -295,12 +315,13 @@ const Lab = () => {
             {!selectedAgent ? (
               // Show agent list when no agent is selected
               <div className="w-full flex flex-col items-start space-y-4">
-                <NewAgent knowledgeBaseItems={knowledgeBaseItems} />
+                <NewAgent knowledgeBaseItems={knowledgeBaseItems} onAgentCreated={refreshAgents} />
                 <AgentCards 
                   setSelectedAgent={handleAgentSelect} 
                   agents={agents}
                   loading={agentsLoading}
                   error={agentsError}
+                  refreshAgents={refreshAgents}
                 />
               </div>
             ) : (
