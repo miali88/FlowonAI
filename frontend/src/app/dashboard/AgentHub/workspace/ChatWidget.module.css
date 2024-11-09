@@ -1,8 +1,8 @@
 .chatWidgetContainer {
   position: relative;
-  width: 55%;
-  height: 95%;
-  min-height: 500px;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 9/16;
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -10,7 +10,6 @@
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   overflow: hidden;
-  aspect-ratio: 4/3;
   margin: 0 auto;
 }
 
@@ -22,11 +21,9 @@
 
 @media (max-width: 640px) {
   .chatWidgetContainer {
-    width: calc(100% - 40px);
-    height: calc(100vh - 40px);
-    right: 20px;
-    top: 20px;
-    border-radius: 12px;
+    width: calc(100% - 32px);
+    max-height: calc(100vh - 32px);
+    margin: 16px auto;
   }
 }
 

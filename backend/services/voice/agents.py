@@ -59,8 +59,7 @@ user input data:
 """
 
 async def create_agent(data):
-    # TODO: add system prompt to agent 
-
+    # TODO: make system prompt dynamic for agent. i.e based on skills, features etc
     data['instructions'] = sys_prompt_scaffold
 
     if data.get('dataSource') == 'tagged' and 'tag' in data:

@@ -70,7 +70,6 @@ async def new_agent_handler(request: Request):
         data = await request.json()
         logger.debug(f"Received data: {data}")
 
-        # TODO: add system prompt to agent 
         new_agent = await create_agent(data)
         return new_agent
     except Exception as e:

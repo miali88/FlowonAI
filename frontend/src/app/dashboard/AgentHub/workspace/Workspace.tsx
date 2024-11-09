@@ -512,41 +512,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
         <TabsContent value="playground">
           <Playground 
             selectedAgent={selectedAgent}
-            isStreaming={isStreaming}
-            setIsStreaming={setIsStreaming}
-            isLiveKitActive={isLiveKitActive}
-            setIsLiveKitActive={setIsLiveKitActive}
-            token={token}
-            setToken={setToken}
-            url={url}
-            setUrl={setUrl}
-            isConnecting={isConnecting}
-            setIsConnecting={setIsConnecting}
-            handleStreamEnd={handleStreamEnd}
-            handleStreamStart={handleStreamStart}
-            localParticipant={localParticipant}
-            setLocalParticipant={setLocalParticipant}
           />
         </TabsContent>
       </Tabs>
-      
-      <ChatBotMini
-        agentId={selectedAgent.id}
-        userId={userId}
-        isStreaming={isStreaming}
-        setIsStreaming={setIsStreaming}
-        isLiveKitActive={isLiveKitActive}
-        setIsLiveKitActive={setIsLiveKitActive}
-        token={token}
-        setToken={setToken}
-        url={url}
-        setUrl={setUrl}
-        isConnecting={isConnecting}
-        setIsConnecting={setIsConnecting}
-        onStreamEnd={handleStreamEnd}
-        onStreamStart={handleStreamStart}
-        features={features}
-      />
     </>
   );
 };

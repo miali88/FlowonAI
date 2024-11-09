@@ -4,13 +4,13 @@ import logging  # Add this import
 import time  # Add this import
 from datetime import datetime, timedelta  # Update import
 import os
+import socket
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
 from livekit.api import ListParticipantsRequest
 from livekit.api.livekit_api import LiveKitAPI
-from livekit.protocol import participant_pb2
 
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
@@ -56,6 +56,7 @@ async def create_livekit_api():
         api_secret=os.getenv("LIVEKIT_API_SECRET"))
 
 async def check_for_existing_agent(room_name: str, livekit_api: LiveKitAPI) -> bool:
+    print("check_for_existing_agent called")
     try:
         # List participants in the room
         list_request = ListParticipantsRequest(room=room_name)
@@ -63,7 +64,7 @@ async def check_for_existing_agent(room_name: str, livekit_api: LiveKitAPI) -> b
         
         # Check for any participants with agent kind
         for participant in response.participants:
-            if participant.kind == participant_pb2.ParticipantKind.PARTICIPANT_KIND_AGENT:
+            if participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
                 return True
         return False
     except Exception as e:
@@ -71,6 +72,7 @@ async def check_for_existing_agent(room_name: str, livekit_api: LiveKitAPI) -> b
         return True
 
 async def safe_room_initialization(ctx: JobContext, room_name: str) -> tuple[bool, str]:
+    print("safe_room_initialization called")
     try:
         livekit_api = await create_livekit_api()
         
@@ -82,7 +84,7 @@ async def safe_room_initialization(ctx: JobContext, room_name: str) -> tuple[boo
         # Connect with agent kind properly set
         await ctx.connect(
             auto_subscribe=AutoSubscribe.AUDIO_ONLY,
-            participant_kind=participant_pb2.ParticipantKind.PARTICIPANT_KIND_AGENT
+            participant_kind=rtc.ParticipantKind.PARTICIPANT_KIND_AGENT
         )
         
         return True, "Successfully initialized room"
@@ -97,7 +99,6 @@ async def entrypoint(ctx: JobContext):
     # Safely initialize room
     success, message = await safe_room_initialization(ctx, room_name)
     if not success:
-        logger.error(f"Room initialization failed: {message}")
         ctx.shutdown(reason=message)
         return
         
@@ -109,7 +110,7 @@ async def entrypoint(ctx: JobContext):
     print("room_name:", room_name)
 
     print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
+    # await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
 
     # Add call start time tracking
     call_start_time = datetime.now()
@@ -125,8 +126,7 @@ async def entrypoint(ctx: JobContext):
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
             print("telephone call detected")
-            
-
+        
 
             async def get_agent_id(room_name: str):
                 agents = await get_all_agents()
@@ -435,15 +435,28 @@ def prewarm_fnc(proc: JobProcess):
 
 
 if __name__ == "__main__":
-    opts = WorkerOptions(
-        # entrypoint function is called when a job is assigned to this worker
-        entrypoint_fnc=entrypoint,
-        # the type of worker to create, either JT_ROOM or JT_PUBLISHER
-        worker_type=WorkerType.ROOM,
-        # # inspect the request and decide if the current worker should handle it.
-        # request_fnc=request_fnc,
-        # a function to perform any necessary initialization in a new process.
-        prewarm_fnc=prewarm_fnc,
-    )
+    # Add function to find available port
+    def find_available_port(start_port=8081, max_attempts=10):
+        for port in range(start_port, start_port + max_attempts):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind(('0.0.0.0', port))
+                    return port
+            except OSError:
+                continue
+        raise OSError("No available ports found in range")
 
-    cli.run_app(opts)
+    try:
+        available_port = find_available_port()
+        os.environ['LIVEKIT_AGENT_PORT'] = str(available_port)
+        
+        opts = WorkerOptions(
+            entrypoint_fnc=entrypoint,
+            worker_type=WorkerType.ROOM,
+            prewarm_fnc=prewarm_fnc,
+        )
+
+        cli.run_app(opts)
+    except OSError as e:
+        print(f"Failed to start server: {e}")
+        exit(1)

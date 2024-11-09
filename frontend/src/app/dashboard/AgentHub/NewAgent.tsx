@@ -11,13 +11,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { MultiSelect } from "./multiselect_newagent"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
@@ -57,16 +50,15 @@ const VOICE_OPTIONS = {
   "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
 };
 
-// Add an interface for the form data type
+// Update the FormData interface to match DB schema
 interface FormData {
   agentName: string;
   agentPurpose: string;
-  dataSource: string[];
-  tag?: string;  // Make tag optional with '?'
-  openingLine: string;
-  voice: string;
-  instructions: string;
-  language: string;
+  instructions: string | null;
+  dataSource: string;  // Changed from string[] to string to match DB
+  openingLine: string | null;
+  voice: string | null;
+  language: string | null;
   features: {
     notifyOnInterest: boolean;
     collectWrittenInformation: boolean;
@@ -100,12 +92,13 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    dataSource: [] as string[],
-    openingLine: '',
     agentName: '',
     agentPurpose: '',
+    instructions: null,
+    dataSource: '',  // Changed from array to string
+    openingLine: null,
+    voice: null,
+    language: null,
     features: {
       notifyOnInterest: false,
       collectWrittenInformation: false,
@@ -250,9 +243,11 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
   // Convert your existing options to the Item format
   const AGENT_PURPOSE_OPTIONS = [
     { id: "prospecting", title: "Prospecting" },
+    { id: "onboarding", title: "Onboarding" },
+    { id: "receptionist", title: "Receptionist" },
     { id: "question-answer", title: "Question & Answer" },
     { id: "customer-service", title: "Customer Service" },
-    { id: "product-recommendation", title: "Product Recommendation" },
+    { id: "appointment-booking", title: "Appointment Booking" },
   ];
 
   const LANGUAGE_OPTIONS_FORMATTED = LANGUAGE_OPTIONS.map(lang => ({
@@ -310,20 +305,19 @@ export function NewAgent({ knowledgeBaseItems = [] }: NewAgentProps) {
               <div className="col-span-3">
                 <MultiSelect 
                   items={[
-                    { id: -1, title: 'All Knowledge Base Items', data_type: 'all' },
+                    { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
                     ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
                   ]}
                   selectedItems={
-                    formData.dataSource.includes(-1)
-                      ? [{ id: -1, title: 'All Knowledge Base Items', data_type: 'all' }]
-                      : knowledgeBaseItems.filter(item => formData.dataSource.includes(Number(item.id)))
+                    formData.dataSource === 'all'
+                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                      : knowledgeBaseItems.filter(item => formData.dataSource === String(item.id))
                   }
                   onChange={(selectedItems) => {
-                    console.log('Selected items:', selectedItems);
-                    const newIds = selectedItems.map(item => Number(item.id));
+                    const newValue = selectedItems[0]?.id || '';
                     setFormData(prev => ({
                       ...prev,
-                      dataSource: newIds
+                      dataSource: String(newValue)
                     }));
                   }}
                 />

@@ -10,6 +10,7 @@ import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
 import { Information } from "@/components/Information";
+import { ChatWidget } from "./ChatWidget";
 
 export default function HomePage() {
   return (
@@ -39,6 +40,10 @@ export default function HomePage() {
         </div>
       </main>
       <Footer />
+      <ChatWidget 
+        agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
+        domain="http://localhost:3000"
+      />
     </div>
   );
 }

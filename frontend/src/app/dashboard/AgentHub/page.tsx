@@ -275,7 +275,7 @@ const Lab = () => {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink onClick={handleNavigateToHub} className="cursor-pointer">
-                  Agent's
+                  Hub
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {selectedAgent && (

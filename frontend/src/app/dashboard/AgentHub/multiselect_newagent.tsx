@@ -30,7 +30,6 @@ export function MultiSelect({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  console.log('MultiSelect render - items:', items);
   console.log('MultiSelect render - selectedItems:', selectedItems);
 
   const handleSelect = (item: Item) => {
