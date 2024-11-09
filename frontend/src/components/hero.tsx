@@ -1,6 +1,5 @@
 'use client';
 
-import ChatBotMini from "@/app/dashboard/AgentHub/workspace/ChatbotMini/ChatBotMini";
 import { useState } from "react";
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { Particles } from "@/components/magicui/particles";
@@ -51,12 +50,16 @@ export function Hero() {
           </TextShimmer>
         </div>
         
-        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-5xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
+        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
           <span className="whitespace-normal">Give Your Website a Voice That</span>{" "}
-          <WordRotate words={["Drives Conversion", "Answers Questions", "Engages With Visitors", "Books Appointments"]} />
+          <WordRotate words={["Drives Conversion", 
+                              "Answers Questions", 
+                              "Engages With Visitors", 
+                              "Books Appointments",
+                              "Onboards Users"]} />
         </h1>
 
-        <p className="mb-8 text-base tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
+        <p className="mb-8 text-sm tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
           Easily deploy AI agents to your website to assist with prospecting, appointment booking,
           customer service, and more
         </p>
@@ -70,23 +73,6 @@ export function Hero() {
         <div className="flex flex-col items-stretch justify-center">
           <div className="flex flex-col rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
             <div className="w-full p-3 relative">
-              <ChatBotMini
-                title={chatTitle}
-                agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
-                isStreaming={isStreaming}
-                setIsStreaming={setIsStreaming}
-                isLiveKitActive={isLiveKitActive}
-                setIsLiveKitActive={setIsLiveKitActive}
-                token={token}
-                setToken={setToken}
-                url={url}
-                setUrl={setUrl}
-                isConnecting={isConnecting}
-                setIsConnecting={setIsConnecting}
-                onStreamEnd={handleStreamEnd}
-                onStreamStart={handleStreamStart}
-                bypassShowChatInputCondition={false}
-              />
             </div>
             <div className="w-full p-3 relative">
               <BentoDemo onAgentSelect={handleGridClick} />
@@ -109,14 +95,15 @@ export function Hero() {
           </TextShimmer>
         </div>
         
-        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-6xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-7xl md:text-8xl lg:text-9xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
+        <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
           <span className="whitespace-nowrap">Give Your Website a Voice That</span>{" "}
           <WordRotate
             words={[
               "Drives Conversion",
               "Answers Questions",
               "Engages With Visitors",
-              "Books Appointments"
+              "Books Appointments",
+              "Onboards Users"
             ]}
           />
         </h1>
@@ -150,23 +137,6 @@ export function Hero() {
             </div>
             
             <div className="w-[500px] p-5 relative">
-              <ChatBotMini
-                title={chatTitle}
-                agentId="e8b64819-7c2c-432f-9f80-05a72bd49787"
-                isStreaming={isStreaming}
-                setIsStreaming={setIsStreaming}
-                isLiveKitActive={isLiveKitActive}
-                setIsLiveKitActive={setIsLiveKitActive}
-                token={token}
-                setToken={setToken}
-                url={url}
-                setUrl={setUrl}
-                isConnecting={isConnecting}
-                setIsConnecting={setIsConnecting}
-                onStreamEnd={handleStreamEnd}
-                onStreamStart={handleStreamStart}
-                bypassShowChatInputCondition={false}
-              />
             </div>
             <div className="w-[400px] p-5 relative">
               <BentoDemo onAgentSelect={handleGridClick} />

@@ -8,7 +8,7 @@ export function OnboardingButton() {
   return (
     <div className="flex items-center justify-center relative z-10">
       <Link 
-        href="/onboarding" 
+        href="/sign-up" 
         className="inline-block relative z-20"
       >
         <Button 

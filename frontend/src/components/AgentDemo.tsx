@@ -9,33 +9,33 @@ interface DemoAgent {
   id: string;
   title: string;
   description: string;
-  example: string;
 }
 
 const demoAgents: DemoAgent[] = [
   {
-    id: "sales",
-    title: "Sales Agent",
-    description: "A sales representative that can qualify leads and book meetings",
-    example: "Hi! I'm looking to learn more about your services."
+    id: "prospecting",
+    title: "Prospecting Agent",
+    description: "Qualify visitors based on defined criteria at scale to keep your pipeline full.",
+  },
+  {
+    id: "onboarding",
+    title: "Onboarding Agent",
+    description: "Guide new users through your product to ensure a smooth onboarding experience.",
   },
   {
     id: "support",
     title: "Support Agent",
-    description: "A support agent that can answer common questions and troubleshoot issues",
-    example: "How do I integrate the chatbot with my website?"
+    description: "Provide immediate assistance to users with their queries and issues.",
   },
   {
     id: "booking",
     title: "Booking Agent",
-    description: "An agent that can handle appointment scheduling and calendar management",
-    example: "I'd like to schedule a consultation"
+    description: "Agent with scheduling and calendar management capabilities."
   },
   {
     id: "receptionist",
     title: "Receptionist",
-    description: "Link your telephone number to an agent for intelligent call handling and routing.",
-    example: "Hello, I'd like to speak to support"
+    description: "Link your telephone number to an agent for intelligent call handling and routing."
   },
 ];
 
@@ -68,12 +68,6 @@ export function BentoDemo({ onAgentSelect }: BentoDemoProps) {
                 <p className="text-base text-muted-foreground">
                   {agent.description}
                 </p>
-                <button
-                  onClick={() => onAgentSelect(agent.title, agent.example)}
-                  className="text-base text-primary hover:underline w-full text-left p-2 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
-                >
-                  Try this example: "{agent.example}"
-                </button>
               </div>
             </AccordionContent>
           </AccordionItem>
