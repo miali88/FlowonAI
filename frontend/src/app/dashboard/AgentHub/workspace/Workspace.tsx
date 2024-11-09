@@ -213,22 +213,16 @@ const Workspace: React.FC<WorkspaceProps> = ({
     
     console.log('Selected items:', items);
     
-    // If "All" is selected
-    if (items.some(item => item.id === 'all')) {
-      setSelectedAgent({
-        ...selectedAgent,
-        dataSource: ['all'],
-        knowledgeBaseIds: [], // Clear specific selections when "all" is chosen
-      });
-    } 
-    // If specific items are selected
-    else {
-      setSelectedAgent({
-        ...selectedAgent,
-        dataSource: items.map(item => item), // Send the actual selected item IDs
-        knowledgeBaseIds: items.map(item => item.id),
-      });
-    }
+    // Simplify the state update
+    const newAgent = {
+      ...selectedAgent,
+      dataSource: items.some(item => item.id === 'all') ? ['all'] : items.map(item => item),
+      knowledgeBaseIds: items.some(item => item.id === 'all') 
+        ? [] 
+        : items.map(item => item.id)
+    };
+    
+    setSelectedAgent(newAgent);
   };
 
   // Add this useEffect at the Workspace level
@@ -333,11 +327,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
                         ...knowledgeBaseItems
                       ]}
                       selectedItems={
-                        selectedAgent?.dataSource === 'all' 
+                        selectedAgent?.dataSource?.includes('all') 
                           ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                          : knowledgeBaseItems.filter(item => 
-                              selectedAgent?.knowledgeBaseIds?.includes(item.id)
-                            ) || []
+                          : (selectedAgent?.dataSource as any[] || [])
                       }
                       onChange={handleDataSourceChange}
                       defaultValue={selectedAgent?.dataSource || ''}

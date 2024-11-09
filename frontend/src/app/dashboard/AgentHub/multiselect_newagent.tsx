@@ -35,30 +35,21 @@ export function MultiSelect({
       const isSelected = selectedItems.some(selected => selected.id === item.id);
       let newSelection;
       
-      if (isSelected) {
-        newSelection = selectedItems.filter(selected => selected.id !== item.id);
+      if (item.id === 'all') {
+        newSelection = isSelected ? [] : [item];
       } else {
-        if (item.id === -1) {
-          newSelection = [item];
-        } else if (selectedItems.some(selected => selected.id === -1)) {
-          newSelection = [item];
+        if (isSelected) {
+          newSelection = selectedItems.filter(selected => selected.id !== item.id);
         } else {
-          newSelection = [...selectedItems, {
-            id: item.id,
-            title: item.title,
-            data_type: item.data_type,
-            file: item.file
-          }];
+          newSelection = selectedItems.some(selected => selected.id === 'all')
+            ? [item]
+            : [...selectedItems, item];
         }
       }
+      
       onChange(newSelection);
     } else {
-      onChange([{
-        id: item.id,
-        title: item.title,
-        data_type: item.data_type,
-        file: item.file
-      }]);
+      onChange([item]);
       setOpen(false);
     }
   };
