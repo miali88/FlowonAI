@@ -220,72 +220,74 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   }, [localParticipant, isMuted]);
 
   return (
-    <div data-widget="wrapper">
-      <div data-widget="chatbox">
-        <MorphingStreamButton
-          onStreamToggle={handleStreamToggle}
-          isStreaming={isStreaming}
-          isConnecting={isConnecting}
-        />
-        {isLiveKitActive && token && url && roomName && (
-          <>
-            <LiveKitEntry 
-              token={token} 
-              url={url} 
-              roomName={roomName}
-              isStreaming={isStreaming} 
-              onStreamEnd={onStreamEnd} 
-              onStreamStart={onStreamStart}
-              setRoom={setLiveKitRoom}
-              setLocalParticipant={setLocalParticipant}
-              setParticipantIdentity={setParticipantIdentity}
-              options={{
-                adaptiveStream: true,
-                dynacast: true,
-                element: eventBridge.getLiveKitContainer?.() || null
-              }}
-            />
-            {isStreaming && localParticipant && (
-              <button
-                onClick={handleMuteToggle}
-                className={`muteButton ${isMuted ? 'muted' : ''}`}
-              >
-                {isMuted ? 'Unmute' : 'Mute'}
+    <div data-widget="wrapper" className={styles.mainWrapper}>
+      <div className={styles.contentContainer}>
+        <div data-widget="chatbox" className={styles.chatboxContainer}>
+          <MorphingStreamButton
+            onStreamToggle={handleStreamToggle}
+            isStreaming={isStreaming}
+            isConnecting={isConnecting}
+          />
+          {isLiveKitActive && token && url && roomName && (
+            <>
+              <LiveKitEntry 
+                token={token} 
+                url={url} 
+                roomName={roomName}
+                isStreaming={isStreaming} 
+                onStreamEnd={onStreamEnd} 
+                onStreamStart={onStreamStart}
+                setRoom={setLiveKitRoom}
+                setLocalParticipant={setLocalParticipant}
+                setParticipantIdentity={setParticipantIdentity}
+                options={{
+                  adaptiveStream: true,
+                  dynacast: true,
+                  element: eventBridge.getLiveKitContainer?.() || null
+                }}
+              />
+              {isStreaming && localParticipant && (
+                <button
+                  onClick={handleMuteToggle}
+                  className={`muteButton ${isMuted ? 'muted' : ''}`}
+                >
+                  {isMuted ? 'Unmute' : 'Mute'}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+        
+        {(showChatInput && isStreaming) && (
+          <div className={styles.chatInput}>
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Full Name"
+                required
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address"
+                required
+              />
+              <input
+                type="tel"
+                value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)}
+                placeholder="Contact Number (optional)"
+              />
+              <button type="submit" className="submitBtn">
+                Submit
               </button>
-            )}
-          </>
+            </form>
+          </div>
         )}
       </div>
-      
-      {(showChatInput && isStreaming) && (
-        <div className={styles.chatInput}>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full Name"
-              required
-            />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email Address"
-              required
-            />
-            <input
-              type="tel"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              placeholder="Contact Number (optional)"
-            />
-            <button type="submit" className="submitBtn">
-              Submit
-            </button>
-          </form>
-        </div>
-      )}
       
       <footer className={styles.footer}>
         <a 
@@ -295,7 +297,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
           className={styles.footerContent}
         >
           <img 
-            src="/flowon.png" 
+            src="https://flowon.ai/logo.png" 
             alt="Flowon.AI Logo" 
             className={styles.footerLogo} 
           />

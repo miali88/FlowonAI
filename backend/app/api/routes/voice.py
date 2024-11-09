@@ -134,12 +134,12 @@ supabase: Client = create_client(supabase_url, supabase_key)
 @router.post("/wh")
 async def livekit_room_webhook(request: Request):
     data = await request.json()
-    print(f"\n /wh Received webhook data: {data}")
+    #print(f"\n /wh Received webhook data: {data}")
     
-    print("extracting data...")
+    #print("extracting data...")
     webhook_extract = sip_call_extract(data)
     if webhook_extract:
-        print("webhook_extract:", webhook_extract)
+        #print("webhook_extract:", webhook_extract)
         call_data[webhook_extract['room_name']] = webhook_extract
  
     # event = data.get('event')

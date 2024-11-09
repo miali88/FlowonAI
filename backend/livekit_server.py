@@ -155,23 +155,7 @@ async def entrypoint(ctx: JobContext):
             else:
                 print(f"Participant disconnected but was not the available participant: {participant.identity}")
 
-        # @ctx.room.on("track_subscribed")
-        # def on_track_subscribed(
-        #     track: rtc.Track,
-        #     publication: rtc.TrackPublication,
-        #     participant: rtc.RemoteParticipant,
-        # ):
-        #     if track.kind == rtc.TrackKind.KIND_AUDIO:
-        #         audio_stream = rtc.AudioStream(track)
-        #         for event in audio_stream:
-        #             nonlocal last_audio_time, last_participant_audio
-        #             current_time = time.time()
-        #             last_audio_time = current_time  # Update overall last audio time
-        #             last_participant_audio = current_time  # Update participant's last audio time
-        #             print(event.frame)
 
-        # Add handler for agent's audio
-        # Replace the previous agent.on("speaking_started") with these handlers
         @agent.on("agent_started_speaking")
         def on_agent_started_speaking():
             nonlocal last_audio_time, last_agent_audio
@@ -324,21 +308,6 @@ async def entrypoint(ctx: JobContext):
             if prospect_status == "yes":
                 print("prospect_status is yes, sending email")
                 await send_email(participant_identity, conversation_history, agent_id)
-
-        # @ctx.room.on("track_published")
-        # async def on_track_published(publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
-        #     # Ensure new tracks follow the same isolation rules
-        #     if participant != available_participant:
-        #         publication.set_subscribe_allowed(False)
-
-        # # Add explicit subscription management
-        # @ctx.room.on("participant_connected")
-        # async def on_participant_connected(participant: rtc.RemoteParticipant):
-        #     print(f"New participant connected: {participant.identity}")
-        #     # Ensure other participants can't subscribe to each other's tracks
-        #     for track_pub in participant.track_publications.values():
-        #         track_pub.set_subscribe_allowed(False)
- 
 
         def format_duration(start_time):
             duration = datetime.now() - start_time
