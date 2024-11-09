@@ -173,7 +173,7 @@ def sip_call_extract(data) -> Dict[str, Any]:
         })
         return result
     else:
-        logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
+        #logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
         return None
 
 # async def process_participant_left(room_sid: str):

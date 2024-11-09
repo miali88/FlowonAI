@@ -9,7 +9,11 @@ interface ChatWidgetProps {
   theme?: 'light' | 'dark';
 }
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ agentId, domain = 'http://localhost:3000', theme = 'light' }) => {
+const ChatWidget: React.FC<ChatWidgetProps> = ({ 
+  agentId, 
+  domain = process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL || 'http://localhost:3000', 
+  theme = 'light' 
+}) => {
   useEffect(() => {
     // Add Font Awesome CSS
     const fontAwesomeLink = document.createElement('link');
