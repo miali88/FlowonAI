@@ -202,7 +202,7 @@ async def form_fields(agent_id: str):
     try:
         response = supabase.table("agents").select("features").eq("id", agent_id).execute()
         if response.data:
-            return JSONResponse(content=response.data[0]['features'])
+            return JSONResponse(content=response.data[0]['features']['form'])
         else:
             return JSONResponse(content={}, status_code=404)
     except Exception as e:
