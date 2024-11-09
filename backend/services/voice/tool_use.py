@@ -115,6 +115,7 @@ class AgentFunctions(llm.FunctionContext):
             )
         ]
     ) -> str:
+        print("\n\n\n\n FUNCTION CALL: verify_user_info")
         logger.info(f"Verifying user information: {form_fields}")
         try:
             # Implementation details would go here
@@ -143,6 +144,7 @@ class AgentFunctions(llm.FunctionContext):
             )
         ]
     ) -> str:
+        print("\n\n\n\n FUNCTION CALL: redirect_to_dashboard")
         logger.info(f"Redirecting to dashboard - Feature: {feature}, Use Case: {use_case}")
         try:
             # Implementation details would go here

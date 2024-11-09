@@ -81,10 +81,12 @@ async def safe_room_initialization(ctx: JobContext, room_name: str) -> tuple[boo
         if has_agent:
             return False, "Room already has an agent"
             
-        # Connect with agent kind properly set
+        # Set participant kind before connecting
+        ctx.agent.kind = rtc.ParticipantKind.PARTICIPANT_KIND_AGENT
+        
+        # Connect with auto_subscribe set to AUDIO_ONLY
         await ctx.connect(
-            auto_subscribe=AutoSubscribe.AUDIO_ONLY,
-            participant_kind=rtc.ParticipantKind.PARTICIPANT_KIND_AGENT
+            auto_subscribe=AutoSubscribe.AUDIO_ONLY
         )
         
         return True, "Successfully initialized room"

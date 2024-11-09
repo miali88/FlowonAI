@@ -22,7 +22,7 @@ function Loader() {
   );
 }
 
-const Lab = () => {
+const AgentHub = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
@@ -333,6 +333,8 @@ const Lab = () => {
                 userInfo={userInfo}
                 features={selectedAgent.features}
                 userId={userId}
+                handleSaveChanges={handleSaveChanges}
+                handleDeleteAgent={handleDeleteAgent}
               />
             )}
 
@@ -356,4 +358,4 @@ const Lab = () => {
   );
 };
 
-export default Lab;
+export default AgentHub;

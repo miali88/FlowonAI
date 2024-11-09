@@ -129,27 +129,30 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
 
   const handleSaveFeatures = async () => {
-    if (selectedAgent) {
-      console.log('Before save - Selected Agent State:', {
-        dataSource: selectedAgent.dataSource,
-        knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
-      });
+    if (!selectedAgent || !handleSaveChanges) {
+      console.error("Selected agent or handleSaveChanges is not available");
+      return;
+    }
 
-      const agentToSave = {
-        ...selectedAgent,
-        knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
-          ? undefined
-          : selectedAgent.knowledgeBaseIds
-      };
+    console.log('Before save - Selected Agent State:', {
+      dataSource: selectedAgent.dataSource,
+      knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
+    });
 
-      console.log('Saving agent with data:', agentToSave);
+    const agentToSave = {
+      ...selectedAgent,
+      knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
+        ? undefined
+        : selectedAgent.knowledgeBaseIds
+    };
 
-      try {
-        await handleSaveChanges(agentToSave);
-        console.log("Features saved successfully");
-      } catch (error) {
-        console.error("Failed to save features:", error);
-      }
+    console.log('Saving agent with data:', agentToSave);
+
+    try {
+      await handleSaveChanges(agentToSave);
+      console.log("Features saved successfully");
+    } catch (error) {
+      console.error("Failed to save features:", error);
     }
   };
 
@@ -181,18 +184,19 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const handleDataSourceChange = (items: Array<{ id: string; title: string; data_type: string }>) => {
     if (!selectedAgent) return;
     
-    console.log('Selected items:', items);
+    console.log('handleDataSourceChange - items:', items);
     
-    // Simplify the state update
-    const newAgent = {
-      ...selectedAgent,
-      dataSource: items.some(item => item.id === 'all') ? ['all'] : items.map(item => item),
-      knowledgeBaseIds: items.some(item => item.id === 'all') 
-        ? [] 
-        : items.map(item => item.id)
-    };
-    
-    setSelectedAgent(newAgent);
+    setSelectedAgent(prev => {
+      const updated = {
+        ...prev,
+        dataSource: items,
+        knowledgeBaseIds: items.some(item => item.id === 'all') 
+          ? [] 
+          : items.map(item => item.id)
+      };
+      console.log('Updated agent:', updated);
+      return updated;
+    });
   };
 
   // Add this useEffect at the Workspace level

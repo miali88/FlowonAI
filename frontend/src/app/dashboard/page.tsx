@@ -25,14 +25,14 @@ import {
   Search,
   Settings,
 } from "lucide-react";
-import ChatHistory from '@/app/dashboard/ConversationLogs/page';
+import ChatHistory from '@/app/dashboard/conversationlogs/page';
 
-import KnowledgeBaseContent from "./Knowledgebase/page";
-import Lab from '@/app/dashboard/AgentHub/page';  // Add this import
-import IntegrationsPage from "@/app/dashboard/Integrations/page";
+import KnowledgeBaseContent from "./knowledgebase/page";
+import AgentHub from '@/app/dashboard/agenthub/page';  // Add this import
+import IntegrationsPage from "@/app/dashboard/integrations/page";
 import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
 import ContactFounders from "@/app/dashboard/contactfounders/page";
-import Analytics from '@/app/dashboard/Analytics/page';
+import Analytics from '@/app/dashboard/analytics/page';
 import { Particles } from '@/components/magicui/particles'; // Correct the import path
 //import { Sidebar } from './Sidebar';
 //console.log(Sidebar); // Should log a function or class, not an object
@@ -245,14 +245,12 @@ function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeItem) {
-      case "Dashboard":
-        return <DashboardContent />;
       case "Knowledge Base":
         return <KnowledgeBaseContent />;
       case "Conversation Logs":
         return <ChatHistory />;
       case "Agent Hub":
-        return <Lab />;
+        return <AgentHub />;
       case "Integrations":
         return <IntegrationsPage />;
       case "Contact Founders":
@@ -260,7 +258,7 @@ function AdminDashboard() {
       case "Analytics":
         return <Analytics />;
       default:
-        return <Lab />;
+        return <AgentHub />;
     }
   };
 
