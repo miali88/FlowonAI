@@ -3,16 +3,21 @@ from dotenv import load_dotenv
 import logging  # Add this import
 import time  # Add this import
 from datetime import datetime, timedelta  # Update import
+import os
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
+from livekit.api import ListParticipantsRequest
+from livekit.api.livekit_api import LiveKitAPI
+from livekit.protocol import participant_pb2
 
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data
 
+import logging
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
@@ -44,7 +49,58 @@ class CallDuration:
             "formatted": str(self)
         }
 
+async def create_livekit_api():
+    return LiveKitAPI(
+        url=os.getenv("LIVEKIT_URL"),
+        api_key=os.getenv("LIVEKIT_API_KEY"),
+        api_secret=os.getenv("LIVEKIT_API_SECRET"))
+
+async def check_for_existing_agent(room_name: str, livekit_api: LiveKitAPI) -> bool:
+    try:
+        # List participants in the room
+        list_request = ListParticipantsRequest(room=room_name)
+        response = await livekit_api.room.list_participants(list_request)
+        
+        # Check for any participants with agent kind
+        for participant in response.participants:
+            if participant.kind == participant_pb2.ParticipantKind.PARTICIPANT_KIND_AGENT:
+                return True
+        return False
+    except Exception as e:
+        # If we can't verify, assume there might be an agent to be safe
+        return True
+
+async def safe_room_initialization(ctx: JobContext, room_name: str) -> tuple[bool, str]:
+    try:
+        livekit_api = await create_livekit_api()
+        
+        # Check for existing agent
+        has_agent = await check_for_existing_agent(room_name, livekit_api)
+        if has_agent:
+            return False, "Room already has an agent"
+            
+        # Connect with agent kind properly set
+        await ctx.connect(
+            auto_subscribe=AutoSubscribe.AUDIO_ONLY,
+            participant_kind=participant_pb2.ParticipantKind.PARTICIPANT_KIND_AGENT
+        )
+        
+        return True, "Successfully initialized room"
+    except Exception as e:
+        return False, f"Room initialization failed: {str(e)}"
+    finally:
+        await livekit_api.aclose()
+
 async def entrypoint(ctx: JobContext):
+    room_name = ctx.room.name
+    
+    # Safely initialize room
+    success, message = await safe_room_initialization(ctx, room_name)
+    if not success:
+        logger.error(f"Room initialization failed: {message}")
+        ctx.shutdown(reason=message)
+        return
+        
     print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
     # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
     # agent, opening_line = await create_voice_assistant(agent_id, ctx)
