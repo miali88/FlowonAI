@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import styles from './ChatWidget.module.css';
 
 interface ChatWidgetProps {
   agentId: string;
@@ -41,12 +42,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   return (
     <>
-      <style jsx>{`
-        // ... existing styles ... (copy all CSS from the original file)
-      `}</style>
-
       <div 
-        className="chat-widget-button" 
+        className={styles.chatWidgetButton}
         onClick={toggleChat}
         dangerouslySetInnerHTML={{ 
           __html: isOpen ? '<i class="fa-solid fa-xmark"></i>' : buttonIcon 
@@ -55,12 +52,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       />
 
       <div 
-        className="chat-widget-container" 
+        className={styles.chatWidgetContainer}
         style={{ display: isOpen ? 'block' : 'none' }}
         data-theme={theme}
       >
         <iframe 
-          className="chat-widget-iframe"
+          className={styles.chatWidgetIframe}
           src={`${domain}/chat-widget/${agentId}`}
           allow="microphone *; camera *"
           sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"

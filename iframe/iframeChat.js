@@ -40,7 +40,9 @@ class ChatWidget {
         width: 55px;
         height: 55px;
         border-radius: 50%;
-        background-color: rgba(108, 117, 125, 0.85);
+        background: linear-gradient(45deg, #8b5cf6, #06b6d4, #ec4899);
+        background-size: 300% 300%;
+        animation: ${this.isOpen ? 'none' : 'pulse 2s infinite, gradientMove 10s ease infinite'};
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
@@ -51,7 +53,18 @@ class ChatWidget {
         transition: all 0.3s ease;
         z-index: 9999;
         border: 1px solid rgba(255, 255, 255, 0.18);
-        animation: ${this.isOpen ? 'none' : 'pulse 2s infinite'};
+      }
+
+      @keyframes gradientMove {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
       }
 
       @keyframes pulse {
@@ -81,9 +94,14 @@ class ChatWidget {
         font-size: 35px;
       }
 
-      i.fa-solid.fa-microphone-lines,
+      i.fa-solid.fa-microphone-lines {
+        color: white;
+      }
+
       i.fa-solid.fa-xmark {
         color: white;
+        font-size: 20px;
+        font-weight: bold;
       }
 
       .chat-widget-container {
@@ -101,9 +119,13 @@ class ChatWidget {
         display: none;
         z-index: 9999;
         overflow: hidden;
+        padding: 0;
+        margin: 0;
+        line-height: 0;
       }
 
       .chat-widget-header {
+        margin: 0;
         padding: 15px;
         background: linear-gradient(135deg, 
           rgba(0, 0, 0, 0.6), 
@@ -123,18 +145,26 @@ class ChatWidget {
 
       .chat-widget-iframe {
         width: 100%;
-        height: calc(100% - 60px);
+        height: 540px;
         border: none;
         display: block;
+        background: transparent;
+        margin: 0;
+        padding: 0;
+        line-height: 0;
       }
 
       @media (max-width: 640px) {
         .chat-widget-container {
           width: 100%;
-          height: 100%;
+          height: 100vh;
           ${this.config.position}: 0;
           bottom: 0;
           border-radius: 0;
+        }
+
+        .chat-widget-iframe {
+          height: calc(100vh - 60px);
         }
       }
 
