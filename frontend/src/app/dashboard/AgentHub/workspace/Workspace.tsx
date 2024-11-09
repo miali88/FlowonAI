@@ -15,27 +15,12 @@ import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';
 import Ui from './Ui';
-import ChatBotMini from './ChatbotMini/ChatBotMini';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
   setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
   handleSaveChanges: (agent: Agent) => Promise<void>;
   handleDeleteAgent: () => Promise<void>;
-  isStreaming: boolean;
-  setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>;
-  isLiveKitActive: boolean;
-  setIsLiveKitActive: React.Dispatch<React.SetStateAction<boolean>>;
-  token: string | null;
-  setToken: React.Dispatch<React.SetStateAction<string | null>>;
-  url: string | null;
-  setUrl: React.Dispatch<React.SetStateAction<string | null>>;
-  isConnecting: boolean;
-  setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
-  handleStreamEnd: () => void;
-  handleStreamStart: () => void;
-  localParticipant: LocalParticipant | null;
-  setLocalParticipant: React.Dispatch<React.SetStateAction<LocalParticipant | null>>;
   knowledgeBaseItems: Array<{
     id: string;
     title: string;
@@ -106,20 +91,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   setSelectedAgent,
   handleSaveChanges,
   handleDeleteAgent,
-  isStreaming,
-  setIsStreaming,
-  isLiveKitActive,
-  setIsLiveKitActive,
-  token,
-  setToken,
-  url,
-  setUrl,
-  isConnecting,
-  setIsConnecting,
-  handleStreamEnd,
-  handleStreamStart,
-  localParticipant,
-  setLocalParticipant,
   knowledgeBaseItems,
   userId,
   features,
@@ -207,7 +178,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     console.log('Knowledge Base Items:', knowledgeBaseItems);
   }, [knowledgeBaseItems]);
 
-  // The MultiSelect component looks correct, but let's add some logging
   const handleDataSourceChange = (items: Array<{ id: string; title: string; data_type: string }>) => {
     if (!selectedAgent) return;
     
@@ -248,7 +218,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           <TabsTrigger value="playground">Playground</TabsTrigger>
           <TabsTrigger value="edit">Settings</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="ui">UI</TabsTrigger>
+          {/* <TabsTrigger value="ui">UI</TabsTrigger> */}
           <TabsTrigger value="deploy">Deploy</TabsTrigger>
           <TabsTrigger value="share">Share</TabsTrigger>
         </TabsList>
@@ -327,12 +297,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
                         ...knowledgeBaseItems
                       ]}
                       selectedItems={
-                        selectedAgent?.dataSource?.includes('all') 
-                          ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                          : (selectedAgent?.dataSource as any[] || [])
+                        selectedAgent?.dataSource 
+                          ? (selectedAgent.dataSource.includes('all')
+                              ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                              : knowledgeBaseItems.filter(item => 
+                                  selectedAgent.dataSource.includes(item.id.toString())
+                                ))
+                          : []
                       }
                       onChange={handleDataSourceChange}
-                      defaultValue={selectedAgent?.dataSource || ''}
                     />
                   </div>
                 </div>
@@ -463,7 +436,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="ui">
+        {/* <TabsContent value="ui">
           <Ui
             selectedAgent={selectedAgent}
             setSelectedAgent={setSelectedAgent}
@@ -482,7 +455,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             localParticipant={localParticipant}
             setLocalParticipant={setLocalParticipant}
           />
-        </TabsContent>
+        </TabsContent> */}
         <TabsContent value="deploy">
           <Deploy 
             selectedAgent={selectedAgent}

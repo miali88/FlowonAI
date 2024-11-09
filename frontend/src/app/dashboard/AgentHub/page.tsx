@@ -154,7 +154,7 @@ const Lab = () => {
       });
 
       if (response.ok) {
-        setAlertDialogMessage(`${selectedAgent.agentName} has been successfully deleted. Refresh the page to see the change.`);
+        setAlertDialogMessage(`${selectedAgent.agentName} has been successfully deleted.`);
         setSelectedAgent(null);
         // Optionally, refresh the agent list here
       } else {
@@ -329,22 +329,6 @@ const Lab = () => {
               <Workspace
                 selectedAgent={selectedAgent}
                 setSelectedAgent={setSelectedAgent}
-                handleSaveChanges={handleSaveChanges}
-                handleDeleteAgent={handleDeleteAgent}
-                isStreaming={isStreaming}
-                setIsStreaming={setIsStreaming}
-                isLiveKitActive={isLiveKitActive}
-                setIsLiveKitActive={setIsLiveKitActive}
-                token={token}
-                setToken={setToken}
-                url={url}
-                setUrl={setUrl}
-                isConnecting={isConnecting}
-                setIsConnecting={setIsConnecting}
-                handleStreamEnd={handleStreamEnd}
-                handleStreamStart={handleStreamStart}
-                localParticipant={localParticipant}
-                setLocalParticipant={setLocalParticipant}
                 knowledgeBaseItems={knowledgeBaseItems}
                 userInfo={userInfo}
                 features={selectedAgent.features}

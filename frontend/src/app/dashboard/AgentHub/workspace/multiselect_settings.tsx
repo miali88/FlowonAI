@@ -14,7 +14,7 @@ interface MultiSelectProps {
   defaultValue?: string;
 }
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, defaultValue }) => {
+export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems = [], onChange, defaultValue }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,6 +76,10 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
     item?.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const isItemSelected = (item: Item) => {
+    return Array.isArray(selectedItems) && selectedItems.some(selected => selected.id === item.id);
+  };
+
   return (
     <div className="relative w-full" ref={containerRef}>
       {/* Dropdown trigger button - fixed padding and alignment */}
@@ -85,9 +89,9 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
         className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
         <span className="truncate text-sm">
-          {selectedItems.length === 0
+          {(!selectedItems || selectedItems.length === 0)
             ? "Select items..."
-            : selectedItems.map(item => item.title).join(', ')}
+            : (Array.isArray(selectedItems) ? selectedItems : []).map(item => item.title).join(', ')}
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
@@ -121,11 +125,11 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
                   className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center gap-3"
                 >
                   <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
-                    selectedItems.some(selected => selected.id === item.id) 
+                    isItemSelected(item)
                       ? 'bg-primary border-primary' 
                       : 'border-input'
                   }`}>
-                    {selectedItems.some(selected => selected.id === item.id) && (
+                    {isItemSelected(item) && (
                       <Check className="h-3 w-3 text-primary-foreground" />
                     )}
                   </div>

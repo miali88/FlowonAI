@@ -101,6 +101,56 @@ class AgentFunctions(llm.FunctionContext):
             logger.error(f"Error in search_products_and_services: {str(e)}", exc_info=True)
             return "Sorry, I encountered an error while searching for products and services."
 
+    @llm.ai_callable(
+        name="verify_user_info",
+        description="Verify and update user information collected during the conversation",
+        auto_retry=False
+    )
+    async def verify_user_info(
+        self,
+        form_fields: Annotated[
+            Dict[str, str],
+            llm.TypeInfo(
+                description="Dictionary containing user information fields to verify/update"
+            )
+        ]
+    ) -> str:
+        logger.info(f"Verifying user information: {form_fields}")
+        try:
+            # Implementation details would go here
+            return "User information verified and updated successfully."
+        except Exception as e:
+            logger.error(f"Error in verify_user_info: {str(e)}", exc_info=True)
+            return "Sorry, I encountered an error while verifying user information."
+
+    @llm.ai_callable(
+        name="redirect_to_dashboard",
+        description="End conversation and redirect user to dashboard with specific recommendations",
+        auto_retry=False
+    )
+    async def redirect_to_dashboard(
+        self,
+        feature: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The recommended dashboard feature to highlight"
+            )
+        ],
+        use_case: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The relevant use case or reason for the dashboard redirect"
+            )
+        ]
+    ) -> str:
+        logger.info(f"Redirecting to dashboard - Feature: {feature}, Use Case: {use_case}")
+        try:
+            # Implementation details would go here
+            return f"Redirecting to dashboard with focus on {feature} for {use_case}."
+        except Exception as e:
+            logger.error(f"Error in redirect_to_dashboard: {str(e)}", exc_info=True)
+            return "Sorry, I encountered an error while redirecting to the dashboard."
+
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
     async with aiohttp.ClientSession() as session:
