@@ -3,21 +3,16 @@ from dotenv import load_dotenv
 import logging  # Add this import
 import time  # Add this import
 from datetime import datetime, timedelta  # Update import
-import os
-import socket
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
-from livekit.api import ListParticipantsRequest
-from livekit.api.livekit_api import LiveKitAPI
 
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data
 
-import logging
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
@@ -49,61 +44,7 @@ class CallDuration:
             "formatted": str(self)
         }
 
-async def create_livekit_api():
-    return LiveKitAPI(
-        url=os.getenv("LIVEKIT_URL"),
-        api_key=os.getenv("LIVEKIT_API_KEY"),
-        api_secret=os.getenv("LIVEKIT_API_SECRET"))
-
-async def check_for_existing_agent(room_name: str, livekit_api: LiveKitAPI) -> bool:
-    print("check_for_existing_agent called")
-    try:
-        # List participants in the room
-        list_request = ListParticipantsRequest(room=room_name)
-        response = await livekit_api.room.list_participants(list_request)
-        
-        # Check for any participants with agent kind
-        for participant in response.participants:
-            if participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
-                return True
-        return False
-    except Exception as e:
-        # If we can't verify, assume there might be an agent to be safe
-        return True
-
-async def safe_room_initialization(ctx: JobContext, room_name: str) -> tuple[bool, str]:
-    print("safe_room_initialization called")
-    try:
-        livekit_api = await create_livekit_api()
-        
-        # Check for existing agent
-        has_agent = await check_for_existing_agent(room_name, livekit_api)
-        if has_agent:
-            return False, "Room already has an agent"
-            
-        # Set participant kind before connecting
-        ctx.agent.kind = rtc.ParticipantKind.PARTICIPANT_KIND_AGENT
-        
-        # Connect with auto_subscribe set to AUDIO_ONLY
-        await ctx.connect(
-            auto_subscribe=AutoSubscribe.AUDIO_ONLY
-        )
-        
-        return True, "Successfully initialized room"
-    except Exception as e:
-        return False, f"Room initialization failed: {str(e)}"
-    finally:
-        await livekit_api.aclose()
-
 async def entrypoint(ctx: JobContext):
-    room_name = ctx.room.name
-    
-    # Safely initialize room
-    success, message = await safe_room_initialization(ctx, room_name)
-    if not success:
-        ctx.shutdown(reason=message)
-        return
-        
     print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
     # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
     # agent, opening_line = await create_voice_assistant(agent_id, ctx)
@@ -112,7 +53,7 @@ async def entrypoint(ctx: JobContext):
     print("room_name:", room_name)
 
     print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-    # await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
 
     # Add call start time tracking
     call_start_time = datetime.now()
@@ -128,7 +69,8 @@ async def entrypoint(ctx: JobContext):
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
             print("telephone call detected")
-        
+            
+
 
             async def get_agent_id(room_name: str):
                 agents = await get_all_agents()
@@ -213,7 +155,8 @@ async def entrypoint(ctx: JobContext):
             else:
                 print(f"Participant disconnected but was not the available participant: {participant.identity}")
 
-
+        # Add handler for agent's audio
+        # Replace the previous agent.on("speaking_started") with these handlers
         @agent.on("agent_started_speaking")
         def on_agent_started_speaking():
             nonlocal last_audio_time, last_agent_audio
@@ -437,28 +380,15 @@ def prewarm_fnc(proc: JobProcess):
 
 
 if __name__ == "__main__":
-    # Add function to find available port
-    def find_available_port(start_port=8081, max_attempts=10):
-        for port in range(start_port, start_port + max_attempts):
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.bind(('0.0.0.0', port))
-                    return port
-            except OSError:
-                continue
-        raise OSError("No available ports found in range")
+    opts = WorkerOptions(
+        # entrypoint function is called when a job is assigned to this worker
+        entrypoint_fnc=entrypoint,
+        # the type of worker to create, either JT_ROOM or JT_PUBLISHER
+        worker_type=WorkerType.ROOM,
+        # # inspect the request and decide if the current worker should handle it.
+        # request_fnc=request_fnc,
+        # a function to perform any necessary initialization in a new process.
+        prewarm_fnc=prewarm_fnc,
+    )
 
-    try:
-        available_port = find_available_port()
-        os.environ['LIVEKIT_AGENT_PORT'] = str(available_port)
-        
-        opts = WorkerOptions(
-            entrypoint_fnc=entrypoint,
-            worker_type=WorkerType.ROOM,
-            prewarm_fnc=prewarm_fnc,
-        )
-
-        cli.run_app(opts)
-    except OSError as e:
-        print(f"Failed to start server: {e}")
-        exit(1)
+    cli.run_app(opts)

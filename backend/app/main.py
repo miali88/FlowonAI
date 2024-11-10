@@ -93,8 +93,6 @@ async def startup_event():
     global livekit_process
     
     try:
-        # Kill existing processes on port 8000
-        kill_processes_on_port(8000)
         time.sleep(1)  # Give processes time to fully terminate
         
         MAX_RETRIES = 3
@@ -120,6 +118,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+
     global livekit_process
     if livekit_process:
         try:
