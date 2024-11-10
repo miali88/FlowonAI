@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import ChatWidget from '@/app/dashboard/agenthub/workspace/ChatWidget';
+import ChatWidget from '@/app/dashboard/AgentHub/workspace/ChatWidget';
 
 interface DemoAgent {
   id: string;
@@ -46,7 +46,7 @@ interface BentoDemoProps {
 
 export function BentoDemo({ onAgentSelect }: BentoDemoProps) {
   return (
-    <div className="w-full max-w-[500px] p-6 relative min-h-[700px]">
+    <div className="w-full max-w-[500px] p-6 relative min-h-[700px] md:min-h-[700px] mb-[100px] md:mb-0">
       <h3 className="text-2xl font-semibold mb-4">Explore Our AI Agents</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Accordion 
@@ -76,7 +76,12 @@ export function BentoDemo({ onAgentSelect }: BentoDemoProps) {
           ))}
         </Accordion>
         
-        <div className="absolute left-[-400px] top-0 w-[350px] h-[700px]">
+        <div className="
+          relative md:absolute 
+          w-full h-[400px] md:h-[700px] 
+          md:left-[-400px] md:top-0 md:w-[350px]
+          mt-6 md:mt-0
+        ">
           <ChatWidget 
             agentId="ac0b4742-23ae-4cc1-8b9b-77392e27e410"
             theme="dark"
