@@ -47,7 +47,7 @@ export function Pricing({ currentPlan }: PricingProps) {
           </h2> */}
           <p className="mt-6 text-xl leading-8">
             Packed with the best features for engaging your
-            audience, creating customer loyalty, and driving sales.
+            audience, creating customer loyalty, and automating workflows.
           </p>
         </div>
         <div className="flex w-full items-center justify-center space-x-2 mx-2 my-6">

@@ -22,8 +22,8 @@ export const SetupSection = () => {
     },
     {
       number: "3",
-      title: "Embed to your website",
-      description: "Simply add a few lines of code to your website to start engaging with visitors through your AI agent.",
+      title: "Deploy your AI Agent",
+      description: "Choose how you want to integrate your AI assistant with your business.",
     },
   ];
 

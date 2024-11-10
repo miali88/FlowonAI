@@ -14,41 +14,6 @@ export function Information() {
           curated knowledge base, whether from documents, websites, or direct input.
         </p>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto px-4">
-        <div className="p-6 rounded-lg border border-gray-800 bg-black/40 backdrop-blur-sm hover:border-gray-700 transition-all duration-300 hover:scale-[1.02]">
-          <div className="flex flex-col items-center text-center">
-            <Type className="h-8 w-8 mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold mb-2">Text</h3>
-            <p className="text-gray-400">
-              Input company policies, guidelines, or any text-based information to build your 
-              agent's foundational knowledge
-            </p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-lg border border-gray-800 bg-black/40 backdrop-blur-sm hover:border-gray-700 transition-all duration-300 hover:scale-[1.02]">
-          <div className="flex flex-col items-center text-center">
-            <Upload className="h-8 w-8 mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold mb-2">Document Intelligence</h3>
-            <p className="text-gray-400">
-              Upload and process various document formats, enabling your agent to understand 
-              complex documentation
-            </p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-lg border border-gray-800 bg-black/40 backdrop-blur-sm hover:border-gray-700 transition-all duration-300 hover:scale-[1.02]">
-          <div className="flex flex-col items-center text-center">
-            <Globe className="h-8 w-8 mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold mb-2">Web Integration</h3>
-            <p className="text-gray-400">
-              Automatically extract and learn from web content, keeping your agent updated 
-              with the latest information
-            </p>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }
