@@ -58,7 +58,7 @@ export function Pricing({ currentPlan }: PricingProps) {
           />
           <span>Annual</span>
           <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
-            Get 5 months free ✨
+            Get 2 months free ✨
           </span>
         </div>
         <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-3 flex-col gap-4 place-items-center">
@@ -139,9 +139,6 @@ export function Pricing({ currentPlan }: PricingProps) {
               >
                 <span className="text-4xl font-bold leading-7">£{isAnnual ? '1,690' : '169'}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
-                {isAnnual && (
-                  <span className="text-xs text-green-500 mb-1 ml-1">2 months free</span>
-                )}
               </motion.div>
               <Button 
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"

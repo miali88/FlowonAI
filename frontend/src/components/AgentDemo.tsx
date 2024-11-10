@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import ChatWidget from '@/app/dashboard/agenthub/workspace/ChatWidget';
 
 interface DemoAgent {
   id: string;
@@ -45,34 +46,43 @@ interface BentoDemoProps {
 
 export function BentoDemo({ onAgentSelect }: BentoDemoProps) {
   return (
-    <div className="w-full max-w-[500px] p-6">
+    <div className="w-full max-w-[500px] p-6 relative min-h-[700px]">
       <h3 className="text-2xl font-semibold mb-4">Explore Our AI Agents</h3>
-      <Accordion 
-        type="single" 
-        collapsible 
-        className="w-full [&>*]:!border-b-0 [&>*]:!border-0 [&_button]:!border-0 [&_button]:!border-b-0"
-      >
-        {demoAgents.map((agent) => (
-          <AccordionItem 
-            key={agent.id} 
-            value={agent.id}
-            className="!border-b-0 !border-0 data-[state=open]:!border-0"
-          >
-            <AccordionTrigger 
-              className="text-left !border-b-0 !border-0 hover:no-underline data-[state=open]:!border-0 text-lg"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full [&>*]:!border-b-0 [&>*]:!border-0 [&_button]:!border-0 [&_button]:!border-b-0"
+        >
+          {demoAgents.map((agent) => (
+            <AccordionItem 
+              key={agent.id} 
+              value={agent.id}
+              className="!border-b-0 !border-0 data-[state=open]:!border-0"
             >
-              {agent.title}
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <p className="text-base text-muted-foreground">
-                  {agent.description}
-                </p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+              <AccordionTrigger 
+                className="text-left !border-b-0 !border-0 hover:no-underline data-[state=open]:!border-0 text-lg"
+              >
+                {agent.title}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4">
+                  <p className="text-base text-muted-foreground">
+                    {agent.description}
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+        
+        <div className="absolute left-[-400px] top-0 w-[350px] h-[700px]">
+          <ChatWidget 
+            agentId="ac0b4742-23ae-4cc1-8b9b-77392e27e410"
+            theme="dark"
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export function Hero() {
 
       <div className="min-h-[70vh] pt-6 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
         <div className="flex flex-col items-stretch justify-center">
-          <div className="flex flex-col rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
+          <div className="flex flex-col rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md min-h-[700px]">
             <div className="w-full p-3 relative">
             </div>
             <div className="w-full p-3 relative">
@@ -136,9 +136,9 @@ export function Hero() {
               <div className="absolute inset-0 bg-gradient-radial from-white/[0.08] via-transparent to-transparent" />
             </div>
             
-            <div className="w-[500px] p-5 relative">
+            <div className="w-[600px] p-5 relative">
             </div>
-            <div className="w-[400px] p-5 relative">
+            <div className="w-[500px] p-5 relative">
               <BentoDemo onAgentSelect={handleGridClick} />
             </div>
           </div>

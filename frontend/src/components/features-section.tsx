@@ -36,7 +36,7 @@ export function FeaturesSection() {
           <FeatureCard key={title} title={title} description={description} />
         ))}
       </div>
-      <div className="flex justify-center mt-16">
+      <div className="flex justify-center mt-32 mb-32">
         <Image
           alt="Integrations visualization"
           src="/images/integrations.png"
