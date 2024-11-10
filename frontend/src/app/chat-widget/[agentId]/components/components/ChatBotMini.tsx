@@ -43,7 +43,7 @@ interface FormField {
 const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   agentId,
   eventBridge,
-  apiBaseUrl = DEFAULT_API_BASE_URL,
+  apiBaseUrl = API_DOMAIN,
   isStreaming,
   setIsStreaming,
   isLiveKitActive,
