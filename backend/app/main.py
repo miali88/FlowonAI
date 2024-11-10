@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import subprocess
 import psutil
 import time
+import platform
 
 load_dotenv()
 
@@ -61,31 +62,61 @@ if origins:
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+def kill_processes_on_port(port):
+    try:
+        if platform.system() == "Windows":
+            subprocess.run(['taskkill', '/F', '/PID', '$(netstat -ano | findstr :%d | awk \'{print $5}\')' % port], shell=True)
+        else:  # Unix-like systems (Linux, macOS)
+            # Get the current process ID
+            current_pid = os.getpid()
+            
+            # Get all processes on the port
+            result = subprocess.run(f"lsof -ti:{port}", shell=True, capture_output=True, text=True)
+            if result.stdout:
+                pids = result.stdout.strip().split('\n')
+                for pid in pids:
+                    try:
+                        pid = int(pid)
+                        # Don't kill our own process
+                        if pid != current_pid:
+                            os.kill(pid, 9)
+                            print(f"Killed process {pid} on port {port}")
+                    except (ValueError, ProcessLookupError) as e:
+                        print(f"Error processing PID {pid}: {e}")
+            
+        print(f"Finished checking processes on port {port}")
+    except Exception as e:
+        print(f"Error in kill_processes_on_port: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     global livekit_process
-    import os
     
-    MAX_RETRIES = 3
-    RETRY_DELAY = 2
+    try:
+        # Kill existing processes on port 8000
+        kill_processes_on_port(8000)
+        time.sleep(1)  # Give processes time to fully terminate
+        
+        MAX_RETRIES = 3
+        RETRY_DELAY = 2
 
-    for attempt in range(MAX_RETRIES):
-        try:
-            python_path = "/root/FlowonAI/backend/venv/bin/python"
-            #python_path = 'python'
-            livekit_process = subprocess.Popen([python_path, 'livekit_server.py', 'start'])
-            print("LiveKit server started")
-            break
-        except subprocess.SubprocessError as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
-            if attempt < MAX_RETRIES - 1:
-                print(f"Retrying in {RETRY_DELAY} seconds...")
-                time.sleep(RETRY_DELAY)
-            else:
-                print("Failed to start LiveKit server after maximum retries")
-                raise
-    
-
+        for attempt in range(MAX_RETRIES):
+            try:
+                #python_path = "/root/FlowonAI/backend/venv/bin/python"
+                python_path = 'python'
+                livekit_process = subprocess.Popen([python_path, 'livekit_server.py', 'start'])
+                print("LiveKit server started")
+                break
+            except subprocess.SubprocessError as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < MAX_RETRIES - 1:
+                    print(f"Retrying in {RETRY_DELAY} seconds...")
+                    time.sleep(RETRY_DELAY)
+                else:
+                    print("Failed to start LiveKit server after maximum retries")
+                    raise
+    except Exception as e:
+        print(f"Error in startup_event: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
