@@ -27,9 +27,6 @@ export function DeploySection() {
               Add a customizable chat or voice widget to your website. Engage visitors
               in real-time with AI-powered conversations.
             </p>
-            <button className="relative z-20 px-4 py-2 border border-neutral-200 text-neutral-200 hover:bg-white/10 rounded-md transition-colors">
-              Learn More
-            </button>
           </CardSpotlight>
 
           <CardSpotlight className="p-6">
@@ -46,9 +43,6 @@ export function DeploySection() {
             <p className="text-neutral-200 mb-4 relative z-20">
               Empower your AI agents with local phone numbers across 60 countries
             </p>
-            <button className="relative z-20 px-4 py-2 border border-neutral-200 text-neutral-200 hover:bg-white/10 rounded-md transition-colors">
-              Learn More
-            </button>
           </CardSpotlight>
         </div>
       </div>

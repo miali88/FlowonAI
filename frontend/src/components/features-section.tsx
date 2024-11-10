@@ -6,7 +6,7 @@ import { MagicCard } from "@/components/ui/magic-card";
 
 const featureDetails = {
   "Seamless Data Access": "Unified API interface for effortless data source integration and management.",
-  "Easy Setup": "Quick configuration process to get your system up and running in minutes.",
+  "Bespoke Tool Use": "Customize your agents to execute workflow tasks, unlocking limitless automation possibilities",
   "Smart Analytics": "Advanced AI algorithms delivering powerful data insights and analysis.",
   "Custom Integrations": "Tailored integration solutions designed for your specific business needs.",
   "Real-time Insights": "Instant data monitoring and analysis for timely decision making.",
@@ -36,7 +36,7 @@ export function FeaturesSection() {
           <FeatureCard key={title} title={title} description={description} />
         ))}
       </div>
-      <div className="flex justify-center mt-32 mb-32">
+      <div className="flex justify-center mt-16">
         <Image
           alt="Integrations visualization"
           src="/images/integrations.png"

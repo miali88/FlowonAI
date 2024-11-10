@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { TextShimmer } from "@/components/magicui/text-shimmer";
-import { Particles } from "@/components/magicui/particles";
 import { BentoDemo } from "@/components/AgentDemo";
 import WordRotate from "@/components/ui/word-rotate";
 import { OnboardingButton } from './OnboardingButton';
@@ -26,18 +25,7 @@ export function Hero() {
       setUrl(null);
     }
   };
-
-  const handleStreamEnd = () => {
-    setIsStreaming(false);
-    setIsLiveKitActive(false);
-    setToken(null);
-    setUrl(null);
-  };
-
-  const handleStreamStart = () => {
-    // Add any stream start logic if needed
-  };
-
+  
   // Mobile Component (only shows below sm breakpoint)
   const MobileHero = () => (
     <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden">

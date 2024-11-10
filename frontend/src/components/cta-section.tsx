@@ -21,7 +21,7 @@ export function CtaSection() {
             variant="outline"
             className="group mt-4 rounded-full px-6 hover:bg-border"
           >
-            <Link href="#" className="group mt-4 px-6 transition-all duration-300 ease-out">
+            <Link href="/sign-up" className="group mt-4 px-6 transition-all duration-300 ease-out">
               Get Started
               <ChevronRight
                 size={16}
