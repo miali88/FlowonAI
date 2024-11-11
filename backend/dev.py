@@ -127,19 +127,18 @@ async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionConte
 
 @llm.ai_callable(
     name="verify_user_info",
-    description="Verify and update user information based on provided form fields",
-    auto_retry=True
+    description="Verify user information based on provided form fields"
 )
 async def verify_user_info(
     form_fields: Annotated[
         str,
         llm.TypeInfo(
-            description="JSON string containing user form fields to verify (e.g., name, email, etc.)"
+            description=f"JSON string containing user form fields to verify ('full name', 'organization', 'industry sector')"
         )
     ]
 ) -> str:
     """
-    Verifies and updates user information in the system.
+    Verifies user information in the system.
     Returns confirmation message or error details.
     """
     try:
@@ -153,8 +152,8 @@ async def verify_user_info(
         # Update the stored information with new fields
         verify_user_info.collected_user_info.update(fields)
         
-        # Validate required fields
-        required_fields = ['name', 'email']
+        # Validate required fields (fixed version)
+        required_fields = ['full name', 'organization', 'industry sector']
         missing_fields = [field for field in required_fields if field not in fields]
         if missing_fields:
             return f"Missing required fields: {', '.join(missing_fields)}"
@@ -162,15 +161,51 @@ async def verify_user_info(
         # Format collected information for display
         info_summary = "\n".join([f"{k.title()}: {v}" for k, v in verify_user_info.collected_user_info.items()])
         return (
-            f"Information collected successfully!\n\n"
             f"Here's what we have so far:\n{info_summary}\n\n"
-            f"Is there anything else you'd like to update?"
+            f"Great, now that we've collected your information, I'll redirect you to the dashboard."
         )
         
     except json.JSONDecodeError:
         return "Error: Invalid JSON format in form fields"
     except Exception as e:
         return f"Error verifying user information: {str(e)}"
+
+@llm.ai_callable(
+    name="redirect_to_dashboard",
+    description="Redirect user to dashboard after completing onboarding and verifying user information",
+    auto_retry=True
+)
+async def redirect_to_dashboard(
+    recommended_feature: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The recommended feature for the user to start with, based on the conversation"
+        )
+    ],
+    use_case: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The specific use case identified during the conversation"
+        )
+    ]
+) -> str:
+    """
+    Concludes the onboarding conversation and redirects user to dashboard.
+    Should only be called after:
+    1. User information has been collected and verified via verify_user_info
+    2. The conversation has naturally concluded
+    3. A clear use case and recommended feature have been identified
+
+    Returns a farewell message with personalized feature recommendations.
+    """
+    return (
+        f"Great! Now that we've collected your information and understood your needs, "
+        f"I'll redirect you to the dashboard. Based on our conversation, "
+        f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
+        f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
+        f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
+    )
+
 form_fields = ['full name', 'organization', 'industry sector']
 sys_prompt_onboarding = f"""
 # Flowon AI Assistant - System Prompt
@@ -178,7 +213,7 @@ sys_prompt_onboarding = f"""
 ## Available Functions
 You have access to the following functions:
 
-1. `verify_user_info`: Use to verify and update user information
+1. `verify_user_info`: Use to verify user information
    - Requires: {form_fields}
    - Use when you've gathered or confirmed user details during conversation
 
@@ -200,10 +235,12 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 - You maintain a professional yet friendly tone, positioning yourself as a knowledgeable consultant
 
 ## Conversation Flow
-1. Initial Greeting
+1. Initial Greeting and Name Collection
    - Welcome users warmly
    - Introduce yourself as Flora, Flowon AI's onboarding assistant
-   - Express enthusiasm about helping them explore conversational AI solutions
+   - Immediately ask for their full name: "Before we begin, could you please share your full name with me?"
+   - Confirm their name explicitly: "Thank you [Full Name], I'll make sure to remember that."
+   - Only proceed with further onboarding steps after confirming the name
 
 2. Information Gathering
    - Start by explicitly mentioning that you'll be asking a few questions to enhance their experience
@@ -220,9 +257,16 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 
 3. Form Collection
    - When appropriate timing is identified during the conversation, present the user information form
-   - Pre-fill the following fields based on the conversation:
+   - Proactively infer form fields from context whenever possible:
+     - Industry sector should be derived from use cases or business type mentions
+     - Organization details from business context
+     - Role or needs from described use cases
+   - Pre-fill the following fields based on both direct statements AND contextual inference:
      {form_fields}
-   - Ask for verification: "I've captured some details from our conversation. Could you please verify if this information is correct?"
+   - When verifying, present inferred information: "Based on our conversation, I understand that:
+     - You work in [inferred industry]
+     - Your organization is [inferred org]
+     Would you please verify if this information is correct?"
 
 ## Key Features to Highlight
 - Conversational AI deployment capabilities
@@ -233,9 +277,12 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 
 ## Function Usage Guidelines
 - Use `verify_user_info` when:
-  - You've gathered or confirmed user information during conversation
-  - Before proceeding to specific feature recommendations
-  - When updating existing user information
+  - You've gathered information through direct statements
+  - Example inferences:
+    - If user mentions "booking appointments for my salon", infer industry = "Beauty & Wellness"
+    - If user discusses "student management", infer industry = "Education"
+  - Always explain which information was inferred: "I notice you're in the [industry] space..."
+  - Verify inferred information before finalizing
   
 - Use `redirect_to_dashboard` when:
   - User explicitly requests to move to dashboard
@@ -286,6 +333,7 @@ async def interactive_chat():
     fnc_ctx = llm.FunctionContext()
     fnc_ctx._register_ai_function(search_products_and_services)
     fnc_ctx._register_ai_function(verify_user_info)
+    fnc_ctx._register_ai_function(redirect_to_dashboard)
     
     chat_ctx = llm.ChatContext()
     
@@ -315,7 +363,7 @@ async def interactive_chat():
         )
         
         response, functions = await get_llm_response(chat_ctx, fnc_ctx)
-        print(f"\nAssistant: {response}")
+        #print(f"\nAssistant: {response}")
         
         chat_ctx.append(
             role="assistant",
@@ -326,6 +374,7 @@ async def test_scenario(scenario: ChatScenario):
     fnc_ctx = llm.FunctionContext()
     fnc_ctx._register_ai_function(search_products_and_services)
     fnc_ctx._register_ai_function(verify_user_info)
+    fnc_ctx._register_ai_function(redirect_to_dashboard)
     
     chat_ctx = llm.ChatContext()
     chat_ctx.append(role="system", text=sys_prompt_onboarding)
