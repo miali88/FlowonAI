@@ -5,7 +5,6 @@ import { Room, LocalParticipant } from 'livekit-client';
 import styles from './ChatWidget.module.css';
 import Footer from './Footer';
 
-const DEFAULT_API_BASE_URL = 'https://app.flowon.ai/api/v1';
 const API_DOMAIN = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 interface ChatBotMiniProps {
@@ -56,7 +55,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   setIsConnecting,
   onStreamEnd,
   onStreamStart,
-  bypassShowChatInputCondition = true,
+  bypassShowChatInputCondition,
   localParticipant,
   setLocalParticipant,
 }) => {
@@ -251,6 +250,14 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       [fieldLabel]: value
     }));
   }, []);
+
+  useEffect(() => {
+    console.log('Form visibility conditions:', {
+      bypassShowChatInputCondition,
+      showChatInput,
+      isStreaming
+    });
+  }, [bypassShowChatInputCondition, showChatInput, isStreaming]);
 
   return (
     <div data-widget="wrapper" className={styles.mainWrapper}>

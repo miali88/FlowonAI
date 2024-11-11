@@ -106,6 +106,7 @@ class AgentFunctions(llm.FunctionContext):
         description="Verify user information based on provided form fields"
     )
     async def verify_user_info(
+        self,
         form_fields: Annotated[
             str,
             llm.TypeInfo(
@@ -121,12 +122,12 @@ class AgentFunctions(llm.FunctionContext):
             # Parse the JSON string into a dictionary
             fields = json.loads(form_fields)
             
-            # Store collected information in a global variable or database
-            if not hasattr(verify_user_info, 'collected_user_info'):
-                verify_user_info.collected_user_info = {}
+            # Store in instance variable instead of function attribute
+            if not hasattr(self, 'collected_user_info'):
+                self.collected_user_info = {}
             
             # Update the stored information with new fields
-            verify_user_info.collected_user_info.update(fields)
+            self.collected_user_info.update(fields)
             
             # Validate required fields (fixed version)
             required_fields = ['full name', 'organization', 'industry sector']
@@ -135,7 +136,7 @@ class AgentFunctions(llm.FunctionContext):
                 return f"Missing required fields: {', '.join(missing_fields)}"
             
             # Format collected information for display
-            info_summary = "\n".join([f"{k.title()}: {v}" for k, v in verify_user_info.collected_user_info.items()])
+            info_summary = "\n".join([f"{k.title()}: {v}" for k, v in self.collected_user_info.items()])
             return (
                 f"Here's what we have so far:\n{info_summary}\n\n"
                 f"Great, now that we've collected your information, I'll redirect you to the dashboard."
@@ -152,6 +153,7 @@ class AgentFunctions(llm.FunctionContext):
         auto_retry=True
     )
     async def redirect_to_dashboard(
+        self,
         recommended_feature: Annotated[
             str,
             llm.TypeInfo(
