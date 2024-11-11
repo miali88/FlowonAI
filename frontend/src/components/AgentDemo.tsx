@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import ChatWidget from '@/app/dashboard/AgentHub/workspace/ChatWidget';
+import ChatWidget from '@/app/dashboard/agenthub/workspace/ChatWidget';
 
 interface DemoAgent {
   id: string;

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Agent } from '../../AgentHub/AgentCards';
+import { Agent } from '../AgentCards';
 import ChatWidget from './ChatWidget';
 
 interface PlaygroundProps {

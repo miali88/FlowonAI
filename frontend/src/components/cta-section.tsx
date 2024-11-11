@@ -14,7 +14,7 @@ export function CtaSection() {
           <h2 className="text-3xl font-bold lg:text-4xl font-heading">
             Make customers love interacting with your brand.
           </h2>
-          {/* <p className="mt-2">Start your 7-day free trial. No credit card required.</p> */}
+          <p className="mt-2">Sign up now for early access.</p>
           <Button
             size="lg"
             asChild

@@ -49,8 +49,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           className={styles.chatWidgetIframe}
           src={`${domain}/chat-widget/${agentId}`}
           allow="microphone *; camera *"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-storage-access-by-user-activation allow-top-navigation-by-user-activation",
-          credentialless="true"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
         />
       </div>
     </div>

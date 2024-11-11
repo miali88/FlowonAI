@@ -8,7 +8,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "frame-src 'self' https://*.stripe.com http://localhost:3000;",
+            value: "frame-src 'self' http://localhost:3000 https://app.flowon.ai/;",
           },
         ],
       },

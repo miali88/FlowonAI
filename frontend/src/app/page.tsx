@@ -31,9 +31,9 @@ export default function HomePage() {
           <SetupSection />
           <Information />
           <DeploySection />
-          <div id="pricing" className="scroll-mt-20">
+          {/* <div id="pricing" className="scroll-mt-20">
             <Pricing />
-          </div>
+          </div> */}
           <CtaSection />
           {/* <Testimonials /> */}
         </div>

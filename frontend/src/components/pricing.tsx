@@ -22,12 +22,8 @@ export function Pricing({ currentPlan }: PricingProps) {
       return; // Handle manage plan case if needed
     }
     
-    // Redirect to appropriate Stripe checkout URL
-    if (planName.toLowerCase() === "startup") {
-      window.location.href = "https://buy.stripe.com/fZe00H6qzaE42PK3cf";
-    } else if (planName.toLowerCase() === "enterprise") {
-      window.location.href = "https://buy.stripe.com/4gweVBaGP27yfCwfYZ";
-    }
+    // Redirect to sign-up page
+    window.location.href = "/sign-up";
   };
 
   const getButtonText = (planName: string) => {
