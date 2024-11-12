@@ -139,7 +139,6 @@ class AgentFunctions(llm.FunctionContext):
             info_summary = "\n".join([f"{k.title()}: {v}" for k, v in self.collected_user_info.items()])
             return (
                 f"Here's what we have so far:\n{info_summary}\n\n"
-                f"Great, now that we've collected your information, I'll redirect you to the dashboard."
             )
             
         except json.JSONDecodeError:
@@ -147,42 +146,42 @@ class AgentFunctions(llm.FunctionContext):
         except Exception as e:
             return f"Error verifying user information: {str(e)}"
 
-    @llm.ai_callable(
-        name="redirect_to_dashboard",
-        description="Redirect user to dashboard after completing onboarding and verifying user information",
-        auto_retry=True
-    )
-    async def redirect_to_dashboard(
-        self,
-        recommended_feature: Annotated[
-            str,
-            llm.TypeInfo(
-                description="The recommended feature for the user to start with, based on the conversation"
-            )
-        ],
-        use_case: Annotated[
-            str,
-            llm.TypeInfo(
-                description="The specific use case identified during the conversation"
-            )
-        ]
-    ) -> str:
-        """
-        Concludes the onboarding conversation and redirects user to dashboard.
-        Should only be called after:
-        1. User information has been collected and verified via verify_user_info
-        2. The conversation has naturally concluded
-        3. A clear use case and recommended feature have been identified
+    # @llm.ai_callable(
+    #     name="redirect_to_dashboard",
+    #     description="Redirect user to dashboard after completing onboarding and verifying user information",
+    #     auto_retry=True
+    # )
+    # async def redirect_to_dashboard(
+    #     self,
+    #     recommended_feature: Annotated[
+    #         str,
+    #         llm.TypeInfo(
+    #             description="The recommended feature for the user to start with, based on the conversation"
+    #         )
+    #     ],
+    #     use_case: Annotated[
+    #         str,
+    #         llm.TypeInfo(
+    #             description="The specific use case identified during the conversation"
+    #         )
+    #     ]
+    # ) -> str:
+    #     """
+    #     Concludes the onboarding conversation and redirects user to dashboard.
+    #     Should only be called after:
+    #     1. User information has been collected and verified via verify_user_info
+    #     2. The conversation has naturally concluded
+    #     3. A clear use case and recommended feature have been identified
 
-        Returns a farewell message with personalized feature recommendations.
-        """
-        return (
-            f"Great! Now that we've collected your information and understood your needs, "
-            f"I'll redirect you to the dashboard. Based on our conversation, "
-            f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
-            f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
-            f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
-        )
+    #     Returns a farewell message with personalized feature recommendations.
+    #     """
+    #     return (
+    #         f"Great! Now that we've collected your information and understood your needs, "
+    #         f"I'll redirect you to the dashboard. Based on our conversation, "
+    #         f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
+    #         f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
+    #         f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
+    #     )
 
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
