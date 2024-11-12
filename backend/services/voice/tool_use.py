@@ -115,7 +115,7 @@ class AgentFunctions(llm.FunctionContext):
         ]
     ) -> str:
         """
-        Verifies user information in the system.
+        Presents the extracted user information to the user and asks them to verify it.
         Returns confirmation message or error details.
         """
         try:
