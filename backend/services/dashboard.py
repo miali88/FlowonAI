@@ -1,8 +1,7 @@
 import asyncio
 import logging
 from tiktoken import encoding_for_model
-import requests
-import json
+import aiohttp
 
 import spacy
 from openai import AsyncOpenAI
@@ -77,14 +76,23 @@ async def get_embedding(text):
             "embedding_type": "float",
             "input": text
         }
-        response = requests.post(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()  # Raise exception for non-200 status codes
-        logger.debug("Successfully received embedding from Jina AI")
-
-        embedding = response.json()['data'][0]['embedding']
-        token_count = response.json()['usage']['total_tokens']
-        return embedding, token_count
-    except requests.exceptions.RequestException as e:
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=data) as response:
+                if response.status != 200:
+                    raise aiohttp.ClientResponseError(
+                        response.request_info,
+                        response.history,
+                        status=response.status
+                    )
+                result = await response.json()
+                logger.debug("Successfully received embedding from Jina AI")
+                
+                embedding = result['data'][0]['embedding']
+                token_count = result['usage']['total_tokens']
+                return embedding, token_count
+                
+    except aiohttp.ClientError as e:
         logger.error(f"Failed to get embedding from Jina AI: {str(e)}")
         raise
 

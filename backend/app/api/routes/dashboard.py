@@ -2,6 +2,8 @@ from typing import Optional, List
 from pydantic import BaseModel
 import json, logging
 import tiktoken
+import asyncio
+from aiohttp import ClientSession, ClientTimeout
 
 from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks, WebSocket
 from fastapi.responses import JSONResponse
@@ -12,7 +14,7 @@ from app.core.config import settings
 from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items
-from services.knowledge_base.web_scrape import map_url, scrape_url
+from services.knowledge_base.web_scrape import map_url, scrape_url, map_url_async, scrape_single_url_async
 
 supabase = supabase_client()
 
@@ -191,12 +193,38 @@ async def scrape_url_handler(
         request_data = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
         
-        # Schedule scraping to run in the background
-        background_tasks.add_task(scrape_url, urls, current_user)
+        # Create a background task that runs the async scraping
+        background_tasks.add_task(process_urls_async, urls, current_user)
         
         return {"message": "Scraping started in background", "urls": len(urls)}
     except Exception as e:
+        logger.error(f"Error in scrape_url_handler: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error processing URLs: {str(e)}")
+
+async def process_urls_async(urls: List[str], user_id: str):
+    """Process multiple URLs concurrently"""
+    async with ClientSession(timeout=ClientTimeout(total=300)) as session:
+        # Create tasks for all URLs
+        tasks = [process_single_url(session, url, user_id) for url in urls]
+        # Run all tasks concurrently
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+async def process_single_url(session: ClientSession, url: str, user_id: str):
+    """Process a single URL with error handling"""
+    try:
+        # First, map the URL
+        mapped_urls = await map_url_async(session, url)
+        
+        # Then scrape each mapped URL
+        for mapped_url in mapped_urls:
+            try:
+                await scrape_single_url_async(session, mapped_url, user_id)
+            except Exception as e:
+                logger.error(f"Error scraping URL {mapped_url}: {str(e)}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Error processing URL {url}: {str(e)}")
 
 @router.post("/crawl_url")
 async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):

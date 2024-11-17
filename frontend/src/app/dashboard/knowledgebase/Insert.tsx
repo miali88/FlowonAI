@@ -204,7 +204,24 @@ export function Insert({
                     </Button>
                     {mappedUrls.length > 0 && (
                       <div className="mt-4">
-                        <h3 className="text-sm font-medium mb-2">Select pages to scrape:</h3>
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-sm font-medium">Select pages to scrape:</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedUrls.length === mappedUrls.length) {
+                                // If all are selected, deselect all
+                                setSelectedUrls([]);
+                              } else {
+                                // If not all are selected, select all
+                                setSelectedUrls([...mappedUrls]);
+                              }
+                            }}
+                          >
+                            {selectedUrls.length === mappedUrls.length ? "Deselect All" : "Select All"}
+                          </Button>
+                        </div>
                         <div className="space-y-2">
                           {mappedUrls.map((url, index) => (
                             <div key={index} className="flex items-center space-x-2">
