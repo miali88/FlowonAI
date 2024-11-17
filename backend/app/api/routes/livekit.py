@@ -4,7 +4,7 @@ from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends,
 from supabase import create_client, Client
 
 from app.core.config import settings
-from services.voice.livekit_services import token_gen, token_embed_gen, start_agent_request
+from services.voice.livekit_services import token_gen, start_agent_request
 from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content, update_agent
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)

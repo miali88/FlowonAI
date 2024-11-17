@@ -62,17 +62,20 @@ async def livekit_room_webhook(request: Request):
     logger.info(f"Received webhook data: {data}")
 
     try:
-        supabase.table("conversation_logs").insert({
-            "transcript": data['transcript'],  
-            "job_id": data['job_id'],
-            "participant_identity": data['participant_identity'],
-            "room_name": data['room_name'],
-            "user_id": user_id,
-            "agent_id": data['agent_id'],
-            "lead": data['prospect_status'], 
-            "call_duration": data['call_duration'],
-            "call_type": data['call_type']
-        }).execute()
+        if data['transcript'] != []:
+            supabase.table("conversation_logs").insert({
+                "transcript": data['transcript'],  
+                "job_id": data['job_id'],
+                "participant_identity": data['participant_identity'],
+                "room_name": data['room_name'],
+                "user_id": user_id,
+                "agent_id": data['agent_id'],
+                "lead": data['prospect_status'], 
+                "call_duration": data['call_duration'],
+                "call_type": data['call_type']
+            }).execute()
+        else:
+            logger.info(f"No transcript received for job {data['job_id']}")
         
         print(f"Saved conversation log for job {data['job_id']} to Supabase")
 

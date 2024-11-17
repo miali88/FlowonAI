@@ -13,6 +13,9 @@ from services.cache import get_agent_metadata
 
 from services.chat.chat import similarity_search
 
+import logging
+logger = logging.getLogger(__name__)
+
 @dataclass
 class ChatScenario:
     name: str
@@ -38,62 +41,61 @@ class ChatTester:
         except FileNotFoundError:
             return None
 
-@llm.ai_callable(
-    name="search_products_and_services",
-    description="Search the documentation for technical related questions",
-    auto_retry=True
-)
-async def search_products_and_services(
-    query: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The search query containing keywords about products or services"
-        )
-    ],
-    category: Annotated[
-        str, 
-        llm.TypeInfo(
-            description="The category to search in: 'products', 'services', or 'both'"
-        )
-    ] = "both", 
-) -> str:
-    """
-    Performs a semantic search in the database for products and services based on the user's query.
-    Returns formatted information about matching products/services.
-    """
-    print("\n\n\n\n FUNCTION CALL: search_products_and_services")
+# @llm.ai_callable(
+#     name="search_products_and_services",
+#     description="Search the documentation for technical related questions",
+#     auto_retry=True
+# )
+# async def search_products_and_services(
+#     query: Annotated[
+#         str,
+#         llm.TypeInfo(
+#             description="The search query containing keywords about products or services"
+#         )
+#     ],
+#     category: Annotated[
+#         str, 
+#         llm.TypeInfo(
+#             description="The category to search in: 'products', 'services', or 'both'"
+#         )
+#     ] = "both", 
+# ) -> str:
+#     """
+#     Performs a semantic search in the database for products and services based on the user's query.
+#     Returns formatted information about matching products/services.
+#     """
+#     print("\n\n\n\n FUNCTION CALL: search_products_and_services")
 
-    try:
+#     try:
 
-        data_source = await get_agent_metadata("aaf5fce2-c925-4a32-aefc-e4af35d4b8e1")
-        data_source: str = data_source.get('dataSource', None)
-        if data_source != "all":
-            data_source: Dict = json.loads(data_source)
-            data_source: Dict = {
-                "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
-                "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
-            }
-            results = await similarity_search(query, data_source=data_source, user_id="user_2mmXezcGmjZCf88gT2v2waCBsXv")
-        elif data_source == "all":
-            data_source = {"web": ["all"], "text_files": ["all"]}
-            results = await similarity_search(query, data_source=data_source, user_id="user_2mmXezcGmjZCf88gT2v2waCBsXv")
+#         data_source = await get_agent_metadata("aaf5fce2-c925-4a32-aefc-e4af35d4b8e1")
+#         data_source: str = data_source.get('dataSource', None)
+#         if data_source != "all":
+#             data_source: Dict = json.loads(data_source)
+#             data_source: Dict = {
+#                 "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
+#                 "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
+#             }
+#             results = await similarity_search(query, data_source=data_source, user_id="user_2mmXezcGmjZCf88gT2v2waCBsXv")
+#         elif data_source == "all":
+#             data_source = {"web": ["all"], "text_files": ["all"]}
+#             results = await similarity_search(query, data_source=data_source, user_id="user_2mmXezcGmjZCf88gT2v2waCBsXv")
 
-        print("\n\n\n\n RESULTS: ", results)
-        rag_prompt = f"""
-        ## User Query: {query}
-        ## Found matching products/services: {results}
-        """
-        chat_ctx = llm.ChatContext()
-        chat_ctx.append(
-                role="user",
-                text=rag_prompt
-            )
+#         print("\n\n\n\n RESULTS: ", results)
+#         rag_prompt = f"""
+#         ## User Query: {query}
+#         ## Found matching products/services: {results}
+#         """
+#         chat_ctx = llm.ChatContext()
+#         chat_ctx.append(
+#                 role="user",
+#                 text=rag_prompt
+#             )
 
-        return await get_llm_response(chat_ctx)
+#         return await get_llm_response(chat_ctx)
         
-    except Exception as e:
-        return "Sorry, I encountered an error while searching for products and services."
-
+#     except Exception as e:
+#         return "Sorry, I encountered an error while searching for products and services."
 
 
 async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionContext = None):
@@ -126,85 +128,65 @@ async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionConte
     return full_response, function_calls
 
 @llm.ai_callable(
-    name="verify_user_info",
-    description="Verify user information based on provided form fields"
-)
-async def verify_user_info(
-    form_fields: Annotated[
-        str,
-        llm.TypeInfo(
-            description=f"JSON string containing user form fields to verify ('full name', 'organization', 'industry sector')"
-        )
-    ]
-) -> str:
-    """
-    Verifies user information in the system.
-    Returns confirmation message or error details.
-    """
-    try:
-        # Parse the JSON string into a dictionary
-        fields = json.loads(form_fields)
-        
-        # Store collected information in a global variable or database
-        if not hasattr(verify_user_info, 'collected_user_info'):
-            verify_user_info.collected_user_info = {}
-        
-        # Update the stored information with new fields
-        verify_user_info.collected_user_info.update(fields)
-        
-        # Validate required fields (fixed version)
-        required_fields = ['full name', 'organization', 'industry sector']
-        missing_fields = [field for field in required_fields if field not in fields]
-        if missing_fields:
-            return f"Missing required fields: {', '.join(missing_fields)}"
-        
-        # Format collected information for display
-        info_summary = "\n".join([f"{k.title()}: {v}" for k, v in verify_user_info.collected_user_info.items()])
-        return (
-            f"Here's what we have so far:\n{info_summary}\n\n"
-            f"Great, now that we've collected your information, I'll redirect you to the dashboard."
-        )
-        
-    except json.JSONDecodeError:
-        return "Error: Invalid JSON format in form fields"
-    except Exception as e:
-        return f"Error verifying user information: {str(e)}"
-
-@llm.ai_callable(
-    name="redirect_to_dashboard",
-    description="Redirect user to dashboard after completing onboarding and verifying user information",
+    name="question_and_answer",
+    description="Extract user's question and perform information retrieval search to provide relevant answers",
     auto_retry=True
 )
-async def redirect_to_dashboard(
-    recommended_feature: Annotated[
+async def question_and_answer(
+    question: Annotated[
         str,
         llm.TypeInfo(
-            description="The recommended feature for the user to start with, based on the conversation"
-        )
-    ],
-    use_case: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The specific use case identified during the conversation"
+            description="The user's question that needs to be answered"
         )
     ]
 ) -> str:
     """
-    Concludes the onboarding conversation and redirects user to dashboard.
-    Should only be called after:
-    1. User information has been collected and verified via verify_user_info
-    2. The conversation has naturally concluded
-    3. A clear use case and recommended feature have been identified
-
-    Returns a farewell message with personalized feature recommendations.
+    Performs information retrieval search based on the user's question.
+    Returns relevant information found in the knowledge base.
     """
-    return (
-        f"Great! Now that we've collected your information and understood your needs, "
-        f"I'll redirect you to the dashboard. Based on our conversation, "
-        f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
-        f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
-        f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
-    )
+    try:
+        print("\n\n Processing Q&A tool")
+        logger.info(f"Processing Q&A for question: {question}")
+        room_name = "agent_f33b321f-cd04-4db4-b433-57801ac588d4_room_visitor_02c0f9d7-0343-4a18-9800-d74ae75df057"
+
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+        user_id: str = agent_metadata['userId']
+        data_source: str = agent_metadata.get('dataSource', None)
+        
+        if data_source != "all":
+            data_source: Dict = json.loads(data_source)
+            data_source: Dict = {
+                "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
+                "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
+            }
+
+            #print("data_source:", data_source)
+            results = await similarity_search(question, data_source=data_source, user_id=user_id)
+          
+        else:
+            data_source = {"web": ["all"], "text_files": ["all"]}
+            results = await similarity_search(question, data_source=data_source, user_id=user_id)
+
+        rag_prompt = f"""
+        ## User Query: {question}
+        ## Found matching products/services: {results}
+        """
+
+        chat_ctx = llm.ChatContext()
+        chat_ctx.append(
+            role="user",
+            text=rag_prompt
+                    )
+
+        return await get_llm_response(chat_ctx)
+
+
+    except Exception as e:
+        logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
+        return "I apologize, but I encountered an error while searching for an answer to your question."
+
 
 form_fields = ['full name', 'organization', 'industry sector']
 sys_prompt_onboarding = f"""
@@ -328,29 +310,22 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
   - Thank them for their time and express excitement about their journey with Flowon AI
 """
 
+sys_prompt_qa = f"""
+You are a chatbot specialising in sharing your knowledge on headformers. Your responses should be grounded in the results retrieved from the database
+"""
 
 async def interactive_chat():
     fnc_ctx = llm.FunctionContext()
-    fnc_ctx._register_ai_function(search_products_and_services)
-    fnc_ctx._register_ai_function(verify_user_info)
-    fnc_ctx._register_ai_function(redirect_to_dashboard)
+    fnc_ctx._register_ai_function(question_and_answer)
     
     chat_ctx = llm.ChatContext()
     
     chat_ctx.append(
         role="system",
-        text=sys_prompt_onboarding
+        text=sys_prompt_qa
     )
     
     print("Starting conversation (type 'exit' to end)...")
-    
-    response, functions = await get_llm_response(chat_ctx, fnc_ctx)
-    print(f"\nAssistant: {response}")
-    
-    chat_ctx.append(
-        role="assistant",
-        text=response
-    )
     
     while True:
         user_input = input("\nYou: ")
@@ -363,7 +338,6 @@ async def interactive_chat():
         )
         
         response, functions = await get_llm_response(chat_ctx, fnc_ctx)
-        #print(f"\nAssistant: {response}")
         
         chat_ctx.append(
             role="assistant",
@@ -372,9 +346,9 @@ async def interactive_chat():
 
 async def test_scenario(scenario: ChatScenario):
     fnc_ctx = llm.FunctionContext()
-    fnc_ctx._register_ai_function(search_products_and_services)
-    fnc_ctx._register_ai_function(verify_user_info)
-    fnc_ctx._register_ai_function(redirect_to_dashboard)
+    fnc_ctx._register_ai_function(question_and_answer)
+    # fnc_ctx._register_ai_function(verify_user_info)
+    # fnc_ctx._register_ai_function(redirect_to_dashboard)
     
     chat_ctx = llm.ChatContext()
     chat_ctx.append(role="system", text=sys_prompt_onboarding)

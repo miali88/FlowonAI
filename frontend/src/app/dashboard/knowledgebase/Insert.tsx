@@ -190,38 +190,53 @@ export function Insert({
                       onChange={(e) => setScrapeUrl(e.target.value)}
                       className="mb-4"
                     />
-                    <Button 
-                      onClick={handleScrapeWrapper} 
-                      className={`self-start px-4 py-2 ${isMappingWebsite ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isMappingWebsite}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isMappingWebsite && (
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-white" />
-                        )}
-                        {isMappingWebsite ? "Mapping..." : "Map Website"}
-                      </div>
-                    </Button>
-                    {mappedUrls.length > 0 && (
-                      <div className="mt-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="text-sm font-medium">Select pages to scrape:</h3>
+                    <div className="flex gap-2 sticky top-0 bg-background z-10">
+                      <Button 
+                        onClick={handleScrapeWrapper} 
+                        className={`${isMappingWebsite ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={isMappingWebsite}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isMappingWebsite && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-white" />
+                          )}
+                          {isMappingWebsite ? "Mapping..." : "Map Website"}
+                        </div>
+                      </Button>
+                      
+                      {mappedUrls.length > 0 && (
+                        <>
                           <Button
                             variant="outline"
-                            size="sm"
                             onClick={() => {
                               if (selectedUrls.length === mappedUrls.length) {
-                                // If all are selected, deselect all
                                 setSelectedUrls([]);
                               } else {
-                                // If not all are selected, select all
                                 setSelectedUrls([...mappedUrls]);
                               }
                             }}
                           >
                             {selectedUrls.length === mappedUrls.length ? "Deselect All" : "Select All"}
                           </Button>
-                        </div>
+                          
+                          <Button 
+                            onClick={async () => {
+                              const success = await handleScrapeAllWrapper();
+                              if (success) {
+                                setNewItemContent("URLs added to your library");
+                              }
+                            }}
+                            disabled={selectedUrls.length === 0}
+                          >
+                            Scrape Selected ({selectedUrls.length})
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    {mappedUrls.length > 0 && (
+                      <div className="mt-4 overflow-y-auto">
+                        <h3 className="text-sm font-medium mb-2">Select pages to scrape:</h3>
                         <div className="space-y-2">
                           {mappedUrls.map((url, index) => (
                             <div key={index} className="flex items-center space-x-2">
@@ -243,21 +258,9 @@ export function Insert({
                             </div>
                           ))}
                         </div>
-                        <div className="mt-4 flex gap-2">
-                          <Button 
-                            onClick={async () => {
-                              const success = await handleScrapeAllWrapper();
-                              if (success) {
-                                setNewItemContent("URLs added to your library");
-                              }
-                            }}
-                            disabled={selectedUrls.length === 0}
-                          >
-                            Scrape Selected ({selectedUrls.length})
-                          </Button>
-                        </div>
                       </div>
                     )}
+                    
                     {scrapeError && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />

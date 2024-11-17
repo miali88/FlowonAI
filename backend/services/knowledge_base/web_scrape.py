@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 import asyncio
 from datetime import datetime
 import logging
-import aiohttp
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -46,9 +45,8 @@ async def get_embedding(text):
         "embedding_type": "float",
         "input": text
     }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, json=data) as response:
-            return await response.json()
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    return response.json()#['data'][0]['embedding']
 
 async def sliding_window_chunking(text, max_window_size=900, overlap=200):
     encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
@@ -159,80 +157,3 @@ async def scrape_url(urls: List[str], user_id: str = None):
 
 
     return results
-
-async def map_url_async(url: str) -> List[str]:
-    """Async version of map_url function"""
-    logger.info(f"Starting async URL mapping for: {url}")
-    try:
-        # Since FirecrawlApp.map_url is synchronous, we'll run it in a thread pool
-        map_result = await asyncio.to_thread(
-            app.map_url,
-            url,
-            params={'includeSubdomains': True}
-        )
-        logger.info(f"Successfully mapped URL. Found {len(map_result)} URLs")
-        return map_result
-    except Exception as e:
-        logger.error(f"Error mapping URL {url}: {str(e)}")
-        raise
-
-async def scrape_single_url_async(url: str, user_id: str = None):
-    """Async version for scraping a single URL"""
-    logger.info(f"Starting single URL scrape for: {url}")
-    
-    parsed_url = urlparse(url)
-    root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-    sb_insert = {
-        "url": url,
-        "header": "",
-        "content": "",
-        "token_count": 0,
-        "jina_embedding": "",
-        "user_id": user_id,
-        "root_url": root_url
-    }
-
-    try:
-        # Run the synchronous scrape_url in a thread pool
-        response = await asyncio.to_thread(
-            app.scrape_url,
-            url=url,
-            params={
-                'formats': ['markdown'],
-                'waitFor': 1000
-            }
-        )
-
-        content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
-        content = "\n\n".join(content)
-        
-        try:
-            header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
-        except KeyError:
-            logger.warning(f"KeyError occurred for site {url}: Missing description")
-            header = "## Title: " + response['metadata']['title']
-
-        chunks = await sliding_window_chunking(content)
-        results = []
-
-        for chunk in chunks:
-            logger.info(f"Processing chunk {chunks.index(chunk)} of {len(chunks)}")
-            current_insert = sb_insert.copy()
-            current_insert['header'] = header
-            current_insert['content'] = chunk
-            
-            chunk_with_header = header + chunk
-            jina_response = await get_embedding(chunk_with_header)
-            
-            current_insert['jina_embedding'] = jina_response['data'][0]['embedding']
-            current_insert['token_count'] = jina_response['usage']['total_tokens']
-
-            await insert_to_db(current_insert)
-            results.append(current_insert)
-
-        return results
-
-    except Exception as e:
-        logger.error(f"Error processing site {url}: {str(e)}")
-        raise

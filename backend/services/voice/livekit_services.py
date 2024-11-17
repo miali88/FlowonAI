@@ -32,7 +32,8 @@ async def create_livekit_api():
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
     logger.info(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
-    
+    print(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
+
     if not agent_id or not user_id:
         logger.error("Missing required parameters: agent_id or user_id")
         raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
@@ -185,7 +186,11 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
                 raise ValueError(f"Agent configuration missing required field: {field}")
 
         logger.info("Creating voice assistant with configuration")
+        print("Creating voice assistant with configuration")
         fnc_ctx = AgentFunctions(job_ctx)
+        # Initialize functions based on agent features
+        await fnc_ctx.initialize_functions()
+        
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
@@ -201,7 +206,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
             interrupt_min_words=2,
-            min_endpointing_delay=0.5,
+            min_endpointing_delay=1,
             before_tts_cb=remove_special_characters)
             
         logger.info("Voice assistant created successfully")
@@ -241,32 +246,3 @@ async def get_agent(agent_id):
         return response.data[0]
     else:
         return None
-
-""" to refactor code"""
-async def token_embed_gen(agent_id: str, background_tasks: BackgroundTasks):
-    print("Token request received")
-    print(f"Request parameters: agent_id={agent_id}")
-    
-    if not agent_id:
-        print("Missing agent_id in request")
-        raise HTTPException(status_code=400, detail="Missing agent_id")
-
-    visitor_id = f"{random.randint(100000000000, 999999999999):012d}"
-    room_name = f"agent_{agent_id}_room_{visitor_id}"
-    api_key = os.getenv("LIVEKIT_API_KEY")
-    api_secret = os.getenv("LIVEKIT_API_SECRET")
-    livekit_server_url = os.getenv("LIVEKIT_URL")
-    
-    if not api_key or not api_secret or not livekit_server_url:
-        print("LiveKit credentials not configured")
-        raise HTTPException(status_code=500, detail="LiveKit credentials not configured")
-
-    print(f"Generating token for room: {room_name}")
-    token = livekit_api.AccessToken(api_key, api_secret)\
-        .with_identity(visitor_id)\
-        .with_name(f"Visitor {visitor_id}")\
-        .with_grants(livekit_api.VideoGrants(
-            room_join=True,
-            room=room_name))
-
-    return token.to_jwt(), livekit_server_url, room_name

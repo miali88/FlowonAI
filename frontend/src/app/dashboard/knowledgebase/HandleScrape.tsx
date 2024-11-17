@@ -95,13 +95,20 @@ export const handleScrapeAll = async ({
   selectedUrls,
 }: Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'> & { selectedUrls: string[] }) => {
   try {
-    // Add debug log
-    console.log('Selected URLs being sent:', selectedUrls);
+    console.log('=== Starting handleScrapeAll ===');
+    console.log('User ID:', user.id);
+    console.log('Selected URLs:', selectedUrls);
+    console.log('API Endpoint:', `${API_BASE_URL}/dashboard/scrape_web`);
 
     const token = await getToken();
+    console.log('Token obtained successfully');
+
+    const requestData = { urls: selectedUrls };
+    console.log('Request payload:', requestData);
+
     const response = await axios.post(
       `${API_BASE_URL}/dashboard/scrape_web`,
-      { urls: selectedUrls },
+      requestData,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -110,8 +117,9 @@ export const handleScrapeAll = async ({
       }
     );
 
-    // Add debug log
-    console.log('Response from server:', response.data);
+    console.log('Response received:', response);
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
 
     // Modified response handling
     if (response.data.message === "completed") {
@@ -143,11 +151,17 @@ export const handleScrapeAll = async ({
     setAlertMessage("All pages scraped successfully");
     setAlertType("success");
   } catch (error) {
-    console.error("Error scraping URLs:", error);
-    // Add more detailed error logging
+    console.error('=== Error in handleScrapeAll ===');
+    console.error('Error object:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     if (error.response) {
-      console.error("Response data:", error.response.data);
-      console.error("Response status:", error.response.status);
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+      console.error('Response data:', error.response.data);
+    }
+    if (error.request) {
+      console.error('Request details:', error.request);
     }
     setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URLs");
     setAlertMessage("Failed to scrape URLs: " + (error.response?.data?.detail || error.message));
