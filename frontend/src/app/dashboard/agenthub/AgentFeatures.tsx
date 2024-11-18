@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Agent } from './AgentCards';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface AgentFeaturesProps {
   selectedAgent: {
@@ -29,6 +30,7 @@ interface AgentFeaturesProps {
       transferCallToHuman: boolean;
       bookCalendarSlot: boolean;
     };
+    agentPurpose: string;
   };
   setSelectedAgent: (agent: any) => void;
   handleSaveFeatures: (features: any) => Promise<void>;
@@ -46,6 +48,53 @@ interface ProspectSettings {
   sms: string;
   whatsapp: string;
 }
+
+// Add a new interface for purpose-specific features
+const PURPOSE_FEATURES = {
+  "prospecting": [
+    { 
+      id: "notifyOnInterest", 
+      label: "Notify you on interest",
+      description: "Get notified when prospects show interest in your product or service"
+    },
+    { 
+      id: "form", 
+      label: "Collect written information",
+      description: "Specify what information you want to collect from prospects"
+    }
+  ],
+  "appointment-booking": [
+    { 
+      id: "bookCalendarSlot", 
+      label: "Calendar Integration",
+      description: "Give your agent the ability to check calendar availability and book events on your calendar"
+    },
+    { 
+      id: "appointmentBooking", 
+      label: "Email Integration",
+      description: "Link your email to allow calendar access"
+    }
+  ],
+  "question-answer": [
+    { 
+      id: "collectWrittenInformation", 
+      label: "Information Collection",
+      description: "Allow the agent to collect and store important information from conversations"
+    }
+  ],
+  "customer-service": [
+    { 
+      id: "transferCallToHuman", 
+      label: "Call Transfer",
+      description: "Allow the agent to transfer calls to human operators"
+    },
+    { 
+      id: "callTransfer", 
+      label: "Transfer Settings",
+      description: "Configure call transfer options and phone numbers"
+    }
+  ]
+};
 
 export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   selectedAgent,
@@ -77,20 +126,38 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   });
 
   const handleFeatureToggle = (featureId: string) => {
-    console.log("Toggling feature:", featureId); // For debugging
+    if (!selectedAgent) return;
+    
+    const currentFeatures = selectedAgent.features || {};
+    const currentFeature = currentFeatures[featureId] || {};
+    
     const updatedFeatures = {
-      ...selectedAgent.features,
-      [featureId]: !selectedAgent.features[featureId]
+      ...currentFeatures,
+      [featureId]: {
+        ...currentFeature,
+        enabled: !currentFeature.enabled,
+      }
     };
     
-    console.log("Updated features:", updatedFeatures); // For debugging
-    
-    handleSaveFeatures(updatedFeatures);
+    setSelectedAgent({
+      ...selectedAgent,
+      features: updatedFeatures
+    });
   };
 
   const handleConfigureFeature = (featureId: string) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    
     setCurrentFeature(featureId);
     setIsConfigureDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsConfigureDialogOpen(open);
+    if (!open) {
+      setCurrentFeature(null);
+    }
   };
 
   const handleConfigureDone = () => {
@@ -119,7 +186,28 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
 
   // Form-specific handlers
   const handleAddFormField = () => {
-    setFormFields([...formFields, { type: 'text', label: '', options: [] }]);
+    // Create a new field with default values
+    const newField: FormField = {
+      type: 'text',
+      label: '',
+      options: []
+    };
+
+    // Update the agent's form fields
+    const updatedFeatures = {
+      ...selectedAgent.features,
+      form: {
+        ...selectedAgent.features?.form,
+        enabled: true,
+        fields: [...(selectedAgent.features?.form?.fields || []), newField]
+      }
+    };
+
+    // Update the agent state
+    setSelectedAgent({
+      ...selectedAgent,
+      features: updatedFeatures
+    });
   };
 
   const handleRemoveFormField = (index: number) => {
@@ -139,25 +227,47 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Features List */}
-      {[
-        { id: "notifyOnInterest", label: "Notify you on interest" },
-        { id: "collectWrittenInformation", label: "Collect written information" },
-        { id: "transferCallToHuman", label: "Transfer call to a human" },
-        { id: "bookCalendarSlot", label: "Book calendar slot" }
-      ].map((feature) => (
-        <div key={feature.id} className="flex items-center justify-between">
-          <Label htmlFor={feature.id}>{feature.label}</Label>
-          <Switch
-            id={feature.id}
-            checked={selectedAgent.features[feature.id]}
-            onCheckedChange={() => handleFeatureToggle(feature.id)}
-          />
+      {/* Features List - Now based on agent purpose */}
+      {selectedAgent.agentPurpose && PURPOSE_FEATURES[selectedAgent.agentPurpose]?.map((feature) => (
+        <div key={feature.id} className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor={feature.id} className="block text-sm font-medium">
+                {feature.label}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {feature.description}
+              </p>
+            </div>
+            <Switch
+              id={feature.id}
+              checked={selectedAgent?.features?.[feature.id]?.enabled || false}
+              onCheckedChange={() => handleFeatureToggle(feature.id)}
+            />
+          </div>
+          
+          {/* Show configure button for certain features when enabled */}
+          {selectedAgent?.features?.[feature.id]?.enabled && 
+           (feature.id === 'form' || feature.id === 'callTransfer' || 
+            feature.id === 'appointmentBooking' || feature.id === 'prospects') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => handleConfigureFeature(feature.id)}
+            >
+              Configure
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       ))}
 
       {/* Configuration Dialog */}
-      <Dialog open={isConfigureDialogOpen} onOpenChange={setIsConfigureDialogOpen}>
+      <Dialog 
+        open={isConfigureDialogOpen} 
+        onOpenChange={handleDialogOpenChange}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
@@ -256,13 +366,65 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
               </AccordionItem>
             </Accordion>
 
-            {formFields.map((field, index) => (
-              <div key={index} className="space-y-2">
-                {/* Form field configuration UI */}
-                {/* ... (Keep existing form field UI) ... */}
+            {(selectedAgent.features?.form?.fields || []).map((field, index) => (
+              <div key={index} className="space-y-2 border p-4 rounded-md">
+                <div className="flex items-center gap-4">
+                  <Label>Field Type</Label>
+                  <Select
+                    value={field.type}
+                    onValueChange={(value) => {
+                      const updatedFields = [...(selectedAgent.features?.form?.fields || [])];
+                      updatedFields[index] = { ...field, type: value as 'text' | 'email' | 'phone' | 'dropdown' };
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        features: {
+                          ...selectedAgent.features,
+                          form: {
+                            ...selectedAgent.features?.form,
+                            fields: updatedFields
+                          }
+                        }
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="dropdown">Dropdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    placeholder="Field Label"
+                    value={field.label}
+                    onChange={(e) => {
+                      const updatedFields = [...(selectedAgent.features?.form?.fields || [])];
+                      updatedFields[index] = { ...field, label: e.target.value };
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        features: {
+                          ...selectedAgent.features,
+                          form: {
+                            ...selectedAgent.features?.form,
+                            fields: updatedFields
+                          }
+                        }
+                      });
+                    }}
+                  />
+                </div>
               </div>
             ))}
-            <Button onClick={handleAddFormField} className="w-full">
+
+            <Button 
+              onClick={handleAddFormField} 
+              className="w-full"
+              type="button"
+            >
               <Plus className="mr-2 h-4 w-4" /> Add Field
             </Button>
           </div>

@@ -1,8 +1,19 @@
+import os
+import sys
+
+# Add both the project root and backend directory to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+backend_dir = os.path.dirname(__file__)
+
+for path in [project_root, backend_dir]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
 import asyncio
 from dotenv import load_dotenv
-import logging  # Add this import
-import time  # Add this import
-from datetime import datetime, timedelta  # Update import
+import logging
+import time
+from datetime import datetime, timedelta
 
 from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
@@ -12,6 +23,9 @@ from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data
+
+
+
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)

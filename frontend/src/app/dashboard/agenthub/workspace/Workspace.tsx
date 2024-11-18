@@ -68,13 +68,13 @@ const AGENT_PURPOSES: AgentPurpose[] = [
 // Add this constant at the top of the file, after the imports
 const VOICE_OPTIONS = {
   "en-GB": [
-    { id: "95856005-0332-41b0-935f-352e296aa0df", name: "Alex K", file: "/voices/AlexK.wav" },
-    { id: "79a125e8-cd45-4c13-8a67-188112f4dd22", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
-    { id: "a01c369f-6d2d-4185-bc20-b32c225eab70", name: "Felicity A", file: "/voices/FelicityA.wav" },
+    { id: "alex", name: "Alex K", file: "/voices/AlexK.wav" },
+    { id: "beatrice", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
+    { id: "felicity", name: "Felicity A", file: "/voices/FelicityA.wav" },
   ],
   "en-US": [
-    { id: "e00d0e4c-a5c8-443f-a8a3-473eb9a62355", name: "US Voice 1", file: "/voices/USVoice1.wav" },
-    { id: "d46abd1d-2d02-43e8-819f-51fb652c1c61", name: "US Voice 2", file: "/voices/USVoice2.wav" },
+    { id: "us1", name: "US Voice 1", file: "/voices/USVoice1.wav" },
+    { id: "us2", name: "US Voice 2", file: "/voices/USVoice2.wav" },
   ],
   "fr": [
     { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav" },
@@ -251,7 +251,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       <SelectValue>
                         {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
                           ? selectedAgent.agentPurpose
-                              .map(value => AGENT_PURPOSES.find(p => p.value === value)?.label)
+                              .map(value => {
+                                const purpose = AGENT_PURPOSES.find(p => p.value === value);
+                                return purpose?.label || value;
+                              })
                               .join(', ')
                           : "Select agent skills"}
                       </SelectValue>

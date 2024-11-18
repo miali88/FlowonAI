@@ -43,16 +43,20 @@ export interface Agent {
   };
   features?: {
     callTransfer?: {
+      enabled?: boolean;
       primaryNumber?: string;
       secondaryNumber?: string;
     };
     appointmentBooking?: {
+      enabled?: boolean;
       nylasApiKey?: string;
     };
     form?: {
+      enabled?: boolean;
       fields: FormField[];
     };
     prospects?: {
+      enabled?: boolean;
       notifyOnInterest: boolean;
       email: string;
       sms: string;
@@ -82,6 +86,58 @@ function Loader() {
     </div>
   );
 }
+
+const formatPurpose = (purpose: string) => {
+  return purpose
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const formatVoice = (voice: string) => {
+  // If it's a UUID format, return a friendly name
+  if (voice.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+    return "AI Voice";
+  }
+  // If it's voice1/all format
+  if (voice === "voice1") return "Voice 1";
+  if (voice === "all") return "All Voices";
+  return voice;
+};
+
+const formatDataSource = (dataSource: string) => {
+  try {
+    // First check if it's just "all" by itself
+    if (dataSource === "all") return "All Sources";
+    
+    // Try to parse as JSON
+    const parsed = JSON.parse(dataSource);
+    
+    // If it's an array with objects containing title
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) return "No Source";
+      if (parsed.some(item => item.id === 'kb_all' || item.id === 'all')) return "All Sources";
+      
+      // Get just the first source if there are multiple
+      const firstSource = parsed[0].title;
+      const remainingCount = parsed.length - 1;
+      
+      // Simplify the URL if it's a web source
+      const displayTitle = firstSource.replace(/(https?:\/\/)?(www\.)?/i, '').split('/')[0];
+      
+      return remainingCount > 0 
+        ? `${displayTitle} +${remainingCount}` 
+        : displayTitle;
+    }
+    
+    // If it's just a string
+    return dataSource === 'kb_all' ? 'All Sources' : dataSource || "No Source";
+  } catch {
+    // If it's not JSON and just a plain string
+    if (dataSource === "all" || dataSource === "kb_all") return "All Sources";
+    return dataSource || "No Source";
+  }
+};
 
 export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAgents }: AgentCardsProps) {
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([])
@@ -116,23 +172,26 @@ export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAg
                 ${glassStyles}
                 cursor-pointer
                 h-full flex flex-col
-                ${selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg scale-[1.02] from-white/60 to-white/40 dark:from-gray-800/60 dark:to-gray-800/40' : ''}
+                ${selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg scale-[1.02]' : ''}
               `} 
               onClick={() => setSelectedAgent(agent)}
             >
-              <CardHeader>
-                <CardTitle>{agent.agentName}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-2xl font-bold">{agent.agentName}</CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-gray-600 mb-2">{agent.agentPurpose}</p>
-                <Badge variant="secondary" className="mr-2">
-                  {agent.voice}
-                </Badge>
-                <Badge variant="outline">{agent.dataSource}</Badge>
+              <CardContent className="flex-grow flex flex-col gap-4">
+                <p className="text-base font-medium text-gray-600">
+                  {formatPurpose(agent.agentPurpose)}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  <Badge variant="secondary" className="text-sm py-1 px-3">
+                    {formatVoice(agent.voice)}
+                  </Badge>
+                  <Badge variant="outline" className="text-sm py-1 px-3">
+                    {formatDataSource(agent.dataSource)}
+                  </Badge>
+                </div>
               </CardContent>
-              <CardFooter className="text-sm text-gray-500">
-                ID: {agent.id}
-              </CardFooter>
             </Card>
           </div>
         ))}
