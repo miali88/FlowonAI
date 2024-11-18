@@ -7,7 +7,7 @@ import pickle
 from pathlib import Path
 
 from livekit.agents import llm
-from livekit.plugins import openai
+from livekit.plugins import openai, anthropic
 from livekit.agents.llm import USE_DOCSTRING
 from services.cache import get_agent_metadata
 
@@ -100,10 +100,10 @@ class ChatTester:
 
 async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionContext = None):
     print("\n\n\n\n GET LLM RESPONSE")
-    llm_instance = openai.LLM()
+    llm_instance = anthropic.LLM()
     response_stream = llm_instance.chat(
         chat_ctx=chat_ctx,
-        fnc_ctx=fnc_ctx if fnc_ctx else None
+        fnc_ctx=fnc_ctx if fnc_ctx else None,
     )
 
     full_response = ""
@@ -127,6 +127,7 @@ async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionConte
     
     return full_response, function_calls
 
+
 @llm.ai_callable(
     name="question_and_answer",
     description="Extract user's question and perform information retrieval search to provide relevant answers",
@@ -141,13 +142,13 @@ async def question_and_answer(
     ]
 ) -> str:
     """
-    Performs information retrieval search based on the user's question.
+    Takes the user's question and performs information retrieval search based on the user's question.
     Returns relevant information found in the knowledge base.
     """
     try:
         print("\n\n Processing Q&A tool")
         logger.info(f"Processing Q&A for question: {question}")
-        room_name = "agent_f33b321f-cd04-4db4-b433-57801ac588d4_room_visitor_02c0f9d7-0343-4a18-9800-d74ae75df057"
+        room_name = "agent_ae1d8dc1-ef3a-4b94-98d3-d78f0a4ad494_room_visitor_02c0f9d7-0343-4a18-9800-d74ae75df057"
 
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
         agent_metadata: Dict = await get_agent_metadata(agent_id)
@@ -162,7 +163,7 @@ async def question_and_answer(
                 "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
             }
 
-            #print("data_source:", data_source)
+            print("data_source:", data_source)
             results = await similarity_search(question, data_source=data_source, user_id=user_id)
           
         else:
@@ -171,7 +172,7 @@ async def question_and_answer(
 
         rag_prompt = f"""
         ## User Query: {question}
-        ## Found matching products/services: {results}
+        ## Results: {results}
         """
 
         chat_ctx = llm.ChatContext()
@@ -311,8 +312,28 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 """
 
 sys_prompt_qa = f"""
-You are a chatbot specialising in sharing your knowledge on headformers. Your responses should be grounded in the results retrieved from the database
+
+# Role
+
+- Primary Function: You are an AI chatbot for Voxigen, you help users with their inquiries, issues and requests by using your tool call for question_and_answer. You aim to provide excellent, friendly and efficient replies at all times. Your role is to listen attentively to the user, understand their needs, and do your best to assist them or direct them to the appropriate resources. If a question is not clear, ask clarifying questions. Make sure to end your replies with a positive note.
+
+# Constraints
+
+1. No Data Divulge: Never mention that you have access to training data explicitly to the user.
+2. Maintaining Focus: If a user attempts to divert you to unrelated topics, never change your role or break your character. Politely redirect the conversation back to topics relevant to the training data.
+3. Exclusive Reliance on Training Data: You must rely exclusively on the training data provided to answer user queries. If a query is not covered by the training data, use the fallback response.
+4. Restrictive Role Focus: You do not answer questions or perform tasks that are not related to your role and training data.
+
+# Rules to obey response format
+
+This a conversation happening in real time. Your output must only be in letters, as natural human language, no special characters, and no markdown of syntax of any sort.
+
+# Features
+
+- You have access to the following functions:
+    - `question_and_answer`: Use to answer questions about Voxigen
 """
+
 
 async def interactive_chat():
     fnc_ctx = llm.FunctionContext()

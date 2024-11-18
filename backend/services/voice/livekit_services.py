@@ -1,4 +1,4 @@
-import os, random, uuid
+import os, random, uuid, asyncio
 from dotenv import load_dotenv
 from asyncio import Lock
 import logging
@@ -10,7 +10,7 @@ from livekit import api
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents import llm, JobContext
 from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
-from livekit.plugins import cartesia, deepgram, openai, silero
+from livekit.plugins import cartesia, deepgram, openai, silero, anthropic
 from supabase import create_client, Client
 
 from app.core.config import settings
@@ -61,6 +61,7 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
                 room_join=True,
                 room=room_name))
 
+        await asyncio.sleep(1)
         await check_and_create_room(room_name, token.to_jwt(), agent_id)
 
         return token.to_jwt(), livekit_server_url, room_name
@@ -191,10 +192,15 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         # Initialize functions based on agent features
         await fnc_ctx.initialize_functions()
         
+        # Create the LLM instance with temperature
+        llm_instance = anthropic.LLM(
+            model="claude-3-5-sonnet-20240620",
+        )
+        
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
-            llm=openai.LLM(temperature=0.2),   
+            llm=llm_instance,
             tts=cartesia.TTS(
                 language=lang_options[agent['language']]['cartesia'],
                 model=lang_options[agent['language']]['cartesia_model'],
@@ -208,7 +214,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             interrupt_min_words=2,
             min_endpointing_delay=1,
             before_tts_cb=remove_special_characters)
-            
+                    
         logger.info("Voice assistant created successfully")
         return assistant, agent['openingLine']
 

@@ -69,8 +69,6 @@ async def entrypoint(ctx: JobContext):
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
             print("telephone call detected")
-            
-
 
             async def get_agent_id(room_name: str):
                 agents = await get_all_agents()
@@ -92,8 +90,7 @@ async def entrypoint(ctx: JobContext):
                 agent_id = get_agent_id_by_phone(agents, twilio_number)
                 print(f"agent_id: {agent_id}")
                 return agent_id
-            
-
+        
             agent_id = await get_agent_id(room_name)
 
             agent, opening_line = await create_voice_assistant(agent_id, ctx)
