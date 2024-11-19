@@ -1,8 +1,8 @@
 import asyncio
 import json
 from typing import Dict, Annotated
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import List, Optional, Union
 import pickle
 from pathlib import Path
 
@@ -99,7 +99,7 @@ async def question_and_answer(
         )
 
         # Create LLM instance and get response
-        llm_instance = openai.LLM(model="gpt-4")
+        llm_instance = openai.LLM(model="gpt-4o")
         response_stream = llm_instance.chat(chat_ctx=chat_ctx)
         
         # Stream the response chunks directly instead of accumulating
@@ -112,28 +112,80 @@ async def question_and_answer(
         yield "I apologize, but I encountered an error while searching for an answer to your question."
 
 
+@llm.ai_callable(
+    name="request_personal_data",
+    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    auto_retry=False
+)
+async def request_personal_data(
+    message: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+        )
+    ]
+) -> str:
+    logger.info(f"Personal data request triggered with message: {message}")
+    return "Form presented to user. Waiting for user to complete and submit form."
+
+@dataclass
+class ChatHistory:
+    messages: List[Dict[str, str]] = field(default_factory=list)
+    
+    def add_message(self, role: str, content: str):
+        self.messages.append({"role": role, "text": content})
+    
+    def get_messages(self) -> List[Dict[str, str]]:
+        return self.messages
+
+# Global chat history store
+chat_histories: Dict[str, ChatHistory] = {}
+
 async def lk_chat_process(message: str, agent_id: str):
     try:
+        # Initialize or get existing chat history
+        if agent_id not in chat_histories:
+            chat_histories[agent_id] = ChatHistory()
+        
+        chat_history = chat_histories[agent_id]
+        
         # Fetch agent configuration
-        agent = await get_agent(agent_id)
-        if not agent:
+
+        agent_metadata = await get_agent_metadata(agent_id)
+        if not agent_metadata:
             raise ValueError(f"Agent {agent_id} not found")
 
-        # Initialize function context
+        features = agent_metadata.get('features', [])
+        features = features.get('features', [])
         fnc_ctx = llm.FunctionContext()
-        fnc_ctx._register_ai_function(question_and_answer)
-        
-        # Create chat context with agent-specific instructions
+        # Register Q&A function if feature is enabled
+        if 'qa' in features:
+            fnc_ctx._register_ai_function(question_and_answer)
+            print(f"Registered Q&A function")
+            logger.info(f"Registered Q&A function")
+
+        if 'lead_gen' in features:
+            fnc_ctx._register_ai_function(request_personal_data)
+            print(f"Registered lead generation function")
+            logger.info(f"Registered lead generation function")
+
+        # Create chat context with history
         chat_ctx = llm.ChatContext()
         chat_ctx.append(
             role="system",
-            text=agent['instructions']  # Use agent-specific instructions
+            text=agent_metadata['instructions']
         )
         
+        # Add historical messages
+        for hist_message in chat_history.get_messages():
+            chat_ctx.append(**hist_message)
+        
+        # Add current message
         chat_ctx.append(
             role="user",
             text=message
         )
+        chat_history.add_message("user", message)
         
         # Get streaming response using agent-specific configuration
         llm_instance = openai.LLM(
@@ -145,18 +197,26 @@ async def lk_chat_process(message: str, agent_id: str):
             fnc_ctx=fnc_ctx
         )
         
+        accumulated_response = ""
         async for chunk in response_stream:
-            print(chunk)
             if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+                content = chunk.choices[0].delta.content
+                accumulated_response += content
+                yield content
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
-                    # Await the task to get the generator
                     result_generator = await called_function.task
-                    # Now iterate through the generator
+                    tool_response = ""
                     async for result_chunk in result_generator:
+                        tool_response += result_chunk
                         yield result_chunk
+                    # Add tool response to history
+                    chat_history.add_message("function", tool_response)
+
+        # Add assistant's response to history
+        if accumulated_response:
+            chat_history.add_message("assistant", accumulated_response)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
