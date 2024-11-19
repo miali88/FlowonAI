@@ -41,36 +41,6 @@ class ChatTester:
         except FileNotFoundError:
             return None
 
-async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionContext = None):
-    print("\n\n\n\n GET LLM RESPONSE")
-    llm_instance = openai.LLM()
-    response_stream = llm_instance.chat(
-        chat_ctx=chat_ctx,
-        fnc_ctx=fnc_ctx if fnc_ctx else None,
-    )
-
-    full_response = ""
-    function_calls = []  # Track function calls
-    
-    async for chunk in response_stream:
-        if chunk.choices[0].delta.content is not None:
-            content = chunk.choices[0].delta.content
-            print(content, end="", flush=True)
-            full_response += content
-        elif chunk.choices[0].delta.tool_calls:
-            for tool_call in chunk.choices[0].delta.tool_calls:
-                function_calls.append(tool_call.function_info.name)
-                print(f"\nFunction called: {tool_call.function_info.name}")
-                print(f"Arguments: {tool_call.arguments}")
-                
-                called_function = tool_call.execute()
-                result = await called_function.task
-                print(f"Function result: {result}")
-                full_response += f"\nFunction result: {result}"
-    
-    return full_response, function_calls
-
-
 @llm.ai_callable(
     name="question_and_answer",
     description="Extract user's question and perform information retrieval search to provide relevant answers",
@@ -122,10 +92,9 @@ async def question_and_answer(
         chat_ctx.append(
             role="user",
             text=rag_prompt
-                    )
+        )
 
-        return await get_llm_response(chat_ctx)
-
+        return f"Based on the search results: {results}"
 
     except Exception as e:
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
@@ -143,10 +112,6 @@ When a user asks a question, you will:
 3. If you're unsure about something, admit it and explain what you do know"""
 
 async def lk_chat_process(message: str, agent_id: str):
-    """
-    Process a chat message using LiveKit's LLM functionality.
-    Yields chunks of the AI's response to maintain streaming capability.
-    """
     try:
         fnc_ctx = llm.FunctionContext()
         fnc_ctx._register_ai_function(question_and_answer)
@@ -170,72 +135,17 @@ async def lk_chat_process(message: str, agent_id: str):
         )
         
         async for chunk in response_stream:
+            print(chunk)
             if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                yield content
+                # Just yield the raw content
+                yield chunk.choices[0].delta.content
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
                     result = await called_function.task
-                    if result:
-                        yield f"\nFunction result: {result}"
+                    # Yield the function result
+                    yield f"\nFunction result: {result}"
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         raise Exception("Failed to process chat message")
-
-async def test_scenario(scenario: ChatScenario):
-    fnc_ctx = llm.FunctionContext()
-    fnc_ctx._register_ai_function(question_and_answer)
-    # fnc_ctx._register_ai_function(verify_user_info)
-    # fnc_ctx._register_ai_function(redirect_to_dashboard)
-    
-    chat_ctx = llm.ChatContext()
-    chat_ctx.append(role="system", text=sys_prompt_onboarding)
-    
-    actual_function_calls = []
-    
-    for message in scenario.messages:
-        chat_ctx.append(role=message["role"], text=message["content"])
-        if message["role"] == "user":
-            response, functions_called = await get_llm_response(chat_ctx, fnc_ctx)
-            actual_function_calls.extend(functions_called)
-            chat_ctx.append(role="assistant", text=response)
-    
-    scenario.actual_function_calls = actual_function_calls
-    return scenario
-
-# Example usage in main:
-async def run_tests():
-    tester = ChatTester()
-    
-    # Create a test scenario
-    scenario = ChatScenario(
-        name="onboarding_flow",
-        description="Test basic onboarding flow with form collection",
-        messages=[
-            {"role": "user", "content": "Hi, I'm interested in using Flowon AI"},
-            {"role": "user", "content": "I work at Acme Corp in the tech sector"},
-            {"role": "user", "content": "Yes, you can collect my information"},
-        ],
-        expected_function_calls=["verify_user_info"]
-    )
-    
-    # Run the scenario
-    result = await test_scenario(scenario)
-    
-    # Compare expected vs actual function calls
-    print(f"\nScenario: {result.name}")
-    print(f"Expected function calls: {result.expected_function_calls}")
-    print(f"Actual function calls: {result.actual_function_calls}")
-    
-    # Save for future reference
-    tester.save_scenario(result)
-
-# Replace the test function with the interactive chat
-if __name__ == "__main__":
-    asyncio.run(interactive_chat())
-    asyncio.run(run_tests())
-
-# Make sure this function is defined before any usage
-__all__ = ['lk_chat_process']  # This explicitly declares what should be exported

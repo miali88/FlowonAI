@@ -18,16 +18,20 @@ async def chat_message(request: Request):
 
         async def event_generator():
             try:
+                # Track the last chunk to avoid duplicates
+                last_chunk = ""
                 async for chunk in lk_chat_process(
                     user_query['message'], 
                     user_query['agent_id']
                 ):
-                    if chunk:  # Only yield if chunk is not empty
-                        yield f"data: {json.dumps({'response': {'answer': chunk}})}\n\n"
+                    if chunk and chunk != last_chunk:  # Only yield if chunk is new
+                        last_chunk = chunk
+                        yield f"data: {json.dumps({'response': {'answer': str(chunk)}})}\n\n"
             except Exception as e:
                 logger.error(f"Error in stream: {str(e)}")
-                yield f"data: {json.dumps({'error': 'Internal server error'})}\n\n"
-            yield "data: [DONE]\n\n"
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                yield "data: [DONE]\n\n"
 
         return StreamingResponse(
             event_generator(), 

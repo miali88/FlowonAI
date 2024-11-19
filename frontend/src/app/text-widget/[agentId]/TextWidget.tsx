@@ -88,7 +88,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   const newMessages = [...prev];
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.isBot) {
-                    lastMessage.text += data.response.answer;
+                    const newText = data.response.answer;
+                    if (!lastMessage.text.endsWith(newText)) {
+                      lastMessage.text += newText;
+                    }
                   }
                   return newMessages;
                 });
