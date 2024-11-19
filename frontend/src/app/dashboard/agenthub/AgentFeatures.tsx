@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,36 +22,29 @@ import {
 import { Agent } from './AgentCards';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-interface AgentFeaturesProps {
-  selectedAgent: {
-    features: {
-      notifyOnInterest: boolean;
-      collectWrittenInformation: boolean;
-      transferCallToHuman: boolean;
-      bookCalendarSlot: boolean;
-    };
-    agentPurpose: string;
+interface AgentFeature {
+  id: string;
+  enabled: boolean;
+  [key: string]: any;
+}
+
+interface SelectedAgent {
+  id: string;
+  features: {
+    [key: string]: AgentFeature;
   };
-  setSelectedAgent: (agent: any) => void;
+  agentPurposes: string[];
+}
+
+interface AgentFeaturesProps {
+  selectedAgent: Agent | null;
+  setSelectedAgent: (agent: Agent | null) => void;
   handleSaveFeatures: (features: any) => Promise<void>;
 }
 
-interface FormField {
-  type: 'text' | 'email' | 'phone' | 'dropdown';
-  label: string;
-  options: string[];
-}
-
-interface ProspectSettings {
-  notifyOnInterest: boolean;
-  email: string;
-  sms: string;
-  whatsapp: string;
-}
-
-// Add a new interface for purpose-specific features
+// First, let's define our purpose types explicitly
 const PURPOSE_FEATURES = {
-  "prospecting": [
+  "lead-generation": [
     { 
       id: "notifyOnInterest", 
       label: "Notify you on interest",
@@ -63,16 +56,11 @@ const PURPOSE_FEATURES = {
       description: "Specify what information you want to collect from prospects"
     }
   ],
-  "appointment-booking": [
+  "prospecting": [
     { 
-      id: "bookCalendarSlot", 
-      label: "Calendar Integration",
-      description: "Give your agent the ability to check calendar availability and book events on your calendar"
-    },
-    { 
-      id: "appointmentBooking", 
-      label: "Email Integration",
-      description: "Link your email to allow calendar access"
+      id: "prospects", 
+      label: "Prospect Management",
+      description: "Manage and track prospects"
     }
   ],
   "question-answer": [
@@ -84,40 +72,127 @@ const PURPOSE_FEATURES = {
   ],
   "customer-service": [
     { 
-      id: "transferCallToHuman", 
+      id: "callTransfer", 
       label: "Call Transfer",
       description: "Allow the agent to transfer calls to human operators"
-    },
+    }
+  ],
+  "appointment-booking": [
     { 
-      id: "callTransfer", 
-      label: "Transfer Settings",
-      description: "Configure call transfer options and phone numbers"
+      id: "appointmentBooking", 
+      label: "Calendar Integration",
+      description: "Give your agent the ability to check calendar availability and book appointments"
+    }
+  ],
+  "product-recommendation": [
+    { 
+      id: "collectWrittenInformation", 
+      label: "Information Collection",
+      description: "Allow the agent to collect product preferences"
     }
   ]
 };
+
+// Add this with the other interfaces at the top of the file
+interface ProspectSettings {
+  notifyOnInterest: boolean;
+  email: string;
+  sms: string;
+  whatsapp: string;
+}
 
 export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveFeatures,
 }) => {
+  // Simplified state
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  
-  // Feature-specific states
+
+  // Add local state to manage form fields
+  const [localFeatures, setLocalFeatures] = useState(selectedAgent?.features || {});
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalFeatures(selectedAgent?.features || {});
+  }, [selectedAgent?.features]);
+
+  const handleFeatureToggle = async (featureId: string) => {
+    const currentFeature = localFeatures[featureId];
+    const updatedFeatures = {
+      ...localFeatures,
+      [featureId]: {
+        ...currentFeature,
+        enabled: !currentFeature?.enabled
+      }
+    };
+
+    // Update local state first
+    setLocalFeatures(updatedFeatures);
+    
+    // If we're enabling a feature, open the configuration dialog
+    if (!currentFeature?.enabled) {
+      setCurrentFeature(featureId);
+      setIsConfigureDialogOpen(true);
+    }
+    
+    // Notify parent
+    await handleSaveFeatures(updatedFeatures);
+  };
+
+  // When updating form fields, use local state first
+  const handleFormFieldUpdate = (index: number, updates: any) => {
+    const updatedFields = [...(localFeatures?.form?.fields || [])];
+    updatedFields[index] = { ...updatedFields[index], ...updates };
+    
+    const updatedFeatures = {
+      ...localFeatures,
+      form: {
+        ...localFeatures?.form,
+        fields: updatedFields
+      }
+    };
+
+    // Update local state
+    setLocalFeatures(updatedFeatures);
+    // Then notify parent
+    handleSaveFeatures(updatedFeatures);
+  };
+
+  const getFeaturesByPurposes = () => {
+    const availableFeatures: any[] = [];
+    const agentPurpose = selectedAgent?.agentPurpose;
+    
+    console.log('Current agent purpose:', agentPurpose); // Debug log
+    console.log('Available features for purpose:', PURPOSE_FEATURES[agentPurpose as keyof typeof PURPOSE_FEATURES]); // Debug log
+    
+    if (agentPurpose) {
+      const features = PURPOSE_FEATURES[agentPurpose as keyof typeof PURPOSE_FEATURES] || [];
+      features.forEach(feature => {
+        if (!availableFeatures.find(f => f.id === feature.id)) {
+          availableFeatures.push(feature);
+        }
+      });
+    }
+    
+    return availableFeatures;
+  };
+
+  // Add these state declarations at the beginning of the component
   const [callTransferConfig, setCallTransferConfig] = useState({
     primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
     secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
   });
-  
+
   const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
     nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
   });
-  
+
   const [formFields, setFormFields] = useState<FormField[]>(
     selectedAgent?.features?.form?.fields || []
   );
-  
+
   const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
     notifyOnInterest: selectedAgent?.features?.prospects?.notifyOnInterest || false,
     email: selectedAgent?.features?.prospects?.email || '',
@@ -125,75 +200,23 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
     whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
   });
 
-  const handleFeatureToggle = (featureId: string) => {
-    if (!selectedAgent) return;
-    
-    const currentFeatures = selectedAgent.features || {};
-    const currentFeature = currentFeatures[featureId] || {};
-    
-    const updatedFeatures = {
-      ...currentFeatures,
-      [featureId]: {
-        ...currentFeature,
-        enabled: !currentFeature.enabled,
-      }
-    };
-    
-    setSelectedAgent({
-      ...selectedAgent,
-      features: updatedFeatures
-    });
-  };
+  // Add the FormField interface
+  interface FormField {
+    type: 'text' | 'email' | 'phone' | 'dropdown';
+    label: string;
+    options: string[];
+  }
 
-  const handleConfigureFeature = (featureId: string) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    
-    setCurrentFeature(featureId);
-    setIsConfigureDialogOpen(true);
-  };
-
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsConfigureDialogOpen(open);
-    if (!open) {
-      setCurrentFeature(null);
-    }
-  };
-
-  const handleConfigureDone = () => {
-    setIsConfigureDialogOpen(false);
-    if (!selectedAgent) return;
-
-    const featureConfigs = {
-      callTransfer: callTransferConfig,
-      appointmentBooking: appointmentBookingConfig,
-      form: { fields: formFields },
-      prospects: prospectSettings,
-    };
-
-    if (currentFeature) {
-      setSelectedAgent({
-        ...selectedAgent,
-        features: {
-          ...selectedAgent.features,
-          [currentFeature]: featureConfigs[currentFeature as keyof typeof featureConfigs]
-        }
-      });
-    }
-    
-    setCurrentFeature(null);
-  };
-
-  // Form-specific handlers
+  // Add the handleAddFormField function
   const handleAddFormField = () => {
-    // Create a new field with default values
     const newField: FormField = {
       type: 'text',
       label: '',
       options: []
     };
 
-    // Update the agent's form fields
+    if (!selectedAgent) return;
+
     const updatedFeatures = {
       ...selectedAgent.features,
       form: {
@@ -203,33 +226,34 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
       }
     };
 
-    // Update the agent state
     setSelectedAgent({
       ...selectedAgent,
       features: updatedFeatures
     });
   };
 
-  const handleRemoveFormField = (index: number) => {
-    setFormFields(formFields.filter((_, i) => i !== index));
+  const handleProspectSettingsChange = (key: keyof ProspectSettings, value: any) => {
+    setProspectSettings(prev => ({ ...prev, [key]: value }));
+    
+    const updatedFeatures = {
+      ...localFeatures,
+      prospects: {
+        ...localFeatures.prospects,
+        [key]: value
+      }
+    };
+    handleSaveFeatures(updatedFeatures);
   };
 
-  const handleFormFieldChange = (index: number, field: Partial<FormField>) => {
-    const newFields = [...formFields];
-    newFields[index] = { ...newFields[index], ...field };
-    setFormFields(newFields);
-  };
-
-  // Prospect settings handler
-  const handleProspectSettingsChange = (field: keyof ProspectSettings, value: string | boolean) => {
-    setProspectSettings(prev => ({ ...prev, [field]: value }));
+  // Add this helper function to determine if a feature needs configuration
+  const needsConfiguration = (featureId: string) => {
+    return !['collectWrittenInformation'].includes(featureId);
   };
 
   return (
     <div className="space-y-6">
-      {/* Features List - Now based on agent purpose */}
-      {selectedAgent.agentPurpose && PURPOSE_FEATURES[selectedAgent.agentPurpose]?.map((feature) => (
-        <div key={feature.id} className="space-y-2">
+      {getFeaturesByPurposes().map((feature) => (
+        <div key={feature.id} className="space-y-2 border p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor={feature.id} className="block text-sm font-medium">
@@ -241,20 +265,23 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
             </div>
             <Switch
               id={feature.id}
-              checked={selectedAgent?.features?.[feature.id]?.enabled || false}
+              checked={localFeatures[feature.id]?.enabled || false}
               onCheckedChange={() => handleFeatureToggle(feature.id)}
             />
           </div>
-          
-          {/* Show configure button for certain features when enabled */}
-          {selectedAgent?.features?.[feature.id]?.enabled && 
-           (feature.id === 'form' || feature.id === 'callTransfer' || 
-            feature.id === 'appointmentBooking' || feature.id === 'prospects') && (
+
+          {/* Only show Configure button if feature is enabled AND needs configuration */}
+          {localFeatures[feature.id]?.enabled && needsConfiguration(feature.id) && (
             <Button
               variant="outline"
               size="sm"
               className="mt-2"
-              onClick={() => handleConfigureFeature(feature.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCurrentFeature(feature.id);
+                setIsConfigureDialogOpen(true);
+              }}
             >
               Configure
               <ChevronRight className="ml-2 h-4 w-4" />
@@ -263,26 +290,28 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
         </div>
       ))}
 
-      {/* Configuration Dialog */}
+      {/* Make sure Dialog stays open when feature is enabled */}
       <Dialog 
         open={isConfigureDialogOpen} 
-        onOpenChange={handleDialogOpenChange}
+        onOpenChange={(open) => {
+          setIsConfigureDialogOpen(open);
+          if (!open) {
+            setCurrentFeature(null);
+          }
+        }}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              Configure {getFeatureTitle(currentFeature)}
-            </DialogTitle>
+            <DialogTitle>{getFeatureTitle(currentFeature)}</DialogTitle>
             <DialogDescription>
               {getFeatureDescription(currentFeature)}
             </DialogDescription>
           </DialogHeader>
-
-          {/* Feature-specific configuration forms */}
           {renderFeatureConfig()}
-
           <DialogFooter>
-            <Button type="button" onClick={handleConfigureDone}>Done</Button>
+            <Button onClick={() => setIsConfigureDialogOpen(false)}>
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -366,25 +395,14 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
               </AccordionItem>
             </Accordion>
 
-            {(selectedAgent.features?.form?.fields || []).map((field, index) => (
+            {(localFeatures?.form?.fields || []).map((field: FormField, index: number) => (
               <div key={index} className="space-y-2 border p-4 rounded-md">
                 <div className="flex items-center gap-4">
                   <Label>Field Type</Label>
                   <Select
                     value={field.type}
                     onValueChange={(value) => {
-                      const updatedFields = [...(selectedAgent.features?.form?.fields || [])];
-                      updatedFields[index] = { ...field, type: value as 'text' | 'email' | 'phone' | 'dropdown' };
-                      setSelectedAgent({
-                        ...selectedAgent,
-                        features: {
-                          ...selectedAgent.features,
-                          form: {
-                            ...selectedAgent.features?.form,
-                            fields: updatedFields
-                          }
-                        }
-                      });
+                      handleFormFieldUpdate(index, { type: value as 'text' | 'email' | 'phone' | 'dropdown' });
                     }}
                   >
                     <SelectTrigger>
@@ -402,18 +420,7 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
                     placeholder="Field Label"
                     value={field.label}
                     onChange={(e) => {
-                      const updatedFields = [...(selectedAgent.features?.form?.fields || [])];
-                      updatedFields[index] = { ...field, label: e.target.value };
-                      setSelectedAgent({
-                        ...selectedAgent,
-                        features: {
-                          ...selectedAgent.features,
-                          form: {
-                            ...selectedAgent.features?.form,
-                            fields: updatedFields
-                          }
-                        }
-                      });
+                      handleFormFieldUpdate(index, { label: e.target.value });
                     }}
                   />
                 </div>
@@ -457,7 +464,7 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
                     <Input
                       id={`notify-${method}`}
                       placeholder={`Enter ${method} details`}
-                      value={prospectSettings[method as keyof ProspectSettings]}
+                      value={prospectSettings[method as keyof Omit<ProspectSettings, 'notifyOnInterest'>]}
                       onChange={(e) => handleProspectSettingsChange(
                         method as keyof ProspectSettings, 
                         e.target.value

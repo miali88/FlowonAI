@@ -51,8 +51,16 @@ const VOICE_OPTIONS = {
   "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
 };
 
-// Update the FormData interface to match DB schema
+// Add type for MultiSelect items
+interface Item {
+  id: string | number;
+  title: string;
+  data_type?: string;
+}
+
+// Update the FormData interface
 interface FormData {
+  id: string;
   agentName: string;
   agentPurpose: string;
   instructions: string;
@@ -60,7 +68,7 @@ interface FormData {
     id: string | number;
     title: string;
     data_type: string;
-  }>;  // Changed from string to array of objects
+  }>;
   openingLine: string;
   voice: string;
   language: string;
@@ -72,7 +80,7 @@ interface FormData {
     prospects: boolean;
     form: boolean;
     callTransfer: boolean;
-    appointmentBooking: boolean
+    appointmentBooking: boolean;
   };
 }
 
@@ -130,12 +138,27 @@ const AGENT_PURPOSES = {
   }
 };
 
+// Add this interface near your other interfaces
+interface Agent {
+  features: {
+    notifyOnInterest: boolean;
+    collectWrittenInformation: boolean;
+    transferCallToHuman: boolean;
+    bookCalendarSlot: boolean;
+    prospects: boolean;
+    form: boolean;
+    callTransfer: boolean;
+    appointmentBooking: boolean;
+  };
+}
+
 export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'purpose' | 'details'>('purpose');
-  const [selectedPurpose, setSelectedPurpose] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
+  const [formData, setFormData] = useState<FormData>({
+    id: crypto.randomUUID(),
     agentName: '',
     agentPurpose: '',
     instructions: '',
@@ -161,10 +184,10 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
   const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
-  const [agentFeatures, setAgentFeatures] = useState({});
   const [availableVoicesFormatted, setAvailableVoicesFormatted] = useState(
     getVoiceOptionsFormatted(VOICE_OPTIONS["en-GB"])
   );
+  const [agentFeatures, setAgentFeatures] = useState({});
 
   // Move state updates to useEffect
   useEffect(() => {
@@ -252,7 +275,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
       const dataToSend = { 
         ...formData, 
         userId: user.id,
-        features: agentFeatures 
+        features: formData.features 
       };
       
       if (dataToSend.dataSource === "all") {
@@ -287,21 +310,29 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
   };
 
   const handlePurposeSelect = (purpose: string) => {
-    setSelectedPurpose(purpose);
-    setFormData(prev => ({
-      ...prev,
-      agentPurpose: purpose,
-      features: {
-        ...prev.features,
-        ...AGENT_PURPOSES[purpose as keyof typeof AGENT_PURPOSES].features
-      }
-    }));
-    setStep('details');
+    setSelectedPurposes([purpose]);
+  };
+
+  const handleNext = () => {
+    if (selectedPurposes.length > 0) {
+      const purpose = selectedPurposes[0];
+      const features = AGENT_PURPOSES[purpose as keyof typeof AGENT_PURPOSES].features;
+
+      setFormData(prev => ({
+        ...prev,
+        agentPurpose: purpose,
+        features: {
+          ...prev.features,
+          ...features
+        }
+      }));
+      setStep('details');
+    }
   };
 
   const handleBack = () => {
     setStep('purpose');
-    setSelectedPurpose(null);
+    setSelectedPurposes([]);
   };
 
   // Convert your existing options to the Item format
@@ -333,9 +364,9 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
         {step === 'purpose' ? (
           <div className="space-y-4">
             <DialogHeader className="text-center pb-4">
-              <DialogTitle>Select Agent Purpose</DialogTitle>
+              <DialogTitle>Select Agent Purposes</DialogTitle>
               <DialogDescription>
-                Choose the main purpose for your agent
+                Choose one or more purposes for your agent
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 px-2">
@@ -344,13 +375,26 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
                   key={key}
                   variant="outline"
                   onClick={() => handlePurposeSelect(key)}
-                  className="w-full h-auto p-4 flex flex-col items-start space-y-2 border border-gray-600 hover:border-gray-400 transition-colors"
+                  className={`
+                    w-full h-auto p-4 flex flex-col items-start space-y-2 
+                    border border-gray-600 hover:border-gray-400 transition-colors
+                    ${selectedPurposes.includes(key) ? 'border-primary bg-primary/10' : ''}
+                  `}
                 >
                   <span className="font-semibold text-base">{purpose.title}</span>
                   <span className="text-sm text-muted-foreground text-left">{purpose.description}</span>
                 </Button>
               ))}
             </div>
+            <DialogFooter>
+              <Button
+                onClick={handleNext}
+                disabled={selectedPurposes.length === 0}
+                className="w-full"
+              >
+                Next
+              </Button>
+            </DialogFooter>
           </div>
         ) : (
           // Agent Details Form
@@ -367,9 +411,9 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <DialogTitle>{AGENT_PURPOSES[selectedPurpose as keyof typeof AGENT_PURPOSES].title}</DialogTitle>
+                  <DialogTitle>{AGENT_PURPOSES[selectedPurposes[0] as keyof typeof AGENT_PURPOSES].title}</DialogTitle>
                   <DialogDescription>
-                    Configure your {AGENT_PURPOSES[selectedPurpose as keyof typeof AGENT_PURPOSES].title.toLowerCase()} agent
+                    Configure your {AGENT_PURPOSES[selectedPurposes[0] as keyof typeof AGENT_PURPOSES].title.toLowerCase()} agent
                   </DialogDescription>
                 </div>
               </div>
@@ -490,31 +534,35 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
                   </Button>
                 ))}
               </div>
-            </div>
-            <div className="border-t border-border mt-4 pt-4">
-              <AgentFeatures
-                selectedAgent={formData}
-                setSelectedAgent={(agent) => {
-                  console.log("Updated agent:", agent);
-                  setFormData(prev => ({
-                    ...prev,
-                    features: {
-                      ...prev.features,
-                      ...agent.features
-                    }
-                  }));
-                }}
-                handleSaveFeatures={async (features) => {
-                  console.log("Saving features:", features);
-                  setFormData(prev => ({
-                    ...prev,
-                    features: {
-                      ...prev.features,
-                      ...features
-                    }
-                  }));
-                }}
-              />
+
+              {/* Move AgentFeatures here, inside the main grid */}
+              <div className="border-t border-border mt-4 pt-4">
+                <AgentFeatures
+                  selectedAgent={formData}
+                  setSelectedAgent={(agent) => {
+                    console.log("Selected Agent Purpose:", formData.agentPurpose);
+                    console.log("Updated agent:", agent);
+                    setFormData(prev => ({
+                      ...prev,
+                      features: {
+                        ...prev.features,
+                        ...(agent?.features || {})
+                      }
+                    }));
+                  }}
+                  handleSaveFeatures={async (features) => {
+                    console.log("Saving features:", features);
+                    setAgentFeatures(features);
+                    setFormData(prev => ({
+                      ...prev,
+                      features: {
+                        ...prev.features,
+                        ...features
+                      }
+                    }));
+                  }}
+                />
+              </div>
             </div>
             <DialogFooter className="mt-8">
               <Button type="submit" disabled={isLoading}>

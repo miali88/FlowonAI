@@ -59,9 +59,11 @@ interface AgentPurpose {
 
 // Add this constant with your available skills
 const AGENT_PURPOSES: AgentPurpose[] = [
+  { value: "lead-generation", label: "Lead Generation & Prospecting" },
   { value: "prospecting", label: "Prospecting" },
   { value: "question-answer", label: "Question & Answer" },
   { value: "customer-service", label: "Customer Service" },
+  { value: "appointment-booking", label: "Appointment Booking" },
   { value: "product-recommendation", label: "Product Recommendation" },
 ];
 
@@ -86,6 +88,24 @@ const VOICE_OPTIONS = {
   "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
 };
 
+// Update the Agent interface near the top of the file
+interface Agent {
+  id?: string;
+  agentName?: string;
+  agentPurpose?: string;
+  features: {
+    notifyOnInterest?: boolean;
+    collectWrittenInformation?: boolean;
+    transferCallToHuman?: boolean;
+    bookCalendarSlot?: boolean;
+    prospects?: boolean;
+    form?: boolean;
+    callTransfer?: boolean;
+    appointmentBooking?: boolean;
+  };
+  // ... other properties
+}
+
 const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -96,398 +116,322 @@ const Workspace: React.FC<WorkspaceProps> = ({
   features,
 }) => {
   const [activeTab, setActiveTab] = useState('playground');
-  const [setIsConfigureDialogOpen] = useState(false);
-  const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [callTransferConfig, setCallTransferConfig] = useState({
-    primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
-    secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
-  });
-  const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
-    nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
-  });
-  const [formFields, setFormFields] = useState<FormField[]>(
-    selectedAgent?.features?.form?.fields || []
-  );
-  const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
-    notifyOnInterest: selectedAgent?.features?.prospects?.notifyOnInterest || false,
-    email: selectedAgent?.features?.prospects?.email || '',
-    sms: selectedAgent?.features?.prospects?.sms || '',
-    whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
-  });
-
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
 
-  const playVoiceSample = (voiceFile: string) => {
-    if (audioPlayer) {
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-    }
-    const newAudioPlayer = new Audio(voiceFile);
-    newAudioPlayer.play();
-    setAudioPlayer(newAudioPlayer);
-  };
-
-
-  const handleSaveFeatures = async () => {
-    if (!selectedAgent || !handleSaveChanges) {
-      console.error("Selected agent or handleSaveChanges is not available");
-      return;
-    }
-
-    console.log('Before save - Selected Agent State:', {
-      dataSource: selectedAgent.dataSource,
-      knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
-    });
-
-    const agentToSave = {
-      ...selectedAgent,
-      knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
-        ? undefined
-        : selectedAgent.knowledgeBaseIds
-    };
-
-    console.log('Saving agent with data:', agentToSave);
-
-    try {
-      await handleSaveChanges(agentToSave);
-      console.log("Features saved successfully");
-    } catch (error) {
-      console.error("Failed to save features:", error);
-    }
-  };
-
-  // Synchronize local state with selectedAgent when it changes
-  useEffect(() => {
-    if (selectedAgent) {
-      setCallTransferConfig({
-        primaryNumber: selectedAgent.features?.callTransfer?.primaryNumber || '',
-        secondaryNumber: selectedAgent.features?.callTransfer?.secondaryNumber || '',
-      });
-      setAppointmentBookingConfig({
-        nylasApiKey: selectedAgent.features?.appointmentBooking?.nylasApiKey || '',
-      });
-      setFormFields(selectedAgent.features?.form?.fields || []);
-      setProspectSettings({
-        notifyOnInterest: selectedAgent.features?.prospects?.notifyOnInterest || false,
-        email: selectedAgent.features?.prospects?.email || '',
-        sms: selectedAgent.features?.prospects?.sms || '',
-        whatsapp: selectedAgent.features?.prospects?.whatsapp || '',
-      });
-    }
-  }, [selectedAgent]);
-
-  // Add a useEffect to log the knowledge base items when they change
-  useEffect(() => {
-    console.log('Knowledge Base Items:', knowledgeBaseItems);
-  }, [knowledgeBaseItems]);
-
-  const handleDataSourceChange = (items: Array<{ id: string; title: string; data_type: string }>) => {
+  const handleDataSourceChange = (selectedItems: typeof knowledgeBaseItems) => {
     if (!selectedAgent) return;
     
-    console.log('handleDataSourceChange - items:', items);
-    
-    setSelectedAgent(prev => {
-      const updated = {
-        ...prev,
-        dataSource: items,
-        knowledgeBaseIds: items.some(item => item.id === 'all') 
-          ? [] 
-          : items.map(item => item.id)
-      };
-      console.log('Updated agent:', updated);
-      return updated;
+    const selectedIds = selectedItems.map(item => item.id);
+    setSelectedAgent({
+      ...selectedAgent,
+      dataSource: selectedIds
     });
   };
 
-  // Add this useEffect at the Workspace level
-  useEffect(() => {
-    if (selectedAgent) {
-      // Set the embedded chatbot config at workspace level
-      window.embeddedChatbotConfig = {
-        agentId: selectedAgent.id,
-        domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
-      }
+  const handleSaveFeatures = async (features: any) => {
+    if (!selectedAgent) return;
+    
+    try {
+      const updatedAgent = {
+        ...selectedAgent,
+        features
+      };
+      await handleSaveChanges(updatedAgent);
+    } catch (error) {
+      console.error('Error saving features:', error);
     }
-  }, [selectedAgent]);
-
-  // Add debug log
-  useEffect(() => {
-    console.log('Workspace Features:', features);
-  }, [features]);
+  };
 
   return (
-    <>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4 h-12">
-          <TabsTrigger value="playground">Playground</TabsTrigger>
-          <TabsTrigger value="edit">Settings</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          {/* <TabsTrigger value="ui">UI</TabsTrigger> */}
-          <TabsTrigger value="deploy">Deploy</TabsTrigger>
-          <TabsTrigger value="share">Share</TabsTrigger>
-        </TabsList>
-        <TabsContent value="edit">
-          <Card>
-            <CardHeader>
-              <CardTitle>Agent Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
-                  <Input 
-                    id="agentName"
-                    value={selectedAgent?.agentName || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="mb-4 h-12">
+        <TabsTrigger value="playground">Playground</TabsTrigger>
+        <TabsTrigger value="edit">Settings</TabsTrigger>
+        <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        {/* <TabsTrigger value="ui">UI</TabsTrigger> */}
+        <TabsTrigger value="deploy">Deploy</TabsTrigger>
+        <TabsTrigger value="share">Share</TabsTrigger>
+      </TabsList>
+      <TabsContent value="edit">
+        <Card>
+          <CardHeader>
+            <CardTitle>Agent Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Basic Settings */}
+              <div>
+                <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
+                <Input 
+                  id="agentName"
+                  value={selectedAgent?.agentName || ''} 
+                  onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
+                />
+              </div>
+
+              {/* Agent Skills */}
+              <div>
+                <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
+                <Select 
+                  value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
+                  onValueChange={() => {}}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
+                        ? selectedAgent.agentPurpose
+                            .map(value => {
+                              const purpose = AGENT_PURPOSES.find(p => p.value === value);
+                              return purpose?.label || value;
+                            })
+                            .join(', ')
+                        : "Select agent skills"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AGENT_PURPOSES.map((purpose) => (
+                      <SelectItem key={purpose.value} value={purpose.value}>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`checkbox-${purpose.value}`}
+                            checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
+                            onCheckedChange={(checked) => {
+                              if (!selectedAgent) return;
+                              
+                              const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
+                                ? [...selectedAgent.agentPurpose] 
+                                : [];
+                              
+                              const newPurposes = checked
+                                ? [...currentPurposes, purpose.value]
+                                : currentPurposes.filter(p => p !== purpose.value);
+                              
+                              setSelectedAgent({
+                                ...selectedAgent,
+                                agentPurpose: newPurposes
+                              });
+                            }}
+                          />
+                          <label 
+                            htmlFor={`checkbox-${purpose.value}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {purpose.label}
+                          </label>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Data Sources */}
+              <div>
+                <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
+                <div className="relative">
+                  <MultiSelect 
+                    items={[
+                      { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
+                      ...knowledgeBaseItems
+                    ]}
+                    selectedItems={
+                      selectedAgent?.dataSource 
+                        ? (selectedAgent.dataSource.includes('all')
+                            ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                            : knowledgeBaseItems.filter(item => 
+                                selectedAgent.dataSource.includes(item.id.toString())
+                              ))
+                        : []
+                    }
+                    onChange={handleDataSourceChange}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
+              </div>
+
+              {/* Opening Line */}
+              <div>
+                <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
+                <Input 
+                  id="openingLine"
+                  value={selectedAgent?.openingLine || ''} 
+                  onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
+                />
+              </div>
+
+              {/* Language Selection */}
+              <div>
+                <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
+                <Select 
+                  value={selectedAgent?.language}
+                  onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-GB">English GB</SelectItem>
+                    <SelectItem value="en-US">English US</SelectItem>
+                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="de">German</SelectItem>
+                    <SelectItem value="ar">Arabic</SelectItem>
+                    <SelectItem value="nl">Dutch</SelectItem>
+                    <SelectItem value="zh">Chinese</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Voice Selection */}
+              <div>
+                <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
+                <div className="flex items-center space-x-2">
                   <Select 
-                    value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
-                    onValueChange={() => {}}
+                    value={selectedAgent?.voice}
+                    onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue>
-                        {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
-                          ? selectedAgent.agentPurpose
-                              .map(value => {
-                                const purpose = AGENT_PURPOSES.find(p => p.value === value);
-                                return purpose?.label || value;
-                              })
-                              .join(', ')
-                          : "Select agent skills"}
-                      </SelectValue>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select voice" />
                     </SelectTrigger>
                     <SelectContent>
-                      {AGENT_PURPOSES.map((purpose) => (
-                        <SelectItem key={purpose.value} value={purpose.value}>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`checkbox-${purpose.value}`}
-                              checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
-                              onCheckedChange={(checked) => {
-                                if (!selectedAgent) return;
-                                
-                                const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
-                                  ? [...selectedAgent.agentPurpose] 
-                                  : [];
-                                
-                                const newPurposes = checked
-                                  ? [...currentPurposes, purpose.value]
-                                  : currentPurposes.filter(p => p !== purpose.value);
-                                
-                                setSelectedAgent({
-                                  ...selectedAgent,
-                                  agentPurpose: newPurposes
-                                });
-                              }}
-                            />
-                            <label 
-                              htmlFor={`checkbox-${purpose.value}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {purpose.label}
-                            </label>
-                          </div>
-                        </SelectItem>
+                      {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
-                  <div className="relative">
-                    <MultiSelect 
-                      items={[
-                        { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
-                        ...knowledgeBaseItems
-                      ]}
-                      selectedItems={
-                        selectedAgent?.dataSource 
-                          ? (selectedAgent.dataSource.includes('all')
-                              ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                              : knowledgeBaseItems.filter(item => 
-                                  selectedAgent.dataSource.includes(item.id.toString())
-                                ))
-                          : []
-                      }
-                      onChange={handleDataSourceChange}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
-                  <Input 
-                    id="openingLine"
-                    value={selectedAgent?.openingLine || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
-                  <Select 
-                    value={selectedAgent?.language}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
+                      if (voiceFile) playVoiceSample(voiceFile);
+                    }}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en-GB">English GB</SelectItem>
-                      <SelectItem value="en-US">English US</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                      <SelectItem value="ar">Arabic</SelectItem>
-                      <SelectItem value="nl">Dutch</SelectItem>
-                      <SelectItem value="zh">Chinese</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select 
-                      value={selectedAgent?.voice}
-                      onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select voice" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
-                        if (voiceFile) playVoiceSample(voiceFile);
-                      }}
-                    >
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                {/* Add a divider before features */}
-                <div className="my-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Features</span>
-                    </div>
-                  </div>
-                </div>
-
-                <AgentFeatures
-                  selectedAgent={selectedAgent}
-                  setSelectedAgent={setSelectedAgent}
-                  handleSaveFeatures={handleSaveFeatures}
-                />
-
-                {/* Add the Retrain Agent button at the bottom */}
-                <div className="pt-6">
-                  <Button onClick={handleSaveFeatures}>
-                    Retrain Agent
+                    <Play className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="advanced">
-          <Card>
-            <CardHeader>
-              <CardTitle>Advanced Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-                <Textarea 
-                  id="instructions"
-                  value={selectedAgent?.instructions || ''} 
-                  onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
-                  className="min-h-[400px]"
-                />
+
+              {/* Features Section */}
+              <div className="my-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Features</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex space-x-2">
+
+              {/* Agent Features Component */}
+              <AgentFeatures
+                selectedAgent={selectedAgent}
+                setSelectedAgent={(agent) => {
+                  if (!agent || !selectedAgent) return;
+                  setSelectedAgent({
+                    ...selectedAgent,
+                    features: agent.features
+                  });
+                }}
+                handleSaveFeatures={handleSaveFeatures}
+              />
+
+              {/* Retrain Button */}
+              <div className="pt-6">
                 <Button onClick={handleSaveFeatures}>
                   Retrain Agent
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Delete Agent</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the agent
-                        and remove all of its data from our servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteAgent}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        {/* <TabsContent value="ui">
-          <Ui
-            selectedAgent={selectedAgent}
-            setSelectedAgent={setSelectedAgent}
-            isStreaming={isStreaming}
-            setIsStreaming={setIsStreaming}
-            isLiveKitActive={isLiveKitActive}
-            setIsLiveKitActive={setIsLiveKitActive}
-            token={token}
-            setToken={setToken}
-            url={url}
-            setUrl={setUrl}
-            isConnecting={isConnecting}
-            setIsConnecting={setIsConnecting}
-            handleStreamEnd={handleStreamEnd}
-            handleStreamStart={handleStreamStart}
-            localParticipant={localParticipant}
-            setLocalParticipant={setLocalParticipant}
-          />
-        </TabsContent> */}
-        <TabsContent value="deploy">
-          <Deploy 
-            selectedAgent={selectedAgent}
-            setSelectedAgent={setSelectedAgent}
-            handleSaveChanges={handleSaveChanges}
-          />
-        </TabsContent>
-        <TabsContent value="share">
-          <Card>
-            <CardHeader>
-              <CardTitle>Share</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Share options for your agent will be shown here.</p>
-              {/* Add share options here */}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="playground">
-          <Playground 
-            selectedAgent={selectedAgent}
-          />
-        </TabsContent>
-      </Tabs>
-    </>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="advanced">
+        <Card>
+          <CardHeader>
+            <CardTitle>Advanced Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
+              <Textarea 
+                id="instructions"
+                value={selectedAgent?.instructions || ''} 
+                onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+                className="min-h-[400px]"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleSaveFeatures}>
+                Retrain Agent
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Delete Agent</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the agent
+                      and remove all of its data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteAgent}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      {/* <TabsContent value="ui">
+        <Ui
+          selectedAgent={selectedAgent}
+          setSelectedAgent={setSelectedAgent}
+          isStreaming={isStreaming}
+          setIsStreaming={setIsStreaming}
+          isLiveKitActive={isLiveKitActive}
+          setIsLiveKitActive={setIsLiveKitActive}
+          token={token}
+          setToken={setToken}
+          url={url}
+          setUrl={setUrl}
+          isConnecting={isConnecting}
+          setIsConnecting={setIsConnecting}
+          handleStreamEnd={handleStreamEnd}
+          handleStreamStart={handleStreamStart}
+          localParticipant={localParticipant}
+          setLocalParticipant={setLocalParticipant}
+        />
+      </TabsContent> */}
+      <TabsContent value="deploy">
+        <Deploy 
+          selectedAgent={selectedAgent}
+          setSelectedAgent={setSelectedAgent}
+          handleSaveChanges={handleSaveChanges}
+        />
+      </TabsContent>
+      <TabsContent value="share">
+        <Card>
+          <CardHeader>
+            <CardTitle>Share</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Share options for your agent will be shown here.</p>
+            {/* Add share options here */}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="playground">
+        <Playground 
+          selectedAgent={selectedAgent}
+        />
+      </TabsContent>
+    </Tabs>
   );
 };
 

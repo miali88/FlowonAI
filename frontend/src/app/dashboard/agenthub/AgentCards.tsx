@@ -27,41 +27,23 @@ const glassStyles = `
 export interface Agent {
   id: string;
   agentName: string;
-  agentPurpose: string;
+  agentPurpose: string | string[];
   dataSource: string;
-  tag?: string;
   openingLine: string;
   language: string;
   voice: string;
-  instructions: string;
+  features?: {
+    [key: string]: {
+      enabled: boolean;
+      [key: string]: any;
+    };
+  };
   uiConfig?: {
     primaryColor?: string;
     secondaryColor?: string;
     fontSize?: number;
     borderRadius?: number;
     chatboxHeight?: number;
-  };
-  features?: {
-    callTransfer?: {
-      enabled?: boolean;
-      primaryNumber?: string;
-      secondaryNumber?: string;
-    };
-    appointmentBooking?: {
-      enabled?: boolean;
-      nylasApiKey?: string;
-    };
-    form?: {
-      enabled?: boolean;
-      fields: FormField[];
-    };
-    prospects?: {
-      enabled?: boolean;
-      notifyOnInterest: boolean;
-      email: string;
-      sms: string;
-      whatsapp: string;
-    };
   };
 }
 
@@ -156,6 +138,25 @@ export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAg
     refreshAgents?.();
   }, [refreshAgents]);
 
+  const handleAgentSelect = async (agent: Agent) => {
+    try {
+      const storedFeatures = localStorage.getItem(`agent-features-${agent.id}`);
+      const features = storedFeatures ? JSON.parse(storedFeatures) : {};
+      
+      setSelectedAgent({
+        ...agent,
+        features: {
+          ...agent.features,
+          ...features // Merge any existing features with stored features
+        }
+      });
+      setSelectedAgentId(agent.id);
+    } catch (error) {
+      console.error('Error loading agent details:', error);
+      setSelectedAgent(agent);
+    }
+  };
+
   if (loading) return <Loader />;
   if (error) return <div>Error: {error}</div>
 
@@ -174,7 +175,7 @@ export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAg
                 h-full flex flex-col
                 ${selectedAgentId === agent.id ? 'border-2 border-primary shadow-lg scale-[1.02]' : ''}
               `} 
-              onClick={() => setSelectedAgent(agent)}
+              onClick={() => handleAgentSelect(agent)}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-2xl font-bold">{agent.agentName}</CardTitle>
