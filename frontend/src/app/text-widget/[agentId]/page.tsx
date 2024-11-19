@@ -7,11 +7,13 @@ export default function ChatWidgetPage() {
   const params = useParams()
   
   return (
-    <div id="embedded-chatbot-container" style={{
+    <div style={{
       width: '100%',
-      height: '100vh',
+      height: '100%',
+      position: 'relative',
       display: 'flex',
-      flexDirection: 'column'
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
       <TextWidget 
         agentId={params.agentId as string}

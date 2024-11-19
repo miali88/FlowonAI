@@ -114,33 +114,42 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   };
 
   return (
-    <div className={styles.chatContainer}>
-      <div className={styles.messageContainer} ref={messageContainerRef}>
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`${styles.messageBubble} ${
-              message.isBot ? styles.assistantMessage : styles.userMessage
-            }`}
-          >
-            {message.text}
-          </div>
-        ))}
-      </div>
-      
-      <div className={styles.inputContainer}>
-        <form onSubmit={handleSendMessage} className={styles.chatForm}>
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className={styles.chatInput}
-            placeholder="Type your message..."
-          />
-          <button type="submit" className={styles.sendButton}>
-            Send
-          </button>
-        </form>
+    <div style={{ 
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div className={styles.chatContainer}>
+        <div className={styles.messageContainer} ref={messageContainerRef}>
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`${styles.messageBubble} ${
+                message.isBot ? styles.assistantMessage : styles.userMessage
+              }`}
+            >
+              {message.text}
+            </div>
+          ))}
+        </div>
+        
+        <div className={styles.inputContainer}>
+          <form onSubmit={handleSendMessage} className={styles.chatForm}>
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className={styles.chatInput}
+              placeholder="Type your message..."
+            />
+            <button type="submit" className={styles.sendButton}>
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
