@@ -86,8 +86,10 @@ async def question_and_answer(
             results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
         rag_prompt = f"""
+        Based on the following information, please provide a comprehensive and accurate answer to the user's question.
+        
         ## User Query: {question}
-        ## Results: {results}
+        ## Retrieved Information: {results}
         """
 
         chat_ctx = llm.ChatContext()
@@ -96,11 +98,18 @@ async def question_and_answer(
             text=rag_prompt
         )
 
-        return f"Based on the search results: {results}"
-
+        # Create LLM instance and get response
+        llm_instance = openai.LLM(model="gpt-4")
+        response_stream = llm_instance.chat(chat_ctx=chat_ctx)
+        
+        # Stream the response chunks directly instead of accumulating
+        async for chunk in response_stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+        
     except Exception as e:
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
-        return "I apologize, but I encountered an error while searching for an answer to your question."
+        yield "I apologize, but I encountered an error while searching for an answer to your question."
 
 
 async def lk_chat_process(message: str, agent_id: str):
@@ -143,8 +152,11 @@ async def lk_chat_process(message: str, agent_id: str):
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
-                    result = await called_function.task
-                    yield f"\nFunction result: {result}"
+                    # Await the task to get the generator
+                    result_generator = await called_function.task
+                    # Now iterate through the generator
+                    async for result_chunk in result_generator:
+                        yield result_chunk
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
