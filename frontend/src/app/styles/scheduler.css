@@ -1,0 +1,5 @@
+/* Custom styling for the scheduler components */
+nylas-scheduling::part(ndp__date--selected) {
+  background-color: #2563EB;
+  color: #FFFFFF;
+} 

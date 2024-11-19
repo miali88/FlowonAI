@@ -103,35 +103,41 @@ async def scrape_url(urls: List[str], user_id: str = None):
 
     results = []
     for site in urls:
+        print(f"Processing site {site}")
         try:
-            response = app.scrape_url(url=site, params={
-                'formats': ['markdown'],
-                'waitFor': 1000
-            })
+            if "screen" not in site:
+                response = app.scrape_url(url=site, params={
+                    'formats': ['markdown'],
+                    'waitFor': 1000
+                })
 
-            content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
-            content = "\n\n".join(content)
-            
-            try:
-                header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
-            except KeyError:
-                print(f"KeyError occurred for site {site}: Missing description")
-                header = "## Title: " + response['metadata']['title']
+                content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
+                content = "\n\n".join(content)
+                
+                try:
+                    header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
+                except KeyError:
+                    print(f"KeyError occurred for site {site}: Missing description")
+                    header = "## Title: " + response['metadata']['title']
 
-            chunks = await sliding_window_chunking(content)
+                chunks = await sliding_window_chunking(content)
 
-            for chunk in chunks:
-                print(f"processing chunk {chunks.index(chunk)} of {len(chunks)}")
-                sb_insert['url'] = site
-                sb_insert['header'] = header
-                sb_insert['content'] = chunk
-                chunk = header + chunk
-                jina_response = await get_embedding(chunk)
-                sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
-                sb_insert['token_count'] = jina_response['usage']['total_tokens']
+                for chunk in chunks:
+                    print(f"processing chunk {chunks.index(chunk)} of {len(chunks)}")
+                    sb_insert['url'] = site
+                    sb_insert['header'] = header
+                    sb_insert['content'] = chunk
+                    chunk = header + chunk
+                    jina_response = await get_embedding(chunk)
+                    sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
+                    sb_insert['token_count'] = jina_response['usage']['total_tokens']
 
-                await insert_to_db(sb_insert)
-                results.append(sb_insert.copy())
+                    await insert_to_db(sb_insert)
+                    results.append(sb_insert.copy())
+
+            else:
+                print(f"Skipping screen {site}")
+                continue
         except KeyError as e:
             print(f"KeyError occurred for site {site}: {str(e)}")
             print("Proceeding without description")

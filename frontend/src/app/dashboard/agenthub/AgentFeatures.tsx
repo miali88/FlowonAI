@@ -42,456 +42,371 @@ interface AgentFeaturesProps {
   handleSaveFeatures: (features: any) => Promise<void>;
 }
 
-// First, let's define our purpose types explicitly
-const PURPOSE_FEATURES = {
-  "lead-generation": [
-    { 
-      id: "notifyOnInterest", 
-      label: "Notify you on interest",
-      description: "Get notified when prospects show interest in your product or service"
-    },
-    { 
-      id: "form", 
-      label: "Collect written information",
-      description: "Specify what information you want to collect from prospects"
-    }
-  ],
-  "prospecting": [
-    { 
-      id: "prospects", 
-      label: "Prospect Management",
-      description: "Manage and track prospects"
-    }
-  ],
-  "question-answer": [
-    { 
-      id: "collectWrittenInformation", 
-      label: "Information Collection",
-      description: "Allow the agent to collect and store important information from conversations"
-    }
-  ],
-  "customer-service": [
-    { 
-      id: "callTransfer", 
-      label: "Call Transfer",
-      description: "Allow the agent to transfer calls to human operators"
-    }
-  ],
-  "appointment-booking": [
-    { 
-      id: "appointmentBooking", 
-      label: "Calendar Integration",
-      description: "Give your agent the ability to check calendar availability and book appointments"
-    }
-  ],
-  "product-recommendation": [
-    { 
-      id: "collectWrittenInformation", 
-      label: "Information Collection",
-      description: "Allow the agent to collect product preferences"
-    }
-  ]
-};
-
-// Add this with the other interfaces at the top of the file
-interface ProspectSettings {
-  notifyOnInterest: boolean;
-  email: string;
-  sms: string;
-  whatsapp: string;
+// Add these interfaces at the top
+interface InformationCollectionConfig {
+  fields: {
+    name: boolean;
+    email: boolean;
+    phone: boolean;
+    company: boolean;
+    jobTitle: boolean;
+    custom: string[];
+  };
 }
+
+// Update the AGENT_FEATURES object to include configuration
+const AGENT_FEATURES = {
+  purposes: {
+    prospecting: {
+      id: "prospecting",
+      label: "Lead Generation & Prospecting",
+      description: "Create an agent that qualifies leads and collects prospect information",
+      subFeatures: {
+        notifyOnInterest: {
+          id: "notifyOnInterest",
+          label: "Notify on Interest",
+          description: "Get notified when prospects show interest"
+        },
+        collectInformation: {
+          id: "collectInformation",
+          label: "Information Collection",
+          description: "Collect and store prospect information",
+          hasConfiguration: true,
+          defaultConfig: {
+            fields: {
+              name: true,
+              email: true,
+              phone: false,
+              company: false,
+              jobTitle: false,
+              custom: []
+            }
+          }
+        }
+      }
+    },
+    appointmentBooking: {
+      id: "appointmentBooking",
+      label: "Appointment Booking",
+      description: "Create an agent that manages your calendar and books appointments",
+      subFeatures: {
+        calendar: {
+          id: "calendar",
+          label: "Calendar Management",
+          description: "Manage and schedule appointments"
+        }
+      }
+    }
+  }
+};
 
 export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveFeatures,
 }) => {
-  // Simplified state
+  const [localFeatures, setLocalFeatures] = useState(selectedAgent?.features || {});
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
+  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [currentConfig, setCurrentConfig] = useState<InformationCollectionConfig | null>(null);
 
-  // Add local state to manage form fields
-  const [localFeatures, setLocalFeatures] = useState(selectedAgent?.features || {});
-
-  // Update local state when props change
-  useEffect(() => {
-    setLocalFeatures(selectedAgent?.features || {});
-  }, [selectedAgent?.features]);
-
-  const handleFeatureToggle = async (featureId: string) => {
-    const currentFeature = localFeatures[featureId];
-    const updatedFeatures = {
-      ...localFeatures,
+  const handleFeatureToggle = (featureId: string) => {
+    setLocalFeatures(prev => ({
+      ...prev,
       [featureId]: {
-        ...currentFeature,
-        enabled: !currentFeature?.enabled
+        ...prev[featureId],
+        enabled: !prev[featureId]?.enabled
       }
-    };
+    }));
+  };
 
-    // Update local state first
-    setLocalFeatures(updatedFeatures);
-    
-    // If we're enabling a feature, open the configuration dialog
-    if (!currentFeature?.enabled) {
-      setCurrentFeature(featureId);
-      setIsConfigureDialogOpen(true);
+  // Add this function to check if a feature has configuration options
+  const hasConfigurationContent = (featureId: string): boolean => {
+    switch (featureId) {
+      case "prospecting":
+        return true; // If prospecting has configuration options
+      case "appointmentBooking":
+        return true; // If appointment booking has configuration options
+      // Add other cases as needed
+      default:
+        return false;
     }
-    
-    // Notify parent
-    await handleSaveFeatures(updatedFeatures);
   };
 
-  // When updating form fields, use local state first
-  const handleFormFieldUpdate = (index: number, updates: any) => {
-    const updatedFields = [...(localFeatures?.form?.fields || [])];
-    updatedFields[index] = { ...updatedFields[index], ...updates };
-    
-    const updatedFeatures = {
-      ...localFeatures,
-      form: {
-        ...localFeatures?.form,
-        fields: updatedFields
-      }
-    };
-
-    // Update local state
-    setLocalFeatures(updatedFeatures);
-    // Then notify parent
-    handleSaveFeatures(updatedFeatures);
+  // Add this function to handle configuration click
+  const handleConfigureClick = (featureId: string) => {
+    setCurrentFeature(featureId);
+    setIsConfigureDialogOpen(true);
   };
 
-  const getFeaturesByPurposes = () => {
-    const availableFeatures: any[] = [];
-    const agentPurpose = selectedAgent?.agentPurpose;
-    
-    console.log('Current agent purpose:', agentPurpose); // Debug log
-    console.log('Available features for purpose:', PURPOSE_FEATURES[agentPurpose as keyof typeof PURPOSE_FEATURES]); // Debug log
-    
-    if (agentPurpose) {
-      const features = PURPOSE_FEATURES[agentPurpose as keyof typeof PURPOSE_FEATURES] || [];
-      features.forEach(feature => {
-        if (!availableFeatures.find(f => f.id === feature.id)) {
-          availableFeatures.push(feature);
-        }
-      });
-    }
-    
-    return availableFeatures;
-  };
-
-  // Add these state declarations at the beginning of the component
-  const [callTransferConfig, setCallTransferConfig] = useState({
-    primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
-    secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
-  });
-
-  const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
-    nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
-  });
-
-  const [formFields, setFormFields] = useState<FormField[]>(
-    selectedAgent?.features?.form?.fields || []
-  );
-
-  const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
-    notifyOnInterest: selectedAgent?.features?.prospects?.notifyOnInterest || false,
-    email: selectedAgent?.features?.prospects?.email || '',
-    sms: selectedAgent?.features?.prospects?.sms || '',
-    whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
-  });
-
-  // Add the FormField interface
-  interface FormField {
-    type: 'text' | 'email' | 'phone' | 'dropdown';
-    label: string;
-    options: string[];
-  }
-
-  // Add the handleAddFormField function
-  const handleAddFormField = () => {
-    const newField: FormField = {
-      type: 'text',
-      label: '',
-      options: []
-    };
-
-    if (!selectedAgent) return;
-
-    const updatedFeatures = {
-      ...selectedAgent.features,
-      form: {
-        ...selectedAgent.features?.form,
-        enabled: true,
-        fields: [...(selectedAgent.features?.form?.fields || []), newField]
-      }
-    };
-
-    setSelectedAgent({
-      ...selectedAgent,
-      features: updatedFeatures
-    });
-  };
-
-  const handleProspectSettingsChange = (key: keyof ProspectSettings, value: any) => {
-    setProspectSettings(prev => ({ ...prev, [key]: value }));
-    
-    const updatedFeatures = {
-      ...localFeatures,
-      prospects: {
-        ...localFeatures.prospects,
-        [key]: value
-      }
-    };
-    handleSaveFeatures(updatedFeatures);
-  };
-
-  // Add this helper function to determine if a feature needs configuration
-  const needsConfiguration = (featureId: string) => {
-    return !['collectWrittenInformation'].includes(featureId);
+  // Add this function to handle configuration
+  const handleConfigureInformationCollection = (subFeature: any) => {
+    setCurrentConfig(localFeatures[subFeature.id]?.config || subFeature.defaultConfig);
+    setConfigDialogOpen(true);
   };
 
   return (
-    <div className="space-y-6">
-      {getFeaturesByPurposes().map((feature) => (
-        <div key={feature.id} className="space-y-2 border p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor={feature.id} className="block text-sm font-medium">
-                {feature.label}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {feature.description}
-              </p>
+    <div className="space-y-2">
+      {Object.values(AGENT_FEATURES.purposes).map((purpose) => (
+        <Accordion
+          key={purpose.id}
+          type="single"
+          collapsible
+          value={openItem}
+          onValueChange={setOpenItem}
+          className="w-full"
+        >
+          <AccordionItem value={purpose.id} className="border rounded-lg">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium">{purpose.label}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {purpose.description}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id={purpose.id}
+                  checked={localFeatures[purpose.id]?.enabled || false}
+                  onCheckedChange={() => handleFeatureToggle(purpose.id)}
+                />
+                <AccordionTrigger className="h-4 w-4 p-0" />
+              </div>
             </div>
-            <Switch
-              id={feature.id}
-              checked={localFeatures[feature.id]?.enabled || false}
-              onCheckedChange={() => handleFeatureToggle(feature.id)}
-            />
-          </div>
 
-          {/* Only show Configure button if feature is enabled AND needs configuration */}
-          {localFeatures[feature.id]?.enabled && needsConfiguration(feature.id) && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setCurrentFeature(feature.id);
-                setIsConfigureDialogOpen(true);
-              }}
-            >
-              Configure
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </div>
+            <AccordionContent className="px-4 pb-4">
+              <div className="space-y-4">
+                {purpose.subFeatures && Object.values(purpose.subFeatures).map((subFeature) => (
+                  <div key={subFeature.id} className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <Label htmlFor={subFeature.id} className="text-sm">
+                        {subFeature.label}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {subFeature.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {subFeature.hasConfiguration && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
+                          onClick={() => handleConfigureInformationCollection(subFeature)}
+                        >
+                          Configure
+                        </Button>
+                      )}
+                      <Switch
+                        id={subFeature.id}
+                        checked={localFeatures[subFeature.id]?.enabled || false}
+                        onCheckedChange={() => handleFeatureToggle(subFeature.id)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       ))}
 
-      {/* Make sure Dialog stays open when feature is enabled */}
-      <Dialog 
-        open={isConfigureDialogOpen} 
-        onOpenChange={(open) => {
-          setIsConfigureDialogOpen(open);
-          if (!open) {
-            setCurrentFeature(null);
-          }
-        }}
-      >
-        <DialogContent>
+      {/* Configuration Dialog */}
+      {isConfigureDialogOpen && currentFeature && (
+        <Dialog 
+          open={isConfigureDialogOpen} 
+          onOpenChange={(open) => {
+            setIsConfigureDialogOpen(open);
+            if (!open) {
+              setCurrentFeature(null);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Configure {currentFeature}</DialogTitle>
+              <DialogDescription>
+                Configure the settings for this feature
+              </DialogDescription>
+            </DialogHeader>
+            {/* Add your configuration content here */}
+            <DialogFooter>
+              <Button onClick={() => setIsConfigureDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add the configuration dialog */}
+      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{getFeatureTitle(currentFeature)}</DialogTitle>
+            <DialogTitle>Configure Information Collection</DialogTitle>
             <DialogDescription>
-              {getFeatureDescription(currentFeature)}
+              Select which information fields the agent should collect
             </DialogDescription>
           </DialogHeader>
-          {renderFeatureConfig()}
+
+          <div className="grid gap-4 py-4">
+            <div className="space-y-4">
+              {currentConfig && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="name"
+                      checked={currentConfig.fields.name}
+                      onCheckedChange={(checked) => {
+                        setCurrentConfig(prev => prev ? {
+                          ...prev,
+                          fields: { ...prev.fields, name: checked as boolean }
+                        } : null);
+                      }}
+                    />
+                    <Label htmlFor="name">Name</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="email"
+                      checked={currentConfig.fields.email}
+                      onCheckedChange={(checked) => {
+                        setCurrentConfig(prev => prev ? {
+                          ...prev,
+                          fields: { ...prev.fields, email: checked as boolean }
+                        } : null);
+                      }}
+                    />
+                    <Label htmlFor="email">Email</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="phone"
+                      checked={currentConfig.fields.phone}
+                      onCheckedChange={(checked) => {
+                        setCurrentConfig(prev => prev ? {
+                          ...prev,
+                          fields: { ...prev.fields, phone: checked as boolean }
+                        } : null);
+                      }}
+                    />
+                    <Label htmlFor="phone">Phone Number</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="company"
+                      checked={currentConfig.fields.company}
+                      onCheckedChange={(checked) => {
+                        setCurrentConfig(prev => prev ? {
+                          ...prev,
+                          fields: { ...prev.fields, company: checked as boolean }
+                        } : null);
+                      }}
+                    />
+                    <Label htmlFor="company">Company</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="jobTitle"
+                      checked={currentConfig.fields.jobTitle}
+                      onCheckedChange={(checked) => {
+                        setCurrentConfig(prev => prev ? {
+                          ...prev,
+                          fields: { ...prev.fields, jobTitle: checked as boolean }
+                        } : null);
+                      }}
+                    />
+                    <Label htmlFor="jobTitle">Job Title</Label>
+                  </div>
+
+                  {/* Custom Fields Section */}
+                  <div className="mt-4">
+                    <Label>Custom Fields</Label>
+                    <div className="space-y-2">
+                      {currentConfig.fields.custom.map((field, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            value={field}
+                            onChange={(e) => {
+                              const newCustom = [...currentConfig.fields.custom];
+                              newCustom[index] = e.target.value;
+                              setCurrentConfig(prev => prev ? {
+                                ...prev,
+                                fields: { ...prev.fields, custom: newCustom }
+                              } : null);
+                            }}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newCustom = currentConfig.fields.custom.filter((_, i) => i !== index);
+                              setCurrentConfig(prev => prev ? {
+                                ...prev,
+                                fields: { ...prev.fields, custom: newCustom }
+                              } : null);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentConfig(prev => prev ? {
+                            ...prev,
+                            fields: {
+                              ...prev.fields,
+                              custom: [...prev.fields.custom, '']
+                            }
+                          } : null);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Custom Field
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button onClick={() => setIsConfigureDialogOpen(false)}>
-              Close
+            <Button onClick={() => {
+              if (currentConfig) {
+                setLocalFeatures(prev => ({
+                  ...prev,
+                  collectInformation: {
+                    ...prev.collectInformation,
+                    config: currentConfig
+                  }
+                }));
+                setConfigDialogOpen(false);
+              }
+            }}>
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-
-  // Helper function to render feature-specific configuration
-  function renderFeatureConfig() {
-    switch (currentFeature) {
-      case 'callTransfer':
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="primaryNumber" className="text-right">
-                Primary Number
-              </Label>
-              <Input
-                id="primaryNumber"
-                value={callTransferConfig.primaryNumber}
-                onChange={(e) => setCallTransferConfig(prev => ({
-                  ...prev,
-                  primaryNumber: e.target.value
-                }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="secondaryNumber" className="text-right">
-                Secondary Number
-              </Label>
-              <Input
-                id="secondaryNumber"
-                value={callTransferConfig.secondaryNumber}
-                onChange={(e) => setCallTransferConfig(prev => ({
-                  ...prev,
-                  secondaryNumber: e.target.value
-                }))}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-        );
-
-      case 'appointmentBooking':
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nylasApiKey" className="text-right">
-                Nylas API Key
-              </Label>
-              <Input
-                id="nylasApiKey"
-                value={appointmentBookingConfig.nylasApiKey}
-                onChange={(e) => setAppointmentBookingConfig(prev => ({
-                  ...prev,
-                  nylasApiKey: e.target.value
-                }))}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-        );
-
-      case 'form':
-        return (
-          <div className="grid gap-4 py-4">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="info">
-                <AccordionTrigger>how to use</AccordionTrigger>
-                <AccordionContent>
-                  <p className="mb-4">
-                    Forms should only be used to collect personal data that requires exact spelling. 
-                    All other types of information will be automatically extracted. The agent will:
-                  </p>
-                  <ul>
-                    <li>- Request and verify this information from the caller</li>
-                    <li>- Let the AI system capture other relevant details from the conversation</li>
-                    <li>- Qualify a caller as a lead</li>
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            {(localFeatures?.form?.fields || []).map((field: FormField, index: number) => (
-              <div key={index} className="space-y-2 border p-4 rounded-md">
-                <div className="flex items-center gap-4">
-                  <Label>Field Type</Label>
-                  <Select
-                    value={field.type}
-                    onValueChange={(value) => {
-                      handleFormFieldUpdate(index, { type: value as 'text' | 'email' | 'phone' | 'dropdown' });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="phone">Phone</SelectItem>
-                      <SelectItem value="dropdown">Dropdown</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Input
-                    placeholder="Field Label"
-                    value={field.label}
-                    onChange={(e) => {
-                      handleFormFieldUpdate(index, { label: e.target.value });
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-
-            <Button 
-              onClick={handleAddFormField} 
-              className="w-full"
-              type="button"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Field
-            </Button>
-          </div>
-        );
-
-      case 'prospects':
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="notifyOnInterest"
-                checked={prospectSettings.notifyOnInterest}
-                onCheckedChange={(checked) => 
-                  handleProspectSettingsChange('notifyOnInterest', checked as boolean)
-                }
-              />
-              <Label htmlFor="notifyOnInterest">
-                Notify when a prospect shows interest
-              </Label>
-            </div>
-            
-            {prospectSettings.notifyOnInterest && (
-              <div className="space-y-4 mt-4">
-                <Label>Notification Methods</Label>
-                {['email', 'sms', 'whatsapp'].map((method) => (
-                  <div key={method} className="space-y-2">
-                    <Label htmlFor={`notify-${method}`}>
-                      {method.charAt(0).toUpperCase() + method.slice(1)}
-                    </Label>
-                    <Input
-                      id={`notify-${method}`}
-                      placeholder={`Enter ${method} details`}
-                      value={prospectSettings[method as keyof Omit<ProspectSettings, 'notifyOnInterest'>]}
-                      onChange={(e) => handleProspectSettingsChange(
-                        method as keyof ProspectSettings, 
-                        e.target.value
-                      )}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  }
 };
 
-// Helper functions for feature descriptions and titles
+// Also remove any references in the helper functions
 function getFeatureDescription(featureId: string | null): string {
   switch (featureId) {
-    case "callTransfer":
-      return "Allow the agent to transfer calls to human operators.";
     case "appointmentBooking":
       return "Enable the agent to schedule appointments and manage a calendar.";
-    case "form":
-      return "Let the agent collect structured data through customizable forms.";
     case "prospects":
       return "Be notified when a prospect shows interest.";
     default:
@@ -501,12 +416,8 @@ function getFeatureDescription(featureId: string | null): string {
 
 function getFeatureTitle(featureId: string | null): string {
   switch (featureId) {
-    case "callTransfer":
-      return "Call Transfer";
     case "appointmentBooking":
       return "Appointment Booking";
-    case "form":
-      return "Custom Form";
     case "prospects":
       return "Prospects";
     default:

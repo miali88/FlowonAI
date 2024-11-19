@@ -62,7 +62,6 @@ interface Item {
 interface FormData {
   id: string;
   agentName: string;
-  agentPurpose: string;
   instructions: string;
   dataSource: Array<{
     id: string | number;
@@ -73,14 +72,11 @@ interface FormData {
   voice: string;
   language: string;
   features: {
-    notifyOnInterest: boolean;
-    collectWrittenInformation: boolean;
-    transferCallToHuman: boolean;
-    bookCalendarSlot: boolean;
-    prospects: boolean;
-    form: boolean;
-    callTransfer: boolean;
+    prospecting: boolean;
     appointmentBooking: boolean;
+    notifyOnInterest: boolean;
+    collectInformation: boolean;
+    calendar: boolean;
   };
 }
 
@@ -101,80 +97,34 @@ const getVoiceOptionsFormatted = (voices: typeof VOICE_OPTIONS[keyof typeof VOIC
   }));
 };
 
-const AGENT_PURPOSES = {
-  "prospecting": {
-    title: "Lead Generation & Prospecting",
-    description: "Create an agent that qualifies leads and collects prospect information",
-    features: {
-      notifyOnInterest: true,
-      collectWrittenInformation: true,
-      form: true,
-      prospects: true
-    }
-  },
-  "appointment-booking": {
-    title: "Appointment Booking",
-    description: "Create an agent that manages your calendar and books appointments",
-    features: {
-      bookCalendarSlot: true,
-      appointmentBooking: true
-    }
-  },
-  "question-answer": {
-    title: "Question & Answer",
-    description: "Create an agent that answers questions based on your knowledge base",
-    features: {
-      collectWrittenInformation: false,
-      transferCallToHuman: true
-    }
-  },
-  "customer-service": {
-    title: "Customer Service",
-    description: "Create an agent that handles customer inquiries and support",
-    features: {
-      transferCallToHuman: true,
-      callTransfer: true
-    }
-  }
-};
-
 // Add this interface near your other interfaces
 interface Agent {
   features: {
-    notifyOnInterest: boolean;
-    collectWrittenInformation: boolean;
-    transferCallToHuman: boolean;
-    bookCalendarSlot: boolean;
-    prospects: boolean;
-    form: boolean;
-    callTransfer: boolean;
+    prospecting: boolean;
     appointmentBooking: boolean;
+    notifyOnInterest: boolean;
+    collectInformation: boolean;
+    calendar: boolean;
   };
 }
 
 export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<'purpose' | 'details'>('purpose');
-  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     id: crypto.randomUUID(),
     agentName: '',
-    agentPurpose: '',
     instructions: '',
     dataSource: [],
     openingLine: '',
     voice: '',
     language: '',
     features: {
+      prospecting: false,
+      appointmentBooking: false,
       notifyOnInterest: false,
-      collectWrittenInformation: false,
-      transferCallToHuman: false,
-      bookCalendarSlot: false,
-      prospects: false,
-      form: false,
-      callTransfer: false,
-      appointmentBooking: false
+      collectInformation: false,
+      calendar: false,
     }
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -309,42 +259,6 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     }
   };
 
-  const handlePurposeSelect = (purpose: string) => {
-    setSelectedPurposes([purpose]);
-  };
-
-  const handleNext = () => {
-    if (selectedPurposes.length > 0) {
-      const purpose = selectedPurposes[0];
-      const features = AGENT_PURPOSES[purpose as keyof typeof AGENT_PURPOSES].features;
-
-      setFormData(prev => ({
-        ...prev,
-        agentPurpose: purpose,
-        features: {
-          ...prev.features,
-          ...features
-        }
-      }));
-      setStep('details');
-    }
-  };
-
-  const handleBack = () => {
-    setStep('purpose');
-    setSelectedPurposes([]);
-  };
-
-  // Convert your existing options to the Item format
-  const AGENT_PURPOSE_OPTIONS = [
-    { id: "prospecting", title: "Prospecting" },
-    { id: "onboarding", title: "Onboarding" },
-    { id: "receptionist", title: "Receptionist" },
-    { id: "question-answer", title: "Question & Answer" },
-    { id: "customer-service", title: "Customer Service" },
-    { id: "appointment-booking", title: "Appointment Booking" },
-  ];
-
   const LANGUAGE_OPTIONS_FORMATTED = LANGUAGE_OPTIONS.map(lang => ({
     id: lang.id,
     title: lang.name,
@@ -355,237 +269,162 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
       <DialogTrigger asChild>
         <Button variant="outline">Create New Agent</Button>
       </DialogTrigger>
-      <DialogContent 
-        className={`
-          ${styles.glassCard}
-          ${step === 'purpose' ? 'sm:max-w-[600px]' : 'sm:max-w-[425px]'}
-        `}
-      >
-        {step === 'purpose' ? (
-          <div className="space-y-4">
-            <DialogHeader className="text-center pb-4">
-              <DialogTitle>Select Agent Purposes</DialogTitle>
-              <DialogDescription>
-                Choose one or more purposes for your agent
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3 px-2">
-              {Object.entries(AGENT_PURPOSES).map(([key, purpose]) => (
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Create New Agent</DialogTitle>
+            <DialogDescription>
+              Configure your AI agent's settings and features
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {/* Agent Name */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="agentName" className="text-right">
+                Agent Name
+              </Label>
+              <Input
+                id="agentName"
+                placeholder="Enter agent name"
+                className="col-span-3"
+                value={formData.agentName}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            {/* Data Source */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="dataSource" className="text-right">
+                Data Source
+              </Label>
+              <div className="col-span-3">
+                <MultiSelect 
+                  items={[
+                    { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
+                    ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
+                  ]}
+                  selectedItems={formData.dataSource}
+                  onChange={(selectedItems) => {
+                    const newSelection = selectedItems.some(item => item.id === 'all') 
+                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
+                      : selectedItems;
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      dataSource: newSelection
+                    }));
+                  }}
+                  multiSelect={true}
+                />
+              </div>
+            </div>
+
+            {/* Opening Line */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="openingLine" className="text-right">
+                Opening Line
+              </Label>
+              <Input
+                id="openingLine"
+                placeholder="Enter opening line"
+                className="col-span-3"
+                value={formData.openingLine}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            {/* Language Selection */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="language" className="text-right">
+                Language
+              </Label>
+              <div className="col-span-3">
+                <MultiSelect
+                  items={LANGUAGE_OPTIONS_FORMATTED}
+                  selectedItems={selectedLanguage ? [{ id: selectedLanguage, title: LANGUAGE_OPTIONS.find(lang => lang.id === selectedLanguage)?.name || '' }] : []}
+                  onChange={(items) => handleLanguageChange(items[0]?.id as string)}
+                  placeholder="Select a language"
+                  multiSelect={false}
+                />
+              </div>
+            </div>
+
+            {/* Voice Selection */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="voice" className="text-right">
+                Voice
+              </Label>
+              <div className="col-span-3">
+                <MultiSelect
+                  items={availableVoicesFormatted}
+                  selectedItems={selectedVoice ? [availableVoicesFormatted.find(voice => voice.id === selectedVoice)!] : []}
+                  onChange={(items) => handleVoiceChange(items[0]?.id as string)}
+                  placeholder="Select a voice"
+                  multiSelect={false}
+                />
+              </div>
+            </div>
+
+            {/* Voice Sample Buttons */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {availableVoicesFormatted.map((voice) => (
                 <Button
-                  key={key}
+                  key={voice.id}
+                  type="button"
                   variant="outline"
-                  onClick={() => handlePurposeSelect(key)}
-                  className={`
-                    w-full h-auto p-4 flex flex-col items-start space-y-2 
-                    border border-gray-600 hover:border-gray-400 transition-colors
-                    ${selectedPurposes.includes(key) ? 'border-primary bg-primary/10' : ''}
-                  `}
+                  size="sm"
+                  onClick={() => playVoiceSample(voice.id as string, voice.file!)}
+                  className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
+                    playingVoiceId === voice.id ? "bg-primary text-primary-foreground" : ""
+                  }`}
                 >
-                  <span className="font-semibold text-base">{purpose.title}</span>
-                  <span className="text-sm text-muted-foreground text-left">{purpose.description}</span>
+                  {playingVoiceId === voice.id ? "Stop" : `Play ${voice.title}`}
                 </Button>
               ))}
             </div>
-            <DialogFooter>
-              <Button
-                onClick={handleNext}
-                disabled={selectedPurposes.length === 0}
-                className="w-full"
-              >
-                Next
-              </Button>
-            </DialogFooter>
-          </div>
-        ) : (
-          // Agent Details Form
-          <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <div className="flex items-center space-x-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBack}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                  <DialogTitle>{AGENT_PURPOSES[selectedPurposes[0] as keyof typeof AGENT_PURPOSES].title}</DialogTitle>
-                  <DialogDescription>
-                    Configure your {AGENT_PURPOSES[selectedPurposes[0] as keyof typeof AGENT_PURPOSES].title.toLowerCase()} agent
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            
-            {/* Common fields */}
-            <div className="grid gap-4 py-4">
-              {/* Agent Name */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="agentName" className="text-right text-foreground dark:text-gray-200">
-                  Agent Name
-                </Label>
-                <Input
-                  id="agentName"
-                  placeholder="Enter agent name"
-                  className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
-                  value={formData.agentName}
-                  onChange={handleInputChange}
-                />
-              </div>
-              {/* Data Source */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dataSource" className="text-right text-foreground">
-                  Data Source
-                </Label>
-                <div className="col-span-3">
-                  <MultiSelect 
-                    items={[
-                      { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
-                      ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
-                    ]}
-                    selectedItems={formData.dataSource}
-                    onChange={(selectedItems) => {
-                      // If "All" is selected, clear other selections
-                      const newSelection = selectedItems.some(item => item.id === 'all') 
-                        ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                        : selectedItems;
-                      
-                      setFormData(prev => ({
-                        ...prev,
-                        dataSource: newSelection
-                      }));
-                    }}
-                    multiSelect={true}  // Enable multiselect
-                  />
-                </div>
-              </div>
-              {/* Instructions */}
-              {/* <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="instructions" className="text-right text-foreground">
-                  Instructions
-                </Label>
-                <Input
-                  id="instructions"
-                  placeholder="Enter instructions for the agent"
-                  className="col-span-3 bg-background text-foreground border-input"
-                  value={formData.instructions}
-                  onChange={handleInputChange}
-                />
-              </div> */}
-              {/* Opening Line */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="openingLine" className="text-right text-foreground dark:text-gray-200">
-                  Opening Line
-                </Label>
-                <Input
-                  id="openingLine"
-                  placeholder="Enter opening line"
-                  className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
-                  value={formData.openingLine}
-                  onChange={handleInputChange}
-                />
-              </div>
-              {/* Language Selection */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="language" className="text-right text-foreground dark:text-gray-200">
-                  Language
-                </Label>
-                <div className="col-span-3">
-                  <MultiSelect
-                    items={LANGUAGE_OPTIONS_FORMATTED}
-                    selectedItems={selectedLanguage ? [{ id: selectedLanguage, title: LANGUAGE_OPTIONS.find(lang => lang.id === selectedLanguage)?.name || '' }] : []}
-                    onChange={(items) => handleLanguageChange(items[0]?.id as string)}
-                    placeholder="Select a language"
-                    multiSelect={false}
-                  />
-                </div>
-              </div>
-              {/* Voice Selection */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="voice" className="text-right text-foreground dark:text-gray-200">
-                  Voice
-                </Label>
-                <div className="col-span-3">
-                  <MultiSelect
-                    items={availableVoicesFormatted}
-                    selectedItems={selectedVoice ? [availableVoicesFormatted.find(voice => voice.id === selectedVoice)!] : []}
-                    onChange={(items) => handleVoiceChange(items[0]?.id as string)}
-                    placeholder="Select a voice"
-                    multiSelect={false}
-                  />
-                </div>
-              </div>
-              {/* Voice Sample Buttons */}
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {availableVoicesFormatted.map((voice) => (
-                  <Button
-                    key={voice.id}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => playVoiceSample(voice.id as string, voice.file!)}
-                    className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
-                      playingVoiceId === voice.id ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                  >
-                    {playingVoiceId === voice.id ? "Stop" : `Play ${voice.title}`}
-                  </Button>
-                ))}
-              </div>
 
-              {/* Move AgentFeatures here, inside the main grid */}
-              <div className="border-t border-border mt-4 pt-4">
-                <AgentFeatures
-                  selectedAgent={formData}
-                  setSelectedAgent={(agent) => {
-                    console.log("Selected Agent Purpose:", formData.agentPurpose);
-                    console.log("Updated agent:", agent);
-                    setFormData(prev => ({
-                      ...prev,
-                      features: {
-                        ...prev.features,
-                        ...(agent?.features || {})
-                      }
-                    }));
-                  }}
-                  handleSaveFeatures={async (features) => {
-                    console.log("Saving features:", features);
-                    setAgentFeatures(features);
-                    setFormData(prev => ({
-                      ...prev,
-                      features: {
-                        ...prev.features,
-                        ...features
-                      }
-                    }));
-                  }}
-                />
-              </div>
+            {/* Features Section */}
+            <AgentFeatures
+              selectedAgent={formData}
+              setSelectedAgent={(agent) => {
+                if (!agent) return;
+                setFormData(prev => ({
+                  ...prev,
+                  features: agent.features
+                }));
+              }}
+              handleSaveFeatures={async (features) => {
+                setFormData(prev => ({
+                  ...prev,
+                  features
+                }));
+              }}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Agent'
+              )}
+            </Button>
+          </DialogFooter>
+          
+          {responseMessage && (
+            <div className={`mt-4 text-center ${
+              responseMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {responseMessage}
             </div>
-            <DialogFooter className="mt-8">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Agent'
-                )}
-              </Button>
-            </DialogFooter>
-            {responseMessage && (
-              <div className={`mt-4 text-center ${
-                responseMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-              }`}>
-                {responseMessage}
-              </div>
-            )}
-          </form>
-        )}
+          )}
+        </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

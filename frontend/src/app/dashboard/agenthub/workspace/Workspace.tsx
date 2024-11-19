@@ -92,7 +92,7 @@ const VOICE_OPTIONS = {
 interface Agent {
   id?: string;
   agentName?: string;
-  agentPurpose?: string;
+  agentPurpose: string;
   features: {
     notifyOnInterest?: boolean;
     collectWrittenInformation?: boolean;
@@ -171,54 +171,24 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
               {/* Agent Skills */}
               <div>
-                <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Skills</Label>
+                <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
                 <Select 
-                  value={selectedAgent?.agentPurpose?.length ? "multiple" : ""}
-                  onValueChange={() => {}}
+                  value={selectedAgent?.agentPurpose || ""}
+                  onValueChange={(value) => {
+                    if (!selectedAgent) return;
+                    setSelectedAgent({
+                      ...selectedAgent,
+                      agentPurpose: value  // Set single purpose instead of array
+                    });
+                  }}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue>
-                      {Array.isArray(selectedAgent?.agentPurpose) && selectedAgent.agentPurpose.length > 0
-                        ? selectedAgent.agentPurpose
-                            .map(value => {
-                              const purpose = AGENT_PURPOSES.find(p => p.value === value);
-                              return purpose?.label || value;
-                            })
-                            .join(', ')
-                        : "Select agent skills"}
-                    </SelectValue>
+                    <SelectValue placeholder="Select agent purpose" />
                   </SelectTrigger>
                   <SelectContent>
                     {AGENT_PURPOSES.map((purpose) => (
                       <SelectItem key={purpose.value} value={purpose.value}>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`checkbox-${purpose.value}`}
-                            checked={Array.isArray(selectedAgent?.agentPurpose) && selectedAgent?.agentPurpose?.includes(purpose.value)}
-                            onCheckedChange={(checked) => {
-                              if (!selectedAgent) return;
-                              
-                              const currentPurposes = Array.isArray(selectedAgent.agentPurpose) 
-                                ? [...selectedAgent.agentPurpose] 
-                                : [];
-                              
-                              const newPurposes = checked
-                                ? [...currentPurposes, purpose.value]
-                                : currentPurposes.filter(p => p !== purpose.value);
-                              
-                              setSelectedAgent({
-                                ...selectedAgent,
-                                agentPurpose: newPurposes
-                              });
-                            }}
-                          />
-                          <label 
-                            htmlFor={`checkbox-${purpose.value}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {purpose.label}
-                          </label>
-                        </div>
+                        {purpose.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
