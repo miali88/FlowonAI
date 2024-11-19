@@ -16,14 +16,14 @@ async def chat_message(request: Request):
         if not all(key in user_query for key in ['message', 'agent_id']):
             raise HTTPException(status_code=400, detail="Missing required fields")
 
-        # Create streaming response
         async def event_generator():
             try:
-                response = await lk_chat_process(
+                async for chunk in lk_chat_process(
                     user_query['message'], 
                     user_query['agent_id']
-                )
-                yield f"data: {json.dumps({'response': {'answer': response}})}\n\n"
+                ):
+                    if chunk:  # Only yield if chunk is not empty
+                        yield f"data: {json.dumps({'response': {'answer': chunk}})}\n\n"
             except Exception as e:
                 logger.error(f"Error in stream: {str(e)}")
                 yield f"data: {json.dumps({'error': 'Internal server error'})}\n\n"

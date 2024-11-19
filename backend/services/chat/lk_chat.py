@@ -142,33 +142,43 @@ When a user asks a question, you will:
 2. Provide clear, concise answers based on the search results
 3. If you're unsure about something, admit it and explain what you do know"""
 
-async def lk_chat_process(message: str, agent_id: str) -> str:
+async def lk_chat_process(message: str, agent_id: str):
     """
     Process a chat message using LiveKit's LLM functionality.
-    Returns the AI's response while maintaining streaming capability.
+    Yields chunks of the AI's response to maintain streaming capability.
     """
     try:
-        # Set up function context for available AI functions
         fnc_ctx = llm.FunctionContext()
         fnc_ctx._register_ai_function(question_and_answer)
         
-        # Create chat context
         chat_ctx = llm.ChatContext()
         chat_ctx.append(
             role="system",
             text=sys_prompt_qa
         )
         
-        # Add user message
         chat_ctx.append(
             role="user",
             text=message
         )
         
-        # Get response using existing streaming function
-        response, function_calls = await get_llm_response(chat_ctx, fnc_ctx)
+        # Get streaming response
+        llm_instance = openai.LLM()
+        response_stream = llm_instance.chat(
+            chat_ctx=chat_ctx,
+            fnc_ctx=fnc_ctx
+        )
         
-        return response
+        async for chunk in response_stream:
+            if chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                yield content
+            elif chunk.choices[0].delta.tool_calls:
+                for tool_call in chunk.choices[0].delta.tool_calls:
+                    called_function = tool_call.execute()
+                    result = await called_function.task
+                    if result:
+                        yield f"\nFunction result: {result}"
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)

@@ -1,23 +1,10 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useEffect } from 'react'
-import dynamic from 'next/dynamic'
-
-const ChatWidget = dynamic(() => import('./components/main'), {
-  ssr: false
-})
+import TextWidget from './TextWidget'
 
 export default function ChatWidgetPage() {
   const params = useParams()
-  
-  useEffect(() => {
-    // Set the embedded chatbot config with the agentId from the URL
-    window.embeddedChatbotConfig = {
-      agentId: params.agentId as string,
-      domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
-    }
-  }, [params.agentId])
   
   return (
     <div id="embedded-chatbot-container" style={{
@@ -26,7 +13,10 @@ export default function ChatWidgetPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <ChatWidget />
+      <TextWidget 
+        agentId={params.agentId as string}
+        apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'}
+      />
     </div>
   )
 }
