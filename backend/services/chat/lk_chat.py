@@ -9,9 +9,11 @@ from pathlib import Path
 from livekit.agents import llm
 from livekit.plugins import openai, anthropic
 from livekit.agents.llm import USE_DOCSTRING
-from services.cache import get_agent_metadata
 
+from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
+from services.voice.tool_use import AgentFunctions
+from services.voice.livekit_services import get_agent
 
 import logging
 logger = logging.getLogger(__name__)
@@ -100,26 +102,23 @@ async def question_and_answer(
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
         return "I apologize, but I encountered an error while searching for an answer to your question."
 
-form_fields = ['full name', 'organization', 'industry sector']
-sys_prompt_onboarding = f"""You are a helpful AI assistant focused on onboarding new users.
-Your goal is to collect user information including {', '.join(form_fields)}.
-Be friendly and professional while gathering this information."""
-
-sys_prompt_qa = f"""You are a helpful AI assistant focused on answering questions accurately.
-When a user asks a question, you will:
-1. Use the question_and_answer function to search for relevant information
-2. Provide clear, concise answers based on the search results
-3. If you're unsure about something, admit it and explain what you do know"""
 
 async def lk_chat_process(message: str, agent_id: str):
     try:
+        # Fetch agent configuration
+        agent = await get_agent(agent_id)
+        if not agent:
+            raise ValueError(f"Agent {agent_id} not found")
+
+        # Initialize function context
         fnc_ctx = llm.FunctionContext()
         fnc_ctx._register_ai_function(question_and_answer)
         
+        # Create chat context with agent-specific instructions
         chat_ctx = llm.ChatContext()
         chat_ctx.append(
             role="system",
-            text=sys_prompt_qa
+            text=agent['instructions']  # Use agent-specific instructions
         )
         
         chat_ctx.append(
@@ -127,8 +126,11 @@ async def lk_chat_process(message: str, agent_id: str):
             text=message
         )
         
-        # Get streaming response
-        llm_instance = openai.LLM()
+        # Get streaming response using agent-specific configuration
+        llm_instance = openai.LLM(
+            model="gpt-4o",
+        )
+        
         response_stream = llm_instance.chat(
             chat_ctx=chat_ctx,
             fnc_ctx=fnc_ctx
@@ -137,13 +139,11 @@ async def lk_chat_process(message: str, agent_id: str):
         async for chunk in response_stream:
             print(chunk)
             if chunk.choices[0].delta.content:
-                # Just yield the raw content
                 yield chunk.choices[0].delta.content
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
                     result = await called_function.task
-                    # Yield the function result
                     yield f"\nFunction result: {result}"
 
     except Exception as e:
