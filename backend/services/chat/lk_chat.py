@@ -43,7 +43,7 @@ class ChatTester:
 
 async def get_llm_response(chat_ctx: llm.ChatContext, fnc_ctx: llm.FunctionContext = None):
     print("\n\n\n\n GET LLM RESPONSE")
-    llm_instance = anthropic.LLM()
+    llm_instance = openai.LLM()
     response_stream = llm_instance.chat(
         chat_ctx=chat_ctx,
         fnc_ctx=fnc_ctx if fnc_ctx else None,
@@ -132,12 +132,15 @@ async def question_and_answer(
         return "I apologize, but I encountered an error while searching for an answer to your question."
 
 form_fields = ['full name', 'organization', 'industry sector']
-sys_prompt_onboarding = f"""
-"""
+sys_prompt_onboarding = f"""You are a helpful AI assistant focused on onboarding new users.
+Your goal is to collect user information including {', '.join(form_fields)}.
+Be friendly and professional while gathering this information."""
 
-sys_prompt_qa = f"""
-
-"""
+sys_prompt_qa = f"""You are a helpful AI assistant focused on answering questions accurately.
+When a user asks a question, you will:
+1. Use the question_and_answer function to search for relevant information
+2. Provide clear, concise answers based on the search results
+3. If you're unsure about something, admit it and explain what you do know"""
 
 async def lk_chat_process(message: str, agent_id: str) -> str:
     """
