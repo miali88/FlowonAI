@@ -15,6 +15,20 @@ declare const styles: {
   readonly streamButtonContainer: string;
   readonly streamButton: string;
   readonly streamButtonRing: string;
+  readonly toggleContainer: string;
+  readonly toggleButton: string;
+  readonly active: string;
+  readonly toggleIcon: string;
+  readonly toggleText: string;
+  readonly mainWrapper: string;
+  readonly contentContainer: string;
+  readonly messageContainer: string;
+  readonly messageBubble: string;
+  readonly assistantMessage: string;
+  readonly userMessage: string;
+  readonly inputContainer: string;
+  readonly chatForm: string;
+  readonly sendButton: string;
 };
 
 export default styles;

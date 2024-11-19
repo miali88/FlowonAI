@@ -206,7 +206,7 @@ async def entrypoint(ctx: JobContext):
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
             """This event triggers when an assistant's function call completes."""
             print("\n\n\n on_function_calls_finished method called")
-            print("\n\n\n called_functions:", called_functions)
+            print("called_functions:", called_functions)
 
             for called_function in called_functions:
                 function_name = called_function.call_info.function_info.name
@@ -228,7 +228,7 @@ async def entrypoint(ctx: JobContext):
 
                 elif function_name == "search_products_and_services":
                     print("search_products_and_services called")
-                    print("\n\nagent.chat_ctx:", agent.chat_ctx)
+                    #print("\n\nagent.chat_ctx:", agent.chat_ctx)
 
         async def handle_chat_input_response(agent, 
                                              room_name: str, 
@@ -244,10 +244,10 @@ async def entrypoint(ctx: JobContext):
                     try:
                         agent.chat_ctx.append(text=user_message, role="user")
                         print(f"Added user message from {participant_identity} to chat context: {user_message}")
-                        print("Debug - Updated chat_ctx:", agent.chat_ctx)
+                        #print("Debug - Updated chat_ctx:", agent.chat_ctx)
                     except Exception as append_error:
                         print(f"Error appending to chat_ctx: {str(append_error)}")
-                        print(f"Type of agent.chat_ctx: {type(agent.chat_ctx)}")
+                        #print(f"Type of agent.chat_ctx: {type(agent.chat_ctx)}")
             except Exception as e:
                 print(f"Error in handle_chat_input_response: {str(e)}")
   

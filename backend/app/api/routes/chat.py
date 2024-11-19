@@ -1,43 +1,39 @@
-from fastapi import Request, HTTPException, APIRouter, Response
-from fastapi.responses import JSONResponse
+from fastapi import Request, HTTPException, APIRouter
+from fastapi.responses import StreamingResponse
 import logging
+import json
 
-from services.chat.chat import chat_process
+from services.chat.lk_chat import lk_chat_process
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.api_route('/', methods=['POST', 'GET'])
-async def chat_webhook(request: Request):
-    user_query = await request.json()
+@router.post("/")
+async def chat_message(request: Request):
+    try:
+        user_query = await request.json()
+        
+        if not all(key in user_query for key in ['message', 'agent_id']):
+            raise HTTPException(status_code=400, detail="Missing required fields")
 
-    print(user_query)
+        # Create streaming response
+        async def event_generator():
+            try:
+                response = await lk_chat_process(
+                    user_query['message'], 
+                    user_query['agent_id']
+                )
+                yield f"data: {json.dumps({'response': {'answer': response}})}\n\n"
+            except Exception as e:
+                logger.error(f"Error in stream: {str(e)}")
+                yield f"data: {json.dumps({'error': 'Internal server error'})}\n\n"
+            yield "data: [DONE]\n\n"
 
-    answer = await chat_process(user_query['message'], user_query['user_id'])
+        return StreamingResponse(
+            event_generator(), 
+            media_type="text/event-stream"
+        )
 
-    # Format the answer with headers and new lines
-    formatted_answer = format_answer(answer)
-
-    response = {
-        "response": {
-            "answer": formatted_answer
-        }
-    }
-
-    return response
-
-def format_answer(answer):
-    # Split the answer into sections
-    sections = answer.split('\n\n')
-    formatted_sections = []
-
-    for section in sections:
-        if ':' in section:
-            # Add markdown header formatting
-            header, content = section.split(':', 1)
-            formatted_sections.append(f"### {header.strip()}\n{content.strip()}")
-        else:
-            formatted_sections.append(section.strip())
-
-    # Join sections with double newlines
-    return '\n\n'.join(formatted_sections)
+    except Exception as e:
+        logger.error(f"Error processing chat message: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

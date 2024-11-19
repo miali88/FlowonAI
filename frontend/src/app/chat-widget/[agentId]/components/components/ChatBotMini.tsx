@@ -4,6 +4,8 @@ import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 import styles from './ChatWidget.module.css';
 import Footer from './Footer';
+import Toggle from './Toggle';
+import TextWidget from './TextWidget';
 
 const API_DOMAIN = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -71,6 +73,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [isError, setIsError] = useState<string | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [isVoiceMode, setIsVoiceMode] = useState(true);
+  const [message, setMessage] = useState('');
 
   const apiUrl = useMemo(() => apiBaseUrl, [apiBaseUrl]);
 
@@ -203,8 +207,15 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('ChatBotMini: handleSubmit called', {
+      formData,
+      roomName,
+      showChatInput,
+      bypassShowChatInputCondition
+    });
+    
     if (!bypassShowChatInputCondition && !showChatInput) {
-      console.log('Form submission blocked: Chat input not shown');
+      console.log('ChatBotMini: Form submission blocked: Chat input not shown');
       return;
     }
     try {
@@ -259,66 +270,63 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     });
   }, [bypassShowChatInputCondition, showChatInput, isStreaming]);
 
+  const handleModeToggle = useCallback(() => {
+    if (isStreaming) {
+      // If currently streaming, stop it before switching modes
+      handleStreamToggle();
+    }
+    setIsVoiceMode(prev => !prev);
+  }, [isStreaming, handleStreamToggle]);
+
   return (
     <div data-widget="wrapper" className={styles.mainWrapper}>
+      <Toggle isVoiceMode={isVoiceMode} onToggle={handleModeToggle} />
       <div className={styles.contentContainer}>
         <div data-widget="chatbox" className={styles.chatboxContainer}>
-          <MorphingStreamButton
-            onStreamToggle={handleStreamToggle}
-            isStreaming={isStreaming}
-            isConnecting={isConnecting}
-          />
-          {isLiveKitActive && token && url && roomName && (
+          {isVoiceMode ? (
+            // Voice chat UI
             <>
-              <LiveKitEntry 
-                token={token} 
-                url={url} 
-                roomName={roomName}
-                isStreaming={isStreaming} 
-                onStreamEnd={onStreamEnd} 
-                onStreamStart={onStreamStart}
-                setRoom={setLiveKitRoom}
-                setLocalParticipant={setLocalParticipant}
-                setParticipantIdentity={setParticipantIdentity}
-                options={{
-                  adaptiveStream: true,
-                  dynacast: true,
-                  element: eventBridge.getLiveKitContainer?.() || null
-                }}
+              <MorphingStreamButton
+                onStreamToggle={handleStreamToggle}
+                isStreaming={isStreaming}
+                isConnecting={isConnecting}
               />
-              {isStreaming && localParticipant && (
-                <button
-                  onClick={handleMuteToggle}
-                  className={`muteButton ${isMuted ? 'muted' : ''}`}
-                >
-                  {isMuted ? 'Unmute' : 'Mute'}
-                </button>
+              {isLiveKitActive && token && url && roomName && (
+                <>
+                  <LiveKitEntry 
+                    token={token} 
+                    url={url} 
+                    roomName={roomName}
+                    isStreaming={isStreaming} 
+                    onStreamEnd={onStreamEnd} 
+                    onStreamStart={onStreamStart}
+                    setRoom={setLiveKitRoom}
+                    setLocalParticipant={setLocalParticipant}
+                    setParticipantIdentity={setParticipantIdentity}
+                    options={{
+                      adaptiveStream: true,
+                      dynacast: true,
+                      element: eventBridge.getLiveKitContainer?.() || null
+                    }}
+                  />
+                  {isStreaming && localParticipant && (
+                    <button
+                      onClick={handleMuteToggle}
+                      className={`muteButton ${isMuted ? 'muted' : ''}`}
+                    >
+                      {isMuted ? 'Unmute' : 'Mute'}
+                    </button>
+                  )}
+                </>
               )}
             </>
+          ) : (
+            <TextWidget 
+              agentId={agentId}
+              apiBaseUrl={apiUrl}
+            />
           )}
         </div>
-        
-        {(bypassShowChatInputCondition || (showChatInput && isStreaming)) && (
-          <div className={styles.chatInput}>
-            <form onSubmit={handleSubmit}>
-              {formFields.map((field: FormField, index: number) => (
-                <input
-                  key={index}
-                  type={field.type}
-                  value={formData[field.label] || ''}
-                  onChange={(e) => handleInputChange(field.label, e.target.value)}
-                  placeholder={field.label}
-                  required={field.type !== 'tel'}
-                  className={styles.formInput}
-                  aria-label={field.label}
-                />
-              ))}
-              <button type="submit" className="submitBtn">
-                Submit
-              </button>
-            </form>
-          </div>
-        )}
       </div>
       <Footer />
     </div>
