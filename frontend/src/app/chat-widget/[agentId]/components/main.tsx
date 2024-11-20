@@ -19,8 +19,8 @@ const ShadowContainer: React.FC<{
       try {
         shadowRef.current = hostRef.current.attachShadow({ mode: 'open' });
         
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = `
+        const styleSheet = new CSSStyleSheet();
+        styleSheet.replaceSync(`
           :host {
             all: initial;
             display: block;
@@ -248,8 +248,20 @@ const ShadowContainer: React.FC<{
           .${styles.submitButton}:active {
             transform: translateY(0);
           }
-        `;
-        shadowRef.current.appendChild(styleSheet);
+          
+          .privacy-link {
+            font-size: 12px;
+            color: var(--widget-text-color);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+          }
+          
+          .privacy-link:hover {
+            opacity: 1;
+          }
+        `);
+        shadowRef.current.adoptedStyleSheets = [styleSheet];
         
         const wrapper = document.createElement('div');
         wrapper.className = `${styles.widgetTheme} ${styles.widgetWrapper}`;

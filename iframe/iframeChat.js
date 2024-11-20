@@ -23,6 +23,60 @@ class ChatWidget {
         border-radius: 50%;
         cursor: pointer;
         z-index: 9999;
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        transform: scale(1);
+        animation: pulse 2s infinite;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+
+      .chat-widget-icon {
+        width: 24px;
+        height: 24px;
+      }
+
+      .chat-widget-close-icon {
+        display: none;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .chat-widget-button-active .chat-widget-mic-icon {
+        display: none;
+      }
+
+      .chat-widget-button-active .chat-widget-close-icon {
+        display: block;
+      }
+
+      .chat-widget-button-active {
+        animation: none !important;
+        transform: scale(1) !important;
+        box-shadow: none !important;
+      }
+
+      .chat-widget-button:hover:not(.chat-widget-button-active) {
+        transform: scale(1.1);
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        }
+        
+        70% {
+          transform: scale(1);
+          box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+        }
+        
+        100% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+        }
       }
 
       .chat-widget-container {
@@ -57,10 +111,18 @@ class ChatWidget {
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
 
-    // Create button
+    // Create button with icons
     this.button = document.createElement('div');
     this.button.className = 'chat-widget-button';
-    
+    this.button.innerHTML = `
+      <svg class="chat-widget-icon chat-widget-mic-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+      </svg>
+      <svg class="chat-widget-icon chat-widget-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    `;
+
     // Create container
     this.container = document.createElement('div');
     this.container.className = 'chat-widget-container';
@@ -86,6 +148,13 @@ class ChatWidget {
   toggleChat() {
     this.isOpen = !this.isOpen;
     this.container.style.display = this.isOpen ? 'block' : 'none';
+    
+    // Toggle animation class
+    if (this.isOpen) {
+      this.button.classList.add('chat-widget-button-active');
+    } else {
+      this.button.classList.remove('chat-widget-button-active');
+    }
   }
 }
 

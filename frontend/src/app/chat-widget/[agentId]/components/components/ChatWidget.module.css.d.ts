@@ -32,6 +32,8 @@ declare const styles: {
   readonly formContainer: string;
   readonly formField: string;
   readonly submitButton: string;
+  readonly privacyContainer: string;
+  readonly privacyLink: string;
 };
 
 export default styles;
