@@ -152,6 +152,7 @@ async def lk_chat_process(message: str, agent_id: str):
         # Fetch agent configuration
 
         agent_metadata = await get_agent_metadata(agent_id)
+        print(f"agent_metadata: {agent_metadata['agentName']}")
         if not agent_metadata:
             raise ValueError(f"Agent {agent_id} not found")
 

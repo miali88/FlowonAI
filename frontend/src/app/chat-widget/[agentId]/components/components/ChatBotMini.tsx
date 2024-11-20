@@ -276,6 +276,23 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
             isStreaming={isStreaming}
             isConnecting={isConnecting}
           />
+          {(bypassShowChatInputCondition || showChatInput) && isStreaming && (
+            <form onSubmit={handleSubmit} className={styles.formContainer}>
+              {formFields.map((field, index) => (
+                <div key={index} className={styles.formField}>
+                  <label htmlFor={field.label}>{field.label}</label>
+                  <input
+                    type={field.type}
+                    id={field.label}
+                    value={formData[field.label] || ''}
+                    onChange={(e) => handleInputChange(field.label, e.target.value)}
+                    required
+                  />
+                </div>
+              ))}
+              <button type="submit" className={styles.submitButton}>Submit</button>
+            </form>
+          )}
           {isLiveKitActive && token && url && roomName && (
             <>
               <LiveKitEntry 

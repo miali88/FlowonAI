@@ -113,7 +113,6 @@ async def entrypoint(ctx: JobContext):
             agent.start(room)
             await agent.say(opening_line, allow_interruptions=False)
 
-
         await asyncio.sleep(3)
 
         print("iterating through room.remote_participants to find available participant")
@@ -212,8 +211,7 @@ async def entrypoint(ctx: JobContext):
                 function_name = called_function.call_info.function_info.name
                 print(f"Function called: {function_name}")
 
-                # if function_name == "request_personal_data":
-                if function_name == "verify_user_info":
+                if function_name == "request_personal_data":
                     print("Triggering show_chat_input")
                     # Update prospect status for the participant
                     participant_prospects[available_participant.sid] = "yes"

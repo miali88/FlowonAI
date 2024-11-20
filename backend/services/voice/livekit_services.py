@@ -192,9 +192,9 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         # Initialize functions based on agent features
         await fnc_ctx.initialize_functions()
         
-        # Create the LLM instance with temperature
-        llm_instance = anthropic.LLM(
-            model="claude-3-5-sonnet-20240620",
+        llm_instance = openai.LLM(
+            model="gpt-4o",
+            temperature=0.2
         )
         
         assistant = VoiceAssistant(

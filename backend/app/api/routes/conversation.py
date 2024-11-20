@@ -114,6 +114,7 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
 
+
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
     print("\n\n chat_message endpoint reached\n\n")
@@ -200,13 +201,21 @@ async def events(participant_identity: str):  # Changed parameter
 
     return EventSourceResponse(event_generator())
 
+
 @router.get("/form_fields/{agent_id}")
 async def form_fields(agent_id: str):
+    logger.info(f"Fetching form fields for agent_id: {agent_id}")
     try:
-        response = supabase.table("agents").select("features").eq("id", agent_id).execute()
+        response = supabase.table("agents").select("form_fields").eq("id", agent_id).execute()
+        logger.debug(f"Supabase response: {response}")
+        
         if response.data:
-            return JSONResponse(content=response.data[0]['features']['form'])
+            logger.info(f"Found form fields for agent_id: {agent_id}")
+            print(f"Found form fields {response.data[0]}")
+            return JSONResponse(content=response.data[0]['form_fields'])
         else:
+            logger.warning(f"No form fields found for agent_id: {agent_id}")
             return JSONResponse(content={}, status_code=404)
     except Exception as e:
+        logger.error(f"Error fetching form fields for agent_id {agent_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

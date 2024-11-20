@@ -29,6 +29,9 @@ declare const styles: {
   readonly inputContainer: string;
   readonly chatForm: string;
   readonly sendButton: string;
+  readonly formContainer: string;
+  readonly formField: string;
+  readonly submitButton: string;
 };
 
 export default styles;

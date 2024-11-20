@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 @router.post("/")
 async def chat_message(request: Request):
+    print("\n /chat endpoint")
     try:
         user_query = await request.json()
         
