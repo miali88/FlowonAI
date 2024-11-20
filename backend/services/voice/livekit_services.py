@@ -10,7 +10,7 @@ from livekit import api
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents import llm, JobContext
 from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
-from livekit.plugins import cartesia, deepgram, openai, silero, anthropic
+from livekit.plugins import cartesia, deepgram, openai, silero, anthropic, elevenlabs
 from supabase import create_client, Client
 
 from app.core.config import settings
@@ -177,7 +177,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             logger.error(f"Agent not found: {agent_id}")
             raise ValueError(f"Agent {agent_id} not found")
             
-        logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}")
+        logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}, provider={agent.get('voiceProvider')}")
         
         # Add validation for required agent fields
         required_fields = ['language', 'voice', 'instructions', 'openingLine']
@@ -196,15 +196,23 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             model="gpt-4o",
             temperature=0.2
         )
+
+        # Select TTS provider based on voiceProvider field
+        if agent.get('voiceProvider') == 'elevenlabs':
+            tts_instance = elevenlabs.TTS(
+                voice=agent['voice']
+            )
+        else:  # Default to cartesia
+            tts_instance = cartesia.TTS(
+                language=lang_options[agent['language']]['cartesia'],
+                model=lang_options[agent['language']]['cartesia_model'],
+                voice=agent['voice'])
         
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
             llm=llm_instance,
-            tts=cartesia.TTS(
-                language=lang_options[agent['language']]['cartesia'],
-                model=lang_options[agent['language']]['cartesia_model'],
-                voice=agent['voice']),
+            tts=tts_instance,
             chat_ctx=llm.ChatContext().append(
                 role="system",
                 text=agent['instructions']),
