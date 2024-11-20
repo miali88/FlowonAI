@@ -59,6 +59,7 @@ export interface Agent {
       whatsapp: string;
     };
   };
+  voiceProvider?: string | null;
 }
 
 interface FormField {

@@ -16,39 +16,9 @@ import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { AgentFeatures } from './AgentFeatures';
 import styles from './NewAgent.module.css';
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from './workspace/agentSettings';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const LANGUAGE_OPTIONS = [
-  { id: "en-GB", name: "English GB" },
-  { id: "en-US", name: "English US" },
-  { id: "fr", name: "French" },
-  { id: "de", name: "German" },
-  { id: "ar", name: "Arabic" },
-  { id: "nl", name: "Dutch" },
-  { id: "zh", name: "Mandarin" },
-];
-
-const VOICE_OPTIONS = {
-  "en-GB": [
-    { id: "voice1", name: "Alex K", file: "/voices/AlexK.wav" },
-    { id: "voice2", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
-    { id: "voice3", name: "Felicity A", file: "/voices/FelicityA.wav" },
-  ],
-  "en-US": [
-    { id: "us-voice1", name: "US Voice 1", file: "/voices/USVoice1.wav" },
-    { id: "us-voice2", name: "US Voice 2", file: "/voices/USVoice2.wav" },
-  ],
-  "fr": [
-    { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav" },
-    { id: "a249eaff-1e96-4d2c-b23b-12efa4f66f41", name: "Female", file: "/voices/cartesia_french2.wav" },
-  ],
-  // Add placeholder voices for other languages
-  "de": [{ id: "de-voice1", name: "German Voice 1", file: "/voices/cartesia_german1.wav" }],
-  "ar": [{ id: "ar-voice1", name: "Arabic Voice 1", file: "/voices/cartesia_arabic1.wav" }],
-  "nl": [{ id: "nl-voice1", name: "Dutch Voice 1", file: "/voices/cartesia_dutch1.wav" }],
-  "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
-};
 
 // Update the FormData interface to match DB schema
 interface FormData {

@@ -14,7 +14,7 @@ import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';
-import Ui from './Ui';
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from './agentSettings';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -65,27 +65,6 @@ const AGENT_PURPOSES: AgentPurpose[] = [
   { value: "product-recommendation", label: "Product Recommendation" },
 ];
 
-// Add this constant at the top of the file, after the imports
-const VOICE_OPTIONS = {
-  "en-GB": [
-    { id: "95856005-0332-41b0-935f-352e296aa0df", name: "Alex K", file: "/voices/AlexK.wav" },
-    { id: "79a125e8-cd45-4c13-8a67-188112f4dd22", name: "Beatrice W", file: "/voices/BeatriceW.wav" },
-    { id: "a01c369f-6d2d-4185-bc20-b32c225eab70", name: "Felicity A", file: "/voices/FelicityA.wav" },
-  ],
-  "en-US": [
-    { id: "e00d0e4c-a5c8-443f-a8a3-473eb9a62355", name: "US Voice 1", file: "/voices/USVoice1.wav" },
-    { id: "d46abd1d-2d02-43e8-819f-51fb652c1c61", name: "US Voice 2", file: "/voices/USVoice2.wav" },
-  ],
-  "fr": [
-    { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav" },
-    { id: "a249eaff-1e96-4d2c-b23b-12efa4f66f41", name: "Female", file: "/voices/cartesia_french2.wav" },
-  ],
-  "de": [{ id: "de-voice1", name: "German Voice 1", file: "/voices/cartesia_german1.wav" }],
-  "ar": [{ id: "ar-voice1", name: "Arabic Voice 1", file: "/voices/cartesia_arabic1.wav" }],
-  "nl": [{ id: "nl-voice1", name: "Dutch Voice 1", file: "/voices/cartesia_dutch1.wav" }],
-  "zh": [{ id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav" }],
-};
-
 const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -134,26 +113,21 @@ const Workspace: React.FC<WorkspaceProps> = ({
       return;
     }
 
-    console.log('Before save - Selected Agent State:', {
-      dataSource: selectedAgent.dataSource,
-      knowledgeBaseIds: selectedAgent.knowledgeBaseIds,
-    });
+    // Find the voice provider from VOICE_OPTIONS
+    const voiceProvider = selectedAgent.language && selectedAgent.voice
+      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)?.voiceProvider
+      : null;
 
     const agentToSave = {
       ...selectedAgent,
+      voiceProvider, // Add the voice provider
       knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
         ? undefined
         : selectedAgent.knowledgeBaseIds
     };
 
     console.log('Saving agent with data:', agentToSave);
-
-    try {
-      await handleSaveChanges(agentToSave);
-      console.log("Features saved successfully");
-    } catch (error) {
-      console.error("Failed to save features:", error);
-    }
+    await handleSaveChanges(agentToSave);
   };
 
   // Synchronize local state with selectedAgent when it changes
@@ -214,6 +188,17 @@ const Workspace: React.FC<WorkspaceProps> = ({
   useEffect(() => {
     console.log('Workspace Features:', features);
   }, [features]);
+
+  const handleVoiceChange = (voiceId: string) => {
+    const selectedLanguage = selectedAgent.language;
+    const voiceOption = VOICE_OPTIONS[selectedLanguage].find(v => v.id === voiceId);
+    
+    setSelectedAgent(prev => ({
+      ...prev,
+      voice: voiceId,
+      voiceProvider: voiceOption?.voiceProvider || null
+    }));
+  };
 
   return (
     <>
@@ -331,13 +316,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="en-GB">English GB</SelectItem>
-                      <SelectItem value="en-US">English US</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                      <SelectItem value="ar">Arabic</SelectItem>
-                      <SelectItem value="nl">Dutch</SelectItem>
-                      <SelectItem value="zh">Chinese</SelectItem>
+                      {LANGUAGE_OPTIONS.map((language) => (
+                        <SelectItem key={language.id} value={language.id}>
+                          {language.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -346,7 +329,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <div className="flex items-center space-x-2">
                     <Select 
                       value={selectedAgent?.voice}
-                      onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+                      onValueChange={(value) => handleVoiceChange(value)}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select voice" />

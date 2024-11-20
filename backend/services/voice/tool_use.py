@@ -150,8 +150,6 @@ async def request_personal_data(
     logger.info(f"Personal data request triggered with message: {message}")
     return "Form presented to user. Waiting for user to complete and submit form."
 
-
-
 @llm.ai_callable(
     name="verify_user_info",
     description="Verify user information based on provided form fields"
@@ -197,7 +195,6 @@ async def verify_user_info(
     except Exception as e:
         return f"Error verifying user information: {str(e)}"
 
-
 @llm.ai_callable(
     name="redirect_to_dashboard",
     description="Redirect user to dashboard after completing onboarding and verifying user information",
@@ -233,7 +230,6 @@ async def redirect_to_dashboard(
         f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
         f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
     )
-
 
 class AgentFunctions(llm.FunctionContext):
     current_room_name = None  # Class variable to store current room_name
@@ -312,5 +308,3 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
 async def send_lead_notification(chat_message: dict):
     """ nylas email send here """
     pass
-
-
