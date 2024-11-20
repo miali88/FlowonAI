@@ -200,7 +200,14 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         # Select TTS provider based on voiceProvider field
         if agent.get('voiceProvider') == 'elevenlabs':
             tts_instance = elevenlabs.TTS(
-                voice=agent['voice']
+                voice=elevenlabs.Voice(
+                    id=agent['voice'],
+                    name="Jessica",
+                    category="",
+                    # settings=elevenlabs.VoiceSettings(
+                    #     stability=0.71, similarity_boost=0.5, style=0.0, use_speaker_boost=True
+                    # )
+                )
             )
         else:  # Default to cartesia
             tts_instance = cartesia.TTS(

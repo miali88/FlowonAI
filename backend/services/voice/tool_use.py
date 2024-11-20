@@ -246,7 +246,7 @@ class AgentFunctions(llm.FunctionContext):
         agent_id = room_name.split('_')[1]
         agent_metadata = await get_agent_metadata(agent_id)
         features = agent_metadata.get('features', [])
-        features = features.get('features', [])
+        
         # Register Q&A function if feature is enabled
         if 'qa' in features:
             self._register_ai_function(question_and_answer)

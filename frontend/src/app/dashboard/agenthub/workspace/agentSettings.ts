@@ -19,7 +19,8 @@ export const LANGUAGE_OPTIONS = [
     "en-US": [
       { id: "e00d0e4c-a5c8-443f-a8a3-473eb9a62355", name: "US Voice 1", file: "/voices/USVoice1.wav", voiceProvider: "cartesia" },
       { id: "d46abd1d-2d02-43e8-819f-51fb652c1c61", name: "US Voice 2", file: "/voices/USVoice2.wav", voiceProvider: "cartesia" },
-      {id: "tnSpp4vdxKPjI9w0GnoV", name: "Hope", file: "/voices/hope.mp3", voiceProvider: "elevenlabs"}
+      { id: "tnSpp4vdxKPjI9w0GnoV", name: "Hope", file: "/voices/hope.mp3", voiceProvider: "elevenlabs"},
+      { id: "Ize3YDdGqJYYKQSDLORJ", name: "Jessica", file: "/voices/jessica.mp3", voiceProvider: "elevenlabs"}
     ],
     "fr": [
       { id: "ab7c61f5-3daa-47dd-a23b-4ac0aac5f5c3", name: "Male", file: "/voices/cartesia_french1.wav", voiceProvider: "cartesia" },
