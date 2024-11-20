@@ -39,7 +39,7 @@ export function Hero() {
         </div>
         
         <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
-          <span className="whitespace-normal">Give Your Website a Voice That</span>{" "}
+          <span className="whitespace-normal">Give Your Website A Voice That</span>{" "}
           <WordRotate words={["Drives Conversion", 
                               "Answers Questions", 
                               "Engages With Visitors", 
@@ -84,7 +84,7 @@ export function Hero() {
         </div>
         
         <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
-          <span className="whitespace-nowrap">Give Your Website a Voice That</span>{" "}
+          <span className="whitespace-nowrap">Give Your Website A Voice That</span>{" "}
           <WordRotate
             words={[
               "Drives Conversion",

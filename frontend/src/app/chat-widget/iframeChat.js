@@ -2,7 +2,7 @@ class ChatWidget {
   constructor(config = {}) {
     this.config = {
       agentId: config.agentId || 'null',
-      domain: config.domain || 'http://localhost:3001',
+      domain: config.domain || 'http://localhost:3000',
       position: config.position || 'right',
     };
     
@@ -139,7 +139,7 @@ class ChatWidget {
         class="chat-widget-iframe"
         src="${this.config.domain}/chat-widget/${this.config.agentId}"
         allow="microphone; camera"
-        sandbox="allow-same-origin allow-scripts allow-forms"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
       ></iframe>
     `;
 

@@ -247,11 +247,11 @@ class AgentFunctions(llm.FunctionContext):
         agent_metadata = await get_agent_metadata(agent_id)
         features = agent_metadata.get('features', [])
         
-        # Register Q&A function if feature is enabled
-        if 'qa' in features:
-            self._register_ai_function(question_and_answer)
-            print(f"Registered Q&A function")
-            logger.info(f"Registered Q&A function")
+        # Always register Q&A function
+        # if 'qa' in features:
+        self._register_ai_function(question_and_answer)
+        print(f"Registered Q&A function")
+        logger.info(f"Registered Q&A function")
 
         if 'lead_gen' in features:
             self._register_ai_function(request_personal_data)

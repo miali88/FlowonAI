@@ -5,12 +5,12 @@ import babel from '@rollup/plugin-babel';
 import postcss from 'rollup-plugin-postcss';
 
 export default {
-  input: './chatWidget.js',
+  input: './iframeChat.js',
   output: [
     {
-      file: 'dist/chatwidget.min.js',
+      file: 'dist/iframeChat.min.js',
       format: 'iife',
-      name: 'ChatWidget',
+      name: 'IframeChat',
       sourcemap: true
     },
   ],

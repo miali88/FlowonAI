@@ -8,7 +8,15 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "frame-src 'self' http://localhost:3000 https://app.flowon.ai/;",
+            value: [
+              "frame-ancestors 'self'",
+              "frame-src *",
+              "script-src * 'self' 'unsafe-inline' 'unsafe-eval'",
+              "connect-src *",
+              "style-src * 'self' 'unsafe-inline'",
+              "img-src * data: blob: 'self'",
+              "default-src * 'self'"
+            ].join('; '),
           },
         ],
       },
