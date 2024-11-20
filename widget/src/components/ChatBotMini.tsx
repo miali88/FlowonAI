@@ -3,7 +3,7 @@ import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
 
-const DEFAULT_API_BASE_URL = 'https://app.flowon.ai/api/v1';
+const DEFAULT_API_BASE_URL = 'https://flowon.ai/api/v1';
 
 interface ChatBotMiniProps {
   agentId: string;

@@ -9,7 +9,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
-              "frame-ancestors 'self'",
+              "frame-ancestors *",
               "frame-src *",
               "script-src * 'self' 'unsafe-inline' 'unsafe-eval'",
               "connect-src *",
@@ -18,6 +18,18 @@ const nextConfig = {
               "default-src * 'self'"
             ].join('; '),
           },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization'
+          }
         ],
       },
     ];
