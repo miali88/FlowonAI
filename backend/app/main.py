@@ -13,6 +13,7 @@ import subprocess
 import psutil
 import time
 import platform
+import sys
 
 load_dotenv()
 
@@ -92,17 +93,37 @@ async def startup_event():
     global livekit_process
     
     try:
-        time.sleep(1)  # Give processes time to fully terminate
+        time.sleep(1)
         
         MAX_RETRIES = 3
         RETRY_DELAY = 2
 
+        # Get the absolute path to the project root
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+        
+        # Get the current Python executable path (ensures using the same virtual environment)
+        python_executable = sys.executable
+        
+        # Set up the environment for the subprocess
+        env = os.environ.copy()
+        
+        # Ensure PYTHONPATH includes project root and site-packages
+        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
+        python_path = [
+            project_root,
+            site_packages,
+            env.get('PYTHONPATH', '')
+        ]
+        env['PYTHONPATH'] = os.pathsep.join(filter(None, python_path))
+
         for attempt in range(MAX_RETRIES):
             try:
-                #python_path = "/root/FlowonAI/backend/venv/bin/python"
-                python_path = 'python'
-                livekit_process = subprocess.Popen([python_path, 'livekit_server.py', 'start'])
-                print("LiveKit server started")
+                livekit_process = subprocess.Popen(
+                    [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
+                    env=env,
+                    cwd=project_root
+                )
+                print(f"LiveKit server started with PYTHONPATH: {env['PYTHONPATH']}")
                 break
             except subprocess.SubprocessError as e:
                 print(f"Attempt {attempt + 1} failed: {e}")

@@ -42,20 +42,32 @@ This a conversation happening in real time. Your output must only be in letters,
 
 # Features You Have
 
-## [FEATURE: request_personal_data]
-### Data Collection Protocol
-#### When to invoke the request_personal_data function
-You must invoke the request_personal_data function when:
-1. The customer indicates interest to book an appointment
-2. After providing service/pricing information if customer shows interest
-3. The customer requests to speak with someone
-4. It is a sensible time to collect the customer contact details in the conversation
-#### The function collects:
+## [FEATURE: Information Collection]
+### When to Collect Information
+You should collect information when:
+1. The customer shows interest in your services
+2. The customer requests more details or follow-up
+3. The customer wants to book an appointment
+4. The conversation naturally leads to needing their contact details
+
+### Required Information Fields
+The following fields must be collected:
 - Full Name
 - Email Address
 - Phone Number
-### The form data will be presented back to you with the prefix:
-user input data:
+- Company Name
+- Job Title
+- Industry
+
+### Collection Protocol
+1. Ask for information naturally within the conversation
+2. Explain why you need the information
+3. Confirm the information once collected
+4. Thank the user for providing their details
+
+### Form Data Format
+The collected information will be presented back to you with the prefix:
+user input data: {field}: {value}
 """
 
 form_fields = ['full name', 'organization', 'industry sector']
@@ -179,6 +191,7 @@ async def create_agent(data):
         data['dataSource'] = data['tag']
         del data['tag']  # Remove the 'tag' key from the data
     new_agent = supabase.table('agents').insert(data).execute()
+    
     return new_agent
 
 async def get_agents(user_id: str):
