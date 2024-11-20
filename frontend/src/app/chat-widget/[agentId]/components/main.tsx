@@ -255,16 +255,17 @@ const ShadowContainer: React.FC<{
         wrapper.className = `${styles.widgetTheme} ${styles.widgetWrapper}`;
         wrapper.style.cssText = `
           --widget-font-family: system-ui, -apple-system, sans-serif;
-          --widget-bg-color: #f5f5f5;
-          --widget-border-color: rgba(0, 0, 0, 0.1);
+          --widget-bg-color: #fafafa;
+          --widget-border-color: #e0e0e0;
           --widget-shadow-color: rgba(0, 0, 0, 0.1);
-          --widget-text-color: #1f2937;
-          --widget-accent-color: #000000;
+          --widget-text-color: #333;
+          --widget-accent-color: #333;
           --widget-radius: 0px;
           --widget-padding: 20px;
           display: block;
           width: 100%;
           height: 100%;
+          background: #fafafa;
         `;
         
         const container = document.createElement('div');

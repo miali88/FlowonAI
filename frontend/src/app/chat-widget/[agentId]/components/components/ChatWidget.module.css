@@ -104,19 +104,26 @@
 }
 
 .mainWrapper {
-  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  background: #fafafa;  /* Light grey background */
 }
 
 .contentContainer {
+  width: 100%;
+  height: 100%;
+  background: #fafafa;  /* Light grey background */
+  display: flex;
+  flex-direction: column;
+}
+
+.chatboxContainer {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;  /* Light grey background */
   position: relative;
-  overflow-y: auto;
-  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .toggleContainer {
@@ -230,47 +237,27 @@
 }
 
 .formContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  background: #fafafa;
   padding: 20px;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  border-radius: 8px;
 }
 
 .formField {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 15px;
 }
 
 .formField label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--widget-text-color, #1f2937);
+  color: #333;  /* Darker text for better contrast */
 }
 
 .formField input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--widget-border-color, rgba(0, 0, 0, 0.1));
-  border-radius: 6px;
-  font-size: 14px;
-  background: var(--widget-bg-color, #ffffff);
-  color: var(--widget-text-color, #1f2937);
-}
-
-.formField input:focus {
-  outline: none;
-  border-color: var(--widget-accent-color, #000000);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  background: #ffffff;  /* White input background */
+  border: 1px solid #e0e0e0;
+  color: #333;
 }
 
 .submitButton {
-  background: var(--widget-accent-color, #000000);
+  background: #333;
   color: #ffffff;
   border: none;
   border-radius: 6px;
