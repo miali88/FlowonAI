@@ -124,13 +124,11 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: #fafafa;
 }
 
 .contentContainer {
   width: 100%;
   height: 100%;
-  background: #fafafa;  /* Light grey background */
   display: flex;
   flex-direction: column;
 }
@@ -139,7 +137,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #fafafa;  /* Light grey background */
   position: relative;
   overflow: hidden;
 }

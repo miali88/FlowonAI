@@ -1,9 +1,8 @@
-"use client";
-
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from 'next-themes';
+import { Metadata } from 'next';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,6 +14,21 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+
+export const metadata: Metadata = {
+  title: 'Flowon AI',
+  description: 'Conversational Web',
+  icons: {
+    icon: [
+      {
+        url: '/favicon.ico',
+        href: '/favicon.ico',
+      }
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
+};
 
 export default function RootLayout({
   children,

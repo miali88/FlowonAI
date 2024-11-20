@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
           className={styles.footerContent}
         >
           <img 
-            src={`${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/flowon.png`}
+            src={`${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/flowon_partial.png`}
             alt="Flowon.AI Logo" 
             className={styles.footerLogo} 
           />
