@@ -202,7 +202,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             tts_instance = elevenlabs.TTS(
                 voice=elevenlabs.Voice(
                     id=agent['voice'],
-                    name="Jessica",
+                    name="",
                     category="",
                     # settings=elevenlabs.VoiceSettings(
                     #     stability=0.71, similarity_boost=0.5, style=0.0, use_speaker_boost=True

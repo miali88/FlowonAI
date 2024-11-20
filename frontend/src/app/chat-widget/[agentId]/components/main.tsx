@@ -185,6 +185,69 @@ const ShadowContainer: React.FC<{
             text-decoration: none;
             color: inherit;
           }
+          
+          .${styles.formContainer} {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+          }
+          
+          .${styles.formField} {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          .${styles.formField} label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--widget-text-color, #1f2937);
+          }
+          
+          .${styles.formField} input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--widget-border-color, rgba(0, 0, 0, 0.1));
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--widget-bg-color, #ffffff);
+            color: var(--widget-text-color, #1f2937);
+          }
+          
+          .${styles.formField} input:focus {
+            outline: none;
+            border-color: var(--widget-accent-color, #000000);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+          }
+          
+          .${styles.submitButton} {
+            background: var(--widget-accent-color, #000000);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 200px;
+          }
+          
+          .${styles.submitButton}:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+          }
+          
+          .${styles.submitButton}:active {
+            transform: translateY(0);
+          }
         `;
         shadowRef.current.appendChild(styleSheet);
         
@@ -192,7 +255,7 @@ const ShadowContainer: React.FC<{
         wrapper.className = `${styles.widgetTheme} ${styles.widgetWrapper}`;
         wrapper.style.cssText = `
           --widget-font-family: system-ui, -apple-system, sans-serif;
-          --widget-bg-color: #ffffff;
+          --widget-bg-color: #f5f5f5;
           --widget-border-color: rgba(0, 0, 0, 0.1);
           --widget-shadow-color: rgba(0, 0, 0, 0.1);
           --widget-text-color: #1f2937;
@@ -324,7 +387,7 @@ function WidgetContent({ agentId, domain, eventBridge }: WidgetContentProps) {
       setIsConnecting={setIsConnecting}
       onStreamEnd={handleStreamEnd}
       onStreamStart={handleStreamStart}
-      bypassShowChatInputCondition={false}
+      bypassShowChatInputCondition={true}
       localParticipant={null}
       setLocalParticipant={() => {}}
       eventBridge={eventBridge}
