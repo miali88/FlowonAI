@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pm2:start": "pm2 start npm --name 'vite-app' -- run dev"
   },
   "devDependencies": {
     "vite": "^5.4.10"

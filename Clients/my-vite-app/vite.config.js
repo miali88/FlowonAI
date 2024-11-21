@@ -4,7 +4,7 @@ export default defineConfig({
   plugins: [],
   server: {
     port: 5173,
-    open: true, // open browser automatically
+    open: true,
     cors: true
   },
   build: {
@@ -12,9 +12,8 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input: {
-        main: 'src/pages/index.html',
-        clientA: 'src/pages/clientA/index.html',
-        clientB: 'src/pages/clientB/index.html',
+        main: 'index.html',
+        wecreate: 'src/pages/wecreate/index.html',
       }
     }
   },
