@@ -33,7 +33,7 @@ async def get_kb_items(current_user):
                               .select('*') \
                               .eq('user_id', current_user) \
                               .execute()
-            
+        
             grouped: List[Dict] = group_by_root_url(results.data)
             
             all_items.extend(grouped)
@@ -60,7 +60,8 @@ async def get_kb_items(current_user):
 
 
 async def get_kb_headers(current_user):
-    kb_tables = ["user_web_data", "user_text_files"]
+    print("\n\n get_kb_headers current_user:", current_user)
+    kb_tables = ["user_web_data_headers", "user_text_files_headers"]
     print(f"Fetching items for user: {current_user}")
     all_items = []
 
@@ -72,7 +73,6 @@ async def get_kb_headers(current_user):
                               .select('*') \
                               .eq('user_id', current_user) \
                               .execute()
-            
             grouped: List[Dict] = group_by_root_url(results.data)
             
             all_items.extend(grouped)

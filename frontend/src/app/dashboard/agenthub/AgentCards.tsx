@@ -1,12 +1,9 @@
 import * as React from "react"
 import { useEffect, useState } from "react"
-import axios from "axios"
-import { useUser } from "@clerk/nextjs"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import "@/components/loading.css";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+import { VOICE_OPTIONS } from "./workspace/agentSettings"
 
 // Update the glassStyles to achieve a darker, greyer, and more transparent look
 const glassStyles = `
@@ -70,35 +67,39 @@ function Loader() {
 }
 
 const formatPurpose = (purpose: string) => {
-  return purpose
+  return "Purpose: " + purpose
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
 
 const formatVoice = (voice: string) => {
-  // If it's a UUID format, return a friendly name
-  if (voice.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
-    return "AI Voice";
+  // Search through all language voices to find matching ID
+  for (const languageVoices of Object.values(VOICE_OPTIONS)) {
+    const voiceOption = languageVoices.find(v => v.id === voice);
+    if (voiceOption) {
+      return `Voice: ${voiceOption.name}`;
+    }
   }
-  // If it's voice1/all format
-  if (voice === "voice1") return "Voice 1";
+  
+  // Fallback cases
   if (voice === "all") return "All Voices";
+  if (voice === "voice1") return "Voice 1";
   return voice;
 };
 
 const formatDataSource = (dataSource: string) => {
   try {
     // First check if it's just "all" by itself
-    if (dataSource === "all") return "All Sources";
+    if (dataSource === "all") return "Sources: All Sources";
     
     // Try to parse as JSON
     const parsed = JSON.parse(dataSource);
     
     // If it's an array with objects containing title
     if (Array.isArray(parsed)) {
-      if (parsed.length === 0) return "No Source";
-      if (parsed.some(item => item.id === 'kb_all' || item.id === 'all')) return "All Sources";
+      if (parsed.length === 0) return "Sources: No Source";
+      if (parsed.some(item => item.id === 'kb_all' || item.id === 'all')) return "Sources: All Sources";
       
       // Get just the first source if there are multiple
       const firstSource = parsed[0].title;
@@ -108,16 +109,16 @@ const formatDataSource = (dataSource: string) => {
       const displayTitle = firstSource.replace(/(https?:\/\/)?(www\.)?/i, '').split('/')[0];
       
       return remainingCount > 0 
-        ? `${displayTitle} +${remainingCount}` 
-        : displayTitle;
+        ? `Sources: ${displayTitle} +${remainingCount}` 
+        : `Sources: ${displayTitle}`;
     }
     
     // If it's just a string
-    return dataSource === 'kb_all' ? 'All Sources' : dataSource || "No Source";
+    return dataSource === 'kb_all' ? 'Sources: All Sources' : `Sources: ${dataSource || "No Source"}`;
   } catch {
     // If it's not JSON and just a plain string
-    if (dataSource === "all" || dataSource === "kb_all") return "All Sources";
-    return dataSource || "No Source";
+    if (dataSource === "all" || dataSource === "kb_all") return "Sources: All Sources";
+    return `Sources: ${dataSource || "No Source"}`;
   }
 };
 
