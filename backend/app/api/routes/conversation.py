@@ -120,24 +120,12 @@ async def chat_message(request: Request):
     print("\n\n chat_message endpoint reached\n\n")
     if request.method == "POST":
         try:
-            data = await request.json()
-            print("\n\n chat_message data:", data, "\n\n")
-            participant_identity = data.get('participant_identity', 'unknown') 
-            room_name = data.get('room_name', 'unknown')
-            full_name = data.get('fullName', 'unknown')
-            email = data.get('email', 'unknown')
-            contact_number = data.get('contactNumber', 'unknown')
-            user_id = data.get('user_id', 'unknown')
+            chat_message_data = await request.json()
+            chat_message_data['timestamp'] = datetime.now().isoformat()
+            print("\n\n chat_message data:", chat_message_data, "\n\n")
 
-            chat_messages[participant_identity].append({  # Changed key to participant_identity
-                'room_name': room_name,     # Include room_name as field
-                'user_id': user_id,
-                'full_name': full_name,
-                'email': email,
-                'contact_number': contact_number,
-                'timestamp': datetime.now().isoformat()
-            })
-
+            chat_messages[participant_identity].append(chat_message_data)
+         
             logger.info(f"Message added for participant_identity {participant_identity}")
             return JSONResponse(content={"status": "success", "message": "Message added"})
 

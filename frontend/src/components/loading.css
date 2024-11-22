@@ -1,24 +1,22 @@
 /* HTML: <div class="loader"></div> */
-.loader {
-  display: inline-grid;
-}
-.loader:before,
-.loader:after {
-  content: "";
-  height: 27px;
-  aspect-ratio: 5;
-  --c: #e7e7e7 90deg,#000000 0;
+.loader {    
+  --r1: 154%;
+  --r2: 68.5%;
+  width: 60px;
+  aspect-ratio: 1;
+  border-radius: 50%; 
   background:
-   conic-gradient(from 135deg at top   ,var(--c)),
-   conic-gradient(from -45deg at bottom,var(--c)) 12.5% 100%;
-  background-size: 20% 50%;
-  background-repeat: repeat-x;
-  clip-path: inset(0 60% 0 0);
-  animation: l7 .8s infinite linear alternate;
+    radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+    radial-gradient(var(--r1) var(--r2) at bottom,#269af2 79.5%,#0000 80%),
+    radial-gradient(var(--r1) var(--r2) at top   ,#0000 79.5%,#269af2 80%),
+    #ccc;
+  background-size: 50.5% 220%;
+  background-position: -100% 0%,0% 0%,100% 0%;
+  background-repeat:no-repeat;
+  animation: l9 2s infinite linear;
 }
-.loader:after {
-  animation-direction: alternate-reverse;
-}
-@keyframes l7{
-  to {clip-path: inset(0 0 0 60%)}
+@keyframes l9 {
+    33%  {background-position:    0% 33% ,100% 33% ,200% 33% }
+    66%  {background-position: -100%  66%,0%   66% ,100% 66% }
+    100% {background-position:    0% 100%,100% 100%,200% 100%}
 }

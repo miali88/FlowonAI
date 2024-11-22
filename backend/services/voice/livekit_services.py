@@ -198,6 +198,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         )
 
         # Select TTS provider based on voiceProvider field
+        print(f"Voice ID: {agent['voice']}")
         if agent.get('voiceProvider') == 'elevenlabs':
             tts_instance = elevenlabs.TTS(
                 voice=elevenlabs.Voice(

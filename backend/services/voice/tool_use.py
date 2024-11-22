@@ -148,88 +148,90 @@ async def request_personal_data(
     ]
 ) -> str:
     logger.info(f"Personal data request triggered with message: {message}")
+
+    
     return "Form presented to user. Waiting for user to complete and submit form."
 
-@llm.ai_callable(
-    name="verify_user_info",
-    description="Verify user information based on provided form fields"
-)
-async def verify_user_info(
-    self,
-    form_fields: Annotated[
-        str,
-        llm.TypeInfo(
-            description=f"JSON string containing user form fields to verify ('full name', 'organization', 'industry sector')"
-        )
-    ]
-) -> str:
-    """
-    Presents the extracted user information to the user and asks them to verify it.
-    Returns confirmation message or error details.
-    """
-    try:
-        # Parse the JSON string into a dictionary
-        fields = json.loads(form_fields)
+# @llm.ai_callable(
+#     name="verify_user_info",
+#     description="Verify user information based on provided form fields"
+# )
+# async def verify_user_info(
+#     self,
+#     form_fields: Annotated[
+#         str,
+#         llm.TypeInfo(
+#             description=f"JSON string containing user form fields to verify ('full name', 'organization', 'industry sector')"
+#         )
+#     ]
+# ) -> str:
+#     """
+#     Presents the extracted user information to the user and asks them to verify it.
+#     Returns confirmation message or error details.
+#     """
+#     try:
+#         # Parse the JSON string into a dictionary
+#         fields = json.loads(form_fields)
         
-        # Store in instance variable instead of function attribute
-        if not hasattr(self, 'collected_user_info'):
-            self.collected_user_info = {}
+#         # Store in instance variable instead of function attribute
+#         if not hasattr(self, 'collected_user_info'):
+#             self.collected_user_info = {}
         
-        # Update the stored information with new fields
-        self.collected_user_info.update(fields)
+#         # Update the stored information with new fields
+#         self.collected_user_info.update(fields)
         
-        # Validate required fields (fixed version)
-        required_fields = ['full name', 'organization', 'industry sector']
-        missing_fields = [field for field in required_fields if field not in fields]
-        if missing_fields:
-            return f"Missing required fields: {', '.join(missing_fields)}"
+#         # Validate required fields (fixed version)
+#         required_fields = ['full name', 'organization', 'industry sector']
+#         missing_fields = [field for field in required_fields if field not in fields]
+#         if missing_fields:
+#             return f"Missing required fields: {', '.join(missing_fields)}"
         
-        # Format collected information for display
-        info_summary = "\n".join([f"{k.title()}: {v}" for k, v in self.collected_user_info.items()])
-        return (
-            f"Here's what we have so far:\n{info_summary}\n\n"
-        )
+#         # Format collected information for display
+#         info_summary = "\n".join([f"{k.title()}: {v}" for k, v in self.collected_user_info.items()])
+#         return (
+#             f"Here's what we have so far:\n{info_summary}\n\n"
+#         )
         
-    except json.JSONDecodeError:
-        return "Error: Invalid JSON format in form fields"
-    except Exception as e:
-        return f"Error verifying user information: {str(e)}"
+#     except json.JSONDecodeError:
+#         return "Error: Invalid JSON format in form fields"
+#     except Exception as e:
+#         return f"Error verifying user information: {str(e)}"
 
-@llm.ai_callable(
-    name="redirect_to_dashboard",
-    description="Redirect user to dashboard after completing onboarding and verifying user information",
-    auto_retry=True
-)
-async def redirect_to_dashboard(
-    recommended_feature: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The recommended feature for the user to start with, based on the conversation"
-        )
-    ],
-    use_case: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The specific use case identified during the conversation"
-        )
-    ]
-) -> str:
-    """
-    Concludes the onboarding conversation and redirects user to dashboard.
-    Should only be called after:
-    1. User information has been collected and verified via verify_user_info
-    2. The conversation has naturally concluded
-    3. A clear use case and recommended feature have been identified
+# @llm.ai_callable(
+#     name="redirect_to_dashboard",
+#     description="Redirect user to dashboard after completing onboarding and verifying user information",
+#     auto_retry=True
+# )
+# async def redirect_to_dashboard(
+#     recommended_feature: Annotated[
+#         str,
+#         llm.TypeInfo(
+#             description="The recommended feature for the user to start with, based on the conversation"
+#         )
+#     ],
+#     use_case: Annotated[
+#         str,
+#         llm.TypeInfo(
+#             description="The specific use case identified during the conversation"
+#         )
+#     ]
+# ) -> str:
+#     """
+#     Concludes the onboarding conversation and redirects user to dashboard.
+#     Should only be called after:
+#     1. User information has been collected and verified via verify_user_info
+#     2. The conversation has naturally concluded
+#     3. A clear use case and recommended feature have been identified
 
-    Returns a farewell message with personalized feature recommendations.
-    """
-    return (
-        f"Great! Now that we've collected your information and understood your needs, "
-        f"I'll redirect you to the dashboard. Based on our conversation, "
-        f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
-        f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
-        f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
-    )
+#     Returns a farewell message with personalized feature recommendations.
+#     """
+#     return (
+#         f"Great! Now that we've collected your information and understood your needs, "
+#         f"I'll redirect you to the dashboard. Based on our conversation, "
+#         f"I recommend starting with the {recommended_feature} feature which aligns perfectly "
+#         f"with your {use_case} use case. You'll find it prominently displayed in the dashboard navigation. "
+#         f"Feel free to return here if you need any additional guidance. Good luck with your journey!"
+#     )
 
 class AgentFunctions(llm.FunctionContext):
     current_room_name = None  # Class variable to store current room_name
@@ -257,6 +259,7 @@ class AgentFunctions(llm.FunctionContext):
             self._register_ai_function(request_personal_data)
             print(f"Registered lead generation function")
             logger.info(f"Registered lead generation function")
+
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
@@ -303,7 +306,6 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                         extra={'room_name': room_name, 'job_id': job_id}, 
                         exc_info=True)
             raise
-
 
 async def send_lead_notification(chat_message: dict):
     """ nylas email send here """
