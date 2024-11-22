@@ -99,7 +99,7 @@ async def send_email(participant_identity, conversation_history, agent_id):
             lead_request_body = {
                     "to": [{"email": lead_email}],
                     "reply_to": [{"email": recipient_email}],
-                    "subject": "Flowon: Conversation with Agent AI",
+                    "subject": "Flowon: Custom AI Agents for Visionary Businesses",
                     "body": (
                         f"<div>"
                         f"<p>Hi {lead_name},</p>"
