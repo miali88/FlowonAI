@@ -248,6 +248,7 @@ async def entrypoint(ctx: JobContext):
                                              participant_identity: str,
                                              prospect_status: str):
             try:
+                print("triggering show_chat_input from livekit_server.py")
                 chat_message = await trigger_show_chat_input(room_name, job_id, participant_identity)
                 print("chat_message retrieved from trigger_show_chat_input:", chat_message)
                 if chat_message:

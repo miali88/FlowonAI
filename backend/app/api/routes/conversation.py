@@ -123,9 +123,17 @@ async def chat_message(request: Request):
             chat_message_data = await request.json()
             chat_message_data['timestamp'] = datetime.now().isoformat()
             print("\n\n chat_message data:", chat_message_data, "\n\n")
+            
+            print(" extracting participant_identity..")
+            # Extract participant_identity from chat_message_data
+            participant_identity = chat_message_data.get('participant_identity')
+            print(f"participant_identity: {participant_identity}")
+            if not participant_identity:
+                raise HTTPException(status_code=400, detail="participant_identity is required")
 
             chat_messages[participant_identity].append(chat_message_data)
-         
+            print(f"chat_messages[participant_identity]: {chat_messages[participant_identity]}")
+
             logger.info(f"Message added for participant_identity {participant_identity}")
             return JSONResponse(content={"status": "success", "message": "Message added"})
 

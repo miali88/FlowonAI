@@ -270,30 +270,32 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
             await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', 
                              json={'room_name': room_name, 'job_id': job_id, 'participant_identity': participant_identity})
             
-            # Wait 2 seconds before starting to poll
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
             # Poll for the chat message with a timeout
-            max_attempts = 45  # 45 seconds total (1 second intervals)
+            max_attempts = 60  # 60 seconds total (1 second intervals)
             attempt = 0
             
+            metadata = ["user_id", "room_name", "participant_identity"]
+
             while attempt < max_attempts:
                 logger.debug(f"Polling for chat message, attempt {attempt + 1}")
                 response = await session.get(
                     f'{API_BASE_URL}/conversation/chat_message',
                     params={'participant_identity': participant_identity}
                 )
-                response_data = await response.json()
-                
+                response_data: List[Dict] = await response.json()
+
                 if response_data and len(response_data) > 0:
-                    chat_message = {
-                        'full_name': response_data[0].get('full_name'),
-                        'email': response_data[0].get('email'),
-                        'contact_number': response_data[0].get('contact_number')
-                    }
-                    #logger.info(f"Successfully received chat message for {chat_message.get('full_name')}")
-                    await send_lead_notification(chat_message)
-                    return chat_message
+                    print("response_data received from chat_message endpoint:", response_data)
+
+                    chat_message: Dict = response_data[0]
+
+                    # Filter out metadata fields from chat_message
+                    filtered_chat_message = {k: v for k, v in chat_message.items() if k not in metadata}
+                    await send_lead_notification(filtered_chat_message)
+                    print("filtered_chat_message:", filtered_chat_message)
+                    return filtered_chat_message
                 
                 await asyncio.sleep(1)
                 attempt += 1

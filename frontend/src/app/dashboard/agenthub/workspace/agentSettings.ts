@@ -18,6 +18,7 @@ export const VOICE_OPTIONS = {
       { id: "2mltbVQP21Fq8XgIfRQJ", name: "Axell", file: "/voices/axell.mp3", voiceProvider: "elevenlabs"},
       { id: "Tx7VLgfksXHVnoY6jDGU", name: "Joe", file: "/voices/joe.mp3", voiceProvider: "elevenlabs"},
       { id: "4u5cJuSmHP9d6YRolsOu", name: "Jay", file: "/voices/jay.mp3", voiceProvider: "elevenlabs"},
+      { id: "19STyYD15bswVz51nqLf", name: "Samara", file: "/voices/samara.mp3", voiceProvider: "elevenlabs"},
     ],
     "en-US": [
       { id: "e00d0e4c-a5c8-443f-a8a3-473eb9a62355", name: "US Voice 1", file: "/voices/USVoice1.wav", voiceProvider: "cartesia" },
