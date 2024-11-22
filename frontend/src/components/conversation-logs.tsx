@@ -89,9 +89,9 @@ export function ConversationLogs() {
           {/* Feature Highlights */}
           <div className="mt-8 grid grid-cols-3 gap-4">
             {[
-              { label: 'Information Accuracy', value: '98%' },
-              { label: 'Avg. Resolution Time', value: '3.5m' },
-              { label: 'Customer Satisfaction', value: '4.9/5' },
+              { label: 'Information Accuracy', value: '87%' },
+              { label: 'Avg. Resolution Time', value: '2.5m' },
+              { label: 'Customer Satisfaction', value: '4.6/5' },
             ].map((stat, index) => (
               <div key={index} className="bg-black/20 backdrop-blur-xl rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{stat.value}</div>

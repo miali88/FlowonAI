@@ -1,5 +1,7 @@
 import os 
+from typing import Dict
 from dotenv import load_dotenv
+
 from nylas import Client
 
 from services.db.supabase_services import supabase_client
@@ -54,42 +56,81 @@ async def send_email(participant_identity, conversation_history, agent_id):
         for message in conversation_history:
             if "user_message" in message and "user input data:" in message["user_message"]:
                 # Extract the dictionary string and convert to actual dictionary using eval()
-                data_str = message["user_message"].split("user input data:")[1].strip()
-                user_data = eval(data_str)  # Note: eval() can be unsafe, consider using ast.literal_eval()
+                data_str: str = message["user_message"].split("user input data:")[1].strip()
+                user_data: Dict = eval(data_str)  # Note: eval() can be unsafe, consider using ast.literal_eval()
+
+                print("\n\n\n\n +_+_+_ nylas convo extracted user_data:", user_data)
+                print("Email Address:", user_data.get("Email Address"))
                 break  # Exit loop after finding the first match
         
         if not user_data:
             raise ValueError("No user data found in conversation history")
 
+        """ email to Flowon User """
         # Now this line will work because we have the cache
         recipient_email = agent_user_cache[agent_id]["email"]
+        if recipient_email:
+            print("recipient_email:", recipient_email)
 
-        print("recipient_email:", recipient_email)
+            user_request_body = {
+                    "to": [{"email": recipient_email}],
+                    "reply_to": [{"email": recipient_email}],
+                    "subject": "New lead from Flowon AI",
+                    "body": (
+                        f"<div>"
+                        f"<p>User submitted the following information:</p>"
+                        f"<pre>{user_data}</pre>"
+                        f"<p>Please log in to your dashboard for full transcript</p>"
+                        f"</div>"
+                    )
+                }
 
-        request_body = {
-                "to": [{"email": recipient_email}],
-                "reply_to": [{"email": recipient_email}],
-                "subject": "New lead from Flowon AI",
-                "body": (
-                    f"User submitted the following information: {user_data}\n\n"
-                    "Please log in to your dashboard for full transcript"
-                )
-            }
-
-        nylas_notification = {"participant_identity": participant_identity, 
-                             "nylas_request_body": request_body}
-
-        # Store notification in Supabase
-        store_notification =supabase.table('conversation_logs').update(
-            {"nylas_notification": nylas_notification}
-        ).eq('participant_identity', participant_identity).execute()
-
-        # Send email, grant_id default from michael@flowon.ai
+      # Send email, grant_id default from michael@flowon.ai
         # c9e0a3fa-69b2-46fd-8626-ec25ed85b6ee
         message = nylas.messages.send(
             identifier="5ef0555c-25ab-4b4e-b4a1-02fd8ba4d255",
-            request_body=request_body
+            request_body=user_request_body
         )
+
+        """ email to Lead """
+        lead_email = user_data.get("Email Address")
+        lead_name = user_data.get("Full Name")
+        if lead_email:
+            lead_request_body = {
+                    "to": [{"email": lead_email}],
+                    "reply_to": [{"email": recipient_email}],
+                    "subject": "Flowon: Conversation with Agent AI",
+                    "body": (
+                        f"<div>"
+                        f"<p>Hi {lead_name},</p>"
+                        f"<p>Thank you for chatting with our landing page agent. I hope you found it informative. "
+                        f"Would you like to explore ways we can help to integrate conversation AI into your business?</p>"
+                        f"<p>If so, feel free to shoot me an email at michael@flowon.ai, or just schedule a demo with me here:<br>"
+                        f"<a href='https://calendly.com/michael-flowon/30min?month=2024-11'>https://calendly.com/michael-flowon/30min?month=2024-11</a></p>"
+                        f"<p>Thanks,<br>"
+                        f"Michael, founder @ Flowon AI</p>"
+                        f"</div>"
+                    )
+                }
+
+      # Send email, grant_id default from michael@flowon.ai
+        # c9e0a3fa-69b2-46fd-8626-ec25ed85b6ee
+        message = nylas.messages.send(
+            identifier="5ef0555c-25ab-4b4e-b4a1-02fd8ba4d255",
+            request_body=lead_request_body
+        )
+
+
+        nylas_notification = {"participant_identity": participant_identity, 
+                             "user_request_body": user_request_body,
+                             "lead_request_body": lead_request_body}
+
+        # Store notification in Supabase
+        store_notification = supabase.table('conversation_logs').update(
+            {"nylas_notification": nylas_notification}
+        ).eq('participant_identity', participant_identity).execute()
+
+  
         return message
         
     except Exception as e:

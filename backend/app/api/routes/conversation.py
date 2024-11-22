@@ -121,7 +121,7 @@ async def chat_message(request: Request):
     if request.method == "POST":
         try:
             chat_message_data = await request.json()
-            chat_message_data['timestamp'] = datetime.now().isoformat()
+            chat_message_data['timestamp'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
             print("\n\n chat_message data:", chat_message_data, "\n\n")
             
             print(" extracting participant_identity..")
