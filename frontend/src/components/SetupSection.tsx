@@ -13,17 +13,17 @@ export const SetupSection = () => {
     {
       number: "1",
       title: "Import your data",
-      description: "Our platform provides multi ways to connect your data to the agent. Upload files, or content from the web.",
+      description: "Our platform provides many ways to connect your data.",
     },
     {
       number: "2",
       title: "Specify how the agent should behave",
-      description: "Help the agent learn how it should interact with visitors. For lead generation, specify the questions to ask and how to qualify.",
+      description: "Help the agent learn how it should interact with visitors",
     },
     {
       number: "3",
       title: "Deploy your AI Agent",
-      description: "Choose how you want to integrate your AI assistant with your business.",
+      description: "Choose how to best serve your AI assistant for maximum impact.",
     },
   ];
 

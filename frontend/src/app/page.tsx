@@ -26,11 +26,11 @@ export default function HomePage() {
         />
         <Hero />
         <div className="mx-auto max-w-7xl">
+          <SetupSection />
+          <DeploySection />
+          <Information />
           <ConversationLogs />
           <FeaturesSection />
-          <SetupSection />
-          <Information />
-          <DeploySection />
           {/* <div id="pricing" className="scroll-mt-20">
             <Pricing />
           </div> */}
