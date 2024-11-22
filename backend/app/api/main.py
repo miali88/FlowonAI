@@ -2,10 +2,11 @@ from fastapi import APIRouter
 
 from app.api.routes import (twilio, dashboard, 
                             chat, voice, livekit, 
-                            conversation, settings, nylas_service)
+                            conversation, settings, nylas_service, clerk)
 
 api_router = APIRouter()
 
+api_router.include_router(clerk.router, prefix="/clerk", tags=["clerk"])
 api_router.include_router(twilio.router, prefix="/twilio", tags=["twilio"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
