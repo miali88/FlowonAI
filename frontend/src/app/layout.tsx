@@ -16,17 +16,10 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Flowon AI',
-  description: 'Conversational Web',
+  title: 'Flowon AI - Experience AI Conversations That Feel Human',
+  description: 'Step into the future of conversational AI. Experience natural, fluid conversations that adapt to your needs, making AI interactions feel remarkably human.',
   icons: {
-    icon: [
-      {
-        url: '/favicon.ico',
-        href: '/favicon.ico',
-      }
-    ],
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: '/favicon.ico',
   },
 };
 

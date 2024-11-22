@@ -52,7 +52,7 @@
     "country-flag-icons": "^1.5.13",
     "embla-carousel-react": "^8.3.0",
     "flag-icons": "^7.2.3",
-    "framer-motion": "^11.11.10",
+    "framer-motion": "^11.11.17",
     "livekit-client": "^2.5.1",
     "livekit-server-sdk": "^2.6.1",
     "lottie-react": "^2.4.0",
