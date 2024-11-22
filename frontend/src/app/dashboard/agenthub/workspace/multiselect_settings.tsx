@@ -42,20 +42,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
   const toggleItem = (item: Item) => {
     let newSelectedItems: Item[];
 
-    if (item.id === 'all') {
-      // If "all" is selected, either select only "all" or clear all selections
-      newSelectedItems = isItemSelected(item) ? [] : [item];
+    if (isItemSelected(item)) {
+      // Remove item if already selected
+      newSelectedItems = selectedItems.filter(selected => selected.id !== item.id);
     } else {
-      // Remove "all" if it exists when selecting specific items
-      const currentSelected = selectedItems.filter(selected => selected.id !== 'all');
-      
-      if (isItemSelected(item)) {
-        // Remove item if already selected
-        newSelectedItems = currentSelected.filter(selected => selected.id !== item.id);
-      } else {
-        // Add item if not selected
-        newSelectedItems = [...currentSelected, item];
-      }
+      // Add item if not selected
+      newSelectedItems = [...(selectedItems || []), item];
     }
 
     console.log('Toggling item:', item);

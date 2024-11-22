@@ -1,70 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { NylasSchedulerEditor } from "@nylas/react";
 
-interface Message {
-  text: string;
-  isBot: boolean;
-}
+const NYLAS_CLIENT_ID = 'b39310e3-7a3d-4f9f-877d-a9193e905b81';
 
-export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+export default function SchedulerEditorPage() {
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-    // Add user message
-    const userMessage: Message = { text: inputText, isBot: false };
-    
-    // Add bot response (placeholder)
-    const botMessage: Message = { text: "This is an automated response!", isBot: true };
-    
-    setMessages([...messages, userMessage, botMessage]);
-    setInputText('');
-  };
+  if (!isMounted) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto">
-      {/* Chat messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
-          >
-            <div
-              className={`max-w-[70%] rounded-lg p-3 ${
-                message.isBot
-                  ? 'bg-gray-200 text-gray-800'
-                  : 'bg-blue-500 text-white'
-              }`}
-            >
-              {message.text}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Input form */}
-      <form onSubmit={handleSendMessage} className="border-t p-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 rounded-lg border p-2 focus:outline-none focus:border-blue-500"
-            placeholder="Type your message..."
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-          >
-            Send
-          </button>
-        </div>
-      </form>
+    <div className="w-full h-full">
+      {isMounted && (
+        <NylasSchedulerEditor
+          schedulerPreviewLink={`${window.location.origin}/?config_id={config.id}`}
+          nylasSessionsConfig={{
+            clientId: NYLAS_CLIENT_ID,
+            redirectUri: `${window.location.origin}/scheduler-editor`,
+            domain: "https://api.us.nylas.com/v3",
+            hosted: true,
+            accessType: 'offline',
+          }}
+          defaultSchedulerConfigState={{
+            selectedConfiguration: {
+              requires_session_auth: false,
+              scheduler: {
+                rescheduling_url: `${window.location.origin}/reschedule/:booking_ref`,
+                cancellation_url: `${window.location.origin}/cancel/:booking_ref`
+              }
+            }
+          }}
+          onError={(error) => {
+            console.error('Nylas Editor Error:', error);
+          }}
+        />
+      )}
     </div>
   );
 }

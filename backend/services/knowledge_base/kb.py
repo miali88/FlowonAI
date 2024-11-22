@@ -58,6 +58,46 @@ async def get_kb_items(current_user):
 
     return all_items, total_tokens
 
+
+async def get_kb_headers(current_user):
+    kb_tables = ["user_web_data", "user_text_files"]
+    print(f"Fetching items for user: {current_user}")
+    all_items = []
+
+    total_tokens: int = 0
+
+    for table in kb_tables:
+        if table == "user_web_data_headers":
+            results = supabase.table(table) \
+                              .select('*') \
+                              .eq('user_id', current_user) \
+                              .execute()
+            
+            grouped: List[Dict] = group_by_root_url(results.data)
+            
+            all_items.extend(grouped)
+            total_tokens += sum(item.get('token_count', 0) for item in results.data)
+
+        elif table == "user_text_files_headers":
+            items = supabase.table(table).select('*').eq('user_id', current_user).execute()
+            formatted_items = [
+                {
+                    'id': item['id'],
+                    'title': item.get('heading', 'No Title'),
+                    'user_id': current_user,
+                    'data_type': item.get('data_type'),
+                    'tag': item.get('tag', ''),
+                    'token_count': item.get('token_count', 0)
+                }
+                for item in items.data
+            ]
+            all_items.extend(formatted_items)
+            total_tokens += sum(item.get('token_count', 0) for item in results.data)
+
+    return all_items, total_tokens
+
+
+
 def group_by_root_url(items):
     id_root = 0
     if not isinstance(items, list):

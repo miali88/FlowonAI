@@ -190,7 +190,7 @@ const AgentHub = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/dashboard/knowledge_base`, {
+      const response = await fetch(`${API_BASE_URL}/dashboard/knowledge_base_headers`, {
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,

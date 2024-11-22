@@ -73,6 +73,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     openingLine: '',
     voice: '',
     language: '',
+    formFields: {},
     features: {
       notifyOnInterest: false,
       collectWrittenInformation: false,
