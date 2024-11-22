@@ -48,6 +48,7 @@ firecrawl==1.2.4
 flatbuffers==24.3.25
 frozenlist==1.4.1
 fsspec==2024.9.0
+svix==1.35.0
 gotrue==2.8.1
 grpcio==1.66.1
 grpcio-health-checking==1.66.1
