@@ -25,8 +25,6 @@ from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data
 
 
-
-
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
