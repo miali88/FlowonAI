@@ -80,19 +80,19 @@ export function Header() {
               transition={{ ease: "easeOut", duration: 0.2 }}
               className="fixed left-0 top-[3.5rem] z-50 h-[calc(100vh-3.5rem)] w-full overflow-auto bg-background backdrop-blur-[12px]"
             >
-              <ul className="flex flex-col md:flex-row md:items-center uppercase md:normal-case ease-in">
+              <ul className="flex flex-col md:flex-row md:items-center">
                 <motion.li
                   exit={{ y: "-20px", opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   initial={{ y: "-20px", opacity: 0 }}
                   transition={{ ease: "easeOut", duration: 0.2 }}
-                  className="pl-6 py-0.5 border-b md:border-none"
+                  className="pl-6 py-2"
                 >
                   <Link
-                    href="#"
-                    className="flex h-[3.5rem] w-full items-center text-xl transition-[color,transform] duration-300 md:translate-y-0 md:text-sm md:transition-colors"
+                    href="/dashboard"
+                    className="flex h-12 w-full items-center text-lg font-medium"
                   >
-                    Features
+                    Log in
                   </Link>
                 </motion.li>
                 <motion.li
@@ -100,45 +100,13 @@ export function Header() {
                   animate={{ y: 0, opacity: 1 }}
                   initial={{ y: "-20px", opacity: 0 }}
                   transition={{ ease: "easeOut", duration: 0.2 }}
-                  className="pl-6 py-0.5 border-b md:border-none"
-                >
-                  <ScrollLink
-                    to="pricing"
-                    spy={true}
-                    smooth={true}
-                    offset={-70}
-                    duration={500}
-                    className="text-sm font-medium hover:text-gray-900 cursor-pointer"
-                  >
-                    Pricing
-                  </ScrollLink>
-                </motion.li>
-                <motion.li
-                  exit={{ y: "-20px", opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  initial={{ y: "-20px", opacity: 0 }}
-                  transition={{ ease: "easeOut", duration: 0.2 }}
-                  className="pl-6 py-0.5 border-b md:border-none"
+                  className="pl-6 py-2"
                 >
                   <Link
-                    href="#"
-                    className="flex h-[3.5rem] w-full items-center text-xl transition-[color,transform] duration-300 md:translate-y-0 md:text-sm md:transition-colors"
+                    href="/dashboard"
+                    className="flex h-12 w-full items-center text-lg font-medium"
                   >
-                    Careers
-                  </Link>
-                </motion.li>
-                <motion.li
-                  exit={{ y: "-20px", opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  initial={{ y: "-20px", opacity: 0 }}
-                  transition={{ ease: "easeOut", duration: 0.2 }}
-                  className="pl-6 py-0.5 border-b md:border-none"
-                >
-                  <Link
-                    href="#"
-                    className="flex h-[3.5rem] w-full items-center text-xl transition-[color,transform] duration-300 md:translate-y-0 md:text-sm md:transition-colors"
-                  >
-                    Contact Us
+                    Sign up
                   </Link>
                 </motion.li>
               </ul>
