@@ -10,7 +10,7 @@ const API_DOMAIN = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 interface ChatBotMiniProps {
   agentId: string;
   eventBridge: {
-    dispatchHostEvent: (eventName: string, detail: any) => void;
+    dispatchHostEvent: (eventName: string, detail: Record<string, unknown>) => void;
     getLiveKitContainer?: () => Element | null;
   };
   isStreaming: boolean;
@@ -59,19 +59,14 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   localParticipant,
   setLocalParticipant,
 }) => {
-  const chatboxRef = useRef<HTMLUListElement>(null);
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [showChatInput, setShowChatInput] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
-  const [isError, setIsError] = useState<string | null>(null);
+  const [setIsError] = useState<string | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState('');
 
   const apiUrl = useMemo(() => apiBaseUrl, [apiBaseUrl]);
 
@@ -114,7 +109,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         liveKitRoom.disconnect();
       }
     };
-  }, []);
+  }, [liveKitRoom]);
 
   useEffect(() => {
     const fetchFormFields = async () => {
