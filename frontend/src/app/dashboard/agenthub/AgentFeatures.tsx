@@ -37,8 +37,10 @@ interface SelectedAgent {
 }
 
 interface AgentFeaturesProps {
-  selectedAgent: Agent | null;
-  setSelectedAgent: (agent: Agent | null) => void;
+  selectedAgent: {
+    features: string[];
+  } | null;
+  setSelectedAgent: (agent: any) => void;
   handleSaveFeatures: (features: any) => Promise<void>;
 }
 
@@ -100,12 +102,26 @@ const AGENT_FEATURES = {
   }
 };
 
+// Add feature mapping constant
+const FEATURE_ID_MAP = {
+  'prospecting': 'lead_gen',
+  'appointmentBooking': 'app_booking'
+};
+
 export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveFeatures,
 }) => {
-  const [localFeatures, setLocalFeatures] = useState(selectedAgent?.features || {});
+  // Convert array format back to object for internal state
+  const initialFeatures = Object.fromEntries(
+    Object.keys(AGENT_FEATURES.purposes).map(featureId => [
+      featureId,
+      { enabled: selectedAgent?.features.includes(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) || false }
+    ])
+  );
+
+  const [localFeatures, setLocalFeatures] = useState(initialFeatures);
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -113,13 +129,16 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   const [currentConfig, setCurrentConfig] = useState<InformationCollectionConfig | null>(null);
 
   const handleFeatureToggle = (featureId: string) => {
-    setLocalFeatures(prev => ({
-      ...prev,
+    const newFeatures = {
+      ...localFeatures,
       [featureId]: {
-        ...prev[featureId],
-        enabled: !prev[featureId]?.enabled
+        ...localFeatures[featureId],
+        enabled: !localFeatures[featureId]?.enabled
       }
-    }));
+    };
+    
+    setLocalFeatures(newFeatures);
+    handleSaveFeatures(newFeatures);
   };
 
   // Add this function to check if a feature has configuration options

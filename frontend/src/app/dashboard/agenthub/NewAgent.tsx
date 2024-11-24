@@ -33,16 +33,7 @@ interface FormData {
   openingLine: string;
   voice: string;
   language: string;
-  features: {
-    notifyOnInterest: boolean;
-    collectWrittenInformation: boolean;
-    transferCallToHuman: boolean;
-    bookCalendarSlot: boolean;
-    prospects: boolean;
-    form: boolean;
-    callTransfer: boolean;
-    appointmentBooking: boolean
-  };
+  features: string[];
 }
 
 interface NewAgentProps {
@@ -62,6 +53,12 @@ const getVoiceOptionsFormatted = (voices: typeof VOICE_OPTIONS[keyof typeof VOIC
   }));
 };
 
+// Add feature mapping constant
+const FEATURE_ID_MAP = {
+  'prospecting': 'lead_gen',
+  'appointmentBooking': 'app_booking'
+};
+
 export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps & { onAgentCreated?: () => void }) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -74,16 +71,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     voice: '',
     language: '',
     formFields: {},
-    features: {
-      notifyOnInterest: false,
-      collectWrittenInformation: false,
-      transferCallToHuman: false,
-      bookCalendarSlot: false,
-      prospects: false,
-      form: false,
-      callTransfer: false,
-      appointmentBooking: false
-    }
+    features: [] as string[]
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
@@ -183,7 +171,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
       const dataToSend = { 
         ...formData, 
         userId: user.id,
-        features: agentFeatures 
+        features: formData.features
       };
       
       if (dataToSend.dataSource === "all") {
@@ -369,23 +357,27 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
             <AgentFeatures
               selectedAgent={formData}
               setSelectedAgent={(agent) => {
-                console.log("Updated agent:", agent);
+                // Convert enabled features to array format
+                const enabledFeatures = Object.entries(agent.features)
+                  .filter(([_, enabled]) => enabled)
+                  .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
+                  .filter(Boolean);
+
                 setFormData(prev => ({
                   ...prev,
-                  features: {
-                    ...prev.features,
-                    ...agent.features
-                  }
+                  features: enabledFeatures
                 }));
               }}
               handleSaveFeatures={async (features) => {
-                console.log("Saving features:", features);
+                // Same conversion logic as above
+                const enabledFeatures = Object.entries(features)
+                  .filter(([_, enabled]) => enabled)
+                  .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
+                  .filter(Boolean);
+
                 setFormData(prev => ({
                   ...prev,
-                  features: {
-                    ...prev.features,
-                    ...features
-                  }
+                  features: enabledFeatures
                 }));
               }}
             />
