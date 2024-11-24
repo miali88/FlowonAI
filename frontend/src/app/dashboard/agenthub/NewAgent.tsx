@@ -357,9 +357,9 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
             <AgentFeatures
               selectedAgent={formData}
               setSelectedAgent={(agent) => {
-                // Convert enabled features to array format
+                // Convert ONLY ENABLED features to array format
                 const enabledFeatures = Object.entries(agent.features)
-                  .filter(([_, enabled]) => enabled)
+                  .filter(([_, feature]) => feature.enabled) // Only include enabled features
                   .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
                   .filter(Boolean);
 
@@ -371,7 +371,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
               handleSaveFeatures={async (features) => {
                 // Same conversion logic as above
                 const enabledFeatures = Object.entries(features)
-                  .filter(([_, enabled]) => enabled)
+                  .filter(([_, feature]) => feature.enabled) // Only include enabled features
                   .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
                   .filter(Boolean);
 
