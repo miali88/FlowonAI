@@ -1,9 +1,11 @@
-from fastapi import Request, APIRouter, Header, HTTPException, Query
-from fastapi.responses import JSONResponse
-from composio import Composio
-from composio import ComposioToolSet, App
-
 from urllib.parse import urlparse, parse_qs
+
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
+from fastapi import APIRouter
+from composio import Composio
+from composio import ComposioToolSet
+from composio_openai import ComposioToolSet
 
 import logging
 
@@ -12,6 +14,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 composio_client = Composio()
+
 
 @router.get("/connections/{user_id}")
 async def composio_handler(user_id: str):
@@ -34,9 +37,12 @@ async def composio_handler(user_id: str, app_name: str):
     entity = toolset.get_entity()
     request = entity.initiate_connection(app_name)
 
+    """ background task to save user_id (entity_id), app, client_id and connected_account_id to supabase """
     parsed_url = urlparse(request.redirectUrl)
     query_params = parse_qs(parsed_url.query)
     client_id = query_params.get('client_id', [None])[0]
     connected_account_id = request.connectedAccountId
 
+
     return JSONResponse(content={"client_id": client_id, "connected_account_id": connected_account_id}, status_code=200)
+
