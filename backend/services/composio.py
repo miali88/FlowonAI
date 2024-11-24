@@ -1,5 +1,5 @@
 from typing import Dict
-
+from datetime import datetime
 from composio import ComposioToolSet, App
 from composio_openai import ComposioToolSet, Action
 from openai import OpenAI
@@ -15,6 +15,15 @@ async def get_calendar_slots(user_id: str, app: str):
     entity = toolset.get_entity()
     request = entity.initiate_connection(app)
 
+    openai_client = OpenAI()
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    tools = toolset.get_tools(actions=[
+            Action.NOTION_SEARCH_NOTION_PAGE
+        ])
+    
+
+    return request
 
 
 
@@ -59,3 +68,5 @@ async def get_notion_database(database_name: str) -> Dict:
         }
         
     except Exception as e:
+        logger.error(f"Error getting Notion database: {e}")
+        return None

@@ -70,6 +70,7 @@
     "react-scroll": "^1.9.0",
     "react-tagcloud": "^2.3.3",
     "recharts": "^2.13.3",
+    "simple-icons": "^13.18.0",
     "tag-cloud": "^2.0.2",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",

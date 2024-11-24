@@ -2,12 +2,13 @@ from typing import Annotated, Optional, Literal, Union, Dict, List
 import json
 import aiohttp, os, logging, asyncio
 from dotenv import load_dotenv
-from functools import partial
 
 from livekit.agents import llm, JobContext
 
+
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata
+from services.composio import get_calendar_slots
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -181,6 +182,8 @@ async def fetch_calendar(
         room_name = AgentFunctions.current_room_name
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
         
+        calendar_slots = await get_calendar_slots(date_range, agent_id)
+
         # TODO: Implement actual calendar integration logic here
         # This is a placeholder return
         return "Available slots found for your requested date range. Please complete the form to book your appointment."

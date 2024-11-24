@@ -2,7 +2,8 @@ from fastapi import APIRouter
 
 from app.api.routes import (twilio, dashboard, 
                             chat, voice, livekit, 
-                            conversation, settings, nylas_service, clerk)
+                            conversation, settings, nylas_service, 
+                            clerk, composio)
 
 api_router = APIRouter()
 
@@ -15,3 +16,4 @@ api_router.include_router(livekit.router, prefix="/livekit", tags=["livekit"])
 api_router.include_router(conversation.router, prefix="/conversation", tags=["conversation"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(nylas_service.router, prefix="/nylas", tags=["nylas"])
+api_router.include_router(composio.router, prefix="/composio", tags=["composio"])

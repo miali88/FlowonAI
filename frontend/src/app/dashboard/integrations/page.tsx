@@ -1,103 +1,44 @@
+"use client";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { integrations } from "./integrationsList"
+import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const integrations = [
-  {
-    name: "Calendar",
-    icon: "/icons/gmail.png",
-    description: "Your agents can see your availability and book meetings",
-    category: "Calendar",
-    status: "Not Connected",
-  },
-  {
-    name: "Emails",
-    icon: "/icons/outlook.png",
-    description: "Have drafts responses to customers written and ready to send",
-    category: "Email",
-    status: "Not connected",
-  },
-  {
-    name: "Zapier",
-    icon: "/icons/zapier.png",
-    description: "Automate workflows with Zapier.",
-    category: "Automation",
-    status: "Coming soon",
-  },
-  {
-    name: "WhatsApp",
-    icon: "/icons/whatsapp.png",
-    description: "Connect WhatsApp Business API.",
-    category: "Communication",
-    status: "Coming soon",
-  },
-  {
-    name: "Shopify",
-    icon: "/icons/shopify.png",
-    description: "Integrate your Shopify store.",
-    category: "E-commerce",
-    status: "Coming soon",
-  },
-  {
-    name: "Slack",
-    icon: "/icons/slack.png",
-    description: "Connect with your Slack workspace.",
-    category: "Communication",
-    status: "Coming soon",
-  },
-  {
-    name: "News API",
-    icon: "/icons/newsapi.png",
-    description: "Connect with News API.",
-    category: "News",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Scholar API",
-    icon: "/icons/googlescholar.png",
-    description: "Connect with Google Scholar API.",
-    category: "News",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Trends API",
-    icon: "/icons/googletrends.png",
-    description: "Connect with Google Trends API.",
-    category: "News",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Finance API",
-    icon: "/icons/googlefinance.png",
-    description: "Connect with Google Finance API.",
-    category: "Finance",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Flight API",
-    icon: "/icons/googleflight.png",
-    description: "Connect with Google Flight API.",
-    category: "Travel",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Foods API",
-    icon: "/icons/googlefoods.png",
-    description: "Connect with Google Foods API.",
-    category: "Food",
-    status: "Coming soon",
-  },
-  {
-    name: "Google Hotels API",
-    icon: "/icons/googlehotels.png",
-    description: "Connect with Google Hotels API.",
-    category: "Travel",
-    status: "Coming soon",
-  },
-]
-
 export default function IntegrationsPage() {
+  const [integrationsList, setIntegrationsList] = useState(integrations);
+  const [userConnections, setUserConnections] = useState<string[]>([]);
+  const { userId } = useAuth();
+
+  useEffect(() => {
+    const fetchConnections = async () => {
+      if (!userId) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/composio/connections/${userId}`);
+        const data = await response.json();
+        setUserConnections(data.connections);
+        
+        // Update integrations status based on connections
+        const updatedIntegrations = integrations.map(integration => ({
+          ...integration,
+          status: data.connections.includes(integration.name.toLowerCase()) 
+            ? "Connected" 
+            : integration.status === "Coming soon" 
+              ? "Coming soon" 
+              : "Not connected"
+        }));
+        setIntegrationsList(updatedIntegrations);
+      } catch (error) {
+        console.error("Failed to fetch connections:", error);
+      }
+    };
+
+    fetchConnections();
+  }, [userId]);
+
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-2">Integrations</h1>
@@ -113,7 +54,7 @@ export default function IntegrationsPage() {
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {integrations.map((integration) => (
+        {integrationsList.map((integration) => (
           <div
             key={integration.name}
             className="p-4 rounded-lg border bg-card"
