@@ -44,6 +44,12 @@ async def new_connection_handler(user_id: str, app_name: str):
     client_id = query_params.get('client_id', [None])[0]
     connected_account_id = request.connectedAccountId
 
-
-    return JSONResponse(content={"client_id": client_id, "connected_account_id": connected_account_id}, status_code=200)
+    return JSONResponse(
+        content={
+            "client_id": client_id,
+            "connected_account_id": connected_account_id,
+            "redirectUrl": request.redirectUrl
+        }, 
+        status_code=200
+    )
 

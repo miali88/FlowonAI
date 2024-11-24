@@ -16,7 +16,7 @@ import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { AgentFeatures } from './AgentFeatures';
 import styles from './NewAgent.module.css';
-import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from './workspace/agentSettings';
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './workspace/agentSettings';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -216,16 +216,6 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
       setIsLoading(false);
     }
   };
-
-  // Convert your existing options to the Item format
-  const AGENT_PURPOSE_OPTIONS = [
-    { id: "prospecting", title: "Prospecting" },
-    { id: "onboarding", title: "Onboarding" },
-    { id: "receptionist", title: "Receptionist" },
-    { id: "question-answer", title: "Question & Answer" },
-    { id: "customer-service", title: "Customer Service" },
-    { id: "appointment-booking", title: "Appointment Booking" },
-  ];
 
   const LANGUAGE_OPTIONS_FORMATTED = LANGUAGE_OPTIONS.map(lang => ({
     id: lang.id,

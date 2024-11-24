@@ -24,7 +24,7 @@ export default function IntegrationsPage() {
         // Update integrations status based on connections
         const updatedIntegrations = integrations.map(integration => ({
           ...integration,
-          status: data.connections.includes(integration.name.toLowerCase()) 
+          status: data.connections.includes(integration.id.toLowerCase())
             ? "Connected" 
             : integration.status === "Coming soon" 
               ? "Coming soon" 
@@ -38,6 +38,23 @@ export default function IntegrationsPage() {
 
     fetchConnections();
   }, [userId]);
+
+  const handleIntegrationClick = async (integration: any) => {
+    if (integration.status === "Connected") return;
+    
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/composio/new_connection/${userId}/${integration.id}`
+      );
+      const data = await response.json();
+      
+      if (data.redirectUrl) {
+        window.open(data.redirectUrl, '_blank');
+      }
+    } catch (error) {
+      console.error("Failed to initiate connection:", error);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -82,11 +99,7 @@ export default function IntegrationsPage() {
               variant={integration.status === "Connected" ? "secondary" : "default"}
               className="w-full"
               disabled={integration.status === "Coming soon"}
-              onClick={() => {
-                if (integration.name === "Calendar") {
-                  window.location.href = `${API_BASE_URL}/nylas/auth`
-                }
-              }}
+              onClick={() => handleIntegrationClick(integration)}
             >
               {integration.status}
             </Button>

@@ -9,6 +9,16 @@ export const LANGUAGE_OPTIONS = [
     { id: "zh", name: "Mandarin" },
   ];
   
+  // Agent Purpose Options
+export const AGENT_PURPOSE_OPTIONS = [
+  { id: "prospecting", title: "Prospecting" },
+  { id: "onboarding", title: "Onboarding" },
+  { id: "receptionist", title: "Receptionist" },
+  { id: "question-answer", title: "Question & Answer" },
+  { id: "customer-service", title: "Customer Service" },
+  { id: "appointment-booking", title: "Appointment Booking" },
+];
+  
   // Voice Options
 export const VOICE_OPTIONS = {
     "en-GB": [

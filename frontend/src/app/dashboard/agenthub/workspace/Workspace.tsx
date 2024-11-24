@@ -14,7 +14,7 @@ import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';
-import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from './agentSettings';
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './agentSettings';
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -56,14 +56,6 @@ interface AgentPurpose {
   value: string;
   label: string;
 }
-
-// Add this constant with your available skills
-const AGENT_PURPOSES: AgentPurpose[] = [
-  { value: "prospecting", label: "Prospecting" },
-  { value: "question-answer", label: "Question & Answer" },
-  { value: "customer-service", label: "Customer Service" },
-  { value: "product-recommendation", label: "Product Recommendation" },
-];
 
 const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
@@ -244,9 +236,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       <SelectValue placeholder="Select agent purpose" />
                     </SelectTrigger>
                     <SelectContent>
-                      {AGENT_PURPOSES.map((purpose) => (
-                        <SelectItem key={purpose.value} value={purpose.value}>
-                          {purpose.label}
+                      {AGENT_PURPOSE_OPTIONS.map((purpose) => (
+                        <SelectItem key={purpose.id} value={purpose.id}>
+                          {purpose.title}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -59,7 +59,7 @@ const AGENT_FEATURES = {
   purposes: {
     prospecting: {
       id: "prospecting",
-      label: "Lead Generation & Prospecting",
+      label: "Lead Generation",
       description: "Create an agent that qualifies leads and collects prospect information",
       subFeatures: {
         notifyOnInterest: {

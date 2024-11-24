@@ -12,6 +12,7 @@ import {
 export const integrations = [
     {
       name: "Google Calendar",
+      id: "GOOGLECALENDAR",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siGooglecalendar.svg.replace('<svg', `<svg fill="#${siGooglecalendar.hex}"`)
       )}`,
@@ -21,6 +22,7 @@ export const integrations = [
     },
     {
       name: "Gmail",
+      id: "GMAIL",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siGmail.svg.replace('<svg', `<svg fill="#${siGmail.hex}"`)
       )}`,
@@ -30,6 +32,7 @@ export const integrations = [
     },
     {
       name: "Notion",
+      id: "NOTION",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siNotion.svg.replace('<svg', `<svg fill="white"`)
       )}`,
@@ -39,6 +42,7 @@ export const integrations = [
     },
     {
       name: "WhatsApp",
+      id: "WHATSAPP",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siWhatsapp.svg.replace('<svg', `<svg fill="#${siWhatsapp.hex}"`)
       )}`,
@@ -48,6 +52,7 @@ export const integrations = [
     },
     {
       name: "Shopify",
+      id: "SHOPIFY",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siShopify.svg.replace('<svg', `<svg fill="#${siShopify.hex}"`)
       )}`,
@@ -57,10 +62,19 @@ export const integrations = [
     },
     {
       name: "Slack",
+      id: "SLACK",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
         siSlack.svg.replace('<svg', `<svg fill="#${siSlack.hex}"`)
       )}`,
       description: "Connect with your Slack workspace.",
+      category: "Communication",
+      status: "Coming soon",
+    },
+    {
+      name: "Outlook",
+      id: "OUTLOOK",
+      icon: `/icons/outlook.png`,
+      description: "Connect with your Outlook workspace.",
       category: "Communication",
       status: "Coming soon",
     },
