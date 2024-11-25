@@ -8,6 +8,7 @@
 - Livekit for realtime conversational agent pipeline
 - Clerk for user management
 - Composio for LLM integration with 3rd party apps
+- Twilio for telephony integration
 
 
 ### AI Tools
