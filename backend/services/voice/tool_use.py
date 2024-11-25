@@ -7,7 +7,7 @@ from livekit.agents import llm, JobContext
 
 
 from services.chat.chat import similarity_search
-from services.cache import get_agent_metadata
+from services.cache import get_agent_metadata, calendar_cache
 from services.composio import get_calendar_slots
 
 # Update logger configuration
@@ -184,7 +184,7 @@ async def fetch_calendar(
 
         user_id: str = agent_metadata['userId']
 
-        free_slots = await get_calendar_slots(user_id, "googlecalendar")
+        free_slots = calendar_cache[user_id]
 
         return f"Available slots found: {free_slots}"
         
@@ -215,7 +215,7 @@ class AgentFunctions(llm.FunctionContext):
         logger.info(f"Registered Q&A function")
 
         print(f"features: {features}")
-        
+
         if 'lead_gen' in features:
             self._register_ai_function(request_personal_data)
             print(f"Registered lead generation function")

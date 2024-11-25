@@ -14,7 +14,8 @@ client = Composio()
 logger = logging.getLogger(__name__)
 
 
-async def get_calendar_slots(user_id: str, app: str):
+async def get_calendar_slots(user_id: str, app: str) -> Dict:
+    print("Getting calendar slots..")
     entity_id = user_id
     openai_client = OpenAI()
     today = datetime.now().strftime("%Y-%m-%d")
@@ -41,7 +42,6 @@ async def get_calendar_slots(user_id: str, app: str):
     free_slots = await find_free_slots(busy_slots)
 
     return free_slots
-
 
 async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
     busy_slots = calendar_data
@@ -108,8 +108,6 @@ async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
         days_to_check -= 1
     
     return free_slots
-
-
 
 async def get_notion_database(database_name: str) -> Dict:
     try:

@@ -14,6 +14,7 @@ from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import AgentFunctions
 from services.voice.livekit_services import get_agent
+from services.composio import get_calendar_slots
 
 import logging
 logger = logging.getLogger(__name__)
@@ -111,6 +112,63 @@ async def question_and_answer(
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
         yield "I apologize, but I encountered an error while searching for an answer to your question."
 
+""" CALENDAR MANAGEMENT """
+@llm.ai_callable(
+    name="fetch_calendar",
+    description="Fetch available calendar slots for booking appointments or meetings",
+    auto_retry=True
+)
+async def fetch_calendar(
+    date_range: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
+        )
+    ],
+) -> str:
+    """
+    Fetches available calendar slots based on the specified date range and appointment type.
+    Returns formatted information about available time slots.
+    """
+    logger.info(f"Fetching calendar slots for date range: {date_range}")
+    
+    try:
+        print("\n\nfetch calendar func triggered")
+        # Get the room_name from the current AgentFunctions instance
+        room_name = AgentFunctions.current_room_name
+        logger.info(f"Room name: {room_name}")
+        
+        if not room_name:
+            logger.error("Room name is None or empty")
+            return "I apologize, but I couldn't access the calendar system. Please try again later."
+            
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+        logger.info(f"Agent ID: {agent_id}")
+        
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+        logger.info(f"Retrieved agent metadata: {bool(agent_metadata)}")
+
+        if not agent_metadata:
+            logger.error("Agent metadata is None or empty")
+            return "I apologize, but I couldn't access the agent information. Please try again later."
+
+        user_id: str = agent_metadata['userId']
+        logger.info(f"User ID: {user_id}")
+
+        print("have user_id, now fetching calendar slots")
+        try:
+            free_slots = await get_calendar_slots(user_id, "googlecalendar")
+            logger.info(f"Calendar slots retrieved: {free_slots}")
+            print(f"free_slots: {free_slots}")
+            return f"Available slots found: {free_slots}"
+        except Exception as calendar_error:
+            logger.error(f"Error fetching calendar slots: {str(calendar_error)}", exc_info=True)
+            return "I apologize, but I encountered an error while fetching calendar slots. Please try again later."
+        
+    except Exception as e:
+        logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
+        return "I apologize, but I encountered an error while checking the calendar availability."
+
 
 @llm.ai_callable(
     name="request_personal_data",
@@ -169,6 +227,11 @@ async def lk_chat_process(message: str, agent_id: str):
             print(f"Registered lead generation function")
             logger.info(f"Registered lead generation function")
 
+        if 'app_booking' in features:
+            fnc_ctx._register_ai_function(fetch_calendar)
+            print(f"Registered calendar function")
+            logger.info(f"Registered calendar function")
+
         # Create chat context with history
         chat_ctx = llm.ChatContext()
         chat_ctx.append(
@@ -206,11 +269,18 @@ async def lk_chat_process(message: str, agent_id: str):
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
-                    result_generator = await called_function.task
-                    tool_response = ""
-                    async for result_chunk in result_generator:
-                        tool_response += result_chunk
-                        yield result_chunk
+                    result = await called_function.task
+                    
+                    # Handle both string and generator responses
+                    if isinstance(result, str):
+                        tool_response = result
+                        yield tool_response
+                    else:
+                        tool_response = ""
+                        async for result_chunk in result:
+                            tool_response += result_chunk
+                            yield result_chunk
+                            
                     # Add tool response to history
                     chat_history.add_message("function", tool_response)
 
