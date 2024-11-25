@@ -5,10 +5,11 @@
 - Python, FastAPI (backend)
 - Typescript, React, tailwind CSS (frontend)
 - Supabase (for database)
+- Livekit for realtime conversational agent pipeline
 
 
 ### AI Tools
-- Polymet (for frontend)
 - Cursor for IDE, Model Sonnet 3.5
+- CodeViz for architecture visualisation
 - Warp for terminal
   
