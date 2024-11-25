@@ -180,7 +180,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
         logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}, provider={agent.get('voiceProvider')}")
         
         # Add validation for required agent fields
-        required_fields = ['language', 'voice', 'instructions', 'openingLine']
+        required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
         for field in required_fields:
             if not agent.get(field):
                 logger.error(f"Missing required field: {field}")

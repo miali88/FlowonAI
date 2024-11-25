@@ -64,7 +64,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [showChatInput, setShowChatInput] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
-  const [setIsError] = useState<string | null>(null);
+  const [isError, setIsError] = useState<string | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
 
