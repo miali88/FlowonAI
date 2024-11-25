@@ -182,12 +182,13 @@ async def fetch_calendar(
         # Get the room_name from the current AgentFunctions instance
         room_name = AgentFunctions.current_room_name
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        
-        calendar_slots = await get_calendar_slots(date_range, agent_id)
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
 
-        # TODO: Implement actual calendar integration logic here
-        # This is a placeholder return
-        return "Available slots found for your requested date range. Please complete the form to book your appointment."
+        user_id: str = agent_metadata['userId']
+
+        free_slots = await get_calendar_slots(user_id, "googlecalendar")
+
+        return f"Available slots found: {free_slots}"
         
     except Exception as e:
         logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
