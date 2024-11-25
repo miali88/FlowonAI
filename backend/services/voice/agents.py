@@ -191,6 +191,11 @@ async def create_agent(data):
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']
         del data['tag']  # Remove the 'tag' key from the data
+        
+    # Rename formFields to form_fields before inserting
+    if 'formFields' in data:
+        data['form_fields'] = data.pop('formFields')
+        
     new_agent = supabase.table('agents').insert(data).execute()
     
     return new_agent

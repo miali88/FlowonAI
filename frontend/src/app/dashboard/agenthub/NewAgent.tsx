@@ -20,6 +20,12 @@ import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './worksp
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Add new interface for form fields
+interface FormField {
+  type: string;
+  label: string;
+}
+
 // Update the FormData interface to match DB schema
 interface FormData {
   agentName: string;
@@ -34,6 +40,16 @@ interface FormData {
   voice: string;
   language: string;
   features: string[];
+  formFields: {
+    fields: {
+      name: boolean;
+      email: boolean;
+      phone: boolean;
+      company: boolean;
+      jobTitle: boolean;
+      custom: string[];
+    }
+  }
 }
 
 interface NewAgentProps {
@@ -70,8 +86,17 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     openingLine: '',
     voice: '',
     language: '',
-    formFields: {},
-    features: [] as string[]
+    features: [] as string[],
+    formFields: {
+      fields: {
+        name: true,
+        email: true,
+        phone: false,
+        company: false,
+        jobTitle: false,
+        custom: [] as string[]
+      }
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
@@ -84,6 +109,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
   const [availableVoicesFormatted, setAvailableVoicesFormatted] = useState(
     getVoiceOptionsFormatted(VOICE_OPTIONS["en-GB"])
   );
+  const agentFeaturesRef = useRef<{ getCurrentState: () => any } | null>(null);
 
   // Move state updates to useEffect
   useEffect(() => {
@@ -157,6 +183,18 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     };
   };
 
+  const handleFormFieldsChange = (selectedFields: Record<string, boolean>) => {
+    setFormData(prev => ({
+      ...prev,
+      formFields: {
+        fields: {
+          ...prev.formFields.fields,
+          ...selectedFields
+        }
+      }
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -168,11 +206,19 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     setResponseMessage("");
 
     try {
-      const dataToSend = { 
-        ...formData, 
+      // Get the current state from AgentFeatures
+      const agentFeatureState = agentFeaturesRef.current?.getCurrentState();
+      console.log('AgentFeatureState:', agentFeatureState); // Debug entire state
+      console.log('Features from ref:', agentFeatureState?.features); // Debug features
+      
+      const dataToSend = {
+        ...formData,
         userId: user.id,
-        features: formData.features
+        features: agentFeatureState?.features || [],
+        formFields: agentFeatureState?.formFields || formData.formFields,
       };
+
+      console.log('Final dataToSend:', dataToSend); // Debug final payload
       
       if (dataToSend.dataSource === "all") {
         delete dataToSend.tag;
@@ -210,12 +256,24 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     title: lang.name,
   }));
 
+  const handleFeatureUpdate = (featureData: any) => {
+    // Update form data without triggering submission
+    setFormData(prev => ({
+      ...prev,
+      features: Object.entries(featureData)
+        .filter(([_, feature]) => feature.enabled)
+        .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
+        .filter(Boolean),
+      formFields: featureData.formFields || prev.formFields
+    }));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" onClick={() => setIsOpen(true)}>Create New Agent</Button>
       </DialogTrigger>
-      <DialogContent className={`sm:max-w-[425px] ${styles.glassCard}`}>
+      <DialogContent className={`sm:max-w-[425px] ${styles.glassCard} max-h-[90vh] overflow-y-auto`}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-foreground dark:text-gray-200">Create New Agent</DialogTitle>
@@ -355,31 +413,12 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
           </div>
           <div className="border-t border-border mt-4 pt-4">
             <AgentFeatures
-              selectedAgent={formData}
-              setSelectedAgent={(agent) => {
-                // Convert ONLY ENABLED features to array format
-                const enabledFeatures = Object.entries(agent.features)
-                  .filter(([_, feature]) => feature.enabled) // Only include enabled features
-                  .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
-                  .filter(Boolean);
-
-                setFormData(prev => ({
-                  ...prev,
-                  features: enabledFeatures
-                }));
+              ref={agentFeaturesRef}
+              selectedAgent={{
+                features: formData.features,
+                formFields: formData.formFields
               }}
-              handleSaveFeatures={async (features) => {
-                // Same conversion logic as above
-                const enabledFeatures = Object.entries(features)
-                  .filter(([_, feature]) => feature.enabled) // Only include enabled features
-                  .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
-                  .filter(Boolean);
-
-                setFormData(prev => ({
-                  ...prev,
-                  features: enabledFeatures
-                }));
-              }}
+              setSelectedAgent={handleFeatureUpdate} // Pass the handler
             />
           </div>
           <DialogFooter className="mt-8">

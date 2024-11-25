@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Agent } from './AgentCards';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface AgentFeature {
   id: string;
@@ -39,13 +37,13 @@ interface SelectedAgent {
 interface AgentFeaturesProps {
   selectedAgent: {
     features: string[];
+    formFields?: FormFields;
   } | null;
   setSelectedAgent: (agent: any) => void;
-  handleSaveFeatures: (features: any) => Promise<void>;
 }
 
 // Add these interfaces at the top
-interface InformationCollectionConfig {
+interface FormFields {
   fields: {
     name: boolean;
     email: boolean;
@@ -62,17 +60,17 @@ const AGENT_FEATURES = {
     prospecting: {
       id: "prospecting",
       label: "Lead Generation",
-      description: "Create an agent that qualifies leads and collects prospect information",
+      description: "Present forms to users and collect information",
       subFeatures: {
         notifyOnInterest: {
           id: "notifyOnInterest",
           label: "Notify on Interest",
-          description: "Get notified when prospects show interest"
+          description: "Your registered email will be used to notify of new leads",
         },
-        collectInformation: {
-          id: "collectInformation",
-          label: "Information Collection",
-          description: "Collect and store prospect information",
+        configureFields: {
+          id: "configureFields",
+          label: "Configure fields",
+          description: "",
           hasConfiguration: true,
           defaultConfig: {
             fields: {
@@ -108,16 +106,17 @@ const FEATURE_ID_MAP = {
   'appointmentBooking': 'app_booking'
 };
 
-export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
-  selectedAgent,
-  setSelectedAgent,
-  handleSaveFeatures,
-}) => {
+export const AgentFeatures = forwardRef<
+  { getCurrentState: () => any },
+  AgentFeaturesProps
+>(({ selectedAgent, setSelectedAgent }, ref) => {
   // Convert array format back to object for internal state
   const initialFeatures = Object.fromEntries(
     Object.keys(AGENT_FEATURES.purposes).map(featureId => [
       featureId,
-      { enabled: selectedAgent?.features.includes(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) || false }
+      { 
+        enabled: selectedAgent?.features?.includes?.(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) ?? false 
+      }
     ])
   );
 
@@ -126,7 +125,8 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
-  const [currentConfig, setCurrentConfig] = useState<InformationCollectionConfig | null>(null);
+  const [currentConfig, setCurrentConfig] = useState<FormFields | null>(null);
+  const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
 
   const handleFeatureToggle = (featureId: string) => {
     const newFeatures = {
@@ -138,7 +138,6 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
     };
     
     setLocalFeatures(newFeatures);
-    handleSaveFeatures(newFeatures);
   };
 
   // Add this function to check if a feature has configuration options
@@ -162,9 +161,39 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
 
   // Add this function to handle configuration
   const handleConfigureInformationCollection = (subFeature: any) => {
-    setCurrentConfig(localFeatures[subFeature.id]?.config || subFeature.defaultConfig);
+    setCurrentConfig(
+      selectedAgent?.formFields || 
+      subFeature.defaultConfig
+    );
     setConfigDialogOpen(true);
   };
+
+  // Update dialog close handler to save changes only on confirmation
+  const handleConfigDialogClose = (save: boolean) => {
+    if (save && currentConfig) {
+      console.log('Saving configuration:', currentConfig);
+      setTempConfig(currentConfig);
+      
+      // Log the selected fields
+      const selectedFields = Object.entries(currentConfig.fields)
+        .filter(([key, value]) => key !== 'custom' && value === true)
+        .map(([key]) => key);
+      console.log('Selected fields:', selectedFields);
+    }
+    setConfigDialogOpen(false);
+    setCurrentConfig(null);
+  };
+
+  // Add useImperativeHandle to expose getCurrentState
+  useImperativeHandle(ref, () => ({
+    getCurrentState: () => ({
+      features: Object.entries(localFeatures)
+        .filter(([_, feature]) => feature.enabled)
+        .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
+        .filter(Boolean),
+      formFields: tempConfig || null
+    })
+  }));
 
   return (
     <div className="space-y-2">
@@ -210,6 +239,7 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
                     <div className="flex items-center space-x-2">
                       {subFeature.hasConfiguration && (
                         <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
                           className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
@@ -218,11 +248,13 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
                           Configure
                         </Button>
                       )}
-                      <Switch
-                        id={subFeature.id}
-                        checked={localFeatures[subFeature.id]?.enabled || false}
-                        onCheckedChange={() => handleFeatureToggle(subFeature.id)}
-                      />
+                      {!subFeature.hasConfiguration && (
+                        <Switch
+                          id={subFeature.id}
+                          checked={localFeatures[subFeature.id]?.enabled || false}
+                          onCheckedChange={() => handleFeatureToggle(subFeature.id)}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -261,7 +293,7 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
       )}
 
       {/* Add the configuration dialog */}
-      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+      <Dialog open={configDialogOpen} onOpenChange={() => handleConfigDialogClose(false)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Configure Information Collection</DialogTitle>
@@ -400,26 +432,19 @@ export const AgentFeatures: React.FC<AgentFeaturesProps> = ({
           </div>
 
           <DialogFooter>
-            <Button onClick={() => {
-              if (currentConfig) {
-                setLocalFeatures(prev => ({
-                  ...prev,
-                  collectInformation: {
-                    ...prev.collectInformation,
-                    config: currentConfig
-                  }
-                }));
-                setConfigDialogOpen(false);
-              }
-            }}>
-              Save Changes
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={() => handleConfigDialogClose(false)}
+            >
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
+});
 
 // Also remove any references in the helper functions
 function getFeatureDescription(featureId: string | null): string {

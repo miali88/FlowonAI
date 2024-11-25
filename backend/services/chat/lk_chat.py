@@ -157,7 +157,6 @@ async def lk_chat_process(message: str, agent_id: str):
             raise ValueError(f"Agent {agent_id} not found")
 
         features = agent_metadata.get('features', [])
-        features = features.get('features', [])
         fnc_ctx = llm.FunctionContext()
         # Register Q&A function if feature is enabled
         if 'qa' in features:
