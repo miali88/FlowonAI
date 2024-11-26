@@ -5,16 +5,12 @@ import { useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BillingTab from './BillingTab';
-import NotificationsTab from './NotificationsTab';
+import NotificationsTab, { NotificationSettings } from './NotificationsTab';
 import { useAuth } from "@clerk/nextjs";
 import AccountTab from './AccountTab';
 
 interface Settings {
-  notification_settings: {
-    formNotifications: boolean;
-    conversationNotifications: boolean;
-    emailTranscripts: boolean;
-  };
+  notification_settings: NotificationSettings;
   account_settings: {
     firstName: string;
     lastName: string;

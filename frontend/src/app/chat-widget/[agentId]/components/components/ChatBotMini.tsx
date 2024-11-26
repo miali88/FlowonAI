@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
@@ -64,7 +64,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   const [showChatInput, setShowChatInput] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
-  const [setIsError] = useState<string | null>(null);
+  const [isError, setIsError] = useState<string | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
 
@@ -195,7 +195,18 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setIsConnecting(false);
       }
     }
-  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, eventBridge, apiUrl]);
+  }, [
+    agentId, 
+    isStreaming, 
+    setIsStreaming, 
+    setIsLiveKitActive, 
+    setToken, 
+    setUrl, 
+    setIsConnecting, 
+    eventBridge, 
+    apiUrl,
+    setIsError
+  ]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,7 +276,12 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   return (
     <div data-widget="wrapper" className={styles.mainWrapper}>
       <div className={styles.contentContainer}>
-        <div data-widget="chatbox" className={styles.chatboxContainer}>
+        <div data-widget="chatbox" className={styles.chatContainer}>
+          {isError && (
+            <div className={styles.errorMessage}>
+              {isError}
+            </div>
+          )}
           <MorphingStreamButton
             onStreamToggle={handleStreamToggle}
             isStreaming={isStreaming}
@@ -293,7 +309,6 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               <LiveKitEntry 
                 token={token} 
                 url={url} 
-                roomName={roomName}
                 isStreaming={isStreaming} 
                 onStreamEnd={onStreamEnd} 
                 onStreamStart={onStreamStart}
@@ -303,7 +318,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
                 options={{
                   adaptiveStream: true,
                   dynacast: true,
-                  element: eventBridge.getLiveKitContainer?.() || null
+                  element: eventBridge.getLiveKitContainer?.() || undefined
                 }}
               />
               {isStreaming && localParticipant && (

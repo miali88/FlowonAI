@@ -20,27 +20,17 @@ import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './worksp
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Add new interface for form fields
-interface FormField {
-  type: string;
-  label: string;
-}
-
-// Update the FormData interface to match DB schema
-interface FormData {
-  agentName: string;
-  agentPurpose: string;
-  instructions: string;
-  dataSource: Array<{
+interface NewAgentProps {
+  knowledgeBaseItems?: Array<{
     id: string | number;
     title: string;
     data_type: string;
-  }>;  // Changed from string to array of objects
-  openingLine: string;
-  voice: string;
-  language: string;
+  }>;
+}
+
+type AgentFeatureState = {
   features: string[];
-  formFields: {
+  formFields?: {
     fields: {
       name: boolean;
       email: boolean;
@@ -50,30 +40,21 @@ interface FormData {
       custom: string[];
     }
   }
-}
-
-interface NewAgentProps {
-  knowledgeBaseItems?: Array<{
-    id: string | number;
-    title: string;
-    data_type: string;
-  }>;
-}
-
-// Format voice options to match MultiSelect interface
-const getVoiceOptionsFormatted = (voices: typeof VOICE_OPTIONS[keyof typeof VOICE_OPTIONS]) => {
-  return voices.map(voice => ({
-    id: voice.id,
-    title: voice.name,
-    file: voice.file // Keep the file property for voice samples
-  }));
 };
 
-// Add feature mapping constant
-const FEATURE_ID_MAP = {
-  'prospecting': 'lead_gen',
-  'appointmentBooking': 'app_booking'
-};
+type SetSelectedAgentProps = AgentFeatureState;
+
+interface Item {
+  id: string | number;
+  title: string;
+  data_type?: string;
+  file?: string;
+  voiceProvider?: string;
+}
+
+interface AgentFeaturesRef {
+  getCurrentState: () => AgentFeatureState;
+}
 
 export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps & { onAgentCreated?: () => void }) {
   const { user } = useUser();
@@ -82,7 +63,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     agentName: '',
     agentPurpose: '',
     instructions: '',
-    dataSource: [],
+    dataSource: [] as Item[],
     openingLine: '',
     voice: '',
     language: '',
@@ -104,12 +85,11 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
-  const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"]);
-  const [agentFeatures, setAgentFeatures] = useState({});
-  const [availableVoicesFormatted, setAvailableVoicesFormatted] = useState(
-    getVoiceOptionsFormatted(VOICE_OPTIONS["en-GB"])
-  );
-  const agentFeaturesRef = useRef<{ getCurrentState: () => any } | null>(null);
+  const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"].map(voice => ({
+    ...voice,
+    title: voice.name
+  })));
+  const agentFeaturesRef = useRef<AgentFeaturesRef>(null);
 
   // Move state updates to useEffect
   useEffect(() => {
@@ -120,7 +100,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSelectChange = useCallback((field: string, value: any) => {
+  const handleSelectChange = useCallback((field: string, value: string | Array<{ id: string | number; title: string; data_type?: string }>) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -136,8 +116,10 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     setSelectedLanguage(value);
     handleSelectChange("language", value);
     const newVoices = VOICE_OPTIONS[value as keyof typeof VOICE_OPTIONS] || [];
-    setAvailableVoices(newVoices);
-    setAvailableVoicesFormatted(getVoiceOptionsFormatted(newVoices));
+    setAvailableVoices(newVoices.map(voice => ({
+      ...voice,
+      title: voice.name
+    })));
     setSelectedVoice(""); // Reset voice selection when language changes
   };
 
@@ -183,18 +165,6 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     };
   };
 
-  const handleFormFieldsChange = (selectedFields: Record<string, boolean>) => {
-    setFormData(prev => ({
-      ...prev,
-      formFields: {
-        fields: {
-          ...prev.formFields.fields,
-          ...selectedFields
-        }
-      }
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -220,10 +190,6 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
 
       console.log('Final dataToSend:', dataToSend); // Debug final payload
       
-      if (dataToSend.dataSource === "all") {
-        delete dataToSend.tag;
-      }
-
       const response = await fetch(`${API_BASE_URL}/livekit/new_agent`, {
         method: 'POST',
         headers: {
@@ -256,15 +222,11 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
     title: lang.name,
   }));
 
-  const handleFeatureUpdate = (featureData: any) => {
-    // Update form data without triggering submission
+  const handleFeatureUpdate = (featureData: SetSelectedAgentProps) => {
     setFormData(prev => ({
       ...prev,
-      features: Object.entries(featureData)
-        .filter(([_, feature]) => feature.enabled)
-        .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
-        .filter(Boolean),
-      formFields: featureData.formFields || prev.formFields
+      features: featureData.features,
+      formFields: featureData.formFields?.fields ? { fields: featureData.formFields.fields } : prev.formFields
     }));
   };
 
@@ -304,7 +266,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
                 <MultiSelect
                   items={AGENT_PURPOSE_OPTIONS}
                   selectedItems={formData.agentPurpose ? [{ id: formData.agentPurpose, title: AGENT_PURPOSE_OPTIONS.find(opt => opt.id === formData.agentPurpose)?.title || '' }] : []}
-                  onChange={(items) => handleSelectChange("agentPurpose", items[0]?.id)}
+                  onChange={(items) => handleSelectChange("agentPurpose", items[0]?.id as string)}
                   placeholder="Select agent purpose"
                   multiSelect={false}
                 />
@@ -385,8 +347,8 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
               </Label>
               <div className="col-span-3">
                 <MultiSelect
-                  items={availableVoicesFormatted}
-                  selectedItems={selectedVoice ? [availableVoicesFormatted.find(voice => voice.id === selectedVoice)!] : []}
+                  items={availableVoices}
+                  selectedItems={selectedVoice ? [availableVoices.find(voice => voice.id === selectedVoice)!] : []}
                   onChange={(items) => handleVoiceChange(items[0]?.id as string)}
                   placeholder="Select a voice"
                   multiSelect={false}
@@ -395,7 +357,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
             </div>
             {/* Voice Sample Buttons */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {availableVoicesFormatted.map((voice) => (
+              {availableVoices.map((voice) => (
                 <Button
                   key={voice.id}
                   type="button"

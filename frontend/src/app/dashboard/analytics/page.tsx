@@ -1,5 +1,6 @@
+'use client';
+
 import React from "react";
-import getUnicodeFlagIcon from 'country-flag-icons/unicode'
 import { US, ES, FR, DE, IT } from 'country-flag-icons/react/3x2'
 import {
   Card,
@@ -15,7 +16,7 @@ interface AnalyticsMetric {
   languages?: { code: string; count: number }[];
 }
 
-const FLAGS_COMPONENTS = {
+const FLAGS_COMPONENTS: Record<string, React.ComponentType> = {
   'US': US,
   'ES': ES,
   'FR': FR,
@@ -23,7 +24,7 @@ const FLAGS_COMPONENTS = {
   'IT': IT,
 };
 
-const AnalyticsDashboard = () => {
+export default function AnalyticsPage() {
   // Example data - replace with actual API calls
   const metrics: AnalyticsMetric[] = [
     { label: "Total Talk Time", value: "328h 45m", change: "+12.3%" },
@@ -80,7 +81,7 @@ const AnalyticsDashboard = () => {
                     const FlagIcon = FLAGS_COMPONENTS[lang.code.toUpperCase()];
                     return (
                       <div key={lang.code} className="flex items-center gap-1 text-sm">
-                        {FlagIcon && <FlagIcon className="w-4 h-4" />}
+                        {FlagIcon && <div className="w-4 h-4"><FlagIcon /></div>}
                         <span>{lang.count}</span>
                       </div>
                     );
@@ -112,6 +113,4 @@ const AnalyticsDashboard = () => {
       </Card>
     </div>
   );
-};
-
-export default AnalyticsDashboard;
+}

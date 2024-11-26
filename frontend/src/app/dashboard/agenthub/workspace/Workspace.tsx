@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,52 +9,43 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../AgentCards';
 import { Play } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';
-import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './agentSettings';
+import { VOICE_OPTIONS } from './agentSettings';
 
+// Add this constant near the other imports
+const AGENT_PURPOSE_OPTIONS = [
+  { id: 'customer-service', title: 'Customer Service' },
+  { id: 'sales', title: 'Sales' },
+  { id: 'support', title: 'Support' },
+  // Add more options as needed
+];
+
+// Add this function before the Workspace component
+const playVoiceSample = (audioFile: string) => {
+  const audio = new Audio(audioFile);
+  audio.play();
+};
+
+// Add userId to the interface
 interface WorkspaceProps {
-  selectedAgent: Agent | null;
-  setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
-  handleSaveChanges: (agent: Agent) => Promise<void>;
+  selectedAgent: Agent;
+  setSelectedAgent: Dispatch<SetStateAction<Agent | null>>;
+  knowledgeBaseItems: Array<{ id: string; title: string; data_type: string }>;
+  userInfo: { id: string; [key: string]: unknown } | null;
+  features: AgentFeatures;
+  handleSaveChanges: (agent?: Partial<Agent>) => Promise<void>;
   handleDeleteAgent: () => Promise<void>;
-  knowledgeBaseItems: Array<{
-    id: string;
-    title: string;
-    data_type: string;
-  }>;
-  userId: string | null;
-  features?: {
-    form?: {
-      fields: Array<{
-        type: string;
-        label: string;
-        options: any[];
-      }>;
-    };
-    prospects?: {
-      sms: string;
-      email: string;
-      whatsapp: string;
-      notifyOnInterest: boolean;
-    };
-  };
 }
 
-interface ProspectSettings {
-  notifyOnInterest: boolean;
-  email: string;
-  sms: string;
-  whatsapp: string;
-}
-
-// Add this type definition near your other interfaces
-interface AgentPurpose {
-  value: string;
-  label: string;
+// Add this interface above WorkspaceProps
+interface AgentFeatures {
+  voice?: boolean;
+  form?: boolean;
+  knowledge?: boolean;
+  [key: string]: boolean | undefined;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -63,41 +54,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleSaveChanges,
   handleDeleteAgent,
   knowledgeBaseItems,
-  userId,
   features,
+  userInfo,
 }) => {
   const [activeTab, setActiveTab] = useState('playground');
-  const [setIsConfigureDialogOpen] = useState(false);
-  const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [callTransferConfig, setCallTransferConfig] = useState({
-    primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
-    secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
-  });
-  const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
-    nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
-  });
-  const [formFields, setFormFields] = useState<FormField[]>(
-    selectedAgent?.features?.form?.fields || []
-  );
-  const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
-    notifyOnInterest: selectedAgent?.features?.prospects?.notifyOnInterest || false,
-    email: selectedAgent?.features?.prospects?.email || '',
-    sms: selectedAgent?.features?.prospects?.sms || '',
-    whatsapp: selectedAgent?.features?.prospects?.whatsapp || '',
-  });
-
-  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
-
-  const playVoiceSample = (voiceFile: string) => {
-    if (audioPlayer) {
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-    }
-    const newAudioPlayer = new Audio(voiceFile);
-    newAudioPlayer.play();
-    setAudioPlayer(newAudioPlayer);
-  };
-
 
   const handleSaveFeatures = async () => {
     if (!selectedAgent || !handleSaveChanges) {
@@ -107,7 +67,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     // Find the voice provider from VOICE_OPTIONS
     const voiceProvider = selectedAgent.language && selectedAgent.voice
-      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)?.voiceProvider
+      ? VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent.voice)?.voiceProvider
       : null;
 
     const agentToSave = {
@@ -125,20 +85,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
   // Synchronize local state with selectedAgent when it changes
   useEffect(() => {
     if (selectedAgent) {
-      setCallTransferConfig({
-        primaryNumber: selectedAgent.features?.callTransfer?.primaryNumber || '',
-        secondaryNumber: selectedAgent.features?.callTransfer?.secondaryNumber || '',
-      });
-      setAppointmentBookingConfig({
-        nylasApiKey: selectedAgent.features?.appointmentBooking?.nylasApiKey || '',
-      });
-      setFormFields(selectedAgent.features?.form?.fields || []);
-      setProspectSettings({
-        notifyOnInterest: selectedAgent.features?.prospects?.notifyOnInterest || false,
-        email: selectedAgent.features?.prospects?.email || '',
-        sms: selectedAgent.features?.prospects?.sms || '',
-        whatsapp: selectedAgent.features?.prospects?.whatsapp || '',
-      });
+      // Set the embedded chatbot config at workspace level
+      window.embeddedChatbotConfig = {
+        agentId: selectedAgent.id,
+        domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
+      }
     }
   }, [selectedAgent]);
 
@@ -150,18 +101,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const handleDataSourceChange = (items: Array<{ id: string; title: string; data_type: string }>) => {
     if (!selectedAgent) return;
     
-    console.log('handleDataSourceChange - items:', items);
-    
     setSelectedAgent(prev => {
-      const updated = {
+      if (!prev) return null;
+      return {
         ...prev,
-        dataSource: items,
+        dataSource: items.map(item => item.id).join(','),
         knowledgeBaseIds: items.some(item => item.id === 'all') 
           ? [] 
           : items.map(item => item.id)
       };
-      console.log('Updated agent:', updated);
-      return updated;
     });
   };
 
@@ -180,17 +128,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   useEffect(() => {
     console.log('Workspace Features:', features);
   }, [features]);
-
-  const handleVoiceChange = (voiceId: string) => {
-    const selectedLanguage = selectedAgent.language;
-    const voiceOption = VOICE_OPTIONS[selectedLanguage].find(v => v.id === voiceId);
-    
-    setSelectedAgent(prev => ({
-      ...prev,
-      voice: voiceId,
-      voiceProvider: voiceOption?.voiceProvider || null
-    }));
-  };
 
   return (
     <div>
@@ -215,7 +152,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <Input 
                     id="agentName"
                     value={selectedAgent?.agentName || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
+                    onChange={(e) => {
+                      if (!selectedAgent) return;
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        agentName: e.target.value
+                      });
+                    }}
                   />
                 </div>
 
@@ -223,7 +166,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 <div>
                   <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
                   <Select 
-                    value={selectedAgent?.agentPurpose || ""}
+                    value={Array.isArray(selectedAgent?.agentPurpose) 
+                      ? selectedAgent.agentPurpose[0] 
+                      : (selectedAgent?.agentPurpose || "")}
                     onValueChange={(value) => {
                       if (!selectedAgent) return;
                       setSelectedAgent({
@@ -271,7 +216,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <Input 
                     id="openingLine"
                     value={selectedAgent?.openingLine || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
+                    onChange={(e) => {
+                      if (!selectedAgent) return;
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        openingLine: e.target.value
+                      });
+                    }}
                   />
                 </div>
 
@@ -280,7 +231,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
                   <Select 
                     value={selectedAgent?.language}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
+                    onValueChange={(value) => {
+                      if (!selectedAgent) return;
+                      setSelectedAgent({...selectedAgent, language: value, voice: ''});
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select language" />
@@ -303,7 +257,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <div className="flex items-center space-x-2">
                     <Select 
                       value={selectedAgent?.voice}
-                      onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+                      onValueChange={(value) => {
+                        if (!selectedAgent) return;
+                        setSelectedAgent({...selectedAgent, voice: value});
+                      }}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select voice" />
@@ -340,9 +297,42 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 </div>
 
                   <AgentFeatures
-                    selectedAgent={selectedAgent}
-                    setSelectedAgent={setSelectedAgent}
-                    handleSaveFeatures={handleSaveFeatures}
+                    selectedAgent={{
+                      features: selectedAgent?.features ? Object.keys(selectedAgent.features) : [],
+                      formFields: selectedAgent?.features?.form?.fields ? {
+                        fields: {
+                          name: false,
+                          email: false,
+                          phone: false,
+                          company: false,
+                          jobTitle: false,
+                          custom: [],
+                          ...(typeof selectedAgent.features.form.fields === 'object' ? selectedAgent.features.form.fields : {})
+                        }
+                      } : undefined
+                    }}
+                    setSelectedAgent={(agentFeatures) => {
+                      if (!selectedAgent) return;
+                      setSelectedAgent((prevAgent) => {
+                        if (!prevAgent) return null;
+                        const updatedFeatures = Object.fromEntries(
+                          agentFeatures.features.map(feature => [
+                            feature,
+                            feature === 'form' 
+                              ? { 
+                                  enabled: true,
+                                  fields: agentFeatures.formFields?.fields
+                                }
+                              : { enabled: true }
+                          ])
+                        ) as Agent['features'];
+                        
+                        return {
+                          ...prevAgent,
+                          features: updatedFeatures
+                        };
+                      });
+                    }}
                   />
 
                   {/* Add the Retrain Agent button at the bottom */}
@@ -366,7 +356,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   <Textarea 
                     id="instructions"
                     value={selectedAgent?.instructions || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+                    onChange={(e) => {
+                      if (!selectedAgent) return;
+                      setSelectedAgent({
+                        ...selectedAgent,
+                        instructions: e.target.value
+                      });
+                    }}
                     className="min-h-[400px]"
                   />
                 </div>
@@ -403,6 +399,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
               selectedAgent={selectedAgent}
               setSelectedAgent={setSelectedAgent}
               handleSaveChanges={handleSaveChanges}
+              userInfo={userInfo}
             />
           </TabsContent>
           <TabsContent value="share">

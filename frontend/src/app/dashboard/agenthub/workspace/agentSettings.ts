@@ -55,3 +55,15 @@ export const VOICE_OPTIONS = {
     ],
   };
 
+export interface Agent {
+  id: string;
+  uiConfig?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    fontSize?: number;
+    borderRadius?: number;
+    chatboxHeight?: number;
+  };
+  // ... other agent properties ...
+}
+

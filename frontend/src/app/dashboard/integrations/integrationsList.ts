@@ -4,9 +4,7 @@ import {
   siNotion,
   siWhatsapp,
   siShopify,
-  siSlack,
-  siGooglescholar,
-  siGoogle
+  siSlack
 } from 'simple-icons'
 
 export const integrations = [

@@ -59,6 +59,7 @@ export function BentoDemo({ onAgentSelect }: BentoDemoProps) {
               key={agent.id} 
               value={agent.id}
               className="!border-b-0 !border-0 data-[state=open]:!border-0"
+              onClick={() => onAgentSelect(agent.title, agent.id)}
             >
               <AccordionTrigger 
                 className="text-left !border-b-0 !border-0 hover:no-underline data-[state=open]:!border-0 text-lg"

@@ -21,6 +21,11 @@ const glassStyles = `
 `;
 
 // Move the Agent type definition here
+export interface FeatureConfig {
+  enabled: boolean;
+  [key: string]: boolean | string | number;
+}
+
 export interface Agent {
   id: string;
   agentName: string;
@@ -29,11 +34,9 @@ export interface Agent {
   openingLine: string;
   language: string;
   voice: string;
+  instructions?: string;
   features?: {
-    [key: string]: {
-      enabled: boolean;
-      [key: string]: any;
-    };
+    [key: string]: FeatureConfig;
   };
   uiConfig?: {
     primaryColor?: string;
@@ -42,12 +45,8 @@ export interface Agent {
     borderRadius?: number;
     chatboxHeight?: number;
   };
-}
-
-interface FormField {
-  type: 'text' | 'email' | 'phone' | 'dropdown';
-  label: string;
-  options: string[];
+  tag?: string;
+  knowledgeBaseIds?: string[];
 }
 
 interface AgentCardsProps {
@@ -66,8 +65,9 @@ function Loader() {
   );
 }
 
-const formatPurpose = (purpose: string) => {
-  return "Purpose: " + purpose
+const formatPurpose = (purpose: string | string[]) => {
+  const purposeStr = Array.isArray(purpose) ? purpose.join('-') : purpose;
+  return "Purpose: " + purposeStr
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
@@ -130,7 +130,10 @@ export function AgentCards({ setSelectedAgent, agents, loading, error, refreshAg
   useEffect(() => {
     const filtered = agents.filter(agent =>
       agent.agentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.agentPurpose.toLowerCase().includes(searchTerm.toLowerCase())
+      (Array.isArray(agent.agentPurpose) 
+        ? agent.agentPurpose.join(' ').toLowerCase()
+        : agent.agentPurpose.toLowerCase()
+      ).includes(searchTerm.toLowerCase())
     )
     setFilteredAgents(filtered)
   }, [searchTerm, agents])

@@ -73,7 +73,7 @@ export function Insert({
       <div className="flex flex-col items-center justify-center h-[calc(100vh-400px)]">
         <h2 className="text-2xl font-bold mb-4">Welcome to Your Knowledge Base</h2>
         <p className="text-gray-600 text-center max-w-2xl mb-6">
-          Start building your agent's knowledge by adding content. 
+          Start building your agent&apos;s knowledge by adding content. 
           Choose from the below to begin:
         </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center max-w-3xl mx-auto">
@@ -221,10 +221,8 @@ export function Insert({
                           
                           <Button 
                             onClick={async () => {
-                              const success = await handleScrapeAllWrapper();
-                              if (success) {
-                                setNewItemContent("URLs added to your library");
-                              }
+                              await handleScrapeAllWrapper();
+                              setNewItemContent("URLs added to your library");
                             }}
                             disabled={selectedUrls.length === 0}
                           >

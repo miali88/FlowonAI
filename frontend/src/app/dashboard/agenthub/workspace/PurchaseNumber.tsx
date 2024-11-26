@@ -16,12 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// interface CountryCodes {
+//   countries: string[];
+//   [key: string]: string[] | string;
+// }
+
 interface PurchaseNumberProps {
-  countryCodes: {
-    countries: string[];
-    [key: string]: any;
-  };
-  onNumberPurchased?: (number: string) => void;
+  countries: string[];
+  onNumberPurchased: (number: string) => void;
 }
 
 const getCountryFlag = (countryCode: string): string => {
@@ -33,10 +35,7 @@ const getCountryFlag = (countryCode: string): string => {
   return String.fromCodePoint(...codePoints);
 };
 
-export const PurchaseNumber: React.FC<PurchaseNumberProps> = ({ 
-  countryCodes,
-  onNumberPurchased 
-}) => {
+export const PurchaseNumber: React.FC<PurchaseNumberProps> = ({ countries, onNumberPurchased }) => {
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [availableNumbers, setAvailableNumbers] = useState<string[]>([]);
@@ -89,7 +88,7 @@ export const PurchaseNumber: React.FC<PurchaseNumberProps> = ({
   }, [selectedCountry]);
 
   const handleNumberSelection = (number: string) => {
-    onNumberPurchased?.(number);
+    onNumberPurchased(number);
     setIsDialogOpen(false); // Only close dialog after selection
     setSelectedCountry(""); // Reset selected country
   };
@@ -126,16 +125,16 @@ export const PurchaseNumber: React.FC<PurchaseNumberProps> = ({
                 <SelectValue placeholder="Select a country" />
               </SelectTrigger>
               <SelectContent>
-                {!countryCodes?.countries ? (
+                {!countries ? (
                   <SelectItem value="loading" disabled>
                     Loading countries...
                   </SelectItem>
-                ) : countryCodes.countries.length === 0 ? (
+                ) : countries.length === 0 ? (
                   <SelectItem value="none" disabled>
                     No countries available
                   </SelectItem>
                 ) : (
-                  countryCodes.countries.map((countryCode) => (
+                  countries.map((countryCode) => (
                     <SelectItem 
                       key={countryCode} 
                       value={countryCode}

@@ -1,16 +1,13 @@
 import { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const BentoGrid = ({
   children,
   className,
-  onAgentSelect,
 }: {
   children: ReactNode;
   className?: string;
-  onAgentSelect?: (title: string) => void;
 }) => {
   return (
     <div
@@ -29,7 +26,6 @@ const BentoCard = ({
   className,
   background,
   description,
-  href,
   features,
   Icon,
   onSelect,
@@ -38,7 +34,6 @@ const BentoCard = ({
   className?: string;
   background?: ReactNode;
   description: string;
-  href: string;
   features?: string[];
   Icon?: React.ComponentType<{ className?: string }>;
   onSelect?: () => void;

@@ -3,9 +3,7 @@ import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
 import { SetupSection } from "@/components/SetupSection";
 import { ConversationLogs } from "@/components/conversation-logs";
-import { Pricing } from "@/components/pricing";
 import { CtaSection } from "@/components/cta-section";
-import { Testimonials } from "@/components/testimonials";
 import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
@@ -31,11 +29,7 @@ export default function HomePage() {
           <Information />
           <ConversationLogs />
           <FeaturesSection />
-          {/* <div id="pricing" className="scroll-mt-20">
-            <Pricing />
-          </div> */}
           <CtaSection />
-          {/* <Testimonials /> */}
         </div>
       </main>
       <Footer />

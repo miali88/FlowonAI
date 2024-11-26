@@ -15,6 +15,20 @@ interface HandleScrapeProps {
   selectedUrls: string[];
 }
 
+// Add this type definition at the top of the file
+type ApiError = {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+    status?: number;
+    headers?: Record<string, string>;
+  };
+  request?: XMLHttpRequest;
+  message: string;
+  name: string;
+};
+
 export const handleScrape = async ({
   scrapeUrl,
   setScrapeError,
@@ -73,16 +87,16 @@ export const handleScrape = async ({
       throw new Error("Unexpected response format from server");
     }
   } catch (error) {
-    console.error("Error scraping URL:", error);
-    setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URL");
-    setAlertMessage("Failed to scrape URL: " + (error.response?.data?.detail || error.message));
+    const e = error as ApiError;
+    console.error("Error scraping URL:", e);
+    setScrapeError(e.response?.data?.detail || e.message || "Failed to scrape URL");
+    setAlertMessage("Failed to scrape URL: " + (e.response?.data?.detail || e.message));
     setAlertType("error");
   }
 };
 
 // Add this new function
 export const handleScrapeAll = async ({
-  scrapeUrl,
   setScrapeError,
   getToken,
   user,
@@ -93,7 +107,7 @@ export const handleScrapeAll = async ({
   setAlertMessage,
   setAlertType,
   selectedUrls,
-}: Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'> & { selectedUrls: string[] }) => {
+}: Omit<Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'>, 'scrapeUrl'> & { selectedUrls: string[] }) => {
   try {
     console.log('=== Starting handleScrapeAll ===');
     console.log('User ID:', user.id);
@@ -151,20 +165,21 @@ export const handleScrapeAll = async ({
     setAlertMessage("All pages scraped successfully");
     setAlertType("success");
   } catch (error) {
+    const e = error as ApiError;
     console.error('=== Error in handleScrapeAll ===');
-    console.error('Error object:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response headers:', error.response.headers);
-      console.error('Response data:', error.response.data);
+    console.error('Error object:', e);
+    console.error('Error name:', e.name);
+    console.error('Error message:', e.message);
+    if (e.response) {
+      console.error('Response status:', e.response.status);
+      console.error('Response headers:', e.response.headers);
+      console.error('Response data:', e.response.data);
     }
-    if (error.request) {
-      console.error('Request details:', error.request);
+    if (e.request) {
+      console.error('Request details:', e.request);
     }
-    setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URLs");
-    setAlertMessage("Failed to scrape URLs: " + (error.response?.data?.detail || error.message));
+    setScrapeError(e.response?.data?.detail || e.message || "Failed to scrape URLs");
+    setAlertMessage("Failed to scrape URLs: " + (e.response?.data?.detail || e.message));
     setAlertType("error");
     return false; // Add this to indicate failure
   }

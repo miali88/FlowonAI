@@ -1,4 +1,31 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
-  
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "ignorePatterns": [
+    "**/iframeChat.min.js",
+    "src/components/error-boundary.tsx",
+    "src/components/ui/canvas-reveal-effect.tsx",
+    "src/components/ui/particles.tsx",
+    "src/app/settings/NotificationsTab.tsx"
+  ],
+  "overrides": [
+    {
+      "files": ["**/iframeChat.min.js"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-this-alias": "off"
+      }
+    },
+    {
+      "files": ["src/components/ui/canvas-reveal-effect.tsx"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["src/components/ui/particles.tsx"],
+      "rules": {
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
 }

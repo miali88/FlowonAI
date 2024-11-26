@@ -3,10 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, Menu, X } from "lucide-react";
+import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, Menu, X, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
+export interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
+  activeItem: string;
+  setActiveItem: (value: string) => void;
+}
+
+function SidebarItem({ 
+  icon: Icon, 
+  label, 
+  isActive, 
+  onClick, 
+  isCollapsed 
+}: {
+  icon: LucideIcon;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  isCollapsed: boolean;
+}) {
   return (
     <TooltipProvider>
       <Tooltip>
@@ -30,7 +49,12 @@ function SidebarItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   );
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed, activeItem, setActiveItem }) {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  isCollapsed, 
+  setIsCollapsed, 
+  activeItem, 
+  setActiveItem
+}) => {
   const sidebarItems = [
     { icon: Mic, label: "Agent Hub" },
     { icon: BookOpen, label: "Knowledge Base" },

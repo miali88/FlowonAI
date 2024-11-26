@@ -11,9 +11,9 @@ export default function DevPage() {
         schedulerPreviewLink="https://book.nylas.com/us/4a04150f-1554-44c0-a268-aedfd01633ba"
         defaultSchedulerConfigState={{
           selectedConfiguration: {
-            title: "Leads Flowon",
-            duration: 30,
-          }
+            name: "Leads Flowon",
+            event_duration: 30,
+          } as { name: string; event_duration: number }
         }}
       />
     </div>

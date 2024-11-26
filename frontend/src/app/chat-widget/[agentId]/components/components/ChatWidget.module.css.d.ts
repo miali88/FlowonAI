@@ -5,6 +5,7 @@ declare const styles: {
   readonly chatbox: string;
   readonly chatInput: string;
   readonly footer: string;
+  readonly footerInner: string;
   readonly errorMessage: string;
   readonly muteButton: string;
   readonly muted: string;

@@ -10,7 +10,6 @@ import { useState, useEffect, useCallback } from "react";
 interface LiveKitEntryProps {
   token: string;
   url: string;
-  roomName: string;
   isStreaming: boolean;
   options: {
     element?: Element;
@@ -28,7 +27,6 @@ interface LiveKitEntryProps {
 export function LiveKitEntry({ 
   token, 
   url, 
-  roomName, 
   isStreaming,
   options,
   onStreamEnd, 
@@ -39,11 +37,11 @@ export function LiveKitEntry({
 }: LiveKitEntryProps) {
   const [localRoom, setLocalRoom] = useState<Room | null>(null);
 
-  const handleConnected = useCallback((room: Room) => {
-    setLocalRoom(room);
-    setRoom(room);
+  const handleConnected = useCallback(() => {
+    if (!localRoom) return;
+    setRoom(localRoom);
     onStreamStart();
-  }, [onStreamStart, setRoom]);
+  }, [localRoom, onStreamStart, setRoom]);
 
   const handleDisconnected = useCallback(() => {
     setLocalRoom(null);
@@ -53,24 +51,14 @@ export function LiveKitEntry({
 
   return (
     <LiveKitRoom
-      token={token}
       serverUrl={url}
-      name={roomName}
-      connectOptions={{
-        autoSubscribe: true,
-        publishDefaults: {
-          simulcast: true,
-          videoSimulcastLayers: [
-            { width: 640, height: 360, fps: 30 },
-          ],
-        },
-        audioCaptureDefaults: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        }
+      token={token}
+      connect={isStreaming}
+      options={{
+        ...options,
+        adaptiveStream: true,
+        dynacast: true,
       }}
-      options={options}
       onConnected={handleConnected}
       onDisconnected={handleDisconnected}
     >

@@ -11,10 +11,9 @@ interface MultiSelectProps {
   items: Item[];
   selectedItems: Item[];
   onChange: (items: Item[]) => void;
-  defaultValue?: string;
 }
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, defaultValue }) => {
+export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);

@@ -1,14 +1,7 @@
 import axios from 'axios';
+import { KnowledgeBaseItem } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-interface SavedItem {
-  id: string;
-  title: string;
-  content: string;
-  user_id: string;
-  // Add other properties as needed
-}
 
 interface User {
   id: string;
@@ -21,7 +14,7 @@ interface HandleNewItemProps {
   user: User;
   getToken: () => Promise<string>;
   handleFileUpload: () => Promise<void>;
-  setSavedItems: React.Dispatch<React.SetStateAction<SavedItem[]>>;
+  setSavedItems: React.Dispatch<React.SetStateAction<KnowledgeBaseItem[]>>;
   setNewItemContent: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   setAlertMessage: React.Dispatch<React.SetStateAction<string>>;
@@ -66,7 +59,8 @@ export const handleNewItem = async ({
       setAlertType("success");
     } catch (error) {
       console.error("Error uploading file:", error);
-      setAlertMessage(`Failed to upload file: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setAlertMessage(`Failed to upload file: ${errorMessage}`);
       setAlertType("error");
     }
   } else {
@@ -101,15 +95,17 @@ export const handleNewItem = async ({
       setSelectedFile(null);
       setAlertMessage("New item added successfully");
       setAlertType("success");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error sending data to server:", error);
       if (axios.isAxiosError(error)) {
         console.error("Axios error:", error.message);
         console.error("Response status:", error.response?.status);
         console.error("Response data:", error.response?.data);
         console.error("Request config:", error.config);
+        setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
+      } else {
+        setAlertMessage("Failed to send data to server: " + (error instanceof Error ? error.message : 'Unknown error'));
       }
-      setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
       setAlertType("error");
     }
   }

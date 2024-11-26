@@ -1,16 +1,32 @@
 'use client';
 
+import { Dispatch, SetStateAction } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KnowledgeBaseTable } from './KnowledgeBaseTable';
 
+interface UrlContent {
+  id: number;
+  url: string;
+  token_count: number;
+}
+
+interface KnowledgeBaseItem {
+  id: number;
+  title: string;
+  content: string;
+  data_type: 'web' | 'text';
+  tag: string;
+  tokens: number;
+  created_at: string;
+}
+
 interface LibraryProps {
-  savedItems: any[];
+  savedItems: KnowledgeBaseItem[];
   totalTokens: number;
-  selectedItem: any;
-  setSelectedItem: (item: any) => void;
-  setIsEditing: (value: boolean) => void;
-  setNewItemContent: (content: string) => void;
-  handleDeleteItem: (id: number) => void;
+  selectedItem: KnowledgeBaseItem | null;
+  setSelectedItem: Dispatch<SetStateAction<KnowledgeBaseItem | null>>;
+  setNewItemContent: Dispatch<SetStateAction<string>>;
+  handleDeleteItem: (id: number) => Promise<void>;
 }
 
 export function Library({
@@ -18,9 +34,8 @@ export function Library({
   totalTokens,
   selectedItem,
   setSelectedItem,
-  setIsEditing,
   setNewItemContent,
-  handleDeleteItem
+  handleDeleteItem,
 }: LibraryProps) {
   return (
     <div className="flex w-full">
@@ -31,7 +46,6 @@ export function Library({
           totalTokens={totalTokens}
           onEdit={(item) => {
             setSelectedItem(item);
-            setIsEditing(true);
             setNewItemContent(item.content);
           }}
           onDelete={handleDeleteItem}
@@ -47,7 +61,7 @@ export function Library({
             <ScrollArea className="h-[calc(100vh-200px)]">
               {selectedItem.data_type === 'web' && Array.isArray(selectedItem.content) ? (
                 <div className="space-y-4">
-                  {selectedItem.content.map((urlItem: any) => (
+                  {(selectedItem.content as UrlContent[]).map((urlItem: UrlContent) => (
                     <div key={urlItem.id} className="border-b pb-2">
                       <p className="text-sm font-medium">{urlItem.url}</p>
                       <p className="text-sm text-muted-foreground">

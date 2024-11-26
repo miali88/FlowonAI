@@ -1,20 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronsUpDown, Plus } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { PurchaseNumber } from './PurchaseNumber';
 
 interface Item {
@@ -28,27 +13,12 @@ interface MultiSelectProps {
   selectedItems: Item[];
   onChange: (items: Item[]) => void;
   defaultValue?: string;
-  countryCodes: {
-    countries: string[];
-  };
+  countries?: string[];
 }
 
-const getCountryFlag = (countryCode: string): string => {
-  // Convert country code to regional indicator symbols
-  // Each letter needs to be converted to the corresponding regional indicator symbol
-  // by adding 127397 to its UTF-16 code unit
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  
-  return String.fromCodePoint(...codePoints);
-};
-
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, countryCodes = {} }) => {
+export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange, countries = [] }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -71,10 +41,6 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
     }
   };
 
-  const handleOpenClick = () => {
-    setOpen(!open);
-  };
-
   return (
     <div className="relative w-full" ref={containerRef}>
       <button
@@ -93,13 +59,13 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
       {open && (
         <div className="fixed inset-x-0 top-full mt-2 w-full bg-background rounded-md border border-input shadow-lg z-[100]"
              style={{
-               maxWidth: containerRef.current?.offsetWidth,
-               left: containerRef.current?.getBoundingClientRect().left,
-               top: containerRef.current?.getBoundingClientRect().bottom + window.scrollY + 5
+               maxWidth: containerRef.current?.offsetWidth ?? 0,
+               left: containerRef.current?.getBoundingClientRect()?.left ?? 0,
+               top: (containerRef.current?.getBoundingClientRect()?.bottom ?? 0) + window.scrollY + 5
              }}>
           <div className="p-2">
             <PurchaseNumber 
-              countryCodes={countryCodes}
+              countries={countries}
               onNumberPurchased={(number) => {
                 // Handle purchased number
                 console.log('Number purchased:', number);

@@ -7,22 +7,13 @@ import WordRotate from "@/components/ui/word-rotate";
 import { OnboardingButton } from './OnboardingButton';
 
 export function Hero() {
-  // Add state management for ChatBotMini
+  // Simplified state management - removed unused state
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [chatTitle, setChatTitle] = useState("Flowon");
 
-  const handleGridClick = (title: string) => {
-    setChatTitle(title);
-    // Reset streaming states when switching agents
+  const handleGridClick = () => {
+    // Only handle streaming state reset
     if (isStreaming) {
       setIsStreaming(false);
-      setIsLiveKitActive(false);
-      setToken(null);
-      setUrl(null);
     }
   };
   

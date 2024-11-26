@@ -3,8 +3,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -47,7 +45,7 @@ export function AppSidebar({
 
   return (
     <Sidebar 
-      collapsed={isCollapsed}
+      data-collapsed={isCollapsed}
       className={cn(
         "transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[70px]" : "w-[240px]"

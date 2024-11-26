@@ -2,6 +2,7 @@ import { CardSpotlight } from "@/components/ui/card-spotlight";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
 export function DeploySection() {
   return (
@@ -20,9 +21,11 @@ export function DeploySection() {
               Website Integration
             </h3>
             <div className="mb-4 relative z-20">
-              <img
+              <Image
                 src="/widget.png"
                 alt="Website Widget"
+                width={400}
+                height={192}
                 className="w-full h-48 object-contain"
               />
             </div>
@@ -37,9 +40,11 @@ export function DeploySection() {
               Telephony Integration
             </h3>
             <div className="mb-4 relative z-20">
-              <img
+              <Image
                 src="/phone.webp"
                 alt="Phone System"
+                width={400}
+                height={160}
                 className="w-full h-40 object-contain"
               />
             </div>

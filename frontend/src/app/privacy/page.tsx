@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
         
         <div className="prose prose-invert prose-lg max-w-none">
           <p className="text-gray-300 mb-6">
-            Crescent Advisors Ltd ("we," "us," or "our"), trading as Flowon AI, is committed to protecting 
+            Crescent Advisors Ltd (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), trading as Flowon AI, is committed to protecting 
             and respecting your privacy. This Privacy Policy outlines how we collect, use, and protect your 
             personal data when you use our services. By using Flowon AI, you agree to the terms of this policy.
           </p>

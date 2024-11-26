@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export function SocialProof() {
   return (
     <section className="text-center mx-auto max-w-[80rem] px-6 md:px-8 py-14 min-h-72 overflow-hidden">
@@ -8,38 +10,48 @@ export function SocialProof() {
         <div className="mt-6">
           <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-16 [&_path]:fill-white">
             <li>
-              <img
+              <Image
                 alt="Google"
                 src="/images/google.svg"
-                className="h-8 w-28 px-2 brightness-0 invert"
+                width={112}
+                height={32}
+                className="px-2 brightness-0 invert"
               />
             </li>
             <li>
-              <img
+              <Image
                 alt="Microsoft"
                 src="/images/microsoft.svg"
-                className="h-8 w-28 px-2 brightness-0 invert"
+                width={112}
+                height={32}
+                className="px-2 brightness-0 invert"
               />
             </li>
             <li>
-              <img
+              <Image
                 alt="GitHub"
                 src="/images/github.svg"
-                className="h-8 w-28 px-2 brightness-0 invert"
+                width={112}
+                height={32}
+                className="px-2 brightness-0 invert"
               />
             </li>
             <li>
-              <img
+              <Image
                 alt="Uber"
                 src="/images/uber.svg"
-                className="h-8 w-28 px-2 brightness-0 invert"
+                width={112}
+                height={32}
+                className="px-2 brightness-0 invert"
               />
             </li>
             <li>
-              <img
+              <Image
                 alt="Notion"
                 src="/images/notion.svg"
-                className="h-8 w-28 px-2 brightness-0 invert"
+                width={112}
+                height={32}
+                className="px-2 brightness-0 invert"
               />
             </li>
           </ul>

@@ -1,6 +1,6 @@
 import React from 'react';
+import Image from 'next/image';
 import styles from './ChatWidget.module.css';
-
 
 const Footer: React.FC = () => {
   return (
@@ -12,23 +12,19 @@ const Footer: React.FC = () => {
           rel="noopener noreferrer" 
           className={styles.footerContent}
         >
-          <img 
+          <Image 
             src={`${process.env.NEXT_PUBLIC_FRONTEND_API_BASE_URL}/flowon_partial.png`}
             alt="Flowon.AI Logo" 
-            className={styles.footerLogo} 
+            className={styles.footerLogo}
+            width={100}
+            height={30}
+            priority={true}
+            loading="eager"
           />
           <span className={styles.footerText}>
             Powered by Flowon.AI
           </span>
         </a>
-        {/* <a 
-          href="https://flowon.ai/privacy" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={styles.privacyLink}
-        >
-          Privacy Policy
-        </a> */}
       </div>
     </footer>
   );

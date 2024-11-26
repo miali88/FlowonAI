@@ -3,10 +3,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { AgentCards, Agent } from './AgentCards';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { NewAgent } from './NewAgent';
 import Workspace from './workspace/Workspace';
-import { LocalParticipant } from 'livekit-client';
 import axios from 'axios';
 import "@/components/loading.css";
 import { Slash } from "lucide-react"
@@ -14,6 +13,13 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { VOICE_OPTIONS } from './workspace/agentSettings';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// Add this interface near the top of the file, after the imports
+interface KnowledgeBaseItem {
+  id: number | string;
+  title: string;
+  data_type: string;
+}
 
 function Loader() {
   return (
@@ -24,32 +30,24 @@ function Loader() {
 }
 
 const AgentHub = () => {
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [alertDialogMessage, setAlertDialogMessage] = useState('');
-  const { userId, user, isLoaded } = useAuth();
-  const [isLiveKitActive, setIsLiveKitActive] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null);
-  const [knowledgeBaseItems, setKnowledgeBaseItems] = useState<Array<{
-    id: string | number;
-    title: string;
-    data_type: string;
-  }>>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<any>(null);
-  const [isLoadingUserInfo, setIsLoadingUserInfo] = useState(true);
+  const [userInfo, setUserInfo] = useState<{
+    id: string;
+    [key: string]: unknown;
+  } | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
   const [agentsError, setAgentsError] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertDialogMessage, setAlertDialogMessage] = useState('');
+  const [knowledgeBaseItems, setKnowledgeBaseItems] = useState<Array<{ id: string; title: string; data_type: string }>>([]);
 
-  const fetchUserInfo = async () => {
+  const { userId, isLoaded } = useAuth();
+
+  const fetchUserInfo = useCallback(async () => {
     if (!userId) return;
     
-    setIsLoadingUserInfo(true);
     try {
       const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
         headers: {
@@ -60,23 +58,20 @@ const AgentHub = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched user info:', data);
         setUserInfo(data);
       } else {
         console.error('Failed to fetch user info');
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
-    } finally {
-      setIsLoadingUserInfo(false);
     }
-  };
+  }, [userId]);
 
   React.useEffect(() => {
     if (userId) {
       fetchUserInfo();
     }
-  }, [userId]);
+  }, [userId, fetchUserInfo]);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   React.useEffect(() => {
@@ -84,15 +79,7 @@ const AgentHub = () => {
       console.log('Still loading user data...');
       return;
     }
-
-    if (user) {
-      console.log('User Name:', user.fullName);
-      console.log('First Name:', user.firstName);
-      console.log('Last Name:', user.lastName);
-    } else {
-      console.log('User is authenticated: false');
-    }
-  }, [user, isLoaded]);
+  }, [isLoaded]);
 
   const handleAgentSelect = (agent: Agent) => {
     console.log('Selected Agent with features:', agent.features);
@@ -104,7 +91,7 @@ const AgentHub = () => {
 
     // Find the voice provider from VOICE_OPTIONS
     const voiceOption = selectedAgent.language && selectedAgent.voice
-      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)
+      ? VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent.voice)
       : null;
 
     try {
@@ -176,16 +163,7 @@ const AgentHub = () => {
     }
   };
 
-  const handleStreamEnd = useCallback(() => {
-    setIsStreaming(false);
-    setIsConnecting(false);
-  }, []);
-
-  const handleStreamStart = useCallback(() => {
-    setIsConnecting(false);
-  }, []);
-
-  const fetchKnowledgeBase = async () => {
+  const fetchKnowledgeBase = useCallback(async () => {
     if (!userId) return;
     
     try {
@@ -200,8 +178,8 @@ const AgentHub = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.items) {
-          const formattedItems = data.items.map((item: any) => ({
-            id: item.id,
+          const formattedItems = data.items.map((item: KnowledgeBaseItem) => ({
+            id: String(item.id),
             title: item.title,
             data_type: item.data_type,
           }));
@@ -213,9 +191,9 @@ const AgentHub = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
-  const fetchAgents = async () => {
+  const fetchAgents = useCallback(async () => {
     if (!userId) return;
     
     setAgentsLoading(true);
@@ -233,7 +211,7 @@ const AgentHub = () => {
     } finally {
       setAgentsLoading(false);
     }
-  };
+  }, [userId]);
 
   React.useEffect(() => {
     const initializeData = async () => {
@@ -253,16 +231,10 @@ const AgentHub = () => {
     };
 
     initializeData();
-  }, [userId, isLoaded]);
+  }, [userId, isLoaded, fetchAgents, fetchKnowledgeBase]);
 
   const handleNavigateToHub = useCallback(() => {
     setSelectedAgent(null);
-    setIsStreaming(false);
-    setIsLiveKitActive(false);
-    setToken(null);
-    setUrl(null);
-    setIsConnecting(false);
-    setLocalParticipant(null);
   }, []);
 
   useEffect(() => {
@@ -270,7 +242,7 @@ const AgentHub = () => {
       console.log('Selected Agent:', selectedAgent);
       console.log('Selected Agent Features:', selectedAgent.features);
     }
-  }, [selectedAgent]);
+  });
 
   const refreshAgents = useCallback(async () => {
     if (!userId) return;
@@ -338,8 +310,12 @@ const AgentHub = () => {
                 setSelectedAgent={setSelectedAgent}
                 knowledgeBaseItems={knowledgeBaseItems}
                 userInfo={userInfo}
-                features={selectedAgent.features}
-                userId={userId}
+                features={{
+                  callTransfer: Boolean(selectedAgent.features?.callTransfer),
+                  appointmentBooking: Boolean(selectedAgent.features?.appointmentBooking),
+                  form: Boolean(selectedAgent.features?.form),
+                  prospects: Boolean(selectedAgent.features?.prospects)
+                }}
                 handleSaveChanges={handleSaveChanges}
                 handleDeleteAgent={handleDeleteAgent}
               />

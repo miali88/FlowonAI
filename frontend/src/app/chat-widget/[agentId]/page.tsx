@@ -30,13 +30,3 @@ export default function ChatWidgetPage() {
     </div>
   )
 }
-
-// Add TypeScript declaration for the window object
-declare global {
-  interface Window {
-    embeddedChatbotConfig: {
-      agentId: string
-      domain: string
-    }
-  }
-}

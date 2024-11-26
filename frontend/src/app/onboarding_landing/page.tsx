@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import Image from 'next/image'
 import WordPullUp from '@/components/ui/word-pull-up'
 import SparklesText from '@/components/ui/sparkles-text'
 import ChatWidget from '@/app/dashboard/agenthub/workspace/ChatWidget'
@@ -36,7 +35,7 @@ export default function OnboardingLanding() {
             
             {/* Added ChatWidget */}
             <div className="mt-12 max-w-3xl mx-auto">
-              <ChatWidget />
+              <ChatWidget agentId="your-default-agent-id" />
             </div>
           </div>
         </div>
