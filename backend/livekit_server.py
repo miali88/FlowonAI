@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Dict, List, Optional, Any
 
 # Add both the project root and backend directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -22,8 +23,7 @@ from livekit.plugins import silero
 from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
-from services.cache import get_all_agents, call_data
-
+from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -120,7 +120,9 @@ async def entrypoint(ctx: JobContext):
                 print("rp.identity", rp.identity)
 
             agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-            user_id = '_'.join(room_name.split('_')[3:])  # Extract user_id from room name
+            agent_metadata: Dict = await get_agent_metadata(agent_id)
+            user_id: str = agent_metadata['userId']
+
             agent, opening_line = await create_voice_assistant(agent_id, ctx)
             agent.start(room)
             await agent.say(opening_line, allow_interruptions=False)
@@ -142,6 +144,39 @@ async def entrypoint(ctx: JobContext):
         else:
             print("No available participants found.")
             ctx.shutdown(reason="No available participants")
+
+
+        async def initialize_calendar_on_connect():
+            print("\n=== Starting Calendar Initialization ===")
+            try:
+                # Extract agent_id differently based on call type
+                if room_name.startswith("call-"):
+                    print("Telephone call - using existing agent_id")
+                    # agent_id is already set from telephone call flow
+                else:
+                    print("Web call - extracting agent_id from room name")
+                    agent_id = room_name.split('_')[1]
+
+                print(f"Getting metadata for agent_id: {agent_id}")
+                agent_metadata: Dict = await get_agent_metadata(agent_id)
+                user_id: str = agent_metadata['userId']
+                
+                print(f"Starting calendar cache initialization:")
+                print(f"- user_id: {user_id}")
+                print(f"- provider: googlecalendar")
+                
+                await initialize_calendar_cache(user_id, "googlecalendar")
+                print("Calendar cache initialization completed successfully")
+            except Exception as e:
+                print(f"Error in calendar initialization:")
+                print(f"- Error type: {type(e).__name__}")
+                print(f"- Error details: {str(e)}")
+                print(f"- Room name: {room_name}")
+        
+        # Create background task for calendar initialization
+        print("\n\n\n\n Creating calendar initialization task")
+        asyncio.create_task(initialize_calendar_on_connect())
+
 
         #room_sid = await ctx.room.sid
         """ EVENT HANDLERS FOR AGENT """            
@@ -209,9 +244,12 @@ async def entrypoint(ctx: JobContext):
         def on_disconnected(exception: Exception):
             print(f"Room {room_name} disconnected. Reason: {str(exception)}")
 
+
         @ctx.room.on('connected')
         def on_connected():
             print(f"Room {room_name} connected")
+            """ doesn't work :(, doesn't callback on room connect"""
+
 
         @agent.on("function_calls_finished")
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):

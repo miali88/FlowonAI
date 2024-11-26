@@ -1,7 +1,21 @@
 from typing import Dict, Optional, List
 from services.db.supabase_services import supabase_client
 
+from services.composio import get_calendar_slots
+
 supabase = supabase_client()
+
+
+""" CALENDAR CACHE """
+calendar_cache: Dict[str, dict] = {}
+
+async def initialize_calendar_cache(user_id: str, app: str) -> None:
+    """Initialize the calendar cache"""
+    calendar_slots: Dict = await get_calendar_slots(user_id, "googlecalendar")
+    calendar_cache[user_id] = calendar_slots
+    print(f"Calendar cache initialized for user_id: {user_id}")
+    return calendar_slots
+
 
 
 """ LIVEKIT WEBHOOK CACHE """

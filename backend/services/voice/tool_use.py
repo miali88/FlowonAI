@@ -7,7 +7,7 @@ from livekit.agents import llm, JobContext
 
 
 from services.chat.chat import similarity_search
-from services.cache import get_agent_metadata
+from services.cache import get_agent_metadata, calendar_cache
 from services.composio import get_calendar_slots
 
 # Update logger configuration
@@ -135,7 +135,6 @@ async def question_and_answer(
 #         return "Sorry, I encountered an error while searching for products and services."
 
 
-
 """ LEAD GENERATION """
 ### TODO: rename to present_form
 @llm.ai_callable(
@@ -155,7 +154,6 @@ async def request_personal_data(
 
     
     return "Form presented to user. Waiting for user to complete and submit form."
-
 
 
 """ CALENDAR MANAGEMENT """
@@ -182,12 +180,13 @@ async def fetch_calendar(
         # Get the room_name from the current AgentFunctions instance
         room_name = AgentFunctions.current_room_name
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        
-        calendar_slots = await get_calendar_slots(date_range, agent_id)
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
 
-        # TODO: Implement actual calendar integration logic here
-        # This is a placeholder return
-        return "Available slots found for your requested date range. Please complete the form to book your appointment."
+        user_id: str = agent_metadata['userId']
+
+        free_slots = calendar_cache[user_id]
+
+        return f"Available slots found: {free_slots}"
         
     except Exception as e:
         logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
@@ -215,15 +214,18 @@ class AgentFunctions(llm.FunctionContext):
         print(f"Registered Q&A function")
         logger.info(f"Registered Q&A function")
 
+        print(f"features: {features}")
+
         if 'lead_gen' in features:
             self._register_ai_function(request_personal_data)
             print(f"Registered lead generation function")
             logger.info(f"Registered lead generation function")
 
-        if 'calendar' in features:
+        if 'app_booking' in features:
             self._register_ai_function(fetch_calendar)
             print(f"Registered calendar function")
             logger.info(f"Registered calendar function")
+
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
