@@ -43,7 +43,7 @@ async def get_calendar_slots(user_id: str, app: str) -> Dict:
 
     return free_slots
 
-async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
+async def find_free_slots(calendar_data, num_slots=32, duration_minutes=30):
     busy_slots = calendar_data
     
     # Convert to datetime objects and sort
@@ -58,6 +58,7 @@ async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
     current_time = current_time + timedelta(minutes=(30 - current_time.minute % 30))
     
     free_slots = []
+    formatted_slots = {}  # New dictionary to store slots by date
     # Look ahead for 5 business days
     days_to_check = 5
     current_day = current_time.date()
@@ -77,37 +78,53 @@ async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
         
         slot_start = day_start
         
+        # Create formatted date string for this day
+        date_str = current_day.strftime("%dth %A %B %Y")
+        formatted_slots[date_str] = []  # Initialize empty list for this date
+        
         # If there are busy slots on this day
         if day_busy_slots:
             for busy_start, busy_end in day_busy_slots:
-                # Check for free time before busy slot
                 while slot_start + timedelta(minutes=duration_minutes) <= busy_start and slot_start + timedelta(minutes=duration_minutes) <= day_end:
-                    free_slots.append({
+                    slot_info = {
                         'start': slot_start.isoformat(),
                         'end': (slot_start + timedelta(minutes=duration_minutes)).isoformat()
-                    })
+                    }
+                    free_slots.append(slot_info)
+                    # Format time for formatted_slots
+                    time_str = slot_start.strftime("%I:%M %p")
+                    formatted_slots[date_str].append(time_str)
+                    
                     slot_start += timedelta(minutes=duration_minutes)
                     if len(free_slots) >= num_slots:
-                        return free_slots
+                        return {"formatted": formatted_slots}
+                        #return {"raw": free_slots, "formatted": formatted_slots}
                 
-                # Move start time to after the busy slot
                 slot_start = max(slot_start, busy_end)
         
         # Check remaining time until end of business day
         while slot_start + timedelta(minutes=duration_minutes) <= day_end:
-            free_slots.append({
+            slot_info = {
                 'start': slot_start.isoformat(),
                 'end': (slot_start + timedelta(minutes=duration_minutes)).isoformat()
-            })
+            }
+            free_slots.append(slot_info)
+            # Format time for formatted_slots
+            time_str = slot_start.strftime("%I:%M %p")
+            formatted_slots[date_str].append(time_str)
+            
             slot_start += timedelta(minutes=duration_minutes)
             if len(free_slots) >= num_slots:
-                return free_slots
+                return {"formatted": formatted_slots}
+        #        return {"raw": free_slots, "formatted": formatted_slots}
         
         # Move to next day
         current_day += timedelta(days=1)
         days_to_check -= 1
     
-    return free_slots
+    #return {"raw": free_slots,"formatted": formatted_slots}
+    return {"formatted": formatted_slots}
+
 
 async def get_notion_database(database_name: str) -> Dict:
     try:

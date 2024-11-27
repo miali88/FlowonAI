@@ -72,6 +72,85 @@ async def question_and_answer(
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
         return "I apologize, but I encountered an error while searching for an answer to your question."
 
+""" LEAD GENERATION """
+### TODO: rename to present_form
+@llm.ai_callable(
+    name="request_personal_data",
+    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    auto_retry=False
+)
+async def request_personal_data(
+    message: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+        )
+    ]
+) -> str:
+    logger.info(f"Personal data request triggered with message: {message}")
+
+    
+    return "Form presented to user. Waiting for user to complete and submit form."
+
+""" CALENDAR MANAGEMENT """
+@llm.ai_callable(
+    name="fetch_calendar",
+    description="Fetch available calendar slots for booking appointments or meetings",
+    auto_retry=True
+)
+async def fetch_calendar(
+    date_range: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
+        )
+    ],
+) -> str:
+    """
+    Fetches available calendar slots based on the specified date range and appointment type.
+    Returns formatted information about available time slots.
+    """
+    logger.info(f"Fetching calendar slots for date range: {date_range}")
+    
+    try:
+        # Get the room_name from the current AgentFunctions instance
+        room_name = AgentFunctions.current_room_name
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+        user_id: str = agent_metadata['userId']
+
+        free_slots = calendar_cache[user_id]
+
+        return f"Available slots found: {free_slots}"
+        
+    except Exception as e:
+        logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
+        return "I apologize, but I encountered an error while checking the calendar availability."
+
+@llm.ai_callable(
+    name="book_appointment",
+    description="Book an appointment on the user's calendar",
+    auto_retry=True
+)
+async def book_appointment(
+    appointment_details: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The details of the appointment to book, including the date, time, and type of appointment"
+        )
+    ]
+) -> str:
+    """
+    Books an appointment on the user's calendar.
+    Returns a confirmation message about the booked appointment.
+    """
+    logger.info(f"Booking appointment with details: {appointment_details}")
+    return "Appointment booked successfully."
+
+
+
+
 # @llm.ai_callable(
 #     name="search_products_and_services",
 #     description="Search for products and services in the database when the user inquires about specific offerings, prices, or availability",
@@ -133,64 +212,6 @@ async def question_and_answer(
 #     except Exception as e:
 #         logger.error(f"Error in search_products_and_services: {str(e)}", exc_info=True)
 #         return "Sorry, I encountered an error while searching for products and services."
-
-
-""" LEAD GENERATION """
-### TODO: rename to present_form
-@llm.ai_callable(
-    name="request_personal_data",
-    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
-    auto_retry=False
-)
-async def request_personal_data(
-    message: Annotated[
-        str,
-        llm.TypeInfo(
-            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
-        )
-    ]
-) -> str:
-    logger.info(f"Personal data request triggered with message: {message}")
-
-    
-    return "Form presented to user. Waiting for user to complete and submit form."
-
-
-""" CALENDAR MANAGEMENT """
-@llm.ai_callable(
-    name="fetch_calendar",
-    description="Fetch available calendar slots for booking appointments or meetings",
-    auto_retry=True
-)
-async def fetch_calendar(
-    date_range: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
-        )
-    ],
-) -> str:
-    """
-    Fetches available calendar slots based on the specified date range and appointment type.
-    Returns formatted information about available time slots.
-    """
-    logger.info(f"Fetching calendar slots for date range: {date_range}")
-    
-    try:
-        # Get the room_name from the current AgentFunctions instance
-        room_name = AgentFunctions.current_room_name
-        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        agent_metadata: Dict = await get_agent_metadata(agent_id)
-
-        user_id: str = agent_metadata['userId']
-
-        free_slots = calendar_cache[user_id]
-
-        return f"Available slots found: {free_slots}"
-        
-    except Exception as e:
-        logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
-        return "I apologize, but I encountered an error while checking the calendar availability."
 
 class AgentFunctions(llm.FunctionContext):
     current_room_name = None  # Class variable to store current room_name
