@@ -8,7 +8,7 @@ from livekit.agents import llm, JobContext
 
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache
-from services.composio import get_calendar_slots
+from services.composio import book_appointment_composio
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -130,7 +130,7 @@ async def fetch_calendar(
 
 @llm.ai_callable(
     name="book_appointment",
-    description="Book an appointment on the user's calendar",
+    description="Once user has confirmed appointment details, book an appointment on the user's calendar",
     auto_retry=True
 )
 async def book_appointment(
@@ -142,11 +142,22 @@ async def book_appointment(
     ]
 ) -> str:
     """
-    Books an appointment on the user's calendar.
+    Once user has confirmed appointment details, book an appointment on the user's calendar.
     Returns a confirmation message about the booked appointment.
     """
     logger.info(f"Booking appointment with details: {appointment_details}")
-    return "Appointment booked successfully."
+        # Get the room_name from the current AgentFunctions instance
+    room_name = AgentFunctions.current_room_name
+    agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+    user_id: str = agent_metadata['userId']
+
+    print(f"user_id: {user_id}")
+    print("about to call book_appointment_composio")
+    result = await book_appointment_composio(appointment_details, user_id)
+    print(f"book_appointment_composio result: {result}")
+    return result
 
 
 
@@ -246,6 +257,11 @@ class AgentFunctions(llm.FunctionContext):
             self._register_ai_function(fetch_calendar)
             print(f"Registered calendar function")
             logger.info(f"Registered calendar function")
+
+        if 'book_app' in features:
+            self._register_ai_function(book_appointment)
+            print(f"Registered book appointment function")
+            logger.info(f"Registered book appointment function")
 
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):

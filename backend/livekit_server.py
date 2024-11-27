@@ -149,23 +149,17 @@ async def entrypoint(ctx: JobContext):
         async def initialize_calendar_on_connect():
             print("\n=== Starting Calendar Initialization ===")
             try:
-                # Extract agent_id differently based on call type
-                if room_name.startswith("call-"):
-                    print("Telephone call - using existing agent_id")
-                    # agent_id is already set from telephone call flow
-                else:
-                    print("Web call - extracting agent_id from room name")
-                    agent_id = room_name.split('_')[1]
-
-                print(f"Getting metadata for agent_id: {agent_id}")
-                agent_metadata: Dict = await get_agent_metadata(agent_id)
-                user_id: str = agent_metadata['userId']
-                
-                print(f"Starting calendar cache initialization:")
-                print(f"- user_id: {user_id}")
+                print(f"- user_id: {user_id}") 
                 print(f"- provider: googlecalendar")
+                # Create a loop to run in the thread
+                loop = asyncio.get_event_loop()
                 
-                await initialize_calendar_cache(user_id, "googlecalendar")
+                # Run the calendar initialization in a thread pool
+                await loop.run_in_executor(
+                    None,  # None uses the default thread pool
+                    lambda: asyncio.run(initialize_calendar_cache(user_id, "googlecalendar"))
+                )
+                
                 print("Calendar cache initialization completed successfully")
             except Exception as e:
                 print(f"Error in calendar initialization:")
