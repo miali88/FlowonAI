@@ -258,7 +258,6 @@ class AgentFunctions(llm.FunctionContext):
             print(f"Registered calendar function")
             logger.info(f"Registered calendar function")
 
-        if 'book_app' in features:
             self._register_ai_function(book_appointment)
             print(f"Registered book appointment function")
             logger.info(f"Registered book appointment function")

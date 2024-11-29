@@ -50,6 +50,9 @@ import { Particles } from '@/components/magicui/particles'; // Correct the impor
 // Add this import at the top
 import { AppSidebar } from "@/components/app-sidebar";
 
+// Add this import near the top with other page imports
+import PhoneNumbersPage from '@/app/dashboard/phonenumbers/page';
+
 // Add this CSS at the top of your file after imports
 const layoutStyles = {
   wrapper: "relative flex h-screen min-h-[600px] w-full bg-background text-foreground transition-colors duration-200 overflow-hidden",
@@ -257,6 +260,8 @@ function AdminDashboard() {
         return <ContactFounders />;
       case "Analytics":
         return <Analytics />;
+      case "Phone Numbers":
+        return <PhoneNumbersPage />;
       default:
         return <AgentHub />;
     }
