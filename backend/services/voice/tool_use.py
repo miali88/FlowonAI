@@ -235,32 +235,38 @@ class AgentFunctions(llm.FunctionContext):
 
     async def initialize_functions(self):
         print("Initializing functions for agent")
-        room_name = self.job_ctx.room.name
-        agent_id = room_name.split('_')[1]
-        agent_metadata = await get_agent_metadata(agent_id)
-        features = agent_metadata.get('features', [])
-        
-        # Always register Q&A function
-        # if 'qa' in features:
-        self._register_ai_function(question_and_answer)
-        print(f"Registered Q&A function")
-        logger.info(f"Registered Q&A function")
+        # if not self.room_name.startswith("call-"):
+        #     print("telephone call detected")
 
-        print(f"features: {features}")
+        #     room_name = self.job_ctx.room.name
+        #     agent_id = room_name.split('_')[1]
+        #     agent_metadata = await get_agent_metadata(agent_id)
+        #     features = agent_metadata.get('features', [])
+            
+        # elif self.room_name.startswith("call-"):
+        #     print("telephone call detected")
 
-        if 'lead_gen' in features:
-            self._register_ai_function(request_personal_data)
-            print(f"Registered lead generation function")
-            logger.info(f"Registered lead generation function")
+        # # Always register Q&A function
+        # # if 'qa' in features:
+        # self._register_ai_function(question_and_answer)
+        # print(f"Registered Q&A function")
+        # logger.info(f"Registered Q&A function")
 
-        if 'app_booking' in features:
-            self._register_ai_function(fetch_calendar)
-            print(f"Registered calendar function")
-            logger.info(f"Registered calendar function")
+        # print(f"features: {features}")
 
-            self._register_ai_function(book_appointment)
-            print(f"Registered book appointment function")
-            logger.info(f"Registered book appointment function")
+        # if 'lead_gen' in features:
+        #     self._register_ai_function(request_personal_data)
+        #     print(f"Registered lead generation function")
+        #     logger.info(f"Registered lead generation function")
+
+        # if 'app_booking' in features:
+        #     self._register_ai_function(fetch_calendar)
+        #     print(f"Registered calendar function")
+        #     logger.info(f"Registered calendar function")
+
+        #     self._register_ai_function(book_appointment)
+        #     print(f"Registered book appointment function")
+        #     logger.info(f"Registered book appointment function")
 
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):

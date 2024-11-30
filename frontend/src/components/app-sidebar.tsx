@@ -31,9 +31,9 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const items = [
     { title: "Agent Hub", icon: Mic },
+    { title: "Phone Numbers", icon: Phone },
     { title: "Knowledge Base", icon: BookOpen },
     { title: "Conversation Logs", icon: MessageSquare },
-    { title: "Phone Numbers", icon: Phone },
     { title: "Integrations", icon: Plug },
     { title: "Analytics", icon: BarChart3 },
     { title: "Contact Founders", icon: Calendar },

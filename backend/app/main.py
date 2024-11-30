@@ -14,8 +14,12 @@ import psutil
 import time
 import platform
 import sys
+import logging
 
 load_dotenv()
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -90,9 +94,11 @@ def kill_processes_on_port(port):
 
 @app.on_event("startup")
 async def startup_event():
+    logger.debug("Starting up FastAPI server...")
     global livekit_process
     
     try:
+        logger.debug("Attempting to start LiveKit server...")
         time.sleep(1)
         
         MAX_RETRIES = 3

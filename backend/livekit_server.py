@@ -83,22 +83,34 @@ async def entrypoint(ctx: JobContext):
             print("telephone call detected")
 
             async def get_agent_id(room_name: str):
+                import json
                 agents = await get_all_agents()
+                
+                # Add current directory printing
+                print("Current working directory:", os.getcwd())
+                
                 def get_agent_id_by_phone(data, phone_number):
                     for agent in data:
                         if agent.get('assigned_telephone') == phone_number:
                             return agent.get('id')
                     return None
                 
-                # import re
-                # pattern = r'(?:\+)?(\d{12})'
-                # match = re.search(pattern, room_name)
-                # if match:
-                #     caller_number = match.group(1)
-                print("\n\n\n\n\nroom_name:", room_name)
-                print("call_data:", call_data)
-                twilio_number = call_data.get(room_name)
-                print(f"twilio_number: {twilio_number}")
+                try:
+                    with open('backend/call_data.json', 'r') as f:
+                        call_data_from_file = json.load(f)
+                    twilio_number = call_data_from_file.get(room_name)
+                except FileNotFoundError:
+                    print("call_data.json not found")
+                    twilio_number = None
+                except json.JSONDecodeError:
+                    print("Error decoding call_data.json")
+                    twilio_number = None
+                except Exception as e:
+                    print(f"Error reading call_data.json: {str(e)}")
+                    twilio_number = None
+
+                print(f"\nroom_name: {room_name}")
+                print(f"twilio_number from file: {twilio_number}")
                 agent_id = get_agent_id_by_phone(agents, twilio_number)
                 print(f"agent_id: {agent_id}")
                 return agent_id
@@ -149,17 +161,23 @@ async def entrypoint(ctx: JobContext):
         async def initialize_calendar_on_connect():
             print("\n=== Starting Calendar Initialization ===")
             try:
-                print(f"- user_id: {user_id}") 
+                # Extract agent_id differently based on call type
+                if room_name.startswith("call-"):
+                    print("Telephone call - using existing agent_id")
+                    # agent_id is already set from telephone call flow
+                else:
+                    print("Web call - extracting agent_id from room name")
+                    agent_id = room_name.split('_')[1]
+
+                print(f"Getting metadata for agent_id: {agent_id}")
+                agent_metadata: Dict = await get_agent_metadata(agent_id)
+                user_id: str = agent_metadata['userId']
+                
+                print(f"Starting calendar cache initialization:")
+                print(f"- user_id: {user_id}")
                 print(f"- provider: googlecalendar")
-                # Create a loop to run in the thread
-                loop = asyncio.get_event_loop()
                 
-                # Run the calendar initialization in a thread pool
-                await loop.run_in_executor(
-                    None,  # None uses the default thread pool
-                    lambda: asyncio.run(initialize_calendar_cache(user_id, "googlecalendar"))
-                )
-                
+                await initialize_calendar_cache(user_id, "googlecalendar")
                 print("Calendar cache initialization completed successfully")
             except Exception as e:
                 print(f"Error in calendar initialization:")
