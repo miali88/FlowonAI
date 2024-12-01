@@ -1,7 +1,6 @@
 'use client';
 
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { MagicCard } from "@/components/ui/magic-card";
 
 const featureDetails = {
@@ -14,8 +13,6 @@ const featureDetails = {
 };
 
 export function FeaturesSection() {
-  const { theme } = useTheme();
-
   const FeatureCard = ({ title, description }: { title: string, description: string }) => (
     <MagicCard className="h-[220px] w-full">
       <div className="flex flex-col items-center justify-center h-full p-8">

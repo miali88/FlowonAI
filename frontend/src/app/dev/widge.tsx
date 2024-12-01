@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-// Create a params context
-const ParamsContext = createContext<{ agentId: string }>({ agentId: '' });
+// Add this interface near the top of the file, after the imports
+interface ChatWidgetProps {
+  agentId: string;
+  domain: string;
+}
 
 // Import the ChatWidget component
-const ChatWidget = dynamic(
+const ChatWidget = dynamic<ChatWidgetProps>(
   () => import('@/app/chat-widget/[agentId]/components/main'),  // Note: importing main directly
   { ssr: false }
 );
@@ -29,18 +32,16 @@ function ChatWidgetWrapper() {
       
       window.embeddedChatbotConfig = {
         agentId: agentId,
-        domain: window.location.origin,
-        version: '1.0.0',
-        debug: true
+        domain: window.location.origin
       };
       
       console.log('ChatWidget initialized with:', {
         agentId,
         domain: window.location.origin
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error initializing ChatWidget:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     }
   }, [agentId]);
 
@@ -48,9 +49,7 @@ function ChatWidgetWrapper() {
   if (!domain) return <div>Loading...</div>;
 
   return (
-    <ParamsContext.Provider value={{ agentId }}>
-      <ChatWidget agentId={agentId} domain={domain} />
-    </ParamsContext.Provider>
+    <ChatWidget agentId={agentId} domain={domain} />
   );
 }
 

@@ -4,12 +4,21 @@ import { Input } from "@/components/ui/input"
 import { integrations } from "./integrationsList"
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import Image from 'next/image';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+interface Integration {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  category: string;
+  status: string;
+}
+
 export default function IntegrationsPage() {
   const [integrationsList, setIntegrationsList] = useState(integrations);
-  const [userConnections, setUserConnections] = useState<string[]>([]);
   const { userId } = useAuth();
 
   useEffect(() => {
@@ -19,7 +28,6 @@ export default function IntegrationsPage() {
       try {
         const response = await fetch(`${API_BASE_URL}/composio/connections/${userId}`);
         const data = await response.json();
-        setUserConnections(data.connections);
         
         // Update integrations status based on connections
         const updatedIntegrations = integrations.map(integration => ({
@@ -39,7 +47,7 @@ export default function IntegrationsPage() {
     fetchConnections();
   }, [userId]);
 
-  const handleIntegrationClick = async (integration: any) => {
+  const handleIntegrationClick = async (integration: Integration) => {
     if (integration.status === "Connected") return;
     
     try {
@@ -77,10 +85,12 @@ export default function IntegrationsPage() {
             className="p-4 rounded-lg border bg-card"
           >
             <div className="flex items-center gap-3 mb-2">
-              <img
+              <Image
                 src={integration.icon}
                 alt={integration.name}
-                className="w-10 h-10 rounded-lg"
+                width={40}
+                height={40}
+                className="rounded-lg"
               />
               <div>
                 <h3 className="font-semibold">{integration.name}</h3>

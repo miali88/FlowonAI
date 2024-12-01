@@ -20,6 +20,13 @@ import {
   Search,
 } from "lucide-react";
 
+interface HeaderProps {
+  activeItem: string;
+  selectedFeature: string | null;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+}
+
 function LogoutMenuItem() {
   const { signOut } = useClerk();
   const router = useRouter();
@@ -36,7 +43,7 @@ function LogoutMenuItem() {
   );
 }
 
-function Header({ activeItem, selectedFeature }) {
+export default function Header({ activeItem, selectedFeature }: HeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const [userPlan] = useState("Loading...");
@@ -92,5 +99,3 @@ function Header({ activeItem, selectedFeature }) {
     </header>
   );
 }
-
-export default Header;

@@ -29,7 +29,7 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
         </button>
       </div>
       {isStreaming && (
-        <span className={styles.streamStatus}>Chatting...</span>
+        <span style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>Chatting...</span>
       )}
     </div>
   );

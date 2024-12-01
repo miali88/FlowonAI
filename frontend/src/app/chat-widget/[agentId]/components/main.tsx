@@ -4,8 +4,22 @@ import ChatBotMini from './components/ChatBotMini';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import styles from './components/ChatWidget.module.css';
+import { FlowonWidget } from './types';
 
 const WIDGET_NAMESPACE = 'FlowonWidget';
+
+// Add type for window config
+interface EmbeddedChatbotConfig {
+  agentId: string;
+  domain: string;
+}
+
+declare global {
+  interface Window {
+    embeddedChatbotConfig: EmbeddedChatbotConfig | undefined;
+    [WIDGET_NAMESPACE]: FlowonWidget;
+  }
+}
 
 const ShadowContainer: React.FC<{
   agentId: string;  
@@ -310,7 +324,6 @@ const ShadowContainer: React.FC<{
               <ErrorBoundary>
                 <WidgetContent 
                   agentId={agentId} 
-                  domain={domain}
                   eventBridge={eventBridge}
                 />
               </ErrorBoundary>
@@ -354,13 +367,12 @@ interface StreamEvent {
 
 interface WidgetContentProps {
   agentId: string;
-  domain: string;
   eventBridge: {
     dispatchHostEvent: <T extends object>(eventName: string, detail: T) => void;
   };
 }
 
-function WidgetContent({ agentId, domain, eventBridge }: WidgetContentProps) {
+function WidgetContent({ agentId, eventBridge }: Omit<WidgetContentProps, 'domain'>) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -408,7 +420,8 @@ function WidgetContent({ agentId, domain, eventBridge }: WidgetContentProps) {
   );
 }
 
-const initializeWidget = (containerId: string) => {
+// Update initializeWidget function
+const initializeWidget = (containerId: string = 'embedded-chatbot-container') => {
   try {
     console.debug('Initializing widget...');
     
@@ -417,7 +430,7 @@ const initializeWidget = (containerId: string) => {
       throw new Error(`Container with id "${containerId}" not found`);
     }
 
-    const config = (window as any).embeddedChatbotConfig;
+    const config = window.embeddedChatbotConfig;
     if (!config?.agentId || !config?.domain) {
       throw new Error('Invalid or missing embeddedChatbotConfig');
     }
@@ -426,13 +439,13 @@ const initializeWidget = (containerId: string) => {
     root.render(
       <React.StrictMode>
         <ShadowContainer 
-          agentId={config.agentId} 
-          domain={config.domain} 
+          agentId={config.agentId}
+          domain={config.domain}
         />
       </React.StrictMode>
     );
 
-    (window as any)[WIDGET_NAMESPACE] = {
+    window[WIDGET_NAMESPACE] = {
       initialized: true,
       initialize: initializeWidget,
       version: process.env.WIDGET_VERSION
@@ -474,7 +487,7 @@ const setupGlobalEventListeners = () => {
 
 const MainWidget = () => {
   useEffect(() => {
-    if (!(window as any)[WIDGET_NAMESPACE]?.initialized) {
+    if (!window[WIDGET_NAMESPACE]?.initialized) {
       initializeWidget('embedded-chatbot-container');
     }
   }, []);

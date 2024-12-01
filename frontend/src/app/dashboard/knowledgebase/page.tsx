@@ -21,7 +21,17 @@ import { Library } from './Library';
 import "@/components/loading.css"; // Adjust the path as necessary
 import { Insert } from './Insert';
 
-import { WebContent, KnowledgeBaseItem } from './types'
+import { KnowledgeBaseItem } from './types'
+
+// Update the error type definitions
+type ApiError = {
+  message: string;
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+};
 
 function Loader() {
   return (
@@ -40,8 +50,7 @@ function KnowledgeBaseContent() {
     const [newItemContent, setNewItemContent] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
     const [alertType, setAlertType] = useState("success");
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [setIsEditing] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<KnowledgeBaseItem | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [scrapeUrl, setScrapeUrl] = useState("");
     const [totalTokens, setTotalTokens] = useState(0);
@@ -77,7 +86,17 @@ function KnowledgeBaseContent() {
         // Update this section to handle the new response structure
         if (response.data && response.data.items) {
           console.log("Fetched items:", response.data.items);
-          const formattedItems = response.data.items.map(item => ({
+          const formattedItems = response.data.items.map((item: {
+            id: number;
+            title: string;
+            content: string;
+            data_type: string;
+            tag?: string;
+            token_count?: number;
+            url_tokens?: number;
+            created_at?: string;
+            root_url?: string;
+          }) => ({
             id: item.id,
             title: item.title,
             content: item.content,
@@ -94,7 +113,7 @@ function KnowledgeBaseContent() {
           setSavedItems(formattedItems);
           
           // Log each item's title and data_type
-          formattedItems.forEach((item, index) => {
+          formattedItems.forEach((item: KnowledgeBaseItem, index: number) => {
             console.log(`Item ${index}:`, {
               title: item.title,
               data_type: item.data_type,
@@ -107,9 +126,10 @@ function KnowledgeBaseContent() {
           setAlertMessage("Unexpected data structure received from server");
           setAlertType("error");
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setAlertMessage("Failed to fetch user data: " + (error.message || "Unknown error"));
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        console.error("Error fetching user data:", apiError);
+        setAlertMessage("Failed to fetch user data: " + (apiError.message || "Unknown error"));
         setAlertType("error");
       } finally {
         setIsLoading(false);
@@ -150,27 +170,31 @@ function KnowledgeBaseContent() {
         setSelectedFile(null);
         setAlertMessage("File processed and added to Knowledge Base successfully");
         setAlertType("success");
-      } catch (error) {
-        console.error("Error uploading file:", error);
-        setAlertMessage("Failed to upload and process file: " + (error.response?.data?.detail || error.message));
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        console.error("Error uploading file:", apiError);
+        setAlertMessage("Failed to upload and process file: " + (apiError.response?.data?.detail || apiError.message));
         setAlertType("error");
       }
     };
   
     // Replace the existing handleNewItem function with this:
     const handleNewItemWrapper = async () => {
+      const token = await getToken();
+      if (!token || !user) return;  // Early return if no token or user
+      
       await handleNewItem({
-        activeAddTab: selectedTab, // Change from activeTab to selectedTab
+        activeAddTab: selectedTab,
         newItemContent,
-        user,
-        getToken,
+        user: { id: user.id },
+        getToken: async () => token,
         handleFileUpload,
         setSavedItems,
         setNewItemContent,
         setSelectedFile,
         setAlertMessage,
         setAlertType,
-        selectedFile  // Add this
+        selectedFile
       });
     };
   
@@ -200,21 +224,22 @@ function KnowledgeBaseContent() {
         }
         setAlertMessage("Item deleted successfully");
         setAlertType("success");
-      } catch (error) {
-        console.error("Error deleting item:", error);
-        setAlertMessage("Failed to delete item: " + (error.message || "Unknown error"));
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        console.error("Error deleting item:", apiError);
+        setAlertMessage("Failed to delete item: " + (apiError.message || "Unknown error"));
         setAlertType("error");
       }
     };
   
-    const onDrop = useCallback((acceptedFiles) => {
-      // Handle the dropped files here
-      console.log(acceptedFiles);
-      // You might want to update the state or process the files
-      setSelectedFile(acceptedFiles[0]);
-    }, []);
-  
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+    // Replace the useDropzone section with this:
+    useDropzone({ 
+      onDrop: (acceptedFiles) => {
+        if (acceptedFiles && acceptedFiles[0]) {
+          setSelectedFile(acceptedFiles[0]);
+        }
+      } 
+    });
   
     const handleCardClick = (tab: string) => {
       setSelectedTab(tab);
@@ -293,10 +318,9 @@ function KnowledgeBaseContent() {
         return;
       }
 
-      setIsScrapingUrls(true); // Set loading state to true
+      setIsScrapingUrls(true);
       try {
         await handleScrapeAll({
-          scrapeUrl,
           setScrapeError,
           getToken: async () => token,
           user: { id: user.id },
@@ -310,7 +334,7 @@ function KnowledgeBaseContent() {
         });
         return true;
       } finally {
-        setIsScrapingUrls(false); // Set loading state back to false
+        setIsScrapingUrls(false);
       }
     };
 
@@ -340,7 +364,6 @@ function KnowledgeBaseContent() {
               totalTokens={totalTokens}
               selectedItem={selectedItem}
               setSelectedItem={setSelectedItem}
-              setIsEditing={setIsEditing}
               setNewItemContent={setNewItemContent}
               handleDeleteItem={handleDeleteItem}
             />

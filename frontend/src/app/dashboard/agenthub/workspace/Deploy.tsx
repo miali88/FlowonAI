@@ -4,17 +4,41 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from 'next/image';
-import { Agent } from '../AgentCards';
+import { Agent as BaseAgent } from '../AgentCards';
 import { MultiSelect } from './multiselect_deploy';
 import { useEffect, useState } from 'react';
+
+// Define a type for telephony number details
+interface TelephonyNumberDetails {
+  friendly_name?: string;
+  phone_number: string;
+  capabilities: {
+    voice?: boolean;
+    SMS?: boolean;
+    MMS?: boolean;
+  };
+}
+
+// Add type for MultiSelect items
+interface MultiSelectItem {
+  id: string;
+  title: string;
+  data_type: string;
+}
+
+interface Agent extends BaseAgent {
+  twilioConfig?: {
+    phoneNumbers: MultiSelectItem[];
+  };
+}
 
 interface DeployProps {
   selectedAgent: Agent | null;
   setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
   handleSaveChanges: (agent: Agent) => Promise<void>;
   userInfo: {
-    telephony_numbers?: Record<string, any>;
-    [key: string]: any;
+    telephony_numbers?: Record<string, TelephonyNumberDetails>;
+    [key: string]: unknown;
   } | null;
 }
 
@@ -25,11 +49,9 @@ const Deploy: React.FC<DeployProps> = ({
   userInfo,
 }) => {
   const [countryCodes, setCountryCodes] = useState<Record<string, string[]>>({});
-  const [isLoadingCountryCodes, setIsLoadingCountryCodes] = useState(true);
 
   useEffect(() => {
     const fetchCountryCodes = async () => {
-      setIsLoadingCountryCodes(true);
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/country_codes`);
         if (!response.ok) {
@@ -39,8 +61,6 @@ const Deploy: React.FC<DeployProps> = ({
         setCountryCodes(data);
       } catch (error) {
         console.error('Error fetching country codes:', error);
-      } finally {
-        setIsLoadingCountryCodes(false);
       }
     };
 
@@ -52,7 +72,7 @@ const Deploy: React.FC<DeployProps> = ({
       return <div className="text-sm text-muted-foreground">Loading user information...</div>;
     }
 
-    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number, details]) => ({
+    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number]) => ({
       id: number,
       title: number,
       data_type: 'phone_number'
@@ -62,16 +82,18 @@ const Deploy: React.FC<DeployProps> = ({
       <MultiSelect
         items={phoneNumberItems}
         selectedItems={selectedAgent?.twilioConfig?.phoneNumbers || []}
-        onChange={(items) => {
-          setSelectedAgent({
-            ...selectedAgent,
-            twilioConfig: {
-              ...selectedAgent?.twilioConfig,
-              phoneNumbers: items
-            }
-          });
+        onChange={(items: MultiSelectItem[]) => {
+          if (selectedAgent) {
+            setSelectedAgent({
+              ...selectedAgent,
+              twilioConfig: {
+                ...selectedAgent?.twilioConfig,
+                phoneNumbers: items
+              }
+            });
+          }
         }}
-        countryCodes={countryCodes}
+        countries={Object.values(countryCodes).flat()}
       />
     );
   };
@@ -176,7 +198,7 @@ frameborder="0"
                 </div>
                 <Button 
                   className="mt-4"
-                  onClick={() => handleSaveChanges(selectedAgent)}
+                  onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}
                 >
                   Save Twilio Configuration
                 </Button>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Youtube, Twitter } from "lucide-react";
 import { useState, useEffect } from 'react';
+import Image from "next/image";
 
 interface GeoData {
   country: string;
@@ -33,7 +34,13 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between py-8 gap-8">
           <div className="flex flex-col gap-4 items-center md:items-start">
             <Link href="/" className="flex gap-2">
-              <img alt="Flowon AI Logo" src="/flowon.png" className="size-8 invert" />
+              <Image 
+                alt="Flowon AI Logo" 
+                src="/flowon.png" 
+                width={32}
+                height={32}
+                className="invert" 
+              />
             </Link>
             <p className="max-w-xs"> </p>
           </div>

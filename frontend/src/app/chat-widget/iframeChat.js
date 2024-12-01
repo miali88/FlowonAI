@@ -1,17 +1,16 @@
 class ChatWidget {
-  constructor(config = {}) {
+  constructor(options = {}) {
     this.config = {
-      agentId: config.agentId || 'null',
-      domain: config.domain || 'http://localhost:3000',
-      position: config.position || 'right',
+      agentId: options.agentId || "null",
+      domain: options.domain || "http://localhost:3001",
+      position: options.position || "right"
     };
-    
     this.isOpen = false;
     this.init();
   }
 
   init() {
-    // Basic styles
+    // Create and append styles
     const styles = `
       .chat-widget-button {
         position: fixed;
@@ -112,14 +111,13 @@ class ChatWidget {
         }
       }
     `;
+    const styleElement = document.createElement("style");
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
 
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = styles;
-    document.head.appendChild(styleSheet);
-
-    // Create button with icons
-    this.button = document.createElement('div');
-    this.button.className = 'chat-widget-button';
+    // Create button and container elements
+    this.button = document.createElement("div");
+    this.button.className = "chat-widget-button";
     this.button.innerHTML = `
       <svg class="chat-widget-icon chat-widget-mic-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -129,38 +127,30 @@ class ChatWidget {
       </svg>
     `;
 
-    // Create container
-    this.container = document.createElement('div');
-    this.container.className = 'chat-widget-container';
-
-    // Create iframe
+    this.container = document.createElement("div");
+    this.container.className = "chat-widget-container";
     this.container.innerHTML = `
       <iframe 
         class="chat-widget-iframe"
         src="${this.config.domain}/chat-widget/${this.config.agentId}"
         allow="microphone; camera"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        sandbox="allow-same-origin allow-scripts allow-forms"
       ></iframe>
     `;
 
-    // Add click handler
-    this.button.addEventListener('click', () => this.toggleChat());
+    // Use arrow function to preserve 'this' context
+    this.button.addEventListener("click", () => this.toggleChat());
 
-    // Add to DOM
     document.body.appendChild(this.button);
     document.body.appendChild(this.container);
   }
 
   toggleChat() {
     this.isOpen = !this.isOpen;
-    this.container.style.display = this.isOpen ? 'block' : 'none';
-    
-    // Toggle animation class
-    if (this.isOpen) {
-      this.button.classList.add('chat-widget-button-active');
-    } else {
-      this.button.classList.remove('chat-widget-button-active');
-    }
+    this.container.style.display = this.isOpen ? "block" : "none";
+    this.isOpen 
+      ? this.button.classList.add("chat-widget-button-active")
+      : this.button.classList.remove("chat-widget-button-active");
   }
 }
 

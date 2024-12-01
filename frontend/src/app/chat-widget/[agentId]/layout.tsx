@@ -34,7 +34,6 @@ export default function ChatWidgetLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          suppressHydrationWarning
         >
           <div className="w-full h-screen relative overflow-hidden">
             {children}

@@ -58,6 +58,7 @@ const layoutStyles = {
   wrapper: "relative flex h-screen min-h-[600px] w-full bg-background text-foreground transition-colors duration-200 overflow-hidden",
   mainContainer: "relative z-10 flex w-full min-w-0",
   mainContent: "flex-1 flex flex-col overflow-hidden min-w-0 transition-all duration-300",
+  sidebar: "w-64 border-r bg-background",
 };
 
 function LogoutMenuItem() {
@@ -76,7 +77,15 @@ function LogoutMenuItem() {
   );
 }
 
-function Header({ activeItem, selectedFeature, isCollapsed, setIsCollapsed }) {
+// Add this interface before the Header function
+interface HeaderProps {
+  activeItem: string;
+  selectedFeature: string | null;
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
+}
+
+function Header({ activeItem, selectedFeature, isCollapsed, setIsCollapsed }: HeaderProps) {
   const { user } = useUser();
   const [userPlan] = useState("Pro");
   
@@ -146,39 +155,9 @@ function Header({ activeItem, selectedFeature, isCollapsed, setIsCollapsed }) {
 function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Agent Hub");
-  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedFeature] = useState<string | null>(null);
+  const [isLoading] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
-
-  const handleSetActiveItem = (item: string) => {
-    setActiveItem(item);
-    setSelectedFeature(null);
-    // Remove the switch statement that was navigating to different URLs
-  };
-
-  // Add this function
-  const toggleDarkMode = () => {
-    setIsDarkMode(prevMode => !prevMode);
-  };
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.style.setProperty('--background', '#000134');
-      document.documentElement.style.setProperty('--foreground', '#ffffff');
-    } else {
-      document.documentElement.style.removeProperty('--background');
-      document.documentElement.style.removeProperty('--foreground');
-    }
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    // Simulate a minimum loading time to prevent flash
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -203,12 +182,8 @@ function AdminDashboard() {
         <div className="absolute inset-0">
           <BackgroundPattern />
           <Particles
-            options={{
-              particles: {
-                number: { value: 50 },
-                size: { value: 3 },
-              },
-            }}
+            quantity={50}
+            size={3}
             className="absolute inset-0"
           />
         </div>
@@ -273,23 +248,9 @@ function AdminDashboard() {
       <div className="absolute inset-0">
         <BackgroundPattern />
         <Particles
+          quantity={50}
+          size={3}
           className="absolute inset-0"
-          options={{
-            particles: {
-              number: { value: 50 },
-              size: { value: 3 },
-              color: { value: "#93c5fd" },
-              opacity: { value: 0.3 },
-              move: {
-                direction: "none",
-                enable: true,
-                outModes: "bounce",
-                random: false,
-                speed: 1,
-                straight: false,
-              },
-            },
-          }}
         />
       </div>
 

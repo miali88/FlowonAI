@@ -19,11 +19,11 @@ export default function LetterPullup({
 
   const pullupVariant = {
     initial: { y: 100, opacity: 0 },
-    animate: (i: any) => ({
+    animate: (i: number) => ({
       y: 0,
       opacity: 1,
       transition: {
-        delay: i * (delay ? delay : 0.05), // By default, delay each letter's animation by 0.05 seconds
+        delay: i * (delay ? delay : 0.05),
       },
     }),
   };
