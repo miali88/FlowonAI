@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 interface HandleScrapeProps {
   scrapeUrl: string;
@@ -72,10 +72,16 @@ export const handleScrape = async ({
     } else {
       throw new Error("Unexpected response format from server");
     }
-  } catch (error) {
-    console.error("Error scraping URL:", error);
-    setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URL");
-    setAlertMessage("Failed to scrape URL: " + (error.response?.data?.detail || error.message));
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    console.error("Error scraping URL:", axiosError);
+    
+    const errorMessage = axiosError.response?.data?.detail || 
+                        axiosError.message || 
+                        "Failed to scrape URL";
+    
+    setScrapeError(errorMessage);
+    setAlertMessage("Failed to scrape URL: " + errorMessage);
     setAlertType("error");
   }
 };
@@ -150,22 +156,30 @@ export const handleScrapeAll = async ({
     setScrapeUrl("");
     setAlertMessage("All pages scraped successfully");
     setAlertType("success");
-  } catch (error) {
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
     console.error('=== Error in handleScrapeAll ===');
-    console.error('Error object:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response headers:', error.response.headers);
-      console.error('Response data:', error.response.data);
+    console.error('Error object:', axiosError);
+    console.error('Error name:', axiosError.name);
+    console.error('Error message:', axiosError.message);
+    
+    if (axiosError.response) {
+      console.error('Response status:', axiosError.response.status);
+      console.error('Response headers:', axiosError.response.headers);
+      console.error('Response data:', axiosError.response.data);
     }
-    if (error.request) {
-      console.error('Request details:', error.request);
+    
+    if (axiosError.request) {
+      console.error('Request details:', axiosError.request);
     }
-    setScrapeError(error.response?.data?.detail || error.message || "Failed to scrape URLs");
-    setAlertMessage("Failed to scrape URLs: " + (error.response?.data?.detail || error.message));
+
+    const errorMessage = axiosError.response?.data?.detail || 
+                        axiosError.message || 
+                        "Failed to scrape URLs";
+                        
+    setScrapeError(errorMessage);
+    setAlertMessage("Failed to scrape URLs: " + errorMessage);
     setAlertType("error");
-    return false; // Add this to indicate failure
+    return false;
   }
 };
