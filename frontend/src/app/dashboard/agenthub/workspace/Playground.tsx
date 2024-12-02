@@ -12,14 +12,14 @@ interface PlaygroundProps {
 const Playground: React.FC<PlaygroundProps> = ({
   selectedAgent,
 }) => {
-  const [useTextWidget, setUseTextWidget] = useState(false);
+  const [useTextWidget, setUseTextWidget] = useState(true);
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Chat With Agent</CardTitle>
+        <CardTitle>Playground</CardTitle>
         <div className="flex items-center gap-2">
-          <span>Text Mode</span>
+          <span>{useTextWidget ? 'Text Mode' : 'Voice Mode'}</span>
           <Switch
             checked={useTextWidget}
             onCheckedChange={setUseTextWidget}

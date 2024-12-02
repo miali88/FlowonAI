@@ -5,6 +5,7 @@ import logging
 from fastapi import Request, HTTPException
 from fastapi.responses import Response, JSONResponse
 
+from services.db.supabase_services import supabase_client
 from app.core.config import settings
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
@@ -41,6 +42,9 @@ def get_available_numbers(client: Client, country_code: str) -> Dict[str, List[s
             
     return available_numbers
 
+async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
+    numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
+    return numbers.data
 
 # """ WEBHOOK HANDLER """
 # # async def twilio_start_bot(request: Request) -> None:

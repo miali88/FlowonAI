@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Request, Response, HTTPException
+from fastapi import APIRouter, Request, Response, HTTPException, Depends
 from fastapi.responses import Response, JSONResponse, HTMLResponse
 from typing import Dict, List
 
 from services import twilio
+from app.api.deps import get_current_user
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -17,6 +19,16 @@ async def get_available_numbers_handler(country_code: str) -> JSONResponse:
     """Get list of available numbers for a given country code from Twilio"""
     available_numbers = twilio.get_available_numbers(country_code)
     return JSONResponse(content={"numbers": available_numbers})
+
+@router.get("/user_numbers")
+async def get_user_numbers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
+    """Get list of Twilio numbers for the current user from database"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    numbers = await twilio.fetch_twilio_numbers(user_id=current_user)
+    return JSONResponse(content={"numbers": numbers})
+
 
 # @router.post("/")
 # async def twilio_status_update() -> JSONResponse:

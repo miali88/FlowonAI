@@ -32,6 +32,7 @@ async def get_kb_items(current_user):
             results = supabase.table(table) \
                               .select('*') \
                               .eq('user_id', current_user) \
+                              .limit(100000) \
                               .execute()
         
             grouped: List[Dict] = group_by_root_url(results.data)
@@ -40,7 +41,11 @@ async def get_kb_items(current_user):
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
         elif table == "user_text_files":
-            items = supabase.table(table).select('*').eq('user_id', current_user).execute()
+            items = supabase.table(table) \
+                           .select('*') \
+                           .eq('user_id', current_user) \
+                           .limit(100000) \
+                           .execute()
             formatted_items = [
                 {
                     'id': item['id'],
@@ -72,6 +77,7 @@ async def get_kb_headers(current_user):
             results = supabase.table(table) \
                               .select('*') \
                               .eq('user_id', current_user) \
+                              .limit(100000) \
                               .execute()
             grouped: List[Dict] = group_by_root_url(results.data)
             
@@ -79,7 +85,11 @@ async def get_kb_headers(current_user):
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
         elif table == "user_text_files_headers":
-            items = supabase.table(table).select('*').eq('user_id', current_user).execute()
+            items = supabase.table(table) \
+                           .select('*') \
+                           .eq('user_id', current_user) \
+                           .limit(100000) \
+                           .execute()
             formatted_items = [
                 {
                     'id': item['id'],
@@ -95,7 +105,6 @@ async def get_kb_headers(current_user):
             total_tokens += sum(item.get('token_count', 0) for item in results.data)
 
     return all_items, total_tokens
-
 
 
 def group_by_root_url(items):

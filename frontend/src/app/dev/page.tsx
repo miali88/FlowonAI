@@ -1,48 +1,32 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import { NylasSchedulerEditor } from "@nylas/react";
+import { useEffect } from 'react'
+import dynamic from 'next/dynamic'
 
-const NYLAS_CLIENT_ID = 'b39310e3-7a3d-4f9f-877d-a9193e905b81';
+const ChatWidget = dynamic(() => import('../chat-widget/[agentId]/components/main'), {
+  ssr: false
+})
 
-export default function SchedulerEditorPage() {
-  const [isMounted, setIsMounted] = useState(false);
-
+export default function DevPage() {
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return <div>Loading...</div>;
-  }
-
+    // Set the development configuration for the chatbot
+    window.embeddedChatbotConfig = {
+      agentId: 'test-agent-id', // Replace with your test agent ID
+      domain: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
+    }
+  }, [])
+  
   return (
-    <div className="w-full h-full">
-      {isMounted && (
-        <NylasSchedulerEditor
-          schedulerPreviewLink={`${window.location.origin}/?config_id={config.id}`}
-          nylasSessionsConfig={{
-            clientId: NYLAS_CLIENT_ID,
-            redirectUri: `${window.location.origin}/scheduler-editor`,
-            domain: "https://api.us.nylas.com/v3",
-            hosted: true,
-            accessType: 'offline',
-          }}
-          defaultSchedulerConfigState={{
-            selectedConfiguration: {
-              requires_session_auth: false,
-              scheduler: {
-                rescheduling_url: `${window.location.origin}/reschedule/:booking_ref`,
-                cancellation_url: `${window.location.origin}/cancel/:booking_ref`
-              }
-            }
-          }}
-          onError={(error) => {
-            console.error('Nylas Editor Error:', error);
-          }}
-        />
-      )}
+    <div 
+      id="embedded-chatbot-container" 
+      style={{
+        width: '100%',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <ChatWidget />
     </div>
-  );
+  )
 }
-

@@ -322,7 +322,11 @@ const AgentHub = () => {
             {!selectedAgent ? (
               // Show agent list when no agent is selected
               <div className="w-full flex flex-col items-start space-y-4">
-                <NewAgent knowledgeBaseItems={knowledgeBaseItems} onAgentCreated={refreshAgents} />
+                <NewAgent 
+                  knowledgeBaseItems={knowledgeBaseItems} 
+                  onAgentCreated={refreshAgents}
+                  setSelectedAgent={handleAgentSelect}
+                />
                 <AgentCards 
                   setSelectedAgent={handleAgentSelect} 
                   agents={agents}

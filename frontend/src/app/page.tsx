@@ -11,6 +11,8 @@ import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
 import { Information } from "@/components/Information";
 
+
+
 export default function HomePage() {
   return (
     <div className="overflow-x-hidden relative">

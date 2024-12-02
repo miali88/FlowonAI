@@ -9,7 +9,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../AgentCards';
 import { Play } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AgentFeatures } from '../AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
@@ -66,7 +65,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   userId,
   features,
 }) => {
-  const [activeTab, setActiveTab] = useState('playground');
+  const [activeTab, setActiveTab] = useState('edit');
   const [setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [callTransferConfig, setCallTransferConfig] = useState({
@@ -193,235 +192,250 @@ const Workspace: React.FC<WorkspaceProps> = ({
   };
 
   return (
-    <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4 h-12">
-          <TabsTrigger value="playground">Playground</TabsTrigger>
-          <TabsTrigger value="edit">Settings</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="deploy">Deploy</TabsTrigger>
-          <TabsTrigger value="share">Share</TabsTrigger>
-        </TabsList>
-        <TabsContent value="edit">
-          <Card>
-            <CardHeader>
-              <CardTitle>Agent Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Basic Settings */}
-                <div>
-                  <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
-                  <Input 
-                    id="agentName"
-                    value={selectedAgent?.agentName || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
-                  />
-                </div>
-
-                {/* Agent Skills */}
-                <div>
-                  <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
-                  <Select 
-                    value={selectedAgent?.agentPurpose || ""}
-                    onValueChange={(value) => {
-                      if (!selectedAgent) return;
-                      setSelectedAgent({
-                        ...selectedAgent,
-                        agentPurpose: value  // Set single purpose instead of array
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select agent purpose" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {AGENT_PURPOSE_OPTIONS.map((purpose) => (
-                        <SelectItem key={purpose.id} value={purpose.id}>
-                          {purpose.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Data Sources */}
-                <div>
-                  <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
-                  <div className="relative">
-                    <MultiSelect 
-                      items={knowledgeBaseItems}
-                      selectedItems={
-                        selectedAgent?.dataSource && Array.isArray(selectedAgent.dataSource)
-                          ? selectedAgent.dataSource.map(item => ({
-                              id: item.id.toString(),
-                              title: item.title,
-                              data_type: item.data_type
-                            }))
-                          : []
-                      }
-                      onChange={handleDataSourceChange}
+    <div className="flex gap-4">
+      <div className="w-2/3">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            console.log('Tab changed to:', value);
+            setActiveTab(value);
+          }} 
+          className="w-full"
+        >
+          <TabsList className="mb-4 h-12">
+            <TabsTrigger value="edit">Tune</TabsTrigger>
+            <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="deploy">Deploy</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
+          <TabsContent value="edit">
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Basic Settings */}
+                  <div>
+                    <Label htmlFor="agentName" className="block text-sm font-medium mb-1">Agent Name</Label>
+                    <Input 
+                      id="agentName"
+                      value={selectedAgent?.agentName || ''} 
+                      onChange={(e) => setSelectedAgent({...selectedAgent, agentName: e.target.value})}
                     />
                   </div>
-                </div>
 
-                {/* Opening Line */}
-                <div>
-                  <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
-                  <Input 
-                    id="openingLine"
-                    value={selectedAgent?.openingLine || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
-                  />
-                </div>
-
-                {/* Language Selection */}
-                <div>
-                  <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
-                  <Select 
-                    value={selectedAgent?.language}
-                    onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en-GB">English GB</SelectItem>
-                      <SelectItem value="en-US">English US</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                      <SelectItem value="ar">Arabic</SelectItem>
-                      <SelectItem value="nl">Dutch</SelectItem>
-                      <SelectItem value="zh">Chinese</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Voice Selection */}
-                <div>
-                  <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-                  <div className="flex items-center space-x-2">
+                  {/* Agent Skills */}
+                  <div>
+                    <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
                     <Select 
-                      value={selectedAgent?.voice}
-                      onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+                      value={selectedAgent?.agentPurpose || ""}
+                      onValueChange={(value) => {
+                        if (!selectedAgent) return;
+                        setSelectedAgent({
+                          ...selectedAgent,
+                          agentPurpose: value  // Set single purpose instead of array
+                        });
+                      }}
                     >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select voice" />
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select agent purpose" />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
+                        {AGENT_PURPOSE_OPTIONS.map((purpose) => (
+                          <SelectItem key={purpose.id} value={purpose.id}>
+                            {purpose.title}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
-                        if (voiceFile) playVoiceSample(voiceFile);
-                      }}
+                  </div>
+
+                  {/* Data Sources */}
+                  <div>
+                    <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>
+                    <div className="relative">
+                      <MultiSelect 
+                        items={knowledgeBaseItems}
+                        selectedItems={
+                          selectedAgent?.dataSource && Array.isArray(selectedAgent.dataSource)
+                            ? selectedAgent.dataSource.map(item => ({
+                                id: item.id.toString(),
+                                title: item.title,
+                                data_type: item.data_type
+                              }))
+                            : []
+                        }
+                        onChange={handleDataSourceChange}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Opening Line */}
+                  <div>
+                    <Label htmlFor="openingLine" className="block text-sm font-medium mb-1">Opening Line</Label>
+                    <Input 
+                      id="openingLine"
+                      value={selectedAgent?.openingLine || ''} 
+                      onChange={(e) => setSelectedAgent({...selectedAgent, openingLine: e.target.value})}
+                    />
+                  </div>
+
+                  {/* Language Selection */}
+                  <div>
+                    <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
+                    <Select 
+                      value={selectedAgent?.language}
+                      onValueChange={(value) => setSelectedAgent({...selectedAgent, language: value, voice: ''})}
                     >
-                      <Play className="h-4 w-4" />
-                    </Button>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en-GB">English GB</SelectItem>
+                        <SelectItem value="en-US">English US</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="ar">Arabic</SelectItem>
+                        <SelectItem value="nl">Dutch</SelectItem>
+                        <SelectItem value="zh">Chinese</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
 
-                {/* Features Section */}
-                <div className="my-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Features</span>
+                  {/* Voice Selection */}
+                  <div>
+                    <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
+                    <div className="flex items-center space-x-2">
+                      <Select 
+                        value={selectedAgent?.voice}
+                        onValueChange={(value) => setSelectedAgent({...selectedAgent, voice: value})}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select voice" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
+                          if (voiceFile) playVoiceSample(voiceFile);
+                        }}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                </div>
 
+                  {/* Features Section */}
+                  <div className="my-6">
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Features</span>
+                      </div>
+                    </div>
+                  </div>
+
+                    <AgentFeatures
+                      selectedAgent={selectedAgent}
+                      setSelectedAgent={setSelectedAgent}
+                      handleSaveFeatures={handleSaveFeatures}
+                    />
+
+                    {/* Add the Retrain Agent button at the bottom */}
+                    <div className="pt-6">
+                      <Button onClick={handleSaveFeatures}>
+                        Retrain Agent
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="deploy">
+              <Deploy 
+                selectedAgent={selectedAgent}
+                setSelectedAgent={setSelectedAgent}
+                handleSaveChanges={handleSaveChanges}
+              />
+            </TabsContent>
+            <TabsContent value="actions">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Agent Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <AgentFeatures
                     selectedAgent={selectedAgent}
                     setSelectedAgent={setSelectedAgent}
                     handleSaveFeatures={handleSaveFeatures}
                   />
-
-                  {/* Add the Retrain Agent button at the bottom */}
                   <div className="pt-6">
                     <Button onClick={handleSaveFeatures}>
                       Retrain Agent
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="advanced">
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-                  <Textarea 
-                    id="instructions"
-                    value={selectedAgent?.instructions || ''} 
-                    onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
-                    className="min-h-[400px]"
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveFeatures}>
-                    Retrain Agent
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Delete Agent</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the agent
-                          and remove all of its data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAgent}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="deploy">
-            <Deploy 
-              selectedAgent={selectedAgent}
-              setSelectedAgent={setSelectedAgent}
-              handleSaveChanges={handleSaveChanges}
-            />
-          </TabsContent>
-          <TabsContent value="share">
-            <Card>
-              <CardHeader>
-                <CardTitle>Share</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Share options for your agent will be shown here.</p>
-                {/* Add share options here */}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="playground">
-            <Playground 
-              selectedAgent={selectedAgent}
-            />
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="advanced">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Advanced Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6">
+                    <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
+                    <Textarea 
+                      id="instructions"
+                      value={selectedAgent?.instructions || ''} 
+                      onChange={(e) => setSelectedAgent({...selectedAgent, instructions: e.target.value})}
+                      className="min-h-[400px]"
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={handleSaveFeatures}>
+                      Retrain Agent
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Delete Agent</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the agent
+                            and remove all of its data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteAgent}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="w-1/3">
+          <Playground selectedAgent={selectedAgent} />
+        </div>
       </div>
     );
   };

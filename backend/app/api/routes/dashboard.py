@@ -13,6 +13,7 @@ from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
 from services.knowledge_base.web_scrape import map_url, scrape_url
+from app.api.deps import get_current_user
 
 supabase = supabase_client()
 
@@ -47,20 +48,6 @@ class KnowledgeBaseItemCreate(BaseModel):
 
 class ScrapeUrlRequest(BaseModel):
     url: str
-
-async def get_current_user(x_user_id: str = Header(...)):
-    logger.info("Authenticating user")
-    #logger.debug(f"Authorization header: {authorization}")
-    logger.debug(f"x_user_id header: {x_user_id}")
-    
-    # if not authorization or not authorization.startswith('Bearer '):
-    #     logger.error("Invalid or missing token")
-    #     raise HTTPException(status_code=401, detail="Invalid or missing token")
-    
-    # Here you would typically validate the token with Clerk
-    # For now, we'll just return the user ID from the header
-    logger.info(f"User authenticated: {x_user_id}")
-    return x_user_id
 
 @router.post("/upload_file")
 async def upload_file_handler(

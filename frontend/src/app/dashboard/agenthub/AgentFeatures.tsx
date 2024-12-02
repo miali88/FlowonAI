@@ -96,6 +96,25 @@ const AGENT_FEATURES = {
           description: "Manage and schedule appointments"
         }
       }
+    },
+    callTransfer: {
+      id: "callTransfer",
+      label: "Call Transfer",
+      description: "Enable the agent to transfer calls to another number",
+      subFeatures: {
+        transferToNumber: {
+          id: "transferToNumber",
+          label: "Transfer to Number",
+          description: "Specify the number to which calls should be transferred, please include the country code",
+          hasConfiguration: true,
+          defaultConfig: {
+            fields: {
+              number: "",
+              custom: []
+            }
+          }
+        }
+      }
     }
   }
 };
@@ -103,7 +122,8 @@ const AGENT_FEATURES = {
 // Add feature mapping constant
 const FEATURE_ID_MAP = {
   'prospecting': 'lead_gen',
-  'appointmentBooking': 'app_booking'
+  'appointmentBooking': 'app_booking',
+  'callTransfer': 'call_transfer'
 };
 
 export const AgentFeatures = forwardRef<
@@ -115,7 +135,8 @@ export const AgentFeatures = forwardRef<
     Object.keys(AGENT_FEATURES.purposes).map(featureId => [
       featureId,
       { 
-        enabled: selectedAgent?.features?.includes?.(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) ?? false 
+        enabled: selectedAgent?.features?.includes?.(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) ?? false,
+        ...(featureId === 'callTransfer' && { number: '' })
       }
     ])
   );
@@ -147,6 +168,8 @@ export const AgentFeatures = forwardRef<
         return true; // If prospecting has configuration options
       case "appointmentBooking":
         return true; // If appointment booking has configuration options
+      case "callTransfer":
+        return true; // If call transfer has configuration options
       // Add other cases as needed
       default:
         return false;
@@ -161,10 +184,14 @@ export const AgentFeatures = forwardRef<
 
   // Add this function to handle configuration
   const handleConfigureInformationCollection = (subFeature: any) => {
-    setCurrentConfig(
-      selectedAgent?.formFields || 
-      subFeature.defaultConfig
-    );
+    const config = selectedAgent?.formFields || subFeature.defaultConfig;
+    setCurrentConfig({
+      ...config,
+      fields: {
+        ...config.fields,
+        custom: config.fields.custom || []
+      }
+    });
     setConfigDialogOpen(true);
   };
 
@@ -237,7 +264,24 @@ export const AgentFeatures = forwardRef<
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {subFeature.hasConfiguration && (
+                      {purpose.id === 'callTransfer' ? (
+                        <Input
+                          type="tel"
+                          placeholder="+1234567890"
+                          className="w-48"
+                          value={localFeatures[purpose.id]?.number || ''}
+                          onChange={(e) => {
+                            setLocalFeatures(prev => ({
+                              ...prev,
+                              [purpose.id]: {
+                                ...prev[purpose.id],
+                                enabled: true,
+                                number: e.target.value
+                              }
+                            }));
+                          }}
+                        />
+                      ) : subFeature.hasConfiguration ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -247,8 +291,7 @@ export const AgentFeatures = forwardRef<
                         >
                           Configure
                         </Button>
-                      )}
-                      {!subFeature.hasConfiguration && (
+                      ) : (
                         <Switch
                           id={subFeature.id}
                           checked={localFeatures[subFeature.id]?.enabled || false}

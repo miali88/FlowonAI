@@ -17,7 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 // This would come from your API
 interface PhoneNumber {
@@ -34,22 +36,76 @@ interface Agent {
   name: string;
 }
 
-export default function PhoneNumbersPage() {
-  // Example data - replace with actual API calls
-  const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([
-    {
-      id: '1',
-      number: '+1 (555) 123-4567',
-      countryCode: 'US',
-      assignedAgent: null,
-      status: 'active',
-    },
-  ]);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [agents] = useState<Agent[]>([
-    { id: '1', name: 'Agent Smith' },
-    { id: '2', name: 'Agent Johnson' },
-  ]);
+export default function PhoneNumbersPage() {
+  const { userId } = useAuth();
+  const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPhoneNumbers = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/twilio/user_numbers`, {
+          method: 'GET',
+          headers: {
+            'x-user-id': userId,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error fetching phone numbers:', errorData);
+          return;
+        }
+
+        const data = await response.json();
+        setPhoneNumbers(data.numbers);
+      } catch (error) {
+        console.error('Failed to fetch phone numbers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPhoneNumbers();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/livekit/agents`, {
+          headers: {
+            'x-user-id': userId
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setAgents(data.data);
+        }
+      } catch (error) {
+        setAgentsError('Failed to fetch agents');
+        console.error('Error fetching agents:', error);
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, [userId]);
+
+  if (loading || agentsLoading) {
+    return <div className="flex justify-center items-center h-full">Loading...</div>;
+  }
 
   const handleAssignAgent = (phoneNumberId: string, agentId: string | null) => {
     setPhoneNumbers(numbers =>
@@ -94,7 +150,7 @@ export default function PhoneNumbersPage() {
               <line x1="12" y1="18" x2="12" y2="18" />
             </svg>
           </div>
-          <p className="mt-4 text-gray-600">You don't have any phone numbers</p>
+          <p className="mt-4 text-gray-600">No numbers purchased. Please add a number.</p>
         </div>
       ) : (
         // Phone Numbers Table
