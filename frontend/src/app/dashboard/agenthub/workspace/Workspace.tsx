@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../AgentCards';
 import { Play } from "lucide-react";
-import { AgentFeatures } from '../AgentFeatures';
+import { AgentFeatures } from './AgentFeatures';
 import { MultiSelect } from './multiselect_settings';
 import Deploy from './Deploy';
 import Playground from './Playground';

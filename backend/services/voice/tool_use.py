@@ -192,28 +192,28 @@ class AgentFunctions(llm.FunctionContext):
         if not self.room_name.startswith("call-"):
             print("telephone call detected")
 
-            room_name = self.job_ctx.room.name
-            agent_id = room_name.split('_')[1]
-            agent_metadata = await get_agent_metadata(agent_id)
-            features = agent_metadata.get('features', [])
+            room_name: str = self.job_ctx.room.name
+            agent_id: str = room_name.split('_')[1]
+            agent_metadata: Dict = await get_agent_metadata(agent_id)
+            features: Dict = agent_metadata.get('features', {})
             
         elif self.room_name.startswith("call-"):
             print("telephone call detected")
 
         # Always register Q&A function
-        # if 'qa' in features:
         self._register_ai_function(question_and_answer)
         print(f"Registered Q&A function")
         logger.info(f"Registered Q&A function")
 
         print(f"features: {features}")
 
-        if 'lead_gen' in features:
+        # Check if feature exists in dict and is enabled
+        if features.get('lead_gen', {}).get('enabled', False):
             self._register_ai_function(request_personal_data)
             print(f"Registered lead generation function")
             logger.info(f"Registered lead generation function")
 
-        if 'appointmentBooking' in features:
+        if features.get('appointmentBooking', {}).get('enabled', False):
             self._register_ai_function(fetch_calendar)
             print(f"Registered calendar function")
             logger.info(f"Registered calendar function")
@@ -222,7 +222,7 @@ class AgentFunctions(llm.FunctionContext):
             print(f"Registered book appointment function")
             logger.info(f"Registered book appointment function")
 
-        if "callTransfer" in features:
+        if features.get('callTransfer', {}).get('enabled', False):
             self._register_ai_function(transfer_call)
             print(f"Registered call transfer function")
             logger.info(f"Registered call transfer function")

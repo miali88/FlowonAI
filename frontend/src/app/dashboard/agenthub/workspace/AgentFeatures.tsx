@@ -163,7 +163,7 @@ export const AgentFeatures = forwardRef<
       ...prev,
       [featureId]: {
         ...prev[featureId],
-        enabled: !prev[featureId].enabled
+        enabled: !prev[featureId]?.enabled || false
       }
     }));
 
@@ -172,8 +172,8 @@ export const AgentFeatures = forwardRef<
         ...selectedAgent.features,
         [featureId]: {
           ...selectedAgent.features?.[featureId],
-          enabled: !localFeatures[featureId].enabled,
-          number: localFeatures[featureId].number
+          enabled: !localFeatures[featureId]?.enabled || false,
+          number: localFeatures[featureId]?.number
         }
       };
       setSelectedAgent({

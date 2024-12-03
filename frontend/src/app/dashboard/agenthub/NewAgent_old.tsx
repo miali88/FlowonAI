@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { MultiSelect } from "./multiselect_newagent"
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
-import { AgentFeatures } from './AgentFeatures';
+import { AgentFeatures } from './workspace/AgentFeatures';
 import styles from './NewAgent.module.css';
 import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './workspace/agentSettings';
 
