@@ -69,7 +69,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 async def insert_to_db(data):
     print("inserting to db")
+    # Remove "jina_embedding" and "content" from data for user_web_data_headers
+    headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
     supabase.table('user_web_data').insert(data).execute()
+    supabase.table('user_web_data_headers').insert(headers_data).execute()
+
 
 async def map_url(url):
     logger.info(f"Starting URL mapping for: {url}")

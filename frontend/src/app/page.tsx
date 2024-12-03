@@ -18,6 +18,8 @@ import TelephonySection from "@/components/TelephonySection";
 import FAQSection from "@/components/FAQSection";
 import { Pricing } from "@/components/pricing";
 
+
+
 export default function HomePage() {
   return (
     <div className="overflow-x-hidden relative">

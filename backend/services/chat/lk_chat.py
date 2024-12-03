@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Dict, Annotated
+from typing import Dict, Annotated, AsyncGenerator
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 import pickle
@@ -53,18 +53,18 @@ async def question_and_answer(
     question: Annotated[
         str,
         llm.TypeInfo(
-            description="The user's question that needs to be answered"
+            description="The user's point or query to perform RAG search on"
         )
     ]
-) -> str:
+) -> AsyncGenerator[str, None]:
     """
-    Takes the user's question and performs information retrieval search based on the user's question.
+    Perform RAG search on each user point or query.
     Returns relevant information found in the knowledge base.
     """
     try:
         print("\n\n Processing Q&A tool")
         logger.info(f"Processing Q&A for question: {question}")
-        room_name = "agent_ae1d8dc1-ef3a-4b94-98d3-d78f0a4ad494_room_visitor_02c0f9d7-0343-4a18-9800-d74ae75df057"
+        room_name = "agent_1bf662cf-4d01-4c82-b919-8534ad071380_room_visitor_02c0f9d7-0343-4a18-9800-d74ae75df057"
 
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
         agent_metadata: Dict = await get_agent_metadata(agent_id)
@@ -169,7 +169,6 @@ async def fetch_calendar(
         logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
         return "I apologize, but I encountered an error while checking the calendar availability."
 
-
 @llm.ai_callable(
     name="request_personal_data",
     description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
@@ -216,11 +215,10 @@ async def lk_chat_process(message: str, agent_id: str):
 
         features = agent_metadata.get('features', [])
         fnc_ctx = llm.FunctionContext()
-        # Register Q&A function if feature is enabled
-        if 'qa' in features:
-            fnc_ctx._register_ai_function(question_and_answer)
-            print(f"Registered Q&A function")
-            logger.info(f"Registered Q&A function")
+        # Always register Q&A function
+        fnc_ctx._register_ai_function(question_and_answer)
+        print(f"Registered Q&A function")
+        logger.info(f"Registered Q&A function")
 
         if 'lead_gen' in features:
             fnc_ctx._register_ai_function(request_personal_data)

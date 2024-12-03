@@ -8,7 +8,7 @@ from livekit.agents import llm, JobContext
 
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache
-from services.composio import get_calendar_slots
+from services.composio import book_appointment_composio
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -72,6 +72,217 @@ async def question_and_answer(
         logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
         return "I apologize, but I encountered an error while searching for an answer to your question."
 
+""" LEAD GENERATION """
+### TODO: rename to present_form
+@llm.ai_callable(
+    name="request_personal_data",
+    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    auto_retry=False
+)
+async def request_personal_data(
+    message: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+        )
+    ]
+) -> str:
+    logger.info(f"Personal data request triggered with message: {message}")
+
+    
+    return "Form presented to user. Waiting for user to complete and submit form."
+
+""" CALENDAR MANAGEMENT """
+@llm.ai_callable(
+    name="fetch_calendar",
+    description="Fetch available calendar slots for booking appointments or meetings",
+    auto_retry=True
+)
+async def fetch_calendar(
+    date_range: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
+        )
+    ],
+) -> str:
+    """
+    Fetches available calendar slots based on the specified date range and appointment type.
+    Returns formatted information about available time slots.
+    """
+    logger.info(f"Fetching calendar slots for date range: {date_range}")
+    
+    try:
+        # Get the room_name from the current AgentFunctions instance
+        room_name = AgentFunctions.current_room_name
+        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+        user_id: str = agent_metadata['userId']
+
+        free_slots = calendar_cache[user_id]
+
+        return f"Available slots found: {free_slots}"
+        
+    except Exception as e:
+        logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
+        return "I apologize, but I encountered an error while checking the calendar availability."
+
+@llm.ai_callable(
+    name="book_appointment",
+    description="Once user has confirmed appointment details, book an appointment on the user's calendar",
+    auto_retry=True
+)
+async def book_appointment(
+    appointment_details: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The details of the appointment to book, including the date, time, and type of appointment"
+        )
+    ]
+) -> str:
+    """
+    Once user has confirmed appointment details, book an appointment on the user's calendar.
+    Returns a confirmation message about the booked appointment.
+    """
+    logger.info(f"Booking appointment with details: {appointment_details}")
+        # Get the room_name from the current AgentFunctions instance
+    room_name = AgentFunctions.current_room_name
+    agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+    user_id: str = agent_metadata['userId']
+
+    print(f"user_id: {user_id}")
+    print("about to call book_appointment_composio")
+    result = await book_appointment_composio(appointment_details, user_id)
+    print(f"book_appointment_composio result: {result}")
+    return result
+
+""" CALL TRANSFER """
+@llm.ai_callable(
+    name="transfer_call",
+    description="Transfer the call to a different number",
+    auto_retry=True
+)
+async def transfer_call(
+    number: Annotated[str, llm.TypeInfo(description="The number to transfer the call to")]
+) -> str:
+    """
+    Once ready to transfer the call, 
+    Returns a confirmation message about the call transfer.
+    """
+    logger.info(f"tool transfer_call invoked")
+
+
+    return f"Transferring call to {number}"
+
+
+class AgentFunctions(llm.FunctionContext):
+    current_room_name = None  # Class variable to store current room_name
+    
+    def __init__(self, job_ctx):
+        super().__init__()
+        self.job_ctx = job_ctx
+        self.room_name = job_ctx.room.name
+        AgentFunctions.current_room_name = self.room_name  # Store room_name
+
+    async def initialize_functions(self):
+        print("Initializing functions for agent")
+        if not self.room_name.startswith("call-"):
+            print("telephone call detected")
+
+            room_name: str = self.job_ctx.room.name
+            agent_id: str = room_name.split('_')[1]
+            agent_metadata: Dict = await get_agent_metadata(agent_id)
+            features: Dict = agent_metadata.get('features', {})
+            
+        elif self.room_name.startswith("call-"):
+            print("telephone call detected")
+
+        # Always register Q&A function
+        self._register_ai_function(question_and_answer)
+        print(f"Registered Q&A function")
+        logger.info(f"Registered Q&A function")
+
+        print(f"features: {features}")
+
+        # Check if feature exists in dict and is enabled
+        if features.get('lead_gen', {}).get('enabled', False):
+            self._register_ai_function(request_personal_data)
+            print(f"Registered lead generation function")
+            logger.info(f"Registered lead generation function")
+
+        if features.get('appointmentBooking', {}).get('enabled', False):
+            self._register_ai_function(fetch_calendar)
+            print(f"Registered calendar function")
+            logger.info(f"Registered calendar function")
+
+            self._register_ai_function(book_appointment)
+            print(f"Registered book appointment function")
+            logger.info(f"Registered book appointment function")
+
+        if features.get('callTransfer', {}).get('enabled', False):
+            self._register_ai_function(transfer_call)
+            print(f"Registered call transfer function")
+            logger.info(f"Registered call transfer function")
+
+
+async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
+    logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
+    async with aiohttp.ClientSession() as session:
+        try:
+            # First, trigger the chat input form
+            logger.debug("Sending POST request to trigger_show_chat_input endpoint")
+            await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', 
+                             json={'room_name': room_name, 'job_id': job_id, 'participant_identity': participant_identity})
+            
+            await asyncio.sleep(1)
+
+            # Poll for the chat message with a timeout
+            max_attempts = 60  # 60 seconds total (1 second intervals)
+            attempt = 0
+            
+            metadata = ["user_id", "room_name", "participant_identity"]
+
+            while attempt < max_attempts:
+                logger.debug(f"Polling for chat message, attempt {attempt + 1}")
+                response = await session.get(
+                    f'{API_BASE_URL}/conversation/chat_message',
+                    params={'participant_identity': participant_identity}
+                )
+                response_data: List[Dict] = await response.json()
+
+                if response_data and len(response_data) > 0:
+                    print("response_data received from chat_message endpoint:", response_data)
+
+                    chat_message: Dict = response_data[0]
+
+                    # Filter out metadata fields from chat_message
+                    filtered_chat_message = {k: v for k, v in chat_message.items() if k not in metadata}
+                    await send_lead_notification(filtered_chat_message)
+                    print("filtered_chat_message:", filtered_chat_message)
+                    return filtered_chat_message
+                
+                await asyncio.sleep(1)
+                attempt += 1
+            
+            logger.warning("Timeout waiting for chat message")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error in trigger_show_chat_input: {str(e)}", 
+                        extra={'room_name': room_name, 'job_id': job_id}, 
+                        exc_info=True)
+            raise
+
+async def send_lead_notification(chat_message: dict):
+    """ nylas email send here """
+    pass
+
+
+
+
 # @llm.ai_callable(
 #     name="search_products_and_services",
 #     description="Search for products and services in the database when the user inquires about specific offerings, prices, or availability",
@@ -133,148 +344,3 @@ async def question_and_answer(
 #     except Exception as e:
 #         logger.error(f"Error in search_products_and_services: {str(e)}", exc_info=True)
 #         return "Sorry, I encountered an error while searching for products and services."
-
-
-""" LEAD GENERATION """
-### TODO: rename to present_form
-@llm.ai_callable(
-    name="request_personal_data",
-    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
-    auto_retry=False
-)
-async def request_personal_data(
-    message: Annotated[
-        str,
-        llm.TypeInfo(
-            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
-        )
-    ]
-) -> str:
-    logger.info(f"Personal data request triggered with message: {message}")
-
-    
-    return "Form presented to user. Waiting for user to complete and submit form."
-
-
-""" CALENDAR MANAGEMENT """
-@llm.ai_callable(
-    name="fetch_calendar",
-    description="Fetch available calendar slots for booking appointments or meetings",
-    auto_retry=True
-)
-async def fetch_calendar(
-    date_range: Annotated[
-        str,
-        llm.TypeInfo(
-            description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
-        )
-    ],
-) -> str:
-    """
-    Fetches available calendar slots based on the specified date range and appointment type.
-    Returns formatted information about available time slots.
-    """
-    logger.info(f"Fetching calendar slots for date range: {date_range}")
-    
-    try:
-        # Get the room_name from the current AgentFunctions instance
-        room_name = AgentFunctions.current_room_name
-        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        agent_metadata: Dict = await get_agent_metadata(agent_id)
-
-        user_id: str = agent_metadata['userId']
-
-        free_slots = calendar_cache[user_id]
-
-        return f"Available slots found: {free_slots}"
-        
-    except Exception as e:
-        logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
-        return "I apologize, but I encountered an error while checking the calendar availability."
-
-class AgentFunctions(llm.FunctionContext):
-    current_room_name = None  # Class variable to store current room_name
-    
-    def __init__(self, job_ctx):
-        super().__init__()
-        self.job_ctx = job_ctx
-        self.room_name = job_ctx.room.name
-        AgentFunctions.current_room_name = self.room_name  # Store room_name
-
-    async def initialize_functions(self):
-        print("Initializing functions for agent")
-        room_name = self.job_ctx.room.name
-        agent_id = room_name.split('_')[1]
-        agent_metadata = await get_agent_metadata(agent_id)
-        features = agent_metadata.get('features', [])
-        
-        # Always register Q&A function
-        # if 'qa' in features:
-        self._register_ai_function(question_and_answer)
-        print(f"Registered Q&A function")
-        logger.info(f"Registered Q&A function")
-
-        print(f"features: {features}")
-
-        if 'lead_gen' in features:
-            self._register_ai_function(request_personal_data)
-            print(f"Registered lead generation function")
-            logger.info(f"Registered lead generation function")
-
-        if 'app_booking' in features:
-            self._register_ai_function(fetch_calendar)
-            print(f"Registered calendar function")
-            logger.info(f"Registered calendar function")
-
-
-async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
-    logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
-    async with aiohttp.ClientSession() as session:
-        try:
-            # First, trigger the chat input form
-            logger.debug("Sending POST request to trigger_show_chat_input endpoint")
-            await session.post(f'{API_BASE_URL}/conversation/trigger_show_chat_input', 
-                             json={'room_name': room_name, 'job_id': job_id, 'participant_identity': participant_identity})
-            
-            await asyncio.sleep(1)
-
-            # Poll for the chat message with a timeout
-            max_attempts = 60  # 60 seconds total (1 second intervals)
-            attempt = 0
-            
-            metadata = ["user_id", "room_name", "participant_identity"]
-
-            while attempt < max_attempts:
-                logger.debug(f"Polling for chat message, attempt {attempt + 1}")
-                response = await session.get(
-                    f'{API_BASE_URL}/conversation/chat_message',
-                    params={'participant_identity': participant_identity}
-                )
-                response_data: List[Dict] = await response.json()
-
-                if response_data and len(response_data) > 0:
-                    print("response_data received from chat_message endpoint:", response_data)
-
-                    chat_message: Dict = response_data[0]
-
-                    # Filter out metadata fields from chat_message
-                    filtered_chat_message = {k: v for k, v in chat_message.items() if k not in metadata}
-                    await send_lead_notification(filtered_chat_message)
-                    print("filtered_chat_message:", filtered_chat_message)
-                    return filtered_chat_message
-                
-                await asyncio.sleep(1)
-                attempt += 1
-            
-            logger.warning("Timeout waiting for chat message")
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error in trigger_show_chat_input: {str(e)}", 
-                        extra={'room_name': room_name, 'job_id': job_id}, 
-                        exc_info=True)
-            raise
-
-async def send_lead_notification(chat_message: dict):
-    """ nylas email send here """
-    pass

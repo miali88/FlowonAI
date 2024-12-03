@@ -1,22 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { MultiSelect } from "./multiselect_newagent"
-import { useUser } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
-import { AgentFeatures } from './AgentFeatures';
 import styles from './NewAgent.module.css';
-import { LANGUAGE_OPTIONS, VOICE_OPTIONS, AGENT_PURPOSE_OPTIONS } from './workspace/agentSettings';
+import { useUser } from "@clerk/nextjs";
+
+type SetupMethod = 'scratch' | 'quick' | null;
+type AgentType = 'widget' | 'outbound' | 'inbound' | null;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -26,384 +21,445 @@ interface NewAgentProps {
     title: string;
     data_type: string;
   }>;
+  onAgentCreated?: () => void;
+  setSelectedAgent?: (agent: Agent) => void;
 }
 
-type AgentFeatureState = {
-  features: string[];
-  formFields?: {
-    fields: {
-      name: boolean;
-      email: boolean;
-      phone: boolean;
-      company: boolean;
-      jobTitle: boolean;
-      custom: string[];
-    }
-  }
-};
-
-type SetSelectedAgentProps = AgentFeatureState;
-
-interface Item {
-  id: string | number;
-  title: string;
-  data_type?: string;
-  file?: string;
-  voiceProvider?: string;
-}
-
-interface AgentFeaturesRef {
-  getCurrentState: () => AgentFeatureState;
-}
-
-export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentProps & { onAgentCreated?: () => void }) {
+export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedAgent }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    agentName: '',
-    agentPurpose: '',
-    instructions: '',
-    dataSource: [] as Item[],
-    openingLine: '',
-    voice: '',
-    language: '',
-    features: [] as string[],
-    formFields: {
-      fields: {
-        name: true,
-        email: true,
-        phone: false,
-        company: false,
-        jobTitle: false,
-        custom: [] as string[]
-      }
-    }
-  });
+  const [setupMethod, setSetupMethod] = useState<SetupMethod>(null);
+  const [agentType, setAgentType] = useState<AgentType>(null);
+  const [agentName, setAgentName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [responseMessage, setResponseMessage] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<string>("");
-  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("en-GB");
-  const [availableVoices, setAvailableVoices] = useState(VOICE_OPTIONS["en-GB"].map(voice => ({
-    ...voice,
-    title: voice.name
-  })));
-  const agentFeaturesRef = useRef<AgentFeaturesRef>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Move state updates to useEffect
-  useEffect(() => {
-    console.log('Knowledge base items:', knowledgeBaseItems);
-  }, [knowledgeBaseItems]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+  const handleSetupMethodSelect = (method: SetupMethod) => {
+    setSetupMethod(method);
   };
 
-  const handleSelectChange = useCallback((field: string, value: string | Array<{ id: string | number; title: string; data_type?: string }>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const handleVoiceChange = (value: string) => {
-    setSelectedVoice(value);
-    handleSelectChange("voice", value);
+  const handleAgentTypeSelect = (type: AgentType) => {
+    setAgentType(type);
   };
 
-  const handleLanguageChange = (value: string) => {
-    setSelectedLanguage(value);
-    handleSelectChange("language", value);
-    const newVoices = VOICE_OPTIONS[value as keyof typeof VOICE_OPTIONS] || [];
-    setAvailableVoices(newVoices.map(voice => ({
-      ...voice,
-      title: voice.name
-    })));
-    setSelectedVoice(""); // Reset voice selection when language changes
-  };
-
-  const playVoiceSample = (voiceId: string, file: string) => {
-    if (playingVoiceId === voiceId) {
-      // If the clicked voice is currently playing, stop it
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      setPlayingVoiceId(null);
-      return;
+  const handleBack = () => {
+    if (agentName) {
+      setAgentName('');
+    } else if (agentType !== null) {
+      setAgentType(null);
+    } else if (setupMethod !== null) {
+      setSetupMethod(null);
     }
+  };
 
-    console.log("Attempting to play:", file);
+  const getPlaceholderName = () => {
+    switch (agentType) {
+      case 'widget':
+        return 'My Widget Agent';
+      case 'outbound':
+        return 'My Outbound Agent';
+      case 'inbound':
+        return 'My Inbound Agent';
+      default:
+        return 'My Agent';
+    }
+  };
+
+  const handleCreateAgent = async () => {
+    if (!user?.id || !agentName.trim() || !agentType) return;
     
-    // If there's already an audio playing, stop it
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-
-    // Create a new Audio instance or reuse the existing one
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-
-    audioRef.current.src = file;
-    audioRef.current.play()
-      .then(() => {
-        console.log("Audio started playing");
-        setPlayingVoiceId(voiceId);
-      })
-      .catch(error => {
-        console.error("Error playing audio:", error);
-        setPlayingVoiceId(null);
-      });
-
-    // Add an event listener for when the audio finishes playing
-    audioRef.current.onended = () => {
-      console.log("Audio finished playing");
-      setPlayingVoiceId(null);
-    };
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      console.error('User not authenticated');
-      return;
-    }
-
     setIsLoading(true);
-    setResponseMessage("");
+    setError(null);
 
     try {
-      // Get the current state from AgentFeatures
-      const agentFeatureState = agentFeaturesRef.current?.getCurrentState();
-      console.log('AgentFeatureState:', agentFeatureState); // Debug entire state
-      console.log('Features from ref:', agentFeatureState?.features); // Debug features
-      
-      const dataToSend = {
-        ...formData,
-        userId: user.id,
-        features: agentFeatureState?.features || [],
-        formFields: agentFeatureState?.formFields || formData.formFields,
-      };
-
-      console.log('Final dataToSend:', dataToSend); // Debug final payload
-      
       const response = await fetch(`${API_BASE_URL}/livekit/new_agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': user.id,
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify({
+          userId: user.id,
+          agentName: agentName.trim(),
+          agentType: agentType,
+          features: getDefaultFeatures(agentType),
+          dataSource: [],
+          language: 'en-GB',
+          voice: '',
+          openingLine: '',
+        }),
       });
 
-      if (response.ok) {
-        setResponseMessage('Agent created successfully.');
-        // Call the callback to refresh agents
-        onAgentCreated?.();
-        // Close the dialog after a short delay
-        setTimeout(() => {
-          setIsOpen(false);
-        }, 1500);
-      } else {
-        setResponseMessage('Failed to create agent');
+      if (!response.ok) {
+        throw new Error('Failed to create agent');
       }
-    } catch (error) {
-      console.error('Error creating agent:', error);
-      setResponseMessage('Error creating agent');
+
+      const newAgent = await response.json();
+
+      // Close dialog and reset state
+      setIsOpen(false);
+      setSetupMethod(null);
+      setAgentType(null);
+      setAgentName('');
+      
+      // Refresh the agents list
+      onAgentCreated?.();
+
+      // Create a properly formatted agent object with the required properties
+      const formattedAgent: Agent = {
+        id: newAgent.id,
+        agentName: agentName.trim(),
+        agentPurpose: '', // Set a default or get from response
+        dataSource: [],
+        language: 'en-GB',
+        voice: '',
+        openingLine: '',
+        features: getDefaultFeatures(agentType),
+        // Add any other required properties from the Agent interface
+      };
+
+      // Navigate to the workspace by setting the selected agent
+      if (setSelectedAgent) {
+        setSelectedAgent(formattedAgent);
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create agent');
+      console.error('Error creating agent:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const LANGUAGE_OPTIONS_FORMATTED = LANGUAGE_OPTIONS.map(lang => ({
-    id: lang.id,
-    title: lang.name,
-  }));
-
-  const handleFeatureUpdate = (featureData: SetSelectedAgentProps) => {
-    setFormData(prev => ({
-      ...prev,
-      features: featureData.features,
-      formFields: featureData.formFields?.fields ? { fields: featureData.formFields.fields } : prev.formFields
-    }));
+  const getDefaultFeatures = (type: AgentType) => {
+    switch (type) {
+      case 'widget':
+        return {
+          form: true,
+          callTransfer: false,
+          appointmentBooking: false,
+          prospects: false,
+        };
+      case 'outbound':
+        return {
+          form: true,
+          callTransfer: true,
+          appointmentBooking: true,
+          prospects: true,
+        };
+      case 'inbound':
+        return {
+          form: true,
+          callTransfer: true,
+          appointmentBooking: true,
+          prospects: false,
+        };
+      default:
+        return {
+          form: false,
+          callTransfer: false,
+          appointmentBooking: false,
+          prospects: false,
+        };
+    }
   };
+
+  const renderInitialSelection = () => (
+    <div className="grid gap-6">
+      <DialogHeader>
+        <DialogTitle className="text-foreground dark:text-gray-200">Create New Assistant</DialogTitle>
+      </DialogHeader>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
+          onClick={() => handleSetupMethodSelect('scratch')}
+        >
+          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+            <PlusIcon className="w-6 h-6" />
+          </div>
+          <span className="font-semibold">Start from scratch</span>
+          <span className="text-sm text-muted-foreground">Build your AI Assistant from the ground up</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
+          onClick={() => handleSetupMethodSelect('quick')}
+        >
+          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+            <SparklesIcon className="w-6 h-6" />
+          </div>
+          <span className="font-semibold">Quick Assistant Setup</span>
+          <span className="text-sm text-muted-foreground">Use presets to streamline setup & adjust settings</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
+        >
+          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+            <LayoutTemplateIcon className="w-6 h-6" />
+          </div>
+          <span className="font-semibold">Browse our Templates</span>
+          <span className="text-sm text-muted-foreground">Get inspired by our templates to get started</span>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderAgentTypeSelection = () => (
+    <div className="grid gap-6">
+      <DialogHeader>
+        <DialogTitle className="text-foreground dark:text-gray-200">
+          <Button 
+            variant="ghost" 
+            className="mr-2 p-0 h-8 w-8"
+            onClick={handleBack}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+          Choose type of assistant
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="grid grid-cols-1 gap-4">
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={() => handleAgentTypeSelect('outbound')}
+        >
+          <div className="flex items-center gap-4">
+            <ArrowUpRightIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Outbound</span>
+              <span className="text-sm text-muted-foreground">Automate calls within workflows using Zapier, REST API, or HighLevel</span>
+            </div>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={() => handleAgentTypeSelect('inbound')}
+        >
+          <div className="flex items-center gap-4">
+            <ArrowDownLeftIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Inbound</span>
+              <span className="text-sm text-muted-foreground">Manage incoming calls via phone, Zapier, REST API, or HighLevel</span>
+            </div>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={() => handleAgentTypeSelect('widget')}
+        >
+          <div className="flex items-center gap-4">
+            <MessageSquareIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Widget</span>
+              <span className="text-sm text-muted-foreground">Create a widget and easily embed it anywhere in your app</span>
+            </div>
+          </div>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderNameInput = () => (
+    <div className="grid gap-6">
+      <DialogHeader>
+        <DialogTitle className="text-foreground dark:text-gray-200">
+          <Button 
+            variant="ghost" 
+            className="mr-2 p-0 h-8 w-8"
+            onClick={handleBack}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+          Name your assistant
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="grid gap-4">
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            value={agentName}
+            onChange={(e) => setAgentName(e.target.value)}
+            placeholder={getPlaceholderName()}
+            className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          {error && (
+            <span className="text-sm text-red-500">{error}</span>
+          )}
+        </div>
+        <Button 
+          onClick={handleCreateAgent}
+          disabled={!agentName.trim() || isLoading}
+          className="w-full"
+        >
+          {isLoading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating...
+            </>
+          ) : (
+            'Continue'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" onClick={() => setIsOpen(true)}>Create New Agent</Button>
       </DialogTrigger>
-      <DialogContent className={`sm:max-w-[425px] ${styles.glassCard} max-h-[90vh] overflow-y-auto`}>
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle className="text-foreground dark:text-gray-200">Create New Agent</DialogTitle>
-            <DialogDescription className="text-muted-foreground dark:text-gray-400">
-              Fill in the details to create a new agent. Click save when you&apos;re done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {/* Agent Name */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="agentName" className="text-right text-foreground dark:text-gray-200">
-                Agent Name
-              </Label>
-              <Input
-                id="agentName"
-                placeholder="Enter agent name"
-                className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
-                value={formData.agentName}
-                onChange={handleInputChange}
-              />
-            </div>
-            {/* Agent Purpose */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="agentPurpose" className="text-right text-foreground dark:text-gray-200">
-                Agent Purpose
-              </Label>
-              <div className="col-span-3">
-                <MultiSelect
-                  items={AGENT_PURPOSE_OPTIONS}
-                  selectedItems={formData.agentPurpose ? [{ id: formData.agentPurpose, title: AGENT_PURPOSE_OPTIONS.find(opt => opt.id === formData.agentPurpose)?.title || '' }] : []}
-                  onChange={(items) => handleSelectChange("agentPurpose", items[0]?.id as string)}
-                  placeholder="Select agent purpose"
-                  multiSelect={false}
-                />
-              </div>
-            </div>
-            {/* Data Source */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dataSource" className="text-right text-foreground">
-                Data Source
-              </Label>
-              <div className="col-span-3">
-                <MultiSelect 
-                  items={[
-                    { id: 'all', title: 'All Knowledge Base Items', data_type: 'all' },
-                    ...(Array.isArray(knowledgeBaseItems) ? knowledgeBaseItems : [])
-                  ]}
-                  selectedItems={formData.dataSource}
-                  onChange={(selectedItems) => {
-                    // If "All" is selected, clear other selections
-                    const newSelection = selectedItems.some(item => item.id === 'all') 
-                      ? [{ id: 'all', title: 'All Knowledge Base Items', data_type: 'all' }]
-                      : selectedItems;
-                    
-                    setFormData(prev => ({
-                      ...prev,
-                      dataSource: newSelection
-                    }));
-                  }}
-                  multiSelect={true}  // Enable multiselect
-                />
-              </div>
-            </div>
-            {/* Instructions */}
-            {/* <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="instructions" className="text-right text-foreground">
-                Instructions
-              </Label>
-              <Input
-                id="instructions"
-                placeholder="Enter instructions for the agent"
-                className="col-span-3 bg-background text-foreground border-input"
-                value={formData.instructions}
-                onChange={handleInputChange}
-              />
-            </div> */}
-            {/* Opening Line */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="openingLine" className="text-right text-foreground dark:text-gray-200">
-                Opening Line
-              </Label>
-              <Input
-                id="openingLine"
-                placeholder="Enter opening line"
-                className="col-span-3 bg-transparent text-foreground dark:text-gray-200 border-gray-600"
-                value={formData.openingLine}
-                onChange={handleInputChange}
-              />
-            </div>
-            {/* Language Selection */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="language" className="text-right text-foreground dark:text-gray-200">
-                Language
-              </Label>
-              <div className="col-span-3">
-                <MultiSelect
-                  items={LANGUAGE_OPTIONS_FORMATTED}
-                  selectedItems={selectedLanguage ? [{ id: selectedLanguage, title: LANGUAGE_OPTIONS.find(lang => lang.id === selectedLanguage)?.name || '' }] : []}
-                  onChange={(items) => handleLanguageChange(items[0]?.id as string)}
-                  placeholder="Select a language"
-                  multiSelect={false}
-                />
-              </div>
-            </div>
-            {/* Voice Selection */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="voice" className="text-right text-foreground dark:text-gray-200">
-                Voice
-              </Label>
-              <div className="col-span-3">
-                <MultiSelect
-                  items={availableVoices}
-                  selectedItems={selectedVoice ? [availableVoices.find(voice => voice.id === selectedVoice)!] : []}
-                  onChange={(items) => handleVoiceChange(items[0]?.id as string)}
-                  placeholder="Select a voice"
-                  multiSelect={false}
-                />
-              </div>
-            </div>
-            {/* Voice Sample Buttons */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {availableVoices.map((voice) => (
-                <Button
-                  key={voice.id}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => playVoiceSample(voice.id as string, voice.file!)}
-                  className={`${selectedVoice === voice.id ? "border-primary" : ""} ${
-                    playingVoiceId === voice.id ? "bg-primary text-primary-foreground" : ""
-                  }`}
-                >
-                  {playingVoiceId === voice.id ? "Stop" : `Play ${voice.title}`}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="border-t border-border mt-4 pt-4">
-            <AgentFeatures
-              ref={agentFeaturesRef}
-              selectedAgent={{
-                features: formData.features,
-                formFields: formData.formFields
-              }}
-              setSelectedAgent={handleFeatureUpdate} // Pass the handler
-            />
-          </div>
-          <DialogFooter className="mt-8">
-            <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white">
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Agent'
-              )}
-            </Button>
-          </DialogFooter>
-          {responseMessage && (
-            <div className={`mt-4 text-center ${
-              responseMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {responseMessage}
-            </div>
-          )}
-        </form>
+      <DialogContent className={`sm:max-w-[625px] ${styles.glassCard}`}>
+        {setupMethod === null && renderInitialSelection()}
+        {setupMethod === 'scratch' && !agentType && renderAgentTypeSelection()}
+        {setupMethod === 'scratch' && agentType && renderNameInput()}
+        {/* Add quick setup flow here when needed */}
       </DialogContent>
     </Dialog>
-  )
+  );
 }
+
+// Icons
+const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M5 12h14" />
+    <path d="M12 5v14" />
+  </svg>
+);
+
+const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
+const LayoutTemplateIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect width="18" height="7" x="3" y="3" rx="1" />
+    <rect width="9" height="7" x="3" y="14" rx="1" />
+    <rect width="5" height="7" x="16" y="14" rx="1" />
+  </svg>
+);
+
+const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </svg>
+);
+
+const ArrowUpRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M7 17V7h10" />
+    <path d="M7 7l10 10" />
+  </svg>
+);
+
+const ArrowDownLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M17 7L7 17" />
+    <path d="M17 17H7V7" />
+  </svg>
+);
+
+const MessageSquareIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);

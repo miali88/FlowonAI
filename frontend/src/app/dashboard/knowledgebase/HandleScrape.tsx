@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 interface HandleScrapeProps {
   scrapeUrl: string;
@@ -14,20 +14,6 @@ interface HandleScrapeProps {
   setMappedUrls: React.Dispatch<React.SetStateAction<string[]>>;
   selectedUrls: string[];
 }
-
-// Add this type definition at the top of the file
-type ApiError = {
-  response?: {
-    data?: {
-      detail?: string;
-    };
-    status?: number;
-    headers?: Record<string, string>;
-  };
-  request?: XMLHttpRequest;
-  message: string;
-  name: string;
-};
 
 export const handleScrape = async ({
   scrapeUrl,
@@ -86,17 +72,23 @@ export const handleScrape = async ({
     } else {
       throw new Error("Unexpected response format from server");
     }
-  } catch (error) {
-    const e = error as ApiError;
-    console.error("Error scraping URL:", e);
-    setScrapeError(e.response?.data?.detail || e.message || "Failed to scrape URL");
-    setAlertMessage("Failed to scrape URL: " + (e.response?.data?.detail || e.message));
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    console.error("Error scraping URL:", axiosError);
+    
+    const errorMessage = axiosError.response?.data?.detail || 
+                        axiosError.message || 
+                        "Failed to scrape URL";
+    
+    setScrapeError(errorMessage);
+    setAlertMessage("Failed to scrape URL: " + errorMessage);
     setAlertType("error");
   }
 };
 
 // Add this new function
 export const handleScrapeAll = async ({
+  scrapeUrl,
   setScrapeError,
   getToken,
   user,
@@ -107,7 +99,7 @@ export const handleScrapeAll = async ({
   setAlertMessage,
   setAlertType,
   selectedUrls,
-}: Omit<Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'>, 'scrapeUrl'> & { selectedUrls: string[] }) => {
+}: Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'> & { selectedUrls: string[] }) => {
   try {
     console.log('=== Starting handleScrapeAll ===');
     console.log('User ID:', user.id);
@@ -164,23 +156,30 @@ export const handleScrapeAll = async ({
     setScrapeUrl("");
     setAlertMessage("All pages scraped successfully");
     setAlertType("success");
-  } catch (error) {
-    const e = error as ApiError;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
     console.error('=== Error in handleScrapeAll ===');
-    console.error('Error object:', e);
-    console.error('Error name:', e.name);
-    console.error('Error message:', e.message);
-    if (e.response) {
-      console.error('Response status:', e.response.status);
-      console.error('Response headers:', e.response.headers);
-      console.error('Response data:', e.response.data);
+    console.error('Error object:', axiosError);
+    console.error('Error name:', axiosError.name);
+    console.error('Error message:', axiosError.message);
+    
+    if (axiosError.response) {
+      console.error('Response status:', axiosError.response.status);
+      console.error('Response headers:', axiosError.response.headers);
+      console.error('Response data:', axiosError.response.data);
     }
-    if (e.request) {
-      console.error('Request details:', e.request);
+    
+    if (axiosError.request) {
+      console.error('Request details:', axiosError.request);
     }
-    setScrapeError(e.response?.data?.detail || e.message || "Failed to scrape URLs");
-    setAlertMessage("Failed to scrape URLs: " + (e.response?.data?.detail || e.message));
+
+    const errorMessage = axiosError.response?.data?.detail || 
+                        axiosError.message || 
+                        "Failed to scrape URLs";
+                        
+    setScrapeError(errorMessage);
+    setAlertMessage("Failed to scrape URLs: " + errorMessage);
     setAlertType("error");
-    return false; // Add this to indicate failure
+    return false;
   }
 };

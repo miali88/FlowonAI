@@ -1,9 +1,9 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -20,16 +20,18 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-// Remove or comment out the unused interface
-// interface AgentFeature {
-//   id: string;
-//   enabled: boolean;
-//   [key: string]: unknown;
-// }
+interface AgentFeature {
+  id: string;
+  enabled: boolean;
+  [key: string]: any;
+}
 
-interface SetSelectedAgentProps {
-  features: string[];
-  formFields?: FormFields;
+interface SelectedAgent {
+  id: string;
+  features: {
+    [key: string]: AgentFeature;
+  };
+  agentPurposes: string[];
 }
 
 interface AgentFeaturesProps {
@@ -37,7 +39,7 @@ interface AgentFeaturesProps {
     features: string[];
     formFields?: FormFields;
   } | null;
-  setSelectedAgent: (agent: SetSelectedAgentProps) => void;
+  setSelectedAgent: (agent: any) => void;
 }
 
 // Add these interfaces at the top
@@ -52,15 +54,6 @@ interface FormFields {
   };
 }
 
-// Add proper typing for any
-interface SubFeature {
-  id: string;
-  label: string;
-  description: string;
-  hasConfiguration?: boolean;
-  defaultConfig?: FormFields;
-}
-
 // Update the AGENT_FEATURES object to include configuration
 const AGENT_FEATURES = {
   purposes: {
@@ -73,7 +66,6 @@ const AGENT_FEATURES = {
           id: "notifyOnInterest",
           label: "Notify on Interest",
           description: "Your registered email will be used to notify of new leads",
-          hasConfiguration: false
         },
         configureFields: {
           id: "configureFields",
@@ -101,8 +93,26 @@ const AGENT_FEATURES = {
         calendar: {
           id: "calendar",
           label: "Calendar Management",
-          description: "Manage and schedule appointments",
-          hasConfiguration: false
+          description: "Manage and schedule appointments"
+        }
+      }
+    },
+    callTransfer: {
+      id: "callTransfer",
+      label: "Call Transfer",
+      description: "Enable the agent to transfer calls to another number",
+      subFeatures: {
+        transferToNumber: {
+          id: "transferToNumber",
+          label: "Transfer to Number",
+          description: "Specify the number to which calls should be transferred, please include the country code",
+          hasConfiguration: true,
+          defaultConfig: {
+            fields: {
+              number: "",
+              custom: []
+            }
+          }
         }
       }
     }
@@ -112,50 +122,98 @@ const AGENT_FEATURES = {
 // Add feature mapping constant
 const FEATURE_ID_MAP = {
   'prospecting': 'lead_gen',
-  'appointmentBooking': 'app_booking'
+  'appointmentBooking': 'app_booking',
+  'callTransfer': 'call_transfer'
 };
 
 export const AgentFeatures = forwardRef<
-  { getCurrentState: () => SetSelectedAgentProps },
+  { getCurrentState: () => any },
   AgentFeaturesProps
->(({ selectedAgent }, ref) => {
-  // Convert array format back to object for internal state
-  const initialFeatures = Object.fromEntries(
-    Object.keys(AGENT_FEATURES.purposes).map(featureId => [
-      featureId,
-      { 
-        enabled: selectedAgent?.features?.includes?.(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) ?? false 
-      }
-    ])
-  );
+>(({ selectedAgent, setSelectedAgent }, ref) => {
+  const [localFeatures, setLocalFeatures] = useState({
+    callTransfer: {
+      enabled: selectedAgent?.features?.callTransfer?.enabled || false,
+      number: selectedAgent?.features?.callTransfer?.number || '',
+    },
+    appointmentBooking: {
+      enabled: false,
+    },
+    form: {
+      enabled: false,
+      fields: [],
+    },
+    prospects: {
+      enabled: false,
+      notifyOnInterest: false,
+      email: '',
+      sms: '',
+      whatsapp: '',
+    }
+  });
 
-  const [localFeatures, setLocalFeatures] = useState(initialFeatures);
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [openItem, setOpenItem] = useState<string | undefined>(undefined);
+  const [openItem, setOpenItem] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<FormFields | null>(null);
   const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
 
   const handleFeatureToggle = (featureId: string) => {
-    const newFeatures = {
-      ...localFeatures,
+    setLocalFeatures(prev => ({
+      ...prev,
       [featureId]: {
-        ...localFeatures[featureId],
-        enabled: !localFeatures[featureId]?.enabled
+        ...prev[featureId],
+        enabled: !prev[featureId]?.enabled || false
       }
-    };
-    
-    setLocalFeatures(newFeatures);
+    }));
+
+    if (setSelectedAgent && selectedAgent) {
+      const updatedFeatures = {
+        ...selectedAgent.features,
+        [featureId]: {
+          ...selectedAgent.features?.[featureId],
+          enabled: !localFeatures[featureId]?.enabled || false,
+          number: localFeatures[featureId]?.number
+        }
+      };
+      setSelectedAgent({
+        ...selectedAgent,
+        features: updatedFeatures
+      });
+    }
   };
 
-  // Update the function signature to use SubFeature type
-  const handleConfigureInformationCollection = (subFeature: SubFeature) => {
-    setCurrentConfig(
-      selectedAgent?.formFields ?? 
-      subFeature.defaultConfig ?? 
-      null
-    );
+  // Add this function to check if a feature has configuration options
+  const hasConfigurationContent = (featureId: string): boolean => {
+    switch (featureId) {
+      case "prospecting":
+        return true; // If prospecting has configuration options
+      case "appointmentBooking":
+        return true; // If appointment booking has configuration options
+      case "callTransfer":
+        return true; // If call transfer has configuration options
+      // Add other cases as needed
+      default:
+        return false;
+    }
+  };
+
+  // Add this function to handle configuration click
+  const handleConfigureClick = (featureId: string) => {
+    setCurrentFeature(featureId);
+    setIsConfigureDialogOpen(true);
+  };
+
+  // Add this function to handle configuration
+  const handleConfigureInformationCollection = (subFeature: any) => {
+    const config = selectedAgent?.formFields || subFeature.defaultConfig;
+    setCurrentConfig({
+      ...config,
+      fields: {
+        ...config.fields,
+        custom: config.fields.custom || []
+      }
+    });
     setConfigDialogOpen(true);
   };
 
@@ -175,16 +233,62 @@ export const AgentFeatures = forwardRef<
     setCurrentConfig(null);
   };
 
-  // Add useImperativeHandle to expose getCurrentState
+  // Expose the current state to parent
   useImperativeHandle(ref, () => ({
-    getCurrentState: () => ({
-      features: Object.entries(localFeatures)
-        .filter(([, feature]) => feature.enabled)
-        .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
-        .filter(Boolean),
-      formFields: tempConfig || undefined
-    })
+    getCurrentState: () => {
+      // Only include enabled features with their configurations
+      const enabledFeatures = Object.entries(localFeatures).reduce((acc, [key, value]) => {
+        if (value.enabled) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+
+      return enabledFeatures;
+    }
   }));
+
+  // Add effect to sync with parent
+  useEffect(() => {
+    if (selectedAgent?.features?.callTransfer) {
+      setLocalFeatures(prev => ({
+        ...prev,
+        callTransfer: {
+          ...prev.callTransfer,
+          number: selectedAgent.features.callTransfer.number || '',
+          enabled: selectedAgent.features.callTransfer.enabled || false
+        }
+      }));
+    }
+  }, [selectedAgent?.features?.callTransfer]);
+
+  // Update the number input handler
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newNumber = e.target.value;
+    
+    setLocalFeatures(prev => ({
+      ...prev,
+      callTransfer: {
+        ...prev.callTransfer,
+        enabled: true,
+        number: newNumber
+      }
+    }));
+
+    if (setSelectedAgent && selectedAgent) {
+      setSelectedAgent({
+        ...selectedAgent,
+        features: {
+          ...selectedAgent.features,
+          callTransfer: {
+            ...selectedAgent.features?.callTransfer,
+            enabled: true,
+            number: newNumber
+          }
+        }
+      });
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -228,7 +332,15 @@ export const AgentFeatures = forwardRef<
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {subFeature.hasConfiguration && (
+                      {purpose.id === 'callTransfer' ? (
+                        <Input
+                          type="tel"
+                          placeholder="+1234567890"
+                          className="w-48"
+                          value={localFeatures.callTransfer.number}
+                          onChange={handleNumberChange}
+                        />
+                      ) : subFeature.hasConfiguration ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -238,8 +350,7 @@ export const AgentFeatures = forwardRef<
                         >
                           Configure
                         </Button>
-                      )}
-                      {!subFeature.hasConfiguration && (
+                      ) : (
                         <Switch
                           id={subFeature.id}
                           checked={localFeatures[subFeature.id]?.enabled || false}
@@ -437,4 +548,25 @@ export const AgentFeatures = forwardRef<
   );
 });
 
-AgentFeatures.displayName = 'AgentFeatures';
+// Also remove any references in the helper functions
+function getFeatureDescription(featureId: string | null): string {
+  switch (featureId) {
+    case "appointmentBooking":
+      return "Enable the agent to schedule appointments and manage a calendar.";
+    case "prospects":
+      return "Be notified when a prospect shows interest.";
+    default:
+      return "";
+  }
+}
+
+function getFeatureTitle(featureId: string | null): string {
+  switch (featureId) {
+    case "appointmentBooking":
+      return "Appointment Booking";
+    case "prospects":
+      return "Prospects";
+    default:
+      return "";
+  }
+}

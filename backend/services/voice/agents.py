@@ -195,7 +195,10 @@ async def create_agent(data):
     # Rename formFields to form_fields before inserting
     if 'formFields' in data:
         data['form_fields'] = data.pop('formFields')
-        
+
+    if "agentType" in data:
+        data['agentPurpose'] = data.pop('agentType')
+
     new_agent = supabase.table('agents').insert(data).execute()
     
     return new_agent

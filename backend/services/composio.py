@@ -1,13 +1,15 @@
 from typing import Dict
-from datetime import datetime
+from datetime import datetime, timedelta
+import logging
+import pytz
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from composio import ComposioToolSet, App, Composio
 from composio_openai import ComposioToolSet, Action
-
 from openai import OpenAI
-from datetime import datetime, timedelta
-import pytz
 
-import logging
 
 # Initialize the Composio client
 client = Composio()
@@ -43,7 +45,7 @@ async def get_calendar_slots(user_id: str, app: str) -> Dict:
 
     return free_slots
 
-async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
+async def find_free_slots(calendar_data, num_slots=32, duration_minutes=30):
     busy_slots = calendar_data
     
     # Convert to datetime objects and sort
@@ -58,6 +60,7 @@ async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
     current_time = current_time + timedelta(minutes=(30 - current_time.minute % 30))
     
     free_slots = []
+    formatted_slots = {}  # New dictionary to store slots by date
     # Look ahead for 5 business days
     days_to_check = 5
     current_day = current_time.date()
@@ -77,37 +80,114 @@ async def find_free_slots(calendar_data, num_slots=8, duration_minutes=30):
         
         slot_start = day_start
         
+        # Create formatted date string for this day
+        date_str = current_day.strftime("%dth %A %B %Y")
+        formatted_slots[date_str] = []  # Initialize empty list for this date
+        
         # If there are busy slots on this day
         if day_busy_slots:
             for busy_start, busy_end in day_busy_slots:
-                # Check for free time before busy slot
                 while slot_start + timedelta(minutes=duration_minutes) <= busy_start and slot_start + timedelta(minutes=duration_minutes) <= day_end:
-                    free_slots.append({
+                    slot_info = {
                         'start': slot_start.isoformat(),
                         'end': (slot_start + timedelta(minutes=duration_minutes)).isoformat()
-                    })
+                    }
+                    free_slots.append(slot_info)
+                    # Format time without leading zeros and remove ":00" if present
+                    time_str = slot_start.strftime("%I:%M %p").lstrip("0")
+                    if time_str.endswith(":00 AM") or time_str.endswith(":00 PM"):
+                        time_str = time_str.replace(":00", "")
+                    formatted_slots[date_str].append(time_str)
+                    
                     slot_start += timedelta(minutes=duration_minutes)
                     if len(free_slots) >= num_slots:
-                        return free_slots
+                        return {"formatted": formatted_slots}
+                        #return {"raw": free_slots, "formatted": formatted_slots}
                 
-                # Move start time to after the busy slot
                 slot_start = max(slot_start, busy_end)
         
         # Check remaining time until end of business day
         while slot_start + timedelta(minutes=duration_minutes) <= day_end:
-            free_slots.append({
+            slot_info = {
                 'start': slot_start.isoformat(),
                 'end': (slot_start + timedelta(minutes=duration_minutes)).isoformat()
-            })
+            }
+            free_slots.append(slot_info)
+            # Format time without leading zeros and remove ":00" if present
+            time_str = slot_start.strftime("%I:%M %p").lstrip("0")
+            if time_str.endswith(":00 AM") or time_str.endswith(":00 PM"):
+                time_str = time_str.replace(":00", "")
+            formatted_slots[date_str].append(time_str)
+            
             slot_start += timedelta(minutes=duration_minutes)
             if len(free_slots) >= num_slots:
-                return free_slots
+                return {"formatted": formatted_slots}
+        #        return {"raw": free_slots, "formatted": formatted_slots}
         
         # Move to next day
         current_day += timedelta(days=1)
         days_to_check -= 1
     
-    return free_slots
+    #return {"raw": free_slots,"formatted": formatted_slots}
+    return {"formatted": formatted_slots}
+
+
+async def book_appointment_composio(appointment_details: str, user_id: str) -> str:
+    logger.info(f"Starting appointment booking for user_id: {user_id}")
+    print(f"\n\n\n\n\nfunc book_appointment_composio: booking")
+
+    entity_id = user_id
+    openai_client = OpenAI()
+    today = datetime.now().strftime("%Y-%m-%d")
+    current_time = datetime.now().strftime("%H:%M")
+
+    logger.debug(f"Initializing ComposioToolSet for entity_id: {entity_id}")
+    composio_toolset = ComposioToolSet(entity_id=entity_id)
+
+    logger.debug("Getting calendar tools")
+    tools = composio_toolset.get_tools(actions=[Action.GOOGLECALENDAR_CREATE_EVENT])
+
+    task = f"Book an appointment on the user's calendar with the following details: {appointment_details}. Today's date is {today}. Current time is {current_time}."
+    logger.debug(f"Created task: {task}")
+
+    try:
+        logger.debug("Making OpenAI API call")
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            tools=tools,
+            messages=[
+                {"role": "system", "content": f"You are a helpful assistant helping to manage the user's calendar. Today's date is {today}. Current time is {current_time}."},
+                {"role": "user", "content": task},
+            ],
+        )
+        logger.debug("OpenAI API call successful")
+        
+        logger.debug("Handling tool calls")
+        result = composio_toolset.handle_tool_calls(response)
+        
+        # # Add check for empty result
+        # if not result:
+        #     logger.error("No result returned from tool calls")
+        #     return "Appointment booking failed: No response from calendar service"
+            
+        # if result[0].get('successfull') == True:  # Note: also using .get() for safer access
+        #     logger.info("Event created successfully")
+        #     print("Event created successfully")
+        #     return "Appointment booked successfully."
+        # else:
+        #     logger.error(f"Event creation failed: {result}")
+        #     print("Event creation failed")
+        #     return "Appointment booking failed."
+        
+        return result
+
+    except Exception as e:
+        logger.error(f"Unexpected error during appointment booking: {str(e)}")
+        return "Appointment booking failed due to an unexpected error."
+
+
+
+
 
 async def get_notion_database(database_name: str) -> Dict:
     try:
