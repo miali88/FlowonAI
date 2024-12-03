@@ -130,18 +130,27 @@ export const AgentFeatures = forwardRef<
   { getCurrentState: () => any },
   AgentFeaturesProps
 >(({ selectedAgent, setSelectedAgent }, ref) => {
-  // Convert array format back to object for internal state
-  const initialFeatures = Object.fromEntries(
-    Object.keys(AGENT_FEATURES.purposes).map(featureId => [
-      featureId,
-      { 
-        enabled: selectedAgent?.features?.includes?.(FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP]) ?? false,
-        ...(featureId === 'callTransfer' && { number: '' })
-      }
-    ])
-  );
+  const [localFeatures, setLocalFeatures] = useState({
+    callTransfer: {
+      enabled: selectedAgent?.features?.callTransfer?.enabled || false,
+      number: selectedAgent?.features?.callTransfer?.number || '',
+    },
+    appointmentBooking: {
+      enabled: false,
+    },
+    form: {
+      enabled: false,
+      fields: [],
+    },
+    prospects: {
+      enabled: false,
+      notifyOnInterest: false,
+      email: '',
+      sms: '',
+      whatsapp: '',
+    }
+  });
 
-  const [localFeatures, setLocalFeatures] = useState(initialFeatures);
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -150,15 +159,28 @@ export const AgentFeatures = forwardRef<
   const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
 
   const handleFeatureToggle = (featureId: string) => {
-    const newFeatures = {
-      ...localFeatures,
+    setLocalFeatures(prev => ({
+      ...prev,
       [featureId]: {
-        ...localFeatures[featureId],
-        enabled: !localFeatures[featureId]?.enabled
+        ...prev[featureId],
+        enabled: !prev[featureId].enabled
       }
-    };
-    
-    setLocalFeatures(newFeatures);
+    }));
+
+    if (setSelectedAgent && selectedAgent) {
+      const updatedFeatures = {
+        ...selectedAgent.features,
+        [featureId]: {
+          ...selectedAgent.features?.[featureId],
+          enabled: !localFeatures[featureId].enabled,
+          number: localFeatures[featureId].number
+        }
+      };
+      setSelectedAgent({
+        ...selectedAgent,
+        features: updatedFeatures
+      });
+    }
   };
 
   // Add this function to check if a feature has configuration options
@@ -211,16 +233,62 @@ export const AgentFeatures = forwardRef<
     setCurrentConfig(null);
   };
 
-  // Add useImperativeHandle to expose getCurrentState
+  // Expose the current state to parent
   useImperativeHandle(ref, () => ({
-    getCurrentState: () => ({
-      features: Object.entries(localFeatures)
-        .filter(([_, feature]) => feature.enabled)
-        .map(([featureId]) => FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP])
-        .filter(Boolean),
-      formFields: tempConfig || null
-    })
+    getCurrentState: () => {
+      // Only include enabled features with their configurations
+      const enabledFeatures = Object.entries(localFeatures).reduce((acc, [key, value]) => {
+        if (value.enabled) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+
+      return enabledFeatures;
+    }
   }));
+
+  // Add effect to sync with parent
+  useEffect(() => {
+    if (selectedAgent?.features?.callTransfer) {
+      setLocalFeatures(prev => ({
+        ...prev,
+        callTransfer: {
+          ...prev.callTransfer,
+          number: selectedAgent.features.callTransfer.number || '',
+          enabled: selectedAgent.features.callTransfer.enabled || false
+        }
+      }));
+    }
+  }, [selectedAgent?.features?.callTransfer]);
+
+  // Update the number input handler
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newNumber = e.target.value;
+    
+    setLocalFeatures(prev => ({
+      ...prev,
+      callTransfer: {
+        ...prev.callTransfer,
+        enabled: true,
+        number: newNumber
+      }
+    }));
+
+    if (setSelectedAgent && selectedAgent) {
+      setSelectedAgent({
+        ...selectedAgent,
+        features: {
+          ...selectedAgent.features,
+          callTransfer: {
+            ...selectedAgent.features?.callTransfer,
+            enabled: true,
+            number: newNumber
+          }
+        }
+      });
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -269,17 +337,8 @@ export const AgentFeatures = forwardRef<
                           type="tel"
                           placeholder="+1234567890"
                           className="w-48"
-                          value={localFeatures[purpose.id]?.number || ''}
-                          onChange={(e) => {
-                            setLocalFeatures(prev => ({
-                              ...prev,
-                              [purpose.id]: {
-                                ...prev[purpose.id],
-                                enabled: true,
-                                number: e.target.value
-                              }
-                            }));
-                          }}
+                          value={localFeatures.callTransfer.number}
+                          onChange={handleNumberChange}
                         />
                       ) : subFeature.hasConfiguration ? (
                         <Button

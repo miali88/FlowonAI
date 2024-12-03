@@ -68,10 +68,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState('edit');
   const [setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [callTransferConfig, setCallTransferConfig] = useState({
-    primaryNumber: selectedAgent?.features?.callTransfer?.primaryNumber || '',
-    secondaryNumber: selectedAgent?.features?.callTransfer?.secondaryNumber || '',
-  });
   const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
     nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || '',
   });
@@ -105,29 +101,26 @@ const Workspace: React.FC<WorkspaceProps> = ({
     }
 
     // Find the voice provider from VOICE_OPTIONS
-    const voiceProvider = selectedAgent.language && selectedAgent.voice
-      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)?.voiceProvider
+    const voiceOption = selectedAgent.language && selectedAgent.voice
+      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)
       : null;
 
     const agentToSave = {
       ...selectedAgent,
-      voiceProvider, // Add the voice provider
+      voiceProvider: voiceOption?.voiceProvider || null,
+      features: selectedAgent.features, // This will now contain the properly structured features object
       knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
         ? undefined
         : selectedAgent.knowledgeBaseIds
     };
 
-    console.log('Saving agent with data:', agentToSave);
+    console.log('Saving agent with features:', agentToSave.features);
     await handleSaveChanges(agentToSave);
   };
 
   // Synchronize local state with selectedAgent when it changes
   useEffect(() => {
     if (selectedAgent) {
-      setCallTransferConfig({
-        primaryNumber: selectedAgent.features?.callTransfer?.primaryNumber || '',
-        secondaryNumber: selectedAgent.features?.callTransfer?.secondaryNumber || '',
-      });
       setAppointmentBookingConfig({
         nylasApiKey: selectedAgent.features?.appointmentBooking?.nylasApiKey || '',
       });
@@ -332,25 +325,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       </Button>
                     </div>
                   </div>
-
-                  {/* Features Section */}
-                  <div className="my-6">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Features</span>
-                      </div>
-                    </div>
-                  </div>
-
-                    <AgentFeatures
-                      selectedAgent={selectedAgent}
-                      setSelectedAgent={setSelectedAgent}
-                      handleSaveFeatures={handleSaveFeatures}
-                    />
-
                     {/* Add the Retrain Agent button at the bottom */}
                     <div className="pt-6">
                       <Button onClick={handleSaveFeatures}>

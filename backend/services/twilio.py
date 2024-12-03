@@ -46,149 +46,101 @@ async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
     numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
     return numbers.data
 
-# """ WEBHOOK HANDLER """
-# # async def twilio_start_bot(request: Request) -> None:
-# ## dailyco dialin-chatbot here. 
 
-# async def call_init_handler(twil_numb: str, request: Request) -> None:
-#     try:
-#         form = await request.form()
-#         data = dict(form)
-#         logging.info(f"Received data: {data}")
-#         logging.info(f"Attempting to create Twilio event with CallSid: {data.get('CallSid')}")
-#         # logging.info("Twilio event created successfully")
-#     except Exception as e:
-#         logging.error(f"Error in call_init_handler: {str(e)}")
-#         logging.error(f"Error type: {type(e)}")
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# async def store_twilio_data(data: Dict[str, Any]) -> None:
-#     try:
-#         """ TODO: store twilio data in supabase """
-#         pass
-#     except Exception as e:
-#         logging.error(f"Error in store_twilio_data: {str(e)}")
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# async def handle_voice_webhook(agent_id_path: str, request: Request) -> Response:
-#     try:
-#         form = await request.form()
-#         data = dict(form)
-
-#         print('agent type', retellai.get_agent_type(agent_id_path))
-
-#         print('handle twilio data...')
-#         await handle_twilio_logic(agent_id_path, data)
-
-#         # Save Twilio webhook data to Supabase
-#         await supabase_ops.twilio.create(str(data['CallSid']), data)
-
-#         print('retell logic...')
-#         websocket_url = await retellai.handle_retell_logic(agent_id_path)
-
-#         print("creating twilio voice response object..")
-#         response = create_voice_response(websocket_url)
-
-#         return Response(content=str(response), media_type='text/xml')
-#     except ValueError as ve:
-#         print(f"Error in handle_voice_webhook: {ve}")
-#         raise HTTPException(status_code=400, detail=str(ve))
-#     except Exception as e:
-#         print(f"Error in handle_voice_webhook: {e}")
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# def create_voice_response(websocket_url: str) -> VoiceResponse:
-#     """Create the VoiceResponse object."""
-#     try:
-#         response = VoiceResponse()
-#         connect = Connect()
-#         stream = Stream(url=websocket_url)
-#         print('websocket url', websocket_url)
-#         connect.append(stream)
-#         response.append(connect)
-#         response.say('You are now connected to the AI receptionist.')
-#         return response
-#     except Exception as e:
-#         logging.error(f"Error in create_voice_response: {str(e)}")
-#         raise ValueError(f"Failed to create voice response: {str(e)}")
+async def call_admin(self, event: Dict[str, Any], request: Request) -> None: # Twilio call to admin
+    print('\ncall admin function...')
+    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'
+    print('hold_url', hold_url)      
+    print('twilio_callsid', self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"))
+    await twilio.update_call(self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url, 'hold')
 
 
-# """ CALL HANDLING """
-# # 1st agent places IC on hold
-# async def add_to_conference(request: Request) -> JSONResponse:
-#     try:
-#         form_data = await request.form()
-#         print(form_data)
-#         call_sid = form_data['CallSid']
-#         print('INITIAL CALL SID IS', call_sid)
+""" CALL HANDLING """
+# 1st agent places IC on hold
+async def add_to_conference(request: Request) -> JSONResponse:
+    try:
+        form_data = await request.form()
+        print(form_data)
+        call_sid = form_data['CallSid']
+        print('INITIAL CALL SID IS', call_sid)
 
-#         # Convert call_sid to string
-#         call_sid_str = str(call_sid)
+        # Convert call_sid to string
+        call_sid_str = str(call_sid)
 
-#         # Move the initial caller to the conference, will be on hold until someone else joins 
-#         client.calls(call_sid_str).update(
-#             twiml='<Response><Dial><Conference startConferenceOnEnter="false" \
-#                 endConferenceOnExit="true">MyConferenceRoom</Conference></Dial></Response>'
-#         )
-#         print(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
-#         admin_tel_no = await get_admin_tel_number(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
-#         print('admin tel number is', admin_tel_no)
-#         # 2nd agent to admin 
-#         print('calling agent_outbound')
-#         await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no, settings.AGENT_SECOND)
+        # Move the initial caller to the conference, will be on hold until someone else joins 
+        client.calls(call_sid_str).update(
+            twiml='<Response><Dial><Conference startConferenceOnEnter="false" \
+                endConferenceOnExit="true">MyConferenceRoom</Conference></Dial></Response>'
+        )
+        #print(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
+        #admin_tel_no = await get_admin_tel_number(in_memory_cache.get("AGENT_FIRST.case_locator.admin_name"))
+        admin_tel_no = "+447459264413"
+        print('admin tel number is', admin_tel_no)
+        # 2nd agent to admin 
+        print('calling agent_outbound')
+        await agent_outbound(settings.TWILIO_NUMBER, admin_tel_no, settings.AGENT_SECOND)
         
-#         return JSONResponse(content={'message': 'Call moved to conference and agent added'})
-#     except Exception as e:
-#         print(f"Error in add_to_conference: {e}")
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# # 2nd agent to admin
-# async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> None:
-#     try:
-#         print('calling 2nd agent')
-#         client.calls.create(
-#             url=f"{settings.BASE_URL}/api/v1/twilio/twilio-voice-webhook/{agent_id}",
-#             to=to_number, from_=from_number
-#         )
-#         print(f"Call from: {from_number} to: {to_number}")
-#     except Exception as err:
-#         print(f"Error in agent_outbound: {err}")
-
-# # 2nd agent connects IC & admin
-# async def admin_to_conf(event: Event, request: Request) -> None:
-#     # Create the TwiML URL
-#     twiml_url = f"http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"   
-#     response = VoiceResponse()
-#     dial = Dial()
-
-#     # Creating a conference room
-#     dial.conference(
-#         'NoMusicNoBeepRoom',
-#         beep=False,
-#         wait_url= twiml_url,
-#         start_conference_on_enter=True,
-#         end_conference_on_exit=True
-#     )
-#     response.append(dial)
+        return JSONResponse(content={'message': 'Call moved to conference and agent added'})
+    except Exception as e:
+        print(f"Error in add_to_conference: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     
-#     # Update the first call to join the conference
-#     client.calls(in_memory_cache.get("AGENT_FIRST.twilio_callsid")).update(twiml=response)
-#     # Update the second call to join the conference
-#     client.calls(in_memory_cache.get("AGENT_SECOND.twilio_callsid")).update(twiml=response)
 
-#     print(response)
+# 2nd agent to admin
+async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> None:
+    try:
+        print('calling 2nd agent')
+        client.calls.create(
+            url=f"{settings.BASE_URL}/twilio/twilio-voice-webhook/{agent_id}",
+            to=to_number, from_=from_number
+        )
+        print(f"Call from: {from_number} to: {to_number}")
+    except Exception as err:
+        print(f"Error in agent_outbound: {err}")
 
-# async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optional[str]:
-#     """Handle Twilio-specific operations."""
-#     try:
-#         agent_type = retellai.get_agent_type(agent_id_path)
-#         if 'CallSid' in data:
-#             in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
-#             print(in_memory_cache.get_all())
-#         return data.get('CallSid')
-#     except Exception as e:
-#         logging.error(f"Error in handle_twilio_logic: {str(e)}")
-#         raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
+
+
+# 2nd agent connects IC & admin
+async def admin_to_conf(event: Event, request: Request) -> None:
+    # Create the TwiML URL
+    twiml_url = f"http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"   
+    response = VoiceResponse()
+    dial = Dial()
+
+    # Creating a conference room
+    dial.conference(
+        'NoMusicNoBeepRoom',
+        beep=False,
+        wait_url= twiml_url,
+        start_conference_on_enter=True,
+        end_conference_on_exit=True
+    )
+    response.append(dial)
+    
+    # Update the first call to join the conference
+    client.calls(in_memory_cache.get("AGENT_FIRST.twilio_callsid")).update(twiml=response)
+    # Update the second call to join the conference
+    client.calls(in_memory_cache.get("AGENT_SECOND.twilio_callsid")).update(twiml=response)
+
+    print(response)
+
+async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optional[str]:
+    """Handle Twilio-specific operations."""
+    try:
+        agent_type = retellai.get_agent_type(agent_id_path)
+        if 'CallSid' in data:
+            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
+            print(in_memory_cache.get_all())
+        return data.get('CallSid')
+    except Exception as e:
+        logging.error(f"Error in handle_twilio_logic: {str(e)}")
+        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
+
+
+
+
+
+
 
 
 # """ UTILS """

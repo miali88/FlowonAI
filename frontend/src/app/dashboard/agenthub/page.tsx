@@ -102,11 +102,6 @@ const AgentHub = () => {
   const handleSaveChanges = async () => {
     if (!selectedAgent || !userId) return;
 
-    // Find the voice provider from VOICE_OPTIONS
-    const voiceOption = selectedAgent.language && selectedAgent.voice
-      ? VOICE_OPTIONS[selectedAgent.language]?.find(v => v.id === selectedAgent.voice)
-      : null;
-
     try {
       const response = await fetch(`${API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
         method: 'PATCH',
@@ -122,15 +117,10 @@ const AgentHub = () => {
           openingLine: selectedAgent.openingLine,
           language: selectedAgent.language,
           voice: selectedAgent.voice,
-          voiceProvider: voiceOption?.voiceProvider || null,
+          voiceProvider: selectedAgent.voiceProvider,
           instructions: selectedAgent.instructions,
           uiConfig: selectedAgent.uiConfig,
-          features: {
-            callTransfer: selectedAgent.features?.callTransfer,
-            appointmentBooking: selectedAgent.features?.appointmentBooking,
-            form: selectedAgent.features?.form,
-            prospects: selectedAgent.features?.prospects,
-          },
+          features: selectedAgent.features,
         }),
       });
 
