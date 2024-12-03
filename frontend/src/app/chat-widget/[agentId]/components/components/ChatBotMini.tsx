@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import MorphingStreamButton from './MorphingStreamButton';
 import LiveKitEntry from './LiveKitEntry';
 import { Room, LocalParticipant } from 'livekit-client';
@@ -195,18 +195,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         setIsConnecting(false);
       }
     }
-  }, [
-    agentId, 
-    isStreaming, 
-    setIsStreaming, 
-    setIsLiveKitActive, 
-    setToken, 
-    setUrl, 
-    setIsConnecting, 
-    eventBridge, 
-    apiUrl,
-    setIsError
-  ]);
+  }, [agentId, isStreaming, setIsStreaming, setIsLiveKitActive, setToken, setUrl, setIsConnecting, eventBridge, apiUrl]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,12 +265,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
   return (
     <div data-widget="wrapper" className={styles.mainWrapper}>
       <div className={styles.contentContainer}>
-        <div data-widget="chatbox" className={styles.chatContainer}>
-          {isError && (
-            <div className={styles.errorMessage}>
-              {isError}
-            </div>
-          )}
+        <div data-widget="chatbox" className={styles.chatboxContainer}>
           <MorphingStreamButton
             onStreamToggle={handleStreamToggle}
             isStreaming={isStreaming}
@@ -309,6 +293,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
               <LiveKitEntry 
                 token={token} 
                 url={url} 
+                roomName={roomName}
                 isStreaming={isStreaming} 
                 onStreamEnd={onStreamEnd} 
                 onStreamStart={onStreamStart}
@@ -318,7 +303,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
                 options={{
                   adaptiveStream: true,
                   dynacast: true,
-                  element: eventBridge.getLiveKitContainer?.() || undefined
+                  element: eventBridge.getLiveKitContainer?.() || null
                 }}
               />
               {isStreaming && localParticipant && (
