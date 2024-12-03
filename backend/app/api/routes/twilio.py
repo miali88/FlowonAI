@@ -40,14 +40,17 @@ async def twilio_status_update() -> JSONResponse:
 async def add_to_conference_route(request: Request) -> Response:
     try:
         print('\n\n /add_to_conference')
-        #return await add_to_conference(request)
+        return await twilio.add_to_conference(request)
     except Exception as e:
         print(f"Error in add_to_conference: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
 
-@router.api_route("/twiml", methods=['GET', 'POST'])
-async def twiml() -> None:
-    generate_twiml()
+# @router.api_route("/twiml", methods=['GET', 'POST'])
+# async def twiml() -> None:
+#     generate_twiml()
+
+
 
 # @router.post("/call_init/{twil_numb}")
 # async def call_init(twil_numb: str, request: Request) -> HTMLResponse:
