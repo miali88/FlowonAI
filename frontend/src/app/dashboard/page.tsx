@@ -153,11 +153,17 @@ function Header({ activeItem, selectedFeature, isCollapsed, setIsCollapsed }: He
 }
 
 function AdminDashboard() {
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature] = useState<string | null>(null);
   const [isLoading] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    // Redirect to /dashboard/agenthub on mount
+    router.push("/dashboard/agenthub");
+  }, [router]);
 
   useEffect(() => {
     const handleResize = () => {
