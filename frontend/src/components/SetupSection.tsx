@@ -7,23 +7,33 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { useState } from 'react';
+import { Phone, Brain, MessageCircle, CheckCircle } from 'lucide-react';
 
 export const SetupSection = () => {
   const steps = [
     {
       number: "1",
-      title: "Import your data",
-      description: "Our platform provides many ways to connect your data.",
+      icon: <Phone className="w-6 h-6 text-blue-400" />,
+      title: "Voice Interaction Entry Point",
+      description: "Connect via voice through phone, web, or app. Our platform provides many ways to connect your data.",
     },
     {
       number: "2",
-      title: "Specify how the agent should behave",
-      description: "Help the agent learn how it should interact with visitors",
+      icon: <Brain className="w-6 h-6 text-purple-400" />,
+      title: "AI Comprehension Stage",
+      description: "AI processes natural language and understands intent, learning how it should interact with visitors.",
     },
     {
       number: "3",
-      title: "Deploy your AI Agent",
-      description: "Choose how to best serve your AI assistant for maximum impact.",
+      icon: <MessageCircle className="w-6 h-6 text-green-400" />,
+      title: "Intelligent Response Generation",
+      description: "AI retrieves and formulates precise, context-aware responses in real-time.",
+    },
+    {
+      number: "4",
+      icon: <CheckCircle className="w-6 h-6 text-teal-400" />,
+      title: "Resolution/Action Completion",
+      description: "Tasks are fulfilled with seamless workflow integration for maximum impact.",
     },
   ];
 
@@ -47,7 +57,7 @@ export const SetupSection = () => {
                     <span className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full 
                       bg-[#000000b3] border border-[rgba(255,255,255,0.18)]
                       backdrop-blur-[5px] text-white font-medium">
-                      {step.number}
+                      {step.icon}
                     </span>
                     <span className="text-2xl font-semibold text-white hover:underline">{step.title}</span>
                   </div>

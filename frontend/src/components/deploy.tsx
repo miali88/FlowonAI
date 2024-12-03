@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 export function DeploySection() {
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-black">
+    <section className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-8 text-white">
           Deploy Your AI Agent
@@ -65,7 +65,7 @@ export function DeploySection() {
               className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms] text-lg px-6 py-6 hover:bg-primary/90 cursor-pointer"
               type="button"
             >
-              <span>Book a Demo</span>
+              <span>Start handling customer calls automatically</span>
               <ArrowRight
                 size={20}
                 className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"

@@ -4,7 +4,9 @@ import { useState } from "react";
 import { TextShimmer } from "@/components/magicui/text-shimmer";
 import { BentoDemo } from "@/components/AgentDemo";
 import WordRotate from "@/components/ui/word-rotate";
-import { OnboardingButton } from './OnboardingButton';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export function Hero() {
   // Simplified state management - removed unused state
@@ -44,7 +46,23 @@ export function Hero() {
         </p>
 
         <div className="scale-100">
-          <OnboardingButton />
+          <Link 
+            href="https://calendly.com/michael-flowon/30min" 
+            className="inline-block relative z-20"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button 
+              className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms] text-lg px-6 py-6 hover:bg-primary/90 cursor-pointer"
+              type="button"
+            >
+              <span>Transform your website into a 24/7 sales team</span>
+              <ArrowRight
+                size={20}
+                className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
+              />
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -92,36 +110,23 @@ export function Hero() {
           customer service, and more
         </p>
 
-        <OnboardingButton />
-      </div>
-
-      <div className="min-h-[80vh] pt-14 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
-        <div className="flex flex-row items-stretch justify-center">
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0">
-              <div className="absolute inset-0 bg-gradient-radial from-purple-500/50 via-purple-500/20 to-transparent blur-[120px] animate-glow" />
-              <div className="absolute inset-0 bg-gradient-radial from-blue-500/50 via-blue-500/20 to-transparent blur-[120px] animate-pulse-slow delay-150" />
-            </div>
-            
-            <div className="absolute inset-0 opacity-60">
-              <div className="absolute inset-0 bg-gradient-radial from-indigo-500/30 via-transparent to-transparent blur-[100px] animate-pulse-slow" />
-              <div className="absolute inset-0 bg-gradient-radial from-cyan-500/30 via-transparent to-transparent blur-[100px] animate-glow delay-300" />
-            </div>
-          </div>
-          
-          <div className="flex rounded-3xl border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-md">
-            <div className="absolute inset-0">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent" />
-              <div className="absolute inset-0 bg-gradient-radial from-white/[0.08] via-transparent to-transparent" />
-            </div>
-            
-            <div className="w-[600px] p-5 relative">
-            </div>
-            <div className="w-[500px] p-5 relative">
-              <BentoDemo onAgentSelect={handleGridClick} />
-            </div>
-          </div>
-        </div>
+        <Link 
+          href="https://calendly.com/michael-flowon/30min" 
+          className="inline-block relative z-20"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button 
+            className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms] text-lg px-6 py-6 hover:bg-primary/90 cursor-pointer"
+            type="button"
+          >
+            <span>Transform your website into a 24/7 sales team</span>
+            <ArrowRight
+              size={20}
+              className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
+            />
+          </Button>
+        </Link>
       </div>
     </section>
   );

@@ -1,13 +1,22 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { FeaturesSection } from "@/components/features-section";
 import { SetupSection } from "@/components/SetupSection";
-import { ConversationLogs } from "@/components/conversation-logs";
 import { CtaSection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
-import { Information } from "@/components/Information";
+import { KeySection } from "@/components/KeySection";
+import { BenefitsSection } from "@/components/BenefitsSection";
+import ComparisonSection from "@/components/ComparisonSection";
+import LeadGenSection from "@/components/LeadGenSection";
+import IndustrySection from "@/components/IndustrySection";
+import CommunicationSection from "@/components/CommunicationSection";
+import WorkloadSection from "@/components/WorkloadSection";
+import PsychologySection from "@/components/PsychologySection";
+import ROISection from "@/components/ROISection";
+import TelephonySection from "@/components/TelephonySection";
+import FAQSection from "@/components/FAQSection";
+import { Pricing } from "@/components/pricing";
 
 export default function HomePage() {
   return (
@@ -24,11 +33,20 @@ export default function HomePage() {
         />
         <Hero />
         <div className="mx-auto max-w-7xl">
+          <KeySection /> 
           <SetupSection />
           <DeploySection />
-          <Information />
-          <ConversationLogs />
-          <FeaturesSection />
+          <BenefitsSection />
+          <ComparisonSection />
+          <LeadGenSection />
+          <IndustrySection />
+          <CommunicationSection />
+          <WorkloadSection />
+          <PsychologySection />
+          <ROISection />  
+          <TelephonySection />
+          <FAQSection />
+          <Pricing />
           <CtaSection />
         </div>
       </main>
