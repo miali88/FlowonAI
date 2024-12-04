@@ -80,7 +80,7 @@ async def entrypoint(ctx: JobContext):
     try:
         """ TEL CALL INIT """
         if room_name.startswith("call-"):
-            print("telephone call detected")
+            print("entrypoint - telephone call detected")
 
             async def get_agent_id(room_name: str):
                 import json
@@ -98,7 +98,9 @@ async def entrypoint(ctx: JobContext):
                 try:
                     with open('backend/call_data.json', 'r') as f:
                         call_data_from_file = json.load(f)
-                    twilio_number = call_data_from_file.get(room_name)
+                    # Extract twilio_number from the dictionary structure
+                    call_metadata = call_data_from_file.get(room_name, {})
+                    twilio_number = call_metadata.get('twilio_phone_number')
                 except FileNotFoundError:
                     print("call_data.json not found")
                     twilio_number = None
