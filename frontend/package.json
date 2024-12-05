@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.4.1",
+    "@clerk/nextjs": "^6.6.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@frank-mayer/react-tag-cloud": "^1.2.1",
@@ -53,6 +53,7 @@
     "embla-carousel-react": "^8.3.0",
     "flag-icons": "^7.2.3",
     "framer-motion": "^11.11.17",
+    "gsap": "^3.12.5",
     "livekit-client": "^2.5.1",
     "livekit-server-sdk": "^2.6.1",
     "lottie-react": "^2.4.0",

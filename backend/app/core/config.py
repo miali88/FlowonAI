@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
 
-    BASE_URL: str = os.getenv("PUBLIC_BASE_URL")
+    BASE_URL: str = os.getenv("API_BASE_URL")
     #BASE_URL: str = "http://localhost:8000"
 
    
