@@ -2,100 +2,35 @@ class ChatWidget {
   constructor(config = {}) {
     this.config = {
       agentId: config.agentId || 'null',
-      domain: config.domain || 'http://localhost:3001',
+      domain: config.domain || 'http://localhost:5173',
       position: config.position || 'right',
     };
     
-    this.isOpen = false;
     this.init();
+    this.setupMessageListener();
   }
 
   init() {
     // Basic styles
     const styles = `
-      .chat-widget-button {
-        position: fixed;
-        ${this.config.position}: 20px;
-        bottom: 20px;
-        width: 50px;
-        height: 50px;
-        background: #8b5cf6;
-        border-radius: 50%;
-        cursor: pointer;
-        z-index: 9999;
-        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
-        transform: scale(1);
-        animation: pulse 2s infinite;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-      }
-
-      .chat-widget-icon {
-        width: 24px;
-        height: 24px;
-      }
-
-      .chat-widget-close-icon {
-        display: none;
-        font-size: 24px;
-        font-weight: bold;
-      }
-
-      .chat-widget-button-active .chat-widget-mic-icon {
-        display: none;
-      }
-
-      .chat-widget-button-active .chat-widget-close-icon {
-        display: block;
-      }
-
-      .chat-widget-button-active {
-        animation: none !important;
-        transform: scale(1) !important;
-        box-shadow: none !important;
-      }
-
-      .chat-widget-button:hover:not(.chat-widget-button-active) {
-        transform: scale(1.1);
-      }
-
-      @keyframes pulse {
-        0% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
-        }
-        
-        70% {
-          transform: scale(1);
-          box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
-        }
-        
-        100% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
-        }
-      }
-
       .chat-widget-container {
         position: fixed;
         ${this.config.position}: 20px;
-        bottom: 80px;
-        width: 380px;
-        height: 550px;
+        bottom: 20px;
+        width: 250px;
+        height: 100px;
         background: white;
-        border-radius: 10px;
-        display: none;
+        border-radius: 16px;
+        display: block;
         z-index: 9999;
+        border: 1px solid #ccc;
       }
 
       .chat-widget-iframe {
         width: 100%;
         height: 100%;
         border: none;
-        border-radius: 10px;
+        border-radius: 16px;
       }
 
       @media (max-width: 640px) {
@@ -104,11 +39,12 @@ class ChatWidget {
           height: 100vh;
           ${this.config.position}: 0;
           bottom: 0;
-          border-radius: 10px 10px 0 0;
+          border-radius: 16px 16px 0 0;
+          border: 1px solid #ccc;
         }
         
         .chat-widget-iframe {
-          border-radius: 10px 10px 0 0;
+          border-radius: 16px 16px 0 0;
         }
       }
     `;
@@ -116,18 +52,6 @@ class ChatWidget {
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
-
-    // Create button with icons
-    this.button = document.createElement('div');
-    this.button.className = 'chat-widget-button';
-    this.button.innerHTML = `
-      <svg class="chat-widget-icon chat-widget-mic-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-      </svg>
-      <svg class="chat-widget-icon chat-widget-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    `;
 
     // Create container
     this.container = document.createElement('div');
@@ -137,30 +61,43 @@ class ChatWidget {
     this.container.innerHTML = `
       <iframe 
         class="chat-widget-iframe"
-        src="${this.config.domain}/chat-widget/${this.config.agentId}"
+        src="${this.config.domain}?agentId=${this.config.agentId}"
         allow="microphone; camera"
-        sandbox="allow-same-origin allow-scripts allow-forms"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        crossorigin="anonymous"
       ></iframe>
     `;
 
-    // Add click handler
-    this.button.addEventListener('click', () => this.toggleChat());
-
-    // Add to DOM
-    document.body.appendChild(this.button);
+    // Add to DOM (only the container)
     document.body.appendChild(this.container);
   }
 
-  toggleChat() {
-    this.isOpen = !this.isOpen;
-    this.container.style.display = this.isOpen ? 'block' : 'none';
-    
-    // Toggle animation class
-    if (this.isOpen) {
-      this.button.classList.add('chat-widget-button-active');
-    } else {
-      this.button.classList.remove('chat-widget-button-active');
-    }
+  setupMessageListener() {
+    window.addEventListener('message', (event) => {
+      const expectedDomain = window.location.origin;
+      console.log('Received message:', event.data);
+      console.log('Message origin:', event.origin);
+      console.log('Expected domain:', expectedDomain);
+
+      // TODO: should we check the origin?
+      // if (event.origin !== expectedDomain) {
+      //   console.log('Origin mismatch - message ignored');
+      //   return;
+      // }
+
+      if (event.data.type === 'SHOW_FORM_FIELDS') {
+        console.log('Showing form fields - adjusting height to 400px');
+        this.container.style.height = '400px';
+        this.container.style.width = '350px';
+
+      } else if (event.data.type === 'HIDE_FORM_FIELDS') {
+        console.log('Hiding form fields - adjusting height to 100px');
+        this.container.style.height = '100px';
+        this.container.style.width = '250px';
+      } else {
+        console.log('Message type not recognized:', event.data.type);
+      }
+    });
   }
 }
 
