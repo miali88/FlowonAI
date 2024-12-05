@@ -1,0 +1,15 @@
+</div>
+<div id="embedded-chatbot-container"></div>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const rawAgentId = urlParams.get('agentId');
+  const agentId = rawAgentId || 'default-agent';
+
+  window.embeddedChatbotConfig = {
+    agentId,
+    domain: window.location.origin
+  };
+  
+  console.log('Chatbot config:', window.embeddedChatbotConfig);
+</script>
+<script type="module" src="/src/main.tsx"></script>

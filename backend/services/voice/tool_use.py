@@ -76,19 +76,19 @@ async def question_and_answer(
 ### TODO: rename to present_form
 @llm.ai_callable(
     name="request_personal_data",
-    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    description="Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback",
     auto_retry=False
 )
 async def request_personal_data(
     message: Annotated[
         str,
         llm.TypeInfo(
-            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+            description="The message from the assistant requesting the user's personal details, or the user wishing to speak to someone, or the user requesting a callback"
         )
     ]
 ) -> str:
     logger.info(f"Personal data request triggered with message: {message}")
-
+    """ Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback """
     
     return "Form presented to user. Waiting for user to complete and submit form."
 

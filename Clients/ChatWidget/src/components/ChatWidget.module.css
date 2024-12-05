@@ -1,0 +1,295 @@
+.widgetWrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatContainer {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatbox {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 60px;
+}
+
+.streamButtonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 80px;
+}
+
+.streamButton {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  z-index: 2;
+}
+
+.streamButtonRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--widget-bg-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  border-top: 1px solid var(--widget-border-color);
+  z-index: 100;
+}
+
+.footerInner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  gap: 12px;
+}
+
+.footerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+.footerLogo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: flex;
+}
+
+.footerText {
+  font-size: 14px;
+  color: var(--widget-text-color);
+  display: flex;
+  align-items: center;
+}
+
+.privacyText {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.streamStatus {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.mainWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.contentContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatboxContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.toggleContainer {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--widget-border-color);
+  background: var(--widget-bg-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.toggleButton.active {
+  background: var(--widget-primary-color);
+  color: white;
+}
+
+.toggleIcon {
+  font-size: 16px;
+}
+
+.toggleText {
+  font-size: 14px;
+}
+
+.messageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.messageBubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  word-wrap: break-word;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background-color: var(--widget-primary-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.assistantMessage {
+  align-self: flex-start;
+  background-color: #f0f0f0;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.inputContainer {
+  position: relative;
+  padding: 12px 20px;
+  background: var(--widget-bg-color);
+  border-top: 1px solid var(--widget-border-color);
+  z-index: 100;
+}
+
+.chatForm {
+  display: flex;
+  gap: 12px;
+}
+
+.chatInput {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--widget-border-color);
+  background: white;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.chatInput:focus {
+  border-color: var(--widget-primary-color);
+}
+
+.sendButton {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--widget-primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.sendButton:hover {
+  opacity: 0.9;
+}
+
+.formContainer {
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.formField {
+  margin-bottom: 15px;
+}
+
+.formField label {
+  color: #333;  /* Darker text for better contrast */
+}
+
+.formField input {
+  background: #ffffff;  /* White input background */
+  border: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.submitButton {
+  background: #333;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.submitButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+}

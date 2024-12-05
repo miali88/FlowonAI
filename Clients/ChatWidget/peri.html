@@ -950,23 +950,18 @@ var wpcf7 = {"api":{"root":"https:\/\/www.periperi.co.uk\/wp-json\/","namespace"
 <script>
 	// Store config in window object so it's accessible to other scripts
 	window.chatConfig = {
-	  agentId: 'a14205e6-4b73-43d0-90f8-ea0a38da0112',
-	  domain: 'https://flowon.ai/clients'
+	  agentId: 'a93ef199-3f74-4ab0-ac62-6284526d33d0',
+	  domain: 'https://flowon.ai'
 	};
-
-	// Wait for DOM to be fully loaded
-	document.addEventListener('DOMContentLoaded', function() {
-	  // Use the domain from config for both script source and chat widget
-	  const scriptEl = document.createElement('script');
-	  scriptEl.src = 'https://5231de20.flowonwidget.pages.dev/iframeChat.min.js';
-	  document.body.appendChild(scriptEl);
-	  
-	  scriptEl.onload = function() {
-	    new ChatWidget(window.chatConfig);
-	  };
-	});
-</script>
-
+	// Use the domain from config for both script source and chat widget
+	const scriptEl = document.createElement('script');
+	scriptEl.src = 'https://98bbeefe.flowonwidget.pages.dev/iframeChat.min.js';
+	document.body.appendChild(scriptEl);
+	
+	scriptEl.onload = function() {
+	  new ChatWidget(window.chatConfig);
+	};
+  </script>
 </body>
 </html>
 
