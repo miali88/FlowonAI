@@ -9,6 +9,7 @@ from services.db.supabase_services import supabase_client
 from app.core.config import settings
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
+from twilio.base.exceptions import TwilioRestException
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 # Add this near the top of the file, after imports
@@ -46,13 +47,35 @@ async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
     numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
     return numbers.data
 
-
-async def call_admin(self, event: Dict[str, Any], request: Request) -> None: # Twilio call to admin
-    print('\ncall admin function...')
-    hold_url = f'{settings.BASE_URL}/api/v1/twilio/add_to_conference'
-    print('hold_url', hold_url)      
-    print('twilio_callsid', self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"))
-    await twilio.update_call(self.in_memory_cache.get("AGENT_FIRST.twilio_callsid"), hold_url, 'hold')
+async def call_admin(call_sid: str) -> None:
+    try:
+        print('\ncall admin function...')
+        print("settings.BASE_URL", settings.BASE_URL)
+        hold_url = f'{settings.BASE_URL}/twilio/add_to_conference'
+        print('hold_url', hold_url)     
+        print('call_sid', call_sid)
+        
+        # Validate call_sid format
+        if not call_sid or not call_sid.startswith('CA'):
+            raise ValueError(f"Invalid call SID format: {call_sid}")
+            
+        # Try update directly without fetching first
+        client.calls(call_sid).update(
+            url=hold_url,
+            method='POST'
+        )
+        
+        print(f"Successfully updated call {call_sid} to URL {hold_url}")
+        
+    except TwilioRestException as e:
+        print(f"Twilio error: {e.code} - {e.msg}")
+        print(f"More error details: {e.details}")
+        # Log the full error for debugging
+        print(f"Full error: {vars(e)}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        raise
 
 
 """ CALL HANDLING """
@@ -175,16 +198,6 @@ async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optio
 #     except Exception as err:
 #         print(f"Error in register_url: {err}")
 
-# async def update_call(call_sid: str, new_url: str, instruction: str) -> None:
-#     try:
-#         if instruction == 'hold':
-#             print('_+_ Call is being held')
-#             client.calls(call_sid).update(url=new_url, method='POST')
-#         if call_sid == None:
-#             print('call_sid is None')
-#             return None
-#     except Exception as e:
-#         print(f"Error in update_call: {e}")
 
 # def cleanup() -> None:
 #     print("\nCleaning up before exit...")

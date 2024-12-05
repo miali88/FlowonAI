@@ -7,6 +7,10 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
         return [i.strip() for i in v.split(",")]
@@ -53,7 +57,7 @@ class Settings(BaseSettings):
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
 
-    BASE_URL: str = "https://internally-wise-spaniel.eu.ngrok.io"
+    BASE_URL: str = os.getenv("PUBLIC_BASE_URL")
     #BASE_URL: str = "http://localhost:8000"
 
    

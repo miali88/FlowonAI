@@ -7,9 +7,9 @@ from livekit.agents import llm, JobContext
 
 
 from services.chat.chat import similarity_search
-from services.cache import get_agent_metadata, calendar_cache
+from services.cache import get_agent_metadata, calendar_cache, agent_metadata_cache
 from services.composio import book_appointment_composio
-
+from services import twilio
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,19 +76,19 @@ async def question_and_answer(
 ### TODO: rename to present_form
 @llm.ai_callable(
     name="request_personal_data",
-    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    description="Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback",
     auto_retry=False
 )
 async def request_personal_data(
     message: Annotated[
         str,
         llm.TypeInfo(
-            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+            description="The message from the assistant requesting the user's personal details, or the user wishing to speak to someone, or the user requesting a callback"
         )
     ]
 ) -> str:
     logger.info(f"Personal data request triggered with message: {message}")
-
+    """ Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback """
     
     return "Form presented to user. Waiting for user to complete and submit form."
 
@@ -159,6 +159,7 @@ async def book_appointment(
     print(f"book_appointment_composio result: {result}")
     return result
 
+
 """ CALL TRANSFER """
 @llm.ai_callable(
     name="transfer_call",
@@ -166,16 +167,31 @@ async def book_appointment(
     auto_retry=True
 )
 async def transfer_call(
-    number: Annotated[str, llm.TypeInfo(description="The number to transfer the call to")]
+    ready_to_transfer: bool
 ) -> str:
     """
     Once ready to transfer the call, 
     Returns a confirmation message about the call transfer.
     """
+    print("\n\n\n\n tool transfer_call invoked")
     logger.info(f"tool transfer_call invoked")
+    room_name = AgentFunctions.current_room_name
+
+    with open('backend/call_data.json', 'r') as f:
+        call_data_from_file = json.load(f)
+    # Extract twilio_number from the dictionary structure
+    call_metadata = call_data_from_file.get(room_name, {})
+    call_sid = call_metadata.get('twilio_call_sid')
+    print(f"account_sid: {call_metadata.get('twilio_account_sid')}")
+
+    await twilio.call_admin(call_sid)
+
+    if ready_to_transfer:
+        return f"Transferring now"
+    else:
+        return f"Not ready to transfer yet"
 
 
-    return f"Transferring call to {number}"
 
 
 class AgentFunctions(llm.FunctionContext):
@@ -189,23 +205,65 @@ class AgentFunctions(llm.FunctionContext):
 
     async def initialize_functions(self):
         print("Initializing functions for agent")
+        features = {}  # Initialize features with empty dict as default
+        
+        """ extracting features dict from agent_metadata """
         if not self.room_name.startswith("call-"):
-            print("telephone call detected")
-
             room_name: str = self.job_ctx.room.name
             agent_id: str = room_name.split('_')[1]
             agent_metadata: Dict = await get_agent_metadata(agent_id)
             features: Dict = agent_metadata.get('features', {})
-            
+        
         elif self.room_name.startswith("call-"):
-            print("telephone call detected")
+            room_name: str = self.job_ctx.room.name
+            print("initialize functions - telephone call detected")
+
+            async def get_agent_id(room_name: str):
+                print("\n\n initialize functions - about to get agent_id")
+                import json
+                
+                # Add current directory printing
+                print("Current working directory:", os.getcwd())
+                
+                def get_agent_id_by_phone(data, phone_number):
+                    for agent in data:
+                        if agent.get('assigned_telephone') == phone_number:
+                            return agent.get('id')
+                    return None
+                
+                try:
+                    with open('backend/call_data.json', 'r') as f:
+                        call_data_from_file = json.load(f)
+                    # Extract twilio_number from the dictionary structure
+                    call_metadata = call_data_from_file.get(room_name, {})
+                    twilio_number = call_metadata.get('twilio_phone_number')
+                except FileNotFoundError:
+                    print("call_data.json not found")
+                    twilio_number = None
+                except json.JSONDecodeError:
+                    print("Error decoding call_data.json")
+                    twilio_number = None
+                except Exception as e:
+                    print(f"Error reading call_data.json: {str(e)}")
+                    twilio_number = None
+
+                print(f"\nroom_name: {room_name}")
+                print(f"twilio_number from file: {twilio_number}")
+                agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
+                print(f"agent_id: {agent_id}")
+                return agent_id
+        
+            agent_id = await get_agent_id(room_name)
+            agent_metadata: Dict = await get_agent_metadata(agent_id)
+            features: Dict = agent_metadata.get('features', {})
+
+        """ registering the feature functions """
+        print(f"features: {features}")
 
         # Always register Q&A function
         self._register_ai_function(question_and_answer)
         print(f"Registered Q&A function")
         logger.info(f"Registered Q&A function")
-
-        print(f"features: {features}")
 
         # Check if feature exists in dict and is enabled
         if features.get('lead_gen', {}).get('enabled', False):
@@ -226,6 +284,7 @@ class AgentFunctions(llm.FunctionContext):
             self._register_ai_function(transfer_call)
             print(f"Registered call transfer function")
             logger.info(f"Registered call transfer function")
+
 
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):

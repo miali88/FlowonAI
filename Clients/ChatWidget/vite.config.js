@@ -5,7 +5,8 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
-    cors: true
+    cors: true,
+    historyApiFallback: true
   },
   build: {
     outDir: 'dist',
@@ -13,7 +14,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        wecreate: 'src/pages/wecreate/index.html',
       }
     }
   },
