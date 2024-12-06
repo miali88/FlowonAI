@@ -1,0 +1,9 @@
+{
+    "trunk": {
+    "name": "My outbound trunk",
+    "address": "flowon.pstn.twilio.com",
+    "numbers": ["+447723180506"],
+    "auth_username": "flowon_outbound",
+    "auth_password": "9gHQBC@JNHe@VrJ"
+    }
+}

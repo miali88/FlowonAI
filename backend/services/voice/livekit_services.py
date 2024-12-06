@@ -177,14 +177,18 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             logger.error(f"Agent not found: {agent_id}")
             raise ValueError(f"Agent {agent_id} not found")
             
-        logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}, provider={agent.get('voiceProvider')}")
+        # Log full agent configuration for debugging
+        logger.debug(f"Full agent configuration: {agent}")
         
-        # Add validation for required agent fields
+        # Add validation for required agent fields with detailed logging
         required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
-        for field in required_fields:
-            if not agent.get(field):
-                logger.error(f"Missing required field: {field}")
-                raise ValueError(f"Agent configuration missing required field: {field}")
+        missing_fields = [field for field in required_fields if not agent.get(field)]
+        
+        if missing_fields:
+            error_msg = f"Agent configuration missing required fields: {', '.join(missing_fields)}"
+            logger.error(error_msg)
+            logger.error(f"Current agent configuration: {agent}")
+            raise ValueError(error_msg)
 
         logger.info("Creating voice assistant with configuration")
         print("Creating voice assistant with configuration")

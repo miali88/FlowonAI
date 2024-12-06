@@ -5,11 +5,10 @@ from dotenv import load_dotenv
 
 from livekit.agents import llm, JobContext
 
-
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache, agent_metadata_cache
 from services.composio import book_appointment_composio
-from services import twilio
+
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -175,33 +174,49 @@ async def transfer_call(
     """
     print("\n\n\n\n tool transfer_call invoked")
     logger.info(f"tool transfer_call invoked")
+    from services.outbound_livekit import initiate_outbound_call
+
     room_name = AgentFunctions.current_room_name
+    
+    # Get agent metadata to access transfer number
+    agent_id = room_name.split('_')[1]  # Extract agent_id from room name
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
+    
+    # Get transfer number from features
+    transfer_number = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
+    if not transfer_number:
+        return "Error: No transfer number configured"
 
     with open('backend/call_data.json', 'r') as f:
         call_data_from_file = json.load(f)
-    # Extract twilio_number from the dictionary structure
+    # Extract call metadata from the dictionary structure
     call_metadata = call_data_from_file.get(room_name, {})
-    call_sid = call_metadata.get('twilio_call_sid')
-    print(f"account_sid: {call_metadata.get('twilio_account_sid')}")
 
-    await twilio.call_admin(call_sid)
+    # Get job_ctx from AgentFunctions class
+    job_ctx = AgentFunctions.current_job_ctx
 
-    if ready_to_transfer:
-        return f"Transferring now"
-    else:
-        return f"Not ready to transfer yet"
+    await initiate_outbound_call(
+        job_ctx=job_ctx,  # Pass the job_ctx from AgentFunctions
+        room_name=room_name,
+        participant_identity="testies",
+        participant_name="besties",
+        sip_call_to=transfer_number,
+        agent_id=agent_id
+    )
 
-
+    return f"Call transfer initiated to {transfer_number}"
 
 
 class AgentFunctions(llm.FunctionContext):
     current_room_name = None  # Class variable to store current room_name
+    current_job_ctx = None    # Add class variable to store job_ctx
     
     def __init__(self, job_ctx):
         super().__init__()
         self.job_ctx = job_ctx
         self.room_name = job_ctx.room.name
         AgentFunctions.current_room_name = self.room_name  # Store room_name
+        AgentFunctions.current_job_ctx = job_ctx  # Store job_ctx
 
     async def initialize_functions(self):
         print("Initializing functions for agent")
@@ -226,10 +241,13 @@ class AgentFunctions(llm.FunctionContext):
                 print("Current working directory:", os.getcwd())
                 
                 def get_agent_id_by_phone(data, phone_number):
+                    if phone_number is None:
+                        raise ValueError("No phone number found")
                     for agent in data:
                         if agent.get('assigned_telephone') == phone_number:
                             return agent.get('id')
                     return None
+                
                 
                 try:
                     with open('backend/call_data.json', 'r') as f:
@@ -249,13 +267,21 @@ class AgentFunctions(llm.FunctionContext):
 
                 print(f"\nroom_name: {room_name}")
                 print(f"twilio_number from file: {twilio_number}")
-                agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
-                print(f"agent_id: {agent_id}")
-                return agent_id
+                try:
+                    agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
+                    print(f"agent_id: {agent_id}")
+                except ValueError as e:
+                    print(f"Error getting agent_id for phone {twilio_number}: {str(e)}")
+                    # Depending on your needs, you might want to:
+                    # - return an error response
+                    # - raise the error up the stack
+                    # - use a default value
+                    raise  # Re-raise the exception if you want it handled by upper layers
         
             agent_id = await get_agent_id(room_name)
             agent_metadata: Dict = await get_agent_metadata(agent_id)
             features: Dict = agent_metadata.get('features', {})
+
 
         """ registering the feature functions """
         print(f"features: {features}")
@@ -284,7 +310,6 @@ class AgentFunctions(llm.FunctionContext):
             self._register_ai_function(transfer_call)
             print(f"Registered call transfer function")
             logger.info(f"Registered call transfer function")
-
 
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
