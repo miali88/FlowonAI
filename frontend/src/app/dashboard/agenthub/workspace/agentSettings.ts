@@ -11,12 +11,9 @@ export const LANGUAGE_OPTIONS = [
   
   // Agent Purpose Options
 export const AGENT_PURPOSE_OPTIONS = [
-  { id: "prospecting", title: "Prospecting" },
-  { id: "onboarding", title: "Onboarding" },
-  { id: "receptionist", title: "Receptionist" },
-  { id: "question-answer", title: "Question & Answer" },
-  { id: "customer-service", title: "Customer Service" },
-  { id: "appointment-booking", title: "Appointment Booking" },
+  { id: "custom", title: "Custom" },
+  { id: "lead-gen", title: "Lead Gen" },
+  { id: "feedback", title: "Feedback" },
 ];
   
   // Voice Options

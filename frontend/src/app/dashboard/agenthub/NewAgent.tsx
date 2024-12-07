@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/dialog"
 import styles from './NewAgent.module.css';
 import { useUser } from "@clerk/nextjs";
+import { Agent } from "./AgentCards";
 
-type SetupMethod = 'scratch' | 'quick' | null;
+type SetupMethod = 'scratch' | 'quick' | 'template' | 'name' | null;
 type AgentType = 'widget' | 'outbound' | 'inbound' | null;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -25,6 +26,11 @@ interface NewAgentProps {
   setSelectedAgent?: (agent: Agent) => void;
 }
 
+interface FeatureConfig {
+  enabled: boolean;
+  // Add other properties if needed
+}
+
 export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedAgent }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +42,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
 
   const handleSetupMethodSelect = (method: SetupMethod) => {
     setSetupMethod(method);
+    setAgentType(null);
   };
 
   const handleAgentTypeSelect = (type: AgentType) => {
@@ -83,7 +90,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
           agentName: agentName.trim(),
           agentType: agentType,
           features: getDefaultFeatures(agentType),
-          dataSource: [],
+          dataSource: '',
           language: 'en-GB',
           voice: '',
           openingLine: '',
@@ -110,7 +117,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
         id: newAgent.id,
         agentName: agentName.trim(),
         agentPurpose: '', // Set a default or get from response
-        dataSource: [],
+        dataSource: '',
         language: 'en-GB',
         voice: '',
         openingLine: '',
@@ -135,31 +142,31 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
     switch (type) {
       case 'widget':
         return {
-          form: true,
-          callTransfer: false,
-          appointmentBooking: false,
-          prospects: false,
+          form: { enabled: true },
+          callTransfer: { enabled: false },
+          appointmentBooking: { enabled: false },
+          prospects: { enabled: false },
         };
       case 'outbound':
         return {
-          form: true,
-          callTransfer: true,
-          appointmentBooking: true,
-          prospects: true,
+          form: { enabled: true },
+          callTransfer: { enabled: true },
+          appointmentBooking: { enabled: true },
+          prospects: { enabled: true },
         };
       case 'inbound':
         return {
-          form: true,
-          callTransfer: true,
-          appointmentBooking: true,
-          prospects: false,
+          form: { enabled: true },
+          callTransfer: { enabled: true },
+          appointmentBooking: { enabled: true },
+          prospects: { enabled: false },
         };
       default:
         return {
-          form: false,
-          callTransfer: false,
-          appointmentBooking: false,
-          prospects: false,
+          form: { enabled: false },
+          callTransfer: { enabled: false },
+          appointmentBooking: { enabled: false },
+          prospects: { enabled: false },
         };
     }
   };
@@ -170,41 +177,40 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
         <DialogTitle className="text-foreground dark:text-gray-200">Create New Assistant</DialogTitle>
       </DialogHeader>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
-          onClick={() => handleSetupMethodSelect('scratch')}
-        >
-          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-            <PlusIcon className="w-6 h-6" />
-          </div>
-          <span className="font-semibold">Start from scratch</span>
-          <span className="text-sm text-muted-foreground">Build your AI Assistant from the ground up</span>
-        </Button>
+      <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Button
+            variant="outline"
+            className="h-24 flex items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('scratch')}
+          >
+            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+              <PlusIcon className="w-6 h-6" />
+            </div>
+          </Button>
 
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
-          onClick={() => handleSetupMethodSelect('quick')}
-        >
-          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-            <SparklesIcon className="w-6 h-6" />
-          </div>
-          <span className="font-semibold">Quick Assistant Setup</span>
-          <span className="text-sm text-muted-foreground">Use presets to streamline setup & adjust settings</span>
-        </Button>
+          <Button
+            variant="outline"
+            className="h-24 flex items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('quick')}
+          >
+            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+              <SparklesIcon className="w-6 h-6" />
+            </div>
+          </Button>
+        </div>
 
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary"
-        >
-          <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-            <LayoutTemplateIcon className="w-6 h-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+          <div>
+            <h3 className="font-semibold mb-1">Start from scratch</h3>
+            <p className="text-sm text-muted-foreground">Build your AI Assistant from the ground up</p>
           </div>
-          <span className="font-semibold">Browse our Templates</span>
-          <span className="text-sm text-muted-foreground">Get inspired by our templates to get started</span>
-        </Button>
+          
+          <div>
+            <h3 className="font-semibold mb-1">Quick Assistant Setup</h3>
+            <p className="text-sm text-muted-foreground">Use presets to streamline setup & adjust settings</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -319,6 +325,132 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
     </div>
   );
 
+  const renderQuickSetup = () => (
+    <div className="grid gap-6">
+      <DialogHeader>
+        <DialogTitle className="text-foreground dark:text-gray-200">
+          <Button 
+            variant="ghost" 
+            className="mr-2 p-0 h-8 w-8"
+            onClick={handleBack}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+          Quick Assistant Setup
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="grid grid-cols-1 gap-4">
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={() => {
+            setAgentType('outbound');
+            setSetupMethod('name');
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <ArrowUpRightIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Lead Generation</span>
+              <span className="text-sm text-muted-foreground">Proactive outreach and lead qualification</span>
+            </div>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={() => {
+            setAgentType('widget');
+            setSetupMethod('name');
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <MessageSquareIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Feedback Agent</span>
+              <span className="text-sm text-muted-foreground">Collect user feedback and analyze in real-time</span>
+            </div>
+          </div>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderTemplateSelection = () => (
+    <div className="grid gap-6">
+      <DialogHeader>
+        <DialogTitle className="text-foreground dark:text-gray-200">
+          <Button 
+            variant="ghost" 
+            className="mr-2 p-0 h-8 w-8"
+            onClick={handleBack}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+          Browse Templates
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="grid grid-cols-1 gap-4">
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={async () => {
+            setAgentType('widget');
+            setAgentName('Support Template');
+            await handleCreateAgent();
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <MessageSquareIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Support Template</span>
+              <span className="text-sm text-muted-foreground">Pre-configured support assistant</span>
+            </div>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={async () => {
+            setAgentType('inbound');
+            setAgentName('Sales Template');
+            await handleCreateAgent();
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <ArrowDownLeftIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Sales Template</span>
+              <span className="text-sm text-muted-foreground">Optimized for sales inquiries</span>
+            </div>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-24 flex items-center justify-start px-4 hover:border-primary"
+          onClick={async () => {
+            setAgentType('outbound');
+            setAgentName('Marketing Template');
+            await handleCreateAgent();
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <ArrowUpRightIcon className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold">Marketing Template</span>
+              <span className="text-sm text-muted-foreground">Designed for marketing campaigns</span>
+            </div>
+          </div>
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -328,7 +460,8 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
         {setupMethod === null && renderInitialSelection()}
         {setupMethod === 'scratch' && !agentType && renderAgentTypeSelection()}
         {setupMethod === 'scratch' && agentType && renderNameInput()}
-        {/* Add quick setup flow here when needed */}
+        {setupMethod === 'quick' && !agentType && renderQuickSetup()}
+        {setupMethod === 'name' && renderNameInput()}
       </DialogContent>
     </Dialog>
   );

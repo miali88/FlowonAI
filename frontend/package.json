@@ -8,7 +8,8 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.4.1",
+    "@clerk/clerk-js": "^5.39.0",
+    "@clerk/nextjs": "^6.7.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@frank-mayer/react-tag-cloud": "^1.2.1",
@@ -51,6 +52,7 @@
     "@vapi-ai/web": "^2.1.1",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
+    "clerk": "^0.8.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
     "country-flag-icons": "^1.5.13",
@@ -61,7 +63,7 @@
     "livekit-server-sdk": "^2.6.1",
     "lottie-react": "^2.4.0",
     "lucide-react": "^0.438.0",
-    "next": "^14.2.18",
+    "next": "^14.2.20",
     "next-sanity": "^9.8.19",
     "next-themes": "^0.3.0",
     "radix-ui": "^1.0.1",
@@ -84,6 +86,7 @@
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

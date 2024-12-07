@@ -17,6 +17,8 @@ import ROISection from "@/components/ROISection";
 import TelephonySection from "@/components/TelephonySection";
 import FAQSection from "@/components/FAQSection";
 import { Pricing } from "@/components/pricing";
+import { LeadsMarquee } from "@/components/LeadsMarquee";
+import FeedbackSection from "../components/FeedbackSection";
 
 
 
@@ -35,7 +37,8 @@ export default function HomePage() {
         />
         <Hero />
         <div className="mx-auto max-w-7xl">
-          <KeySection /> 
+          <KeySection />
+          <LeadsMarquee />
           <SetupSection />
           <DeploySection />
           <BenefitsSection />
@@ -45,7 +48,8 @@ export default function HomePage() {
           <CommunicationSection />
           <WorkloadSection />
           <PsychologySection />
-          <ROISection />  
+          <ROISection />
+          <FeedbackSection />
           <TelephonySection />
           <FAQSection />
           <Pricing />

@@ -29,17 +29,18 @@ interface AgentFeature {
 interface SelectedAgent {
   id: string;
   features: {
-    [key: string]: AgentFeature;
+    [key: string]: {
+      enabled: boolean;
+      number?: string;
+      [key: string]: any;
+    };
   };
-  agentPurposes: string[];
+  formFields?: FormFields;
 }
 
 interface AgentFeaturesProps {
-  selectedAgent: {
-    features: string[];
-    formFields?: FormFields;
-  } | null;
-  setSelectedAgent: (agent: any) => void;
+  selectedAgent: SelectedAgent | null;
+  setSelectedAgent: (agent: SelectedAgent) => void;
 }
 
 // Add these interfaces at the top
@@ -54,7 +55,16 @@ interface FormFields {
   };
 }
 
-// Update the AGENT_FEATURES object to include configuration
+// Define the SubFeature interface with optional hasConfiguration
+interface SubFeature {
+  id: string;
+  label: string;
+  description: string;
+  hasConfiguration?: boolean; // Make this property optional
+  defaultConfig?: any;
+}
+
+// Update the AGENT_FEATURES object to use SubFeature type
 const AGENT_FEATURES = {
   purposes: {
     prospecting: {
@@ -66,7 +76,7 @@ const AGENT_FEATURES = {
           id: "notifyOnInterest",
           label: "Notify on Interest",
           description: "Your registered email will be used to notify of new leads",
-        },
+        } as SubFeature,
         configureFields: {
           id: "configureFields",
           label: "Configure fields",
@@ -82,7 +92,7 @@ const AGENT_FEATURES = {
               custom: []
             }
           }
-        }
+        } as SubFeature
       }
     },
     appointmentBooking: {
@@ -126,14 +136,27 @@ const FEATURE_ID_MAP = {
   'callTransfer': 'call_transfer'
 };
 
+// Add LocalFeatures interface
+interface LocalFeatures {
+  [key: string]: {
+    enabled: boolean;
+    number?: string;
+    fields?: any[];
+    notifyOnInterest?: boolean;
+    email?: string;
+    sms?: string;
+    whatsapp?: string;
+  };
+}
+
 export const AgentFeatures = forwardRef<
   { getCurrentState: () => any },
   AgentFeaturesProps
 >(({ selectedAgent, setSelectedAgent }, ref) => {
-  const [localFeatures, setLocalFeatures] = useState({
+  const [localFeatures, setLocalFeatures] = useState<LocalFeatures>({
     callTransfer: {
-      enabled: selectedAgent?.features?.callTransfer?.enabled || false,
-      number: selectedAgent?.features?.callTransfer?.number || '',
+      enabled: false,
+      number: '',
     },
     appointmentBooking: {
       enabled: false,
@@ -153,7 +176,7 @@ export const AgentFeatures = forwardRef<
 
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [openItem, setOpenItem] = useState<string>('');
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<FormFields | null>(null);
   const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
@@ -321,7 +344,7 @@ export const AgentFeatures = forwardRef<
 
             <AccordionContent className="px-4 pb-4">
               <div className="space-y-4">
-                {purpose.subFeatures && Object.values(purpose.subFeatures).map((subFeature) => (
+                {purpose.subFeatures && Object.values(purpose.subFeatures).map((subFeature: SubFeature) => (
                   <div key={subFeature.id} className="flex items-center justify-between">
                     <div className="flex-1">
                       <Label htmlFor={subFeature.id} className="text-sm">
@@ -340,7 +363,7 @@ export const AgentFeatures = forwardRef<
                           value={localFeatures.callTransfer.number}
                           onChange={handleNumberChange}
                         />
-                      ) : subFeature.hasConfiguration ? (
+                      ) : (subFeature as SubFeature).hasConfiguration ? (
                         <Button
                           type="button"
                           variant="ghost"

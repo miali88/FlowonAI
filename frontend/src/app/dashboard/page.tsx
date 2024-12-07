@@ -157,13 +157,13 @@ function AdminDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Agent Hub");
   const [selectedFeature] = useState<string | null>(null);
-  const [isLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isMobileView, setIsMobileView] = useState(false);
 
-  useEffect(() => {
+  //useEffect(() => {
     // Redirect to /dashboard/agenthub on mount
-    router.push("/dashboard/agenthub");
-  }, [router]);
+    //router.push("/dashboard/agenthub");
+  //}, [router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -181,6 +181,19 @@ function AdminDashboard() {
   useEffect(() => {
     console.log('isCollapsed changed to:', isCollapsed);
   }, [isCollapsed]);
+
+  useEffect(() => {
+    // Simulate data fetching or other async operations
+    const fetchData = async () => {
+      // Perform any necessary operations
+      // ...
+
+      // Set isLoading to false once operations are complete
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, []);
 
   if (isLoading) {
     return (

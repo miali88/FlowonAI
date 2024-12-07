@@ -110,27 +110,14 @@ export function Hero() {
           customer service, and more
         </p>
 
-<<<<<<< HEAD
         <Link 
           href="https://calendly.com/michael-flowon/30min" 
           className="inline-block relative z-20"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Button 
-            className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg opacity-0 ease-in-out [--animation-delay:600ms] text-lg px-6 py-6 hover:bg-primary/90 cursor-pointer"
-            type="button"
-          >
-            <span>Transform your website into a 24/7 sales team</span>
-            <ArrowRight
-              size={20}
-              className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
-            />
-          </Button>
+          <Button>Start handling customer calls automatically</Button>
         </Link>
-      </div>
-=======
-        <OnboardingButton />
       </div>
 
       {/* <div className="min-h-[80vh] pt-14 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
@@ -161,7 +148,6 @@ export function Hero() {
           </div>
         </div>
       </div> */}
->>>>>>> c75492bea78825c0074cd6c379c57476ed326ddd
     </section>
   );
 
