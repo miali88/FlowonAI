@@ -91,6 +91,7 @@ async def request_personal_data(
     
     return "Form presented to user. Waiting for user to complete and submit form."
 
+
 """ CALENDAR MANAGEMENT """
 @llm.ai_callable(
     name="fetch_calendar",
@@ -162,30 +163,73 @@ async def book_appointment(
 """ CALL TRANSFER """
 @llm.ai_callable(
     name="transfer_call",
-    description="Transfer the call to a different number",
+    description="""Transfer the call to a specialist. Use this when:
+    1. Caller has completed the online quote form and needs to speak with a specialist
+    2. There is an urgent situation requiring immediate specialist attention
+    3. Caller is ready to discuss their business situation with the team""",
     auto_retry=True
 )
 async def transfer_call(
-    ready_to_transfer: bool
+    transfer_reason: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Brief description of why the call is being transferred (e.g., 'Completed quote form', 'Urgent situation', 'Ready for specialist consultation')"
+        )
+    ],
+    caller_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The name of the caller"
+        )
+    ],
+    business_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The name of the caller's business"
+        )
+    ]
 ) -> str:
     """
-    Once ready to transfer the call, 
+    Transfers the call to an available specialist based on the caller's situation.
     Returns a confirmation message about the call transfer.
     """
-    print("\n\n\n\n tool transfer_call invoked")
+    caller_details = {
+        "name": caller_name,
+        "business_name": business_name
+    }
+    
+    print(f"\n\n\n\n tool transfer_call invoked - caller_details: {caller_details}")
+
     logger.info(f"tool transfer_call invoked")
     from services.outbound_livekit import initiate_outbound_call
 
     room_name = AgentFunctions.current_room_name
     
-    # Get agent metadata to access transfer number
-    agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-    agent_metadata: Dict = await get_agent_metadata(agent_id)
-    
-    # Get transfer number from features
-    transfer_number = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
-    if not transfer_number:
-        return "Error: No transfer number configured"
+    # Fix agent_id extraction - don't split if room_name contains a phone number
+    try:
+        # Assuming room name format is like "room_AGENT-ID_timestamp"
+        parts = room_name.split('_')
+        if len(parts) >= 2:
+            agent_id = parts[1]
+            logger.debug(f"Extracted agent_id from room name: {agent_id}")
+        else:
+            logger.error(f"Invalid room name format: {room_name}")
+            return "Error: Invalid room configuration"
+            
+        agent_metadata = await get_agent_metadata(agent_id)
+        if not agent_metadata:
+            logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+            return "Error: Could not retrieve agent configuration"
+            
+        transfer_number = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
+        if not transfer_number:
+            logger.error(f"No transfer number configured for agent_id: {agent_id}")
+            return "Error: No transfer number configured for this agent"
+    except Exception as e:
+        logger.error(f"Error during transfer setup: {str(e)}")
+        return f"Error during transfer setup: {str(e)}"
+
+    print(f"transfer_number: {transfer_number}")
 
     with open('backend/call_data.json', 'r') as f:
         call_data_from_file = json.load(f)
@@ -196,7 +240,7 @@ async def transfer_call(
     job_ctx = AgentFunctions.current_job_ctx
 
     await initiate_outbound_call(
-        job_ctx=job_ctx,  # Pass the job_ctx from AgentFunctions
+        job_ctx=job_ctx, 
         room_name=room_name,
         participant_identity="testies",
         participant_name="besties",
@@ -204,6 +248,9 @@ async def transfer_call(
         agent_id=agent_id
     )
 
+    print(f"\nInitiating call transfer - Reason: {transfer_reason}")
+    logger.info(f"Call transfer initiated - Reason: {transfer_reason}, Caller: {caller_details}")
+    
     return f"Call transfer initiated to {transfer_number}"
 
 
@@ -221,96 +268,106 @@ class AgentFunctions(llm.FunctionContext):
     async def initialize_functions(self):
         print("Initializing functions for agent")
         features = {}  # Initialize features with empty dict as default
-        
-        """ extracting features dict from agent_metadata """
-        if not self.room_name.startswith("call-"):
-            room_name: str = self.job_ctx.room.name
-            agent_id: str = room_name.split('_')[1]
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
-            features: Dict = agent_metadata.get('features', {})
-        
-        elif self.room_name.startswith("call-"):
-            room_name: str = self.job_ctx.room.name
-            print("initialize functions - telephone call detected")
+        agent_id = None
 
-            async def get_agent_id(room_name: str):
-                print("\n\n initialize functions - about to get agent_id")
-                import json
-                
-                # Add current directory printing
-                print("Current working directory:", os.getcwd())
-                
-                def get_agent_id_by_phone(data, phone_number):
-                    if phone_number is None:
-                        raise ValueError("No phone number found")
-                    for agent in data:
-                        if agent.get('assigned_telephone') == phone_number:
-                            return agent.get('id')
-                    return None
-                
-                
-                try:
-                    with open('backend/call_data.json', 'r') as f:
-                        call_data_from_file = json.load(f)
-                    # Extract twilio_number from the dictionary structure
-                    call_metadata = call_data_from_file.get(room_name, {})
-                    twilio_number = call_metadata.get('twilio_phone_number')
-                except FileNotFoundError:
-                    print("call_data.json not found")
-                    twilio_number = None
-                except json.JSONDecodeError:
-                    print("Error decoding call_data.json")
-                    twilio_number = None
-                except Exception as e:
-                    print(f"Error reading call_data.json: {str(e)}")
-                    twilio_number = None
+        try:
+            if self.room_name.startswith("call-"):
+                print("Getting agent_id for telephone call")
+                async def get_agent_id(room_name: str):
+                    print("\n\n initialize functions - about to get agent_id")
+                    import json
+                    
+                    # Add current directory printing
+                    print("Current working directory:", os.getcwd())
+                    
+                    def get_agent_id_by_phone(data, phone_number):
+                        if phone_number is None:
+                            raise ValueError("No phone number found")
+                        for agent in data:
+                            if agent.get('assigned_telephone') == phone_number:
+                                return agent.get('id')
+                        return None
+                    
+                    try:
+                        with open('backend/call_data.json', 'r') as f:
+                            call_data_from_file = json.load(f)
+                        # Extract twilio_number from the dictionary structure
+                        call_metadata = call_data_from_file.get(room_name, {})
+                        twilio_number = call_metadata.get('twilio_phone_number')
+                    except FileNotFoundError:
+                        print("call_data.json not found")
+                        twilio_number = None
+                    except json.JSONDecodeError:
+                        print("Error decoding call_data.json")
+                        twilio_number = None
+                    except Exception as e:
+                        print(f"Error reading call_data.json: {str(e)}")
+                        twilio_number = None
 
-                print(f"\nroom_name: {room_name}")
-                print(f"twilio_number from file: {twilio_number}")
-                try:
-                    agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
-                    print(f"agent_id: {agent_id}")
-                except ValueError as e:
-                    print(f"Error getting agent_id for phone {twilio_number}: {str(e)}")
-                    # Depending on your needs, you might want to:
-                    # - return an error response
-                    # - raise the error up the stack
-                    # - use a default value
-                    raise  # Re-raise the exception if you want it handled by upper layers
-        
-            agent_id = await get_agent_id(room_name)
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
-            features: Dict = agent_metadata.get('features', {})
+                    print(f"\nroom_name: {room_name}")
+                    print(f"twilio_number from file: {twilio_number}")
+                    try:
+                        agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
+                        print(f"agent_id: {agent_id}")
+                        return agent_id
+                    except ValueError as e:
+                        print(f"Error getting agent_id for phone {twilio_number}: {str(e)}")
+                        # Depending on your needs, you might want to:
+                        # - return an error response
+                        # - raise the error up the stack
+                        # - use a default value
+                        raise  # Re-raise the exception if you want it handled by upper layers
+            
+                agent_id = await get_agent_id(self.room_name)
 
+            else:
+                print("Getting agent_id for web call")
+                room_name: str = self.job_ctx.room.name
+                agent_id: str = room_name.split('_')[1]
 
-        """ registering the feature functions """
-        print(f"features: {features}")
+            print(f"agent_id before getting features: {agent_id}")
+            if agent_id:
+                agent_metadata: Dict = await get_agent_metadata(agent_id)
+                if agent_metadata:
+                    features: Dict = agent_metadata.get('features', {})
+                    print(f"Retrieved features for agent {agent_id}: {features}")
+                else:
+                    logger.error(f"No agent metadata found for agent_id: {agent_id}")
+            else:
+                logger.error("Could not determine agent_id from room name")
 
-        # Always register Q&A function
-        self._register_ai_function(question_and_answer)
-        print(f"Registered Q&A function")
-        logger.info(f"Registered Q&A function")
+            """ registering the feature functions """
+            print(f"features: {features}")
 
-        # Check if feature exists in dict and is enabled
-        if features.get('lead_gen', {}).get('enabled', False):
-            self._register_ai_function(request_personal_data)
-            print(f"Registered lead generation function")
-            logger.info(f"Registered lead generation function")
+            # Always register Q&A function
+            self._register_ai_function(question_and_answer)
+            print(f"Registered Q&A function")
+            logger.info(f"Registered Q&A function")
 
-        if features.get('appointmentBooking', {}).get('enabled', False):
-            self._register_ai_function(fetch_calendar)
-            print(f"Registered calendar function")
-            logger.info(f"Registered calendar function")
+            print("\n\n checking features fields to register functions")
+            print(f"\nfeatures: {features}")
+            # Check if feature exists in dict and is enabled
+            if features.get('lead_gen', {}).get('enabled', False):
+                self._register_ai_function(request_personal_data)
+                print(f"Registered lead generation function")
+                logger.info(f"Registered lead generation function")
 
-            self._register_ai_function(book_appointment)
-            print(f"Registered book appointment function")
-            logger.info(f"Registered book appointment function")
+            if features.get('appointmentBooking', {}).get('enabled', False):
+                self._register_ai_function(fetch_calendar)
+                print(f"Registered calendar function")
+                logger.info(f"Registered calendar function")
 
-        if features.get('callTransfer', {}).get('enabled', False):
-            self._register_ai_function(transfer_call)
-            print(f"Registered call transfer function")
-            logger.info(f"Registered call transfer function")
+                self._register_ai_function(book_appointment)
+                print(f"Registered book appointment function")
+                logger.info(f"Registered book appointment function")
 
+            if features.get('callTransfer', {}).get('enabled', False):
+                self._register_ai_function(transfer_call)
+                print(f"Registered call transfer function")
+                logger.info(f"Registered call transfer function")
+
+        except Exception as e:
+            logger.error(f"Error in initialize_functions: {str(e)}", exc_info=True)
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")

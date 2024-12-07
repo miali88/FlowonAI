@@ -9,8 +9,11 @@ from livekit.protocol.sip import (
 )
 from livekit.agents import JobContext
 from services.voice.livekit_services import create_voice_assistant
+import logging
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 async def check_participants_with_retry(
         job_ctx: JobContext,
@@ -55,25 +58,27 @@ async def check_participants_with_retry(
 
 
 async def initiate_outbound_call(
-                                job_ctx: JobContext,
-                                room_name: str,
-                                participant_identity: str,
-                                participant_name: str,
-                                sip_call_to: str,
-                                agent_id: str,
-                                monitoring_duration: int = 120  # 2 minutes default
+    job_ctx: JobContext,
+    room_name: str,
+    participant_identity: str,
+    participant_name: str,
+    sip_call_to: str,
+    agent_id: str,
+    monitoring_duration: int = 120
 ) -> None:
     """
     Initiates an outbound call through LiveKit SIP integration.
-    
-    Args:
-        room_name: Name of the LiveKit room
-        participant_identity: Identity for the SIP participant
-        participant_name: Display name for the SIP participant
-        sip_call_to: Phone number to call
-        agent_id: ID of the agent to connect
-        monitoring_duration: Duration to monitor the room in seconds
+
     """
+    if not sip_call_to or not sip_call_to.strip():
+        logger.error("Missing or invalid sip_call_to number")
+        raise ValueError("Valid sip_call_to (transfer number) is required")
+        
+    if not agent_id or not agent_id.strip():
+        logger.error("Missing or invalid agent_id")
+        raise ValueError("Valid agent_id is required")
+        
+    logger.info(f"Initiating outbound call to: {sip_call_to} for agent: {agent_id}")
     livekit_api = api.LiveKitAPI(
         url=os.getenv("LIVEKIT_URL"),
         api_key=os.getenv("LIVEKIT_API_KEY"),
