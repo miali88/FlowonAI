@@ -68,4 +68,3 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> str:
     else:
         print("web call detected")
         return room_name.split('_')[1]  # Extract agent_id from room name
-

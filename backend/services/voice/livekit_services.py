@@ -9,7 +9,7 @@ from fastapi import HTTPException, BackgroundTasks
 from livekit import api
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents import llm, JobContext
-from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
+from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest, RoomParticipantIdentity
 from livekit.plugins import cartesia, deepgram, openai, silero, anthropic, elevenlabs
 from supabase import create_client, Client
 
@@ -29,6 +29,8 @@ async def create_livekit_api():
         url=os.getenv("LIVEKIT_URL"),
         api_key=os.getenv("LIVEKIT_API_KEY"),
         api_secret=os.getenv("LIVEKIT_API_SECRET"))
+
+""" ROOM FUNCTIONS """
 
 async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
     logger.info(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
@@ -135,6 +137,83 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
     finally:
         await livekit_api.aclose()
         print("livekit_api closed in create_room")
+
+
+import asyncio
+import os
+from livekit import api
+
+import asyncio
+import os
+from livekit import api
+from livekit.room import Room, RoomOptions
+
+
+async def transfer_participant(
+    source_room_name: str,
+    target_room_name: str,
+    participant_identity: str,
+):
+    """
+    Transfer a SIP participant from source room to target room using SIP transfer.
+    Maintains the phone connection during transfer.
+    """
+    try:
+        print("Sleeping for 10 secs before creating livekit_api")
+        await asyncio.sleep(10)
+        livekit_api = await create_livekit_api()
+        print("livekit_api created")
+
+        # First, create or verify target room exists
+        create_request = api.CreateRoomRequest(
+            name=target_room_name,
+            empty_timeout=120,
+            max_participants=2
+        )
+        await livekit_api.room.create_room(create_request)
+        print("target room created")
+        
+        # Generate token for target room
+        token = api.AccessToken(
+            os.getenv("LIVEKIT_API_KEY"),
+            os.getenv("LIVEKIT_API_SECRET")
+        ).with_identity(participant_identity)\
+         .with_grants(api.VideoGrants(
+            room_join=True,
+            room=target_room_name
+         ))
+        new_token = token.to_jwt()
+
+        print(f"new_token: {new_token[:10]}")
+        
+        # Remove from source room
+        print("removing participant from source room...")
+        await livekit_api.room.remove_participant(RoomParticipantIdentity(
+            room=source_room_name,
+            identity=participant_identity,
+        ))
+        
+        # Connect to target room using Room.connect()
+        room = Room()
+        await room.connect(
+            url=os.getenv("LIVEKIT_URL"),
+            token=new_token,
+            options=RoomOptions(auto_subscribe=True)
+        )
+
+        print("participant transferred to new room")
+        return new_token
+
+    except Exception as e:
+        print(f"Error transferring participant: {str(e)}")
+        raise
+    finally:
+        if 'livekit_api' in locals():
+            await livekit_api.aclose()
+
+
+
+""" AGENT FUNCTIONS """
 
 async def start_agent_request(access_token: str, agent_id: str, room_name: str):
     logger.info(f"Starting agent request for room: {room_name}")

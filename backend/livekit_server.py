@@ -20,7 +20,7 @@ from livekit import agents, rtc
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
 
-from services.voice.livekit_services import create_voice_assistant
+from services.voice.livekit_services import create_voice_assistant, transfer_participant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
@@ -63,8 +63,6 @@ class CallDuration:
 
 async def entrypoint(ctx: JobContext):
     print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
-    # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-    # agent, opening_line = await create_voice_assistant(agent_id, ctx)
     room_name = ctx.room.name
     room = ctx.room
     print("room_name:", room_name)
@@ -83,8 +81,8 @@ async def entrypoint(ctx: JobContext):
     SILENCE_TIMEOUT = 90  # Timeout in seconds
 
     try:
-        print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
 
+        """ call types: inbound tel, outbound tel, web """
         agent_id = await detect_call_type_and_get_agent_id(room_name)
 
         agent, opening_line = await create_voice_assistant(agent_id, ctx)
@@ -113,39 +111,36 @@ async def entrypoint(ctx: JobContext):
             ctx.shutdown(reason="No available participants")
 
 
-        # async def initialize_calendar_on_connect():
-        #     print("\n=== Starting Calendar Initialization ===")
-        #     try:
-        #         # Extract agent_id differently based on call type
-        #         if room_name.startswith("call-"):
-        #             print("Telephone call - using existing agent_id")
-        #             # agent_id is already set from telephone call flow
-        #         else:
-        #             print("Web call - extracting agent_id from room name")
-        #             agent_id = room_name.split('_')[1]
+        async def initialize_calendar_on_connect():
+            print("\n=== Starting Calendar Initialization ===")
+            try:
+                # Extract agent_id differently based on call type
+                if room_name.startswith("call-"):
+                    print("Telephone call - using existing agent_id")
+                    # agent_id is already set from telephone call flow
+                else:
+                    print("Web call - extracting agent_id from room name")
+                    agent_id = room_name.split('_')[1]
 
-        #         print(f"Getting metadata for agent_id: {agent_id}")
-        #         agent_metadata: Dict = await get_agent_metadata(agent_id)
-        #         user_id: str = agent_metadata['userId']
+                print(f"Getting metadata for agent_id: {agent_id}")
+                agent_metadata: Dict = await get_agent_metadata(agent_id)
+                user_id: str = agent_metadata['userId']
                 
-        #         print(f"Starting calendar cache initialization:")
-        #         print(f"- user_id: {user_id}")
-        #         print(f"- provider: googlecalendar")
+                print(f"Starting calendar cache initialization:")
+                print(f"- user_id: {user_id}")
+                print(f"- provider: googlecalendar")
                 
-        #         await initialize_calendar_cache(user_id, "googlecalendar")
-        #         print("Calendar cache initialization completed successfully")
-        #     except Exception as e:
-        #         print(f"Error in calendar initialization:")
-        #         print(f"- Error type: {type(e).__name__}")
-        #         print(f"- Error details: {str(e)}")
-        #         print(f"- Room name: {room_name}")
-        
+                await initialize_calendar_cache(user_id, "googlecalendar")
+                print("Calendar cache initialization completed successfully")
+            except Exception as e:
+                print(f"Error in calendar initialization:")
+                print(f"- Error type: {type(e).__name__}")
+                print(f"- Error details: {str(e)}")
+                print(f"- Room name: {room_name}")
         # # Create background task for calendar initialization
         # print("\n\n\n\n Creating calendar initialization task")
         # asyncio.create_task(initialize_calendar_on_connect())
 
-
-        #room_sid = await ctx.room.sid
         """ EVENT HANDLERS FOR AGENT """            
         @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
@@ -193,30 +188,26 @@ async def entrypoint(ctx: JobContext):
             print("User stopped speaking")
 
         # @agent.on("response_created")
-        # async def on_response_created(text: str):
-        #     """This event is triggered when the LLM generates a response, before it's converted to speech"""
-        #     print("\n=== LLM Response ===")
-        #     print(text)
-        #     print("===================\n")
-
-        # # You can also add this handler to see the final processed text
+        async def on_response_created(text: str):
+            """This event is triggered when the LLM generates a response, before it's converted to speech"""
+            print("\n=== LLM Response ===")
+            print(text)
+            print("===================\n")
         # @agent.on("agent_speech_committed")
-        # def on_speech_committed(text: str):
-        #     """This event is triggered after the text has been processed and sent to TTS"""
-        #     print("\n=== Processed Speech Text ===")
-        #     print(text)
-        #     print("===========================\n")
+        def on_speech_committed(text: str):
+            """This event is triggered after the text has been processed and sent to TTS"""
+            print("\n=== Processed Speech Text ===")
+            print(text)
+            print("===========================\n")
 
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):
             print(f"Room {room_name} disconnected. Reason: {str(exception)}")
 
-
         @ctx.room.on('connected')
         def on_connected():
             print(f"Room {room_name} connected")
             """ doesn't work :(, doesn't callback on room connect"""
-
 
         @agent.on("function_calls_finished")
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
@@ -245,6 +236,30 @@ async def entrypoint(ctx: JobContext):
                     print("search_products_and_services called")
                     #print("\n\nagent.chat_ctx:", agent.chat_ctx)
 
+
+
+                elif function_name == "transfer_call":
+                    print("function call back from livekit_server.py")
+                    print("transfer_call called")
+                    # Create task for the async transfer_participant function
+                    print("creating transfer_participant task, args:")
+                    print(f"source_room_name: {room_name}")
+                    print(f"target_room_name: outbound_{room_name}")
+                    print(f"participant_identity: {available_participant.identity}")
+                    asyncio.create_task(transfer_participant(
+                        source_room_name=room_name, # source room is current agent's room
+                        target_room_name="outbound_" + room_name, # target room is outbound room
+                        participant_identity=available_participant.identity,  # participant to transfer in source room
+                    ))
+                    """
+                    TODO:
+                    - check to see if available_participant is in the outbound room, if not, add them
+                    - transfer_participant should be invoked by the 2nd agent based on result of outbound call. i.e if staff wants to speak or not. 
+                        - for now, we'll just assume they do want, and transfer the initial caller to the staff. 
+                    """
+
+
+        """ HELPER FUNCTIONS """
         async def handle_chat_input_response(agent, 
                                              room_name: str, 
                                              job_id: str, 

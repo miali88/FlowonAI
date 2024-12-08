@@ -225,14 +225,12 @@ async def transfer_call(
     # Extract call metadata from the dictionary structure
     call_metadata = call_data_from_file.get(room_name, {})
 
-
     print(f"\nInitiating call transfer - Reason: {transfer_reason}")
     logger.info(f"Call transfer initiated - Reason: {transfer_reason}, Caller: {caller_details}")
     await initiate_outbound_call(transfer_number, outbound_room_name)
 
     """ to make sure tha agent has mentioned the callee will be placed on hold """
     """ to put callee on hold, and isolte agent and calle. """
-
 
     return f"Call transfer initiated to {transfer_number}"
 
