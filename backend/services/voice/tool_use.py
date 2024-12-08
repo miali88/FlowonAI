@@ -3,11 +3,13 @@ import json
 import aiohttp, os, logging, asyncio
 from dotenv import load_dotenv
 
-from livekit.agents import llm, JobContext
+from livekit.agents import llm
 
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache, agent_metadata_cache
 from services.composio import book_appointment_composio
+from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -197,38 +199,25 @@ async def transfer_call(
         "name": caller_name,
         "business_name": business_name
     }
-    
     print(f"\n\n\n\n tool transfer_call invoked - caller_details: {caller_details}")
 
     logger.info(f"tool transfer_call invoked")
-    from services.outbound_livekit import initiate_outbound_call
+    from services.initiate_outbound import initiate_outbound_call
 
     room_name = AgentFunctions.current_room_name
-    
-    # Fix agent_id extraction - don't split if room_name contains a phone number
-    try:
-        # Assuming room name format is like "room_AGENT-ID_timestamp"
-        parts = room_name.split('_')
-        if len(parts) >= 2:
-            agent_id = parts[1]
-            logger.debug(f"Extracted agent_id from room name: {agent_id}")
-        else:
-            logger.error(f"Invalid room name format: {room_name}")
-            return "Error: Invalid room configuration"
-            
-        agent_metadata = await get_agent_metadata(agent_id)
-        if not agent_metadata:
-            logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
-            return "Error: Could not retrieve agent configuration"
-            
-        transfer_number = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
-        if not transfer_number:
-            logger.error(f"No transfer number configured for agent_id: {agent_id}")
-            return "Error: No transfer number configured for this agent"
-    except Exception as e:
-        logger.error(f"Error during transfer setup: {str(e)}")
-        return f"Error during transfer setup: {str(e)}"
+    outbound_room_name = f"outbound_{room_name}"
+    agent_id = await detect_call_type_and_get_agent_id(outbound_room_name)
 
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
+
+    if not agent_metadata:
+        logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+        return "Error: Could not retrieve agent configuration"
+        
+    transfer_number: str = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
+    if not transfer_number:
+        logger.error(f"No transfer number configured for agent_id: {agent_id}")
+        return "Error: No transfer number configured for this agent"
     print(f"transfer_number: {transfer_number}")
 
     with open('backend/call_data.json', 'r') as f:
@@ -236,22 +225,18 @@ async def transfer_call(
     # Extract call metadata from the dictionary structure
     call_metadata = call_data_from_file.get(room_name, {})
 
-    # Get job_ctx from AgentFunctions class
-    job_ctx = AgentFunctions.current_job_ctx
-
-    await initiate_outbound_call(
-        job_ctx=job_ctx, 
-        room_name=room_name,
-        participant_identity="testies",
-        participant_name="besties",
-        sip_call_to=transfer_number,
-        agent_id=agent_id
-    )
 
     print(f"\nInitiating call transfer - Reason: {transfer_reason}")
     logger.info(f"Call transfer initiated - Reason: {transfer_reason}, Caller: {caller_details}")
-    
+    await initiate_outbound_call(transfer_number, outbound_room_name)
+
+    """ to make sure tha agent has mentioned the callee will be placed on hold """
+    """ to put callee on hold, and isolte agent and calle. """
+
+
     return f"Call transfer initiated to {transfer_number}"
+
+
 
 
 class AgentFunctions(llm.FunctionContext):
@@ -271,63 +256,12 @@ class AgentFunctions(llm.FunctionContext):
         agent_id = None
 
         try:
-            if self.room_name.startswith("call-"):
-                print("Getting agent_id for telephone call")
-                async def get_agent_id(room_name: str):
-                    print("\n\n initialize functions - about to get agent_id")
-                    import json
-                    
-                    # Add current directory printing
-                    print("Current working directory:", os.getcwd())
-                    
-                    def get_agent_id_by_phone(data, phone_number):
-                        if phone_number is None:
-                            raise ValueError("No phone number found")
-                        for agent in data:
-                            if agent.get('assigned_telephone') == phone_number:
-                                return agent.get('id')
-                        return None
-                    
-                    try:
-                        with open('backend/call_data.json', 'r') as f:
-                            call_data_from_file = json.load(f)
-                        # Extract twilio_number from the dictionary structure
-                        call_metadata = call_data_from_file.get(room_name, {})
-                        twilio_number = call_metadata.get('twilio_phone_number')
-                    except FileNotFoundError:
-                        print("call_data.json not found")
-                        twilio_number = None
-                    except json.JSONDecodeError:
-                        print("Error decoding call_data.json")
-                        twilio_number = None
-                    except Exception as e:
-                        print(f"Error reading call_data.json: {str(e)}")
-                        twilio_number = None
 
-                    print(f"\nroom_name: {room_name}")
-                    print(f"twilio_number from file: {twilio_number}")
-                    try:
-                        agent_id = get_agent_id_by_phone(agent_metadata_cache, twilio_number)
-                        print(f"agent_id: {agent_id}")
-                        return agent_id
-                    except ValueError as e:
-                        print(f"Error getting agent_id for phone {twilio_number}: {str(e)}")
-                        # Depending on your needs, you might want to:
-                        # - return an error response
-                        # - raise the error up the stack
-                        # - use a default value
-                        raise  # Re-raise the exception if you want it handled by upper layers
+            agent_id = await detect_call_type_and_get_agent_id(self.room_name)
+            agent_metadata: Dict = await get_agent_metadata(agent_id)
             
-                agent_id = await get_agent_id(self.room_name)
-
-            else:
-                print("Getting agent_id for web call")
-                room_name: str = self.job_ctx.room.name
-                agent_id: str = room_name.split('_')[1]
-
-            print(f"agent_id before getting features: {agent_id}")
+            print(f"agent_id in initialize_functions: {agent_id}")
             if agent_id:
-                agent_metadata: Dict = await get_agent_metadata(agent_id)
                 if agent_metadata:
                     features: Dict = agent_metadata.get('features', {})
                     print(f"Retrieved features for agent {agent_id}: {features}")

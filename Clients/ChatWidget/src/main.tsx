@@ -411,7 +411,7 @@ function WidgetContent({ agentId, domain, eventBridge }: WidgetContentProps) {
       setIsConnecting={setIsConnecting}
       onStreamEnd={handleStreamEnd}
       onStreamStart={handleStreamStart}
-      bypassShowChatInputCondition={true}
+      bypassShowChatInputCondition={false}
       localParticipant={null}
       setLocalParticipant={() => {}}
       eventBridge={eventBridge}

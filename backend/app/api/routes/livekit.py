@@ -49,20 +49,6 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
         "roomName": room_name
     }
 
-@router.get("/token_embed")
-async def get_token_embed(request: Request, background_tasks: BackgroundTasks):
-    """ Create a token for a user to join a room & starts the agent """
-
-    agent_id = request.query_params.get("agent_id")
-    access_token, livekit_url, room_name = await token_embed_gen(agent_id, background_tasks)
-
-    print(f"Adding create_agent_request task for room {room_name}")
-    background_tasks.add_task(start_agent_request, room_name, agent_id)
-
-    return {
-        "accessToken": access_token,
-        "url": livekit_url
-    }
 
 @router.post("/new_agent")
 async def new_agent_handler(request: Request):

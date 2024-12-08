@@ -266,8 +266,8 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
       isStreaming
     });
 
-    // if (isStreaming && (bypassShowChatInputCondition || showChatInput)) {
-    if (bypassShowChatInputCondition) {
+    if (isStreaming && (bypassShowChatInputCondition || showChatInput)) {
+    // if (bypassShowChatInputCondition) {
       console.log('Sending SHOW_FORM_FIELDS message to parent');
       window.parent.postMessage({ type: 'SHOW_FORM_FIELDS' }, '*');
       setFormFieldsWereShown(true);

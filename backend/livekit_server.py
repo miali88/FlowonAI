@@ -24,6 +24,8 @@ from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
+from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -31,6 +33,9 @@ logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('hpack').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('httpx').setLevel(logging.WARNING)  # Add this
 logging.getLogger('httpcore').setLevel(logging.WARNING)  # Add this
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -78,68 +83,16 @@ async def entrypoint(ctx: JobContext):
     SILENCE_TIMEOUT = 90  # Timeout in seconds
 
     try:
-        """ TEL CALL INIT """
-        if room_name.startswith("call-"):
-            print("entrypoint - telephone call detected")
+        print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
 
-            async def get_agent_id(room_name: str):
-                import json
-                agents = await get_all_agents()
-                
-                # Add current directory printing
-                print("Current working directory:", os.getcwd())
-                
-                def get_agent_id_by_phone(data, phone_number):
-                    for agent in data:
-                        if agent.get('assigned_telephone') == phone_number:
-                            return agent.get('id')
-                    return None
-                
-                try:
-                    with open('backend/call_data.json', 'r') as f:
-                        call_data_from_file = json.load(f)
-                    # Extract twilio_number from the dictionary structure
-                    call_metadata = call_data_from_file.get(room_name, {})
-                    twilio_number = call_metadata.get('twilio_phone_number')
-                except FileNotFoundError:
-                    print("call_data.json not found")
-                    twilio_number = None
-                except json.JSONDecodeError:
-                    print("Error decoding call_data.json")
-                    twilio_number = None
-                except Exception as e:
-                    print(f"Error reading call_data.json: {str(e)}")
-                    twilio_number = None
+        agent_id = await detect_call_type_and_get_agent_id(room_name)
 
-                print(f"\nroom_name: {room_name}")
-                print(f"twilio_number from file: {twilio_number}")
-                agent_id = get_agent_id_by_phone(agents, twilio_number)
-                print(f"agent_id: {agent_id}")
-                return agent_id
-        
-            agent_id = await get_agent_id(room_name)
+        agent, opening_line = await create_voice_assistant(agent_id, ctx)
+        agent.start(room)
+        await agent.say(opening_line, allow_interruptions=False)
 
-            agent, opening_line = await create_voice_assistant(agent_id, ctx)
-            agent.start(room)
-            await agent.say(opening_line, allow_interruptions=False)
-
-        else:
-            """ WEB CALL INIT """
-            print("web call detected")
-
-            print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-
-            print("iterating through room.remote_participants")
-            for rp in room.remote_participants.values():
-                print("rp.identity", rp.identity)
-
-            agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
-            user_id: str = agent_metadata['userId']
-
-            agent, opening_line = await create_voice_assistant(agent_id, ctx)
-            agent.start(room)
-            await agent.say(opening_line, allow_interruptions=False)
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+        user_id: str = agent_metadata['userId']
 
         await asyncio.sleep(3)
 
