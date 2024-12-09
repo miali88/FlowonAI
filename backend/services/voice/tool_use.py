@@ -220,16 +220,14 @@ async def transfer_call(
     print(f"transfer_number: {transfer_number}")
 
     print(f"\nInitiating call transfer - Reason: {transfer_reason}")
-    logger.info(f"Call transfer initiated - Reason: {transfer_reason}, Caller: {caller_details}")
 
-    print(f"about to create sip participant for transfer_number: {transfer_number}")
-    await create_sip_participant(transfer_number, room_name)
+    print(f"about to create sip participant for room_name: {outbound_room_name}")
+    await create_sip_participant(transfer_number, outbound_room_name)
 
     """ to make sure the agent has mentioned the callee will be placed on hold """
     """ to put callee on hold, and isolate agent and callee """
 
     return f"Call transfer initiated to {transfer_number}"
-
 
 
 

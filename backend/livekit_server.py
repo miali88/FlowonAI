@@ -143,34 +143,34 @@ async def entrypoint(ctx: JobContext):
                     
                     async def handle_transfer():
                         async with CallTransferHandler(room) as transfer_handler:
-                            await transfer_handler.place_participant_on_hold(first_participant.identity)
-
-
+                            pass
+                            #await transfer_handler.place_participant_on_hold(first_participant.identity)
 
                             # Find the second participant
-                            second_participant = None
-                            for participant in room.remote_participants.values():
-                                if participant.sid != first_participant.sid:
-                                    second_participant = participant
-                                    break
+                            # second_participant = None
+                            # for participant in room.remote_participants.values():
+                            #     if participant.sid != first_participant.sid:
+                            #         second_participant = participant
+                            #         break
                             
-                            if second_participant:
-                                print(f"Found second participant: {second_participant.identity}")
-                                await asyncio.sleep(15)
-                                local_participant = room.local_participant.identity
-                                await transfer_handler.restore_participant_from_hold(
-                                    local_participant, 
-                                    second_participant_identity=second_participant.identity
-                                )
-                            else:
-                                print("No second participant found in the room")
+                            # if second_participant:
+                            #     print(f"Found second participant: {second_participant.identity}")
+                            #     await asyncio.sleep(15)
+                            #     local_participant = room.local_participant.identity
+                            #     await transfer_handler.restore_participant_from_hold(
+                            #         local_participant, 
+                            #         second_participant_identity=second_participant.identity
+                            #     )
+                            # else:
+                            #     print("No second participant found in the room")
 
-                            print("creating second agent")
-                            # Create a second agent
-                            second_agent_id = "1bf662cf-4d01-4c82-b919-8534ad071380"  # Replace with actual agent ID
-                            second_agent, second_opening_line = await create_voice_assistant(second_agent_id, ctx)
-                            second_agent.start(room)
-                            await second_agent.say("Hello, I'm the second agent. How can I help you today?", allow_interruptions=False)
+
+                            # print("creating second agent")
+                            # # Create a second agent
+                            # second_agent_id = "1bf662cf-4d01-4c82-b919-8534ad071380"  # Replace with actual agent ID
+                            # second_agent, second_opening_line = await create_voice_assistant(second_agent_id, ctx)
+                            # second_agent.start(room)
+                            # await second_agent.say("Hello, I'm the second agent. How can I help you today?", allow_interruptions=False)
 
 
 
