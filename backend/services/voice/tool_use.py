@@ -161,7 +161,6 @@ async def book_appointment(
     print(f"book_appointment_composio result: {result}")
     return result
 
-
 """ CALL TRANSFER """
 @llm.ai_callable(
     name="transfer_call",
@@ -202,7 +201,7 @@ async def transfer_call(
     print(f"\n\n\n\n tool transfer_call invoked - caller_details: {caller_details}")
 
     logger.info(f"tool transfer_call invoked")
-    from services.initiate_outbound import initiate_outbound_call
+    from services.initiate_outbound import create_sip_participant
 
     room_name = AgentFunctions.current_room_name
     outbound_room_name = f"outbound_{room_name}"
@@ -220,17 +219,14 @@ async def transfer_call(
         return "Error: No transfer number configured for this agent"
     print(f"transfer_number: {transfer_number}")
 
-    with open('backend/call_data.json', 'r') as f:
-        call_data_from_file = json.load(f)
-    # Extract call metadata from the dictionary structure
-    call_metadata = call_data_from_file.get(room_name, {})
-
     print(f"\nInitiating call transfer - Reason: {transfer_reason}")
     logger.info(f"Call transfer initiated - Reason: {transfer_reason}, Caller: {caller_details}")
-    await initiate_outbound_call(transfer_number, outbound_room_name)
 
-    """ to make sure tha agent has mentioned the callee will be placed on hold """
-    """ to put callee on hold, and isolte agent and calle. """
+    print(f"about to create sip participant for transfer_number: {transfer_number}")
+    await create_sip_participant(transfer_number, room_name)
+
+    """ to make sure the agent has mentioned the callee will be placed on hold """
+    """ to put callee on hold, and isolate agent and callee """
 
     return f"Call transfer initiated to {transfer_number}"
 

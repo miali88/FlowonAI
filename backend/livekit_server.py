@@ -1,6 +1,12 @@
-import os
-import sys
+from __future__ import annotations
+
+import os, sys
 from typing import Dict, List, Optional, Any
+import asyncio
+from dotenv import load_dotenv
+import logging
+import time
+from datetime import datetime, timedelta
 
 # Add both the project root and backend directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -10,22 +16,17 @@ for path in [project_root, backend_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
-import asyncio
-from dotenv import load_dotenv
-import logging
-import time
-from datetime import datetime, timedelta
-
-from livekit import agents, rtc
+from livekit import agents, rtc, api
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
+from livekit.agents.voice_assistant import VoiceAssistant
 
-from services.voice.livekit_services import create_voice_assistant, transfer_participant
+from services.voice.livekit_services import create_voice_assistant
 from services.voice.tool_use import trigger_show_chat_input
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
 from services.voice.livekit_helper import detect_call_type_and_get_agent_id
-
+from backend.mute_track import CallTransferHandler
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -95,21 +96,81 @@ async def entrypoint(ctx: JobContext):
         await asyncio.sleep(3)
 
         print("iterating through room.remote_participants to find available participant")
-        available_participant = None
+        first_participant = None
         for rp in room.remote_participants.values():
             print("remote participant:",rp)
-            available_participant = rp
+            first_participant = rp
             break
 
-        if available_participant:
+        if first_participant:
             # Add the participant to tracking dictionary with empty prospect status
-            participant_prospects[available_participant.sid] = ""
-            print(f"Added participant {available_participant.sid} to tracking with empty prospect status")
-            print(f"Found available participant: {available_participant.identity}")            
+            participant_prospects[first_participant.sid] = ""
+            print(f"Added participant {first_participant.sid} to tracking with empty prospect status")
+            print(f"Found available participant: {first_participant.identity}")            
         else:
             print("No available participants found.")
             ctx.shutdown(reason="No available participants")
 
+        @agent.on("function_calls_finished")
+        def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
+            """This event triggers when an assistant's function call completes."""
+            print("\n\n\n on_function_calls_finished method called")
+            print("called_functions:", called_functions)
+
+            for called_function in called_functions:
+                function_name = called_function.call_info.function_info.name
+                print(f"Function called: {function_name}")
+
+                if function_name == "request_personal_data":
+                    print("Triggering show_chat_input")
+                    # Update prospect status for the participant
+                    participant_prospects[first_participant.sid] = "yes"
+                    print(f"Updated {first_participant.sid} to prospect status")
+                    # Create task for handling the chat input response
+                    asyncio.create_task(handle_chat_input_response(agent, 
+                                                                    ctx.room.name, 
+                                                                    ctx.job.id, 
+                                                                    first_participant.identity,
+                                                                    participant_prospects[first_participant.sid])  # Pass the prospect_status
+                                                                    )
+
+                elif function_name == "search_products_and_services":
+                    print("search_products_and_services called")
+                    #print("\n\nagent.chat_ctx:", agent.chat_ctx)
+
+                elif function_name == "transfer_call":
+                    print("transfer_call called")
+                    
+                    async def handle_transfer():
+                        async with CallTransferHandler(room) as transfer_handler:
+                            await transfer_handler.place_participant_on_hold(first_participant.identity)
+                            
+                            # Find the second participant
+                            second_participant = None
+                            for participant in room.remote_participants.values():
+                                if participant.sid != first_participant.sid:
+                                    second_participant = participant
+                                    break
+                            
+                            if second_participant:
+                                print(f"Found second participant: {second_participant.identity}")
+                                await asyncio.sleep(10)
+                                local_participant = room.local_participant.identity
+                                await transfer_handler.restore_participant_from_hold(
+                                    local_participant, 
+                                    second_participant_identity=second_participant.identity
+                                )
+                            else:
+                                print("No second participant found in the room")
+
+                    # Create the task for the async operation
+                    asyncio.create_task(handle_transfer())
+                    """
+                    TODO:
+                    - check to see if first_participant is in the outbound room, if not, add them
+                    - transfer_participant should be invoked by the 2nd agent based on result of outbound call. i.e if staff wants to speak or not. 
+                        - for now, we'll just assume they do want, and transfer the initial caller to the staff. 
+                    """
 
         async def initialize_calendar_on_connect():
             print("\n=== Starting Calendar Initialization ===")
@@ -141,19 +202,19 @@ async def entrypoint(ctx: JobContext):
         # print("\n\n\n\n Creating calendar initialization task")
         # asyncio.create_task(initialize_calendar_on_connect())
 
-        """ EVENT HANDLERS FOR AGENT """            
-        @ctx.room.on('participant_disconnected')
+        # """ EVENT HANDLERS FOR AGENT """            
+        # @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
-            # Check if available_participant exists before comparing identities
-            if available_participant and participant.identity == available_participant.identity:
+            # Check if first_participant exists before comparing identities
+            if first_participant and participant.identity == first_participant.identity:
                 call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
                 print(f"Call duration: {call_duration}")
                 ctx.add_shutdown_callback(
                     lambda: store_conversation_history(agent, 
                                                    room_name, 
                                                    ctx.job.id, 
-                                                   available_participant.identity, 
-                                                   participant_prospects[available_participant.sid],
+                                                   first_participant.identity, 
+                                                   participant_prospects[first_participant.sid],
                                                    call_duration)
                 )
                 ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
@@ -209,57 +270,6 @@ async def entrypoint(ctx: JobContext):
             print(f"Room {room_name} connected")
             """ doesn't work :(, doesn't callback on room connect"""
 
-        @agent.on("function_calls_finished")
-        def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
-            """This event triggers when an assistant's function call completes."""
-            print("\n\n\n on_function_calls_finished method called")
-            print("called_functions:", called_functions)
-
-            for called_function in called_functions:
-                function_name = called_function.call_info.function_info.name
-                print(f"Function called: {function_name}")
-
-                if function_name == "request_personal_data":
-                    print("Triggering show_chat_input")
-                    # Update prospect status for the participant
-                    participant_prospects[available_participant.sid] = "yes"
-                    print(f"Updated {available_participant.sid} to prospect status")
-                    # Create task for handling the chat input response
-                    asyncio.create_task(handle_chat_input_response(agent, 
-                                                                    ctx.room.name, 
-                                                                    ctx.job.id, 
-                                                                    available_participant.identity,
-                                                                    participant_prospects[available_participant.sid])  # Pass the prospect_status
-                                                                    )
-
-                elif function_name == "search_products_and_services":
-                    print("search_products_and_services called")
-                    #print("\n\nagent.chat_ctx:", agent.chat_ctx)
-
-
-
-                elif function_name == "transfer_call":
-                    print("function call back from livekit_server.py")
-                    print("transfer_call called")
-                    # Create task for the async transfer_participant function
-                    print("creating transfer_participant task, args:")
-                    print(f"source_room_name: {room_name}")
-                    print(f"target_room_name: outbound_{room_name}")
-                    print(f"participant_identity: {available_participant.identity}")
-                    asyncio.create_task(transfer_participant(
-                        source_room_name=room_name, # source room is current agent's room
-                        target_room_name="outbound_" + room_name, # target room is outbound room
-                        participant_identity=available_participant.identity,  # participant to transfer in source room
-                    ))
-                    """
-                    TODO:
-                    - check to see if available_participant is in the outbound room, if not, add them
-                    - transfer_participant should be invoked by the 2nd agent based on result of outbound call. i.e if staff wants to speak or not. 
-                        - for now, we'll just assume they do want, and transfer the initial caller to the staff. 
-                    """
-
-
-        """ HELPER FUNCTIONS """
         async def handle_chat_input_response(agent, 
                                              room_name: str, 
                                              job_id: str, 
@@ -365,8 +375,8 @@ async def entrypoint(ctx: JobContext):
                     await store_conversation_history(agent, 
                                                   room_name, 
                                                   ctx.job.id, 
-                                                  available_participant.identity, 
-                                                  participant_prospects[available_participant.sid],
+                                                  first_participant.identity, 
+                                                  participant_prospects[first_participant.sid],
                                                   format_duration(call_start_time))  # Add duration
                     await ctx.shutdown(reason=f"Silence timeout reached after {format_duration(call_start_time)}")
                     break
