@@ -86,7 +86,6 @@ class CallTransferHandler:
                     
         logger.info(f"Successfully placed participant {participant_identity} on hold")
 
-
     async def restore_participant_from_hold(self, participant_identity: str, second_participant_identity: str) -> None:
         """Restores a participant from hold state"""
         logger.info(f"=== Starting restore process for participant {participant_identity} ===")
@@ -196,6 +195,11 @@ class CallTransferHandler:
         # Clean up stored states
         del self._held_participants[participant_identity]
         logger.info(f"=== Completed restore process for {participant_identity} ===")
+
+    async def call_second_agent(self, local_participant: str, second_participant_identity: str) -> None:
+        """Calls the second agent"""
+        logger.info(f"Calling second agent {second_participant_identity}")
+        await self.subscribe_participant_to_agent(second_participant_identity)
 
 
     async def subscribe_participant_to_agent(self, participant_identity: str) -> None:

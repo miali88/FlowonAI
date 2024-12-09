@@ -184,6 +184,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         # Log full agent configuration for debugging
         logger.debug(f"Full agent configuration: {agent}")
         
+
         # Add validation for required agent fields with detailed logging
         required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
         missing_fields = [field for field in required_fields if not agent.get(field)]
@@ -202,7 +203,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         
         llm_instance = openai.LLM(
             model="gpt-4o",
-            temperature=0.2
+            temperature=0.4
         )
 
         # Select TTS provider based on voiceProvider field
@@ -226,7 +227,9 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
-            stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
+            stt=deepgram.STT(
+                model="nova-2-general", 
+                language=lang_options[agent['language']]['deepgram']),
             llm=llm_instance,
             tts=tts_instance,
             chat_ctx=llm.ChatContext().append(
@@ -236,7 +239,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
             interrupt_min_words=2,
-            min_endpointing_delay=1,
+            min_endpointing_delay=0.7,
             before_tts_cb=remove_special_characters)
                     
         logger.info("Voice assistant created successfully")
