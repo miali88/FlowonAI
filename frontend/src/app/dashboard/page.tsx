@@ -52,6 +52,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 // Add this import near the top with other page imports
 import PhoneNumbersPage from '@/app/dashboard/phonenumbers/page';
+import WorkflowsPage from '@/app/dashboard/workflows/page';
 
 // Add this CSS at the top of your file after imports
 const layoutStyles = {
@@ -256,6 +257,8 @@ function AdminDashboard() {
         return <Analytics />;
       case "Phone Numbers":
         return <PhoneNumbersPage />;
+      case "Workflows":
+        return <WorkflowsPage />;
       default:
         return <AgentHub />;
     }

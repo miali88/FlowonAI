@@ -1,4 +1,4 @@
-import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, ChevronLeft, Phone, PhoneOutgoing } from "lucide-react";
+import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, ChevronLeft, Phone, PhoneOutgoing, Share2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +31,7 @@ export function AppSidebar({
     { title: "Agent Hub", icon: Mic },
     { title: "Phone Numbers", icon: Phone },
     { title: "Batch Outbound Calls", icon: PhoneOutgoing },
+    { title: "Workflows", icon: Share2 },
     { title: "Knowledge Base", icon: BookOpen },
     { title: "Conversation Logs", icon: MessageSquare },
     { title: "Integrations", icon: Plug },

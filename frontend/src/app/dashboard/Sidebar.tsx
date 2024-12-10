@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, Menu, X, LucideIcon } from "lucide-react";
+import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, Menu, X, Phone, Share2, PhoneCall, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface SidebarProps {
@@ -57,6 +57,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const sidebarItems = [
     { icon: Mic, label: "Agent Hub" },
+    { icon: Phone, label: "Phone Numbers" },
+    { icon: PhoneCall, label: "Batch Outbound Calls" },
+    { icon: Share2, label: "Workflows" },
     { icon: BookOpen, label: "Knowledge Base" },
     { icon: MessageSquare, label: "Conversation Logs" },
     { icon: Plug, label: "Integrations" },
