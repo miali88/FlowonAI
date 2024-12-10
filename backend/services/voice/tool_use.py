@@ -93,7 +93,6 @@ async def request_personal_data(
     
     return "Form presented to user. Waiting for user to complete and submit form."
 
-
 """ CALENDAR MANAGEMENT """
 @llm.ai_callable(
     name="fetch_calendar",
@@ -230,71 +229,61 @@ async def transfer_call(
 
     return f"Call transfer initiated to {transfer_number}"
 
-
-
 class AgentFunctions(llm.FunctionContext):
-    current_room_name = None  # Class variable to store current room_name
-    current_job_ctx = None    # Add class variable to store job_ctx
+    current_room_name = None
+    current_job_ctx = None
     
     def __init__(self, job_ctx):
         super().__init__()
         self.job_ctx = job_ctx
         self.room_name = job_ctx.room.name
-        AgentFunctions.current_room_name = self.room_name  # Store room_name
-        AgentFunctions.current_job_ctx = job_ctx  # Store job_ctx
+        AgentFunctions.current_room_name = self.room_name
+        AgentFunctions.current_job_ctx = job_ctx
+        # Initialize functions immediately in constructor
+        asyncio.create_task(self.initialize_functions())
 
     async def initialize_functions(self):
         print("Initializing functions for agent")
-        features = {}  # Initialize features with empty dict as default
+        features = {}
         agent_id = None
 
         try:
-
+            # Get agent ID and metadata
             agent_id = await detect_call_type_and_get_agent_id(self.room_name)
             agent_metadata: Dict = await get_agent_metadata(agent_id)
             
-            print(f"agent_id in initialize_functions: {agent_id}")
-            if agent_id:
-                if agent_metadata:
-                    features: Dict = agent_metadata.get('features', {})
-                    print(f"Retrieved features for agent {agent_id}: {features}")
-                else:
-                    logger.error(f"No agent metadata found for agent_id: {agent_id}")
+            if agent_metadata:
+                features = agent_metadata.get('features', {})
+                print(f"Retrieved features for agent {agent_id}: {features}")
             else:
-                logger.error("Could not determine agent_id from room name")
+                logger.error(f"No agent metadata found for agent_id: {agent_id}")
+                return
 
-            """ registering the feature functions """
-            print(f"features: {features}")
-
-            # Always register Q&A function
-            self._register_ai_function(question_and_answer)
-            print(f"Registered Q&A function")
-            logger.info(f"Registered Q&A function")
-
-            print("\n\n checking features fields to register functions")
-            print(f"\nfeatures: {features}")
-            # Check if feature exists in dict and is enabled
-            if features.get('lead_gen', {}).get('enabled', False):
-                self._register_ai_function(request_personal_data)
-                print(f"Registered lead generation function")
-                logger.info(f"Registered lead generation function")
-
-            if features.get('appointmentBooking', {}).get('enabled', False):
-                self._register_ai_function(fetch_calendar)
-                print(f"Registered calendar function")
-                logger.info(f"Registered calendar function")
-
-                self._register_ai_function(book_appointment)
-                print(f"Registered book appointment function")
-                logger.info(f"Registered book appointment function")
-
-            if features.get('callTransfer', {}).get('enabled', False):
-                self._register_ai_function(transfer_call)
-                print(f"Registered call transfer function")
-                logger.info(f"Registered call transfer function")
-
+            # Register functions before they're needed
+            await self._register_functions(features)
+            
         except Exception as e:
             logger.error(f"Error in initialize_functions: {str(e)}", exc_info=True)
+
+    async def _register_functions(self, features: Dict):
+        """Helper method to register all functions"""
+        # Always register Q&A function
+        self._register_ai_function(question_and_answer)
+        logger.info("Registered Q&A function")
+
+        # Register optional functions based on features
+        if features.get('lead_gen', {}).get('enabled', False):
+            self._register_ai_function(request_personal_data)
+            logger.info("Registered lead generation function")
+
+        if features.get('appointmentBooking', {}).get('enabled', False):
+            self._register_ai_function(fetch_calendar)
+            self._register_ai_function(book_appointment)
+            logger.info("Registered calendar functions")
+
+        if features.get('callTransfer', {}).get('enabled', False):
+            self._register_ai_function(transfer_call)
+            logger.info("Registered call transfer function")
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")

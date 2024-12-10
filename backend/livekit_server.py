@@ -114,7 +114,6 @@ async def entrypoint(ctx: JobContext):
             print("No available participants found.")
             ctx.shutdown(reason="No available participants")
 
-
         @agent.on("function_calls_finished")
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
             """This event triggers when an assistant's function call completes."""
@@ -155,7 +154,7 @@ async def entrypoint(ctx: JobContext):
                             await transfer_handler.re_subscribe_agent(local_participant)
                             # Access the chat context
                             print("appending to chat_ctx")
-                            agent.chat_ctx.append(text="## You have successfully placed the caller on hold. and are now speaking with the staff member", role="user")
+                            agent.chat_ctx.append(text="## SYSTEM:You have successfully placed the caller on hold. and are now speaking with the staff member", role="user")
                             print("chat_ctx appended")
 
                             ### Find the second participant (staff member)
@@ -178,18 +177,13 @@ async def entrypoint(ctx: JobContext):
    
 
 
-
                             # await transfer_handler.get_participant(local_participant)
                             # await transfer_handler.get_participant(first_participant.identity)
 
                     
                     asyncio.create_task(handle_transfer())
 
-
-
         # """ EVENT HANDLERS FOR AGENT """     
-        
-        
         @ctx.room.on('participant_connected')
         def on_participant_connected(participant: rtc.RemoteParticipant):
             print(f"OOOH WOW,Participant connected: {participant.identity}")
@@ -198,7 +192,7 @@ async def entrypoint(ctx: JobContext):
             else:
                 print(f"Other participant connected: {participant.identity}")
            
-        # @ctx.room.on('participant_disconnected')
+        @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             # Check if first_participant exists before comparing identities
             if first_participant and participant.identity == first_participant.identity:
@@ -218,7 +212,6 @@ async def entrypoint(ctx: JobContext):
 
             print("User stopped speaking")
 
-
         @ctx.room.on('disconnected')
         def on_disconnected(exception: Exception):
             print(f"Room {room_name} disconnected. Reason: {str(exception)}")
@@ -227,9 +220,6 @@ async def entrypoint(ctx: JobContext):
         def on_connected():
             print(f"Room {room_name} connected")
             """ doesn't work :(, doesn't callback on room connect"""
-
-
-
 
         async def handle_chat_input_response(agent, 
                                              room_name: str, 
@@ -358,6 +348,34 @@ async def entrypoint(ctx: JobContext):
                 "is_muted": False
             }
 
+        # Update existing on_participant_disconnected to include cleanup
+        @ctx.room.on("participant_disconnected")
+        def on_participant_disconnected(participant: rtc.RemoteParticipant):
+            logger.info(f"Participant disconnected: {participant.identity}")
+            # Clean up tracking dictionaries
+            if participant.sid in track_subscriptions:
+                del track_subscriptions[participant.sid]
+            if participant.sid in participant_states:
+                del participant_states[participant.sid]
+            
+            # Existing disconnect logic
+            if first_participant and participant.identity == first_participant.identity:
+                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
+                print(f"Call duration: {call_duration}")
+                ctx.add_shutdown_callback(
+                    lambda: store_conversation_history(agent, 
+                                                   room_name, 
+                                                   ctx.job.id, 
+                                                   first_participant.identity, 
+                                                   participant_prospects[first_participant.sid],
+                                                   call_duration)
+                )
+                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
+            else:
+                print(f"Participant disconnected but was not the available participant: {participant.identity}")
+
+            print("User stopped speaking")
+
         @ctx.room.on("track_subscribed")
         def on_track_subscribed(track, publication, participant):
             logger.info(f"Track subscribed: {track.kind} from {participant.identity}")
@@ -396,35 +414,6 @@ async def entrypoint(ctx: JobContext):
             if participant.sid in participant_states:
                 participant_states[participant.sid]["is_muted"] = False
 
-        # Update existing on_participant_disconnected to include cleanup
-        @ctx.room.on("participant_disconnected")
-        def on_participant_disconnected(participant: rtc.RemoteParticipant):
-            logger.info(f"Participant disconnected: {participant.identity}")
-            # Clean up tracking dictionaries
-            if participant.sid in track_subscriptions:
-                del track_subscriptions[participant.sid]
-            if participant.sid in participant_states:
-                del participant_states[participant.sid]
-            
-            # Existing disconnect logic
-            if first_participant and participant.identity == first_participant.identity:
-                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
-                print(f"Call duration: {call_duration}")
-                ctx.add_shutdown_callback(
-                    lambda: store_conversation_history(agent, 
-                                                   room_name, 
-                                                   ctx.job.id, 
-                                                   first_participant.identity, 
-                                                   participant_prospects[first_participant.sid],
-                                                   call_duration)
-                )
-                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
-            else:
-                print(f"Participant disconnected but was not the available participant: {participant.identity}")
-
-            print("User stopped speaking")
-
-
         try:
             while True:
                 await asyncio.sleep(0.2)
@@ -457,7 +446,6 @@ def prewarm_fnc(proc: JobProcess):
 # async def load_fnc(proc: JobProcess):
 #     print("load_fnc called")
 #     return True
-
 
 if __name__ == "__main__":
     opts = WorkerOptions(

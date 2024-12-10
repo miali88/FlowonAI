@@ -184,7 +184,6 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         # Log full agent configuration for debugging
         logger.debug(f"Full agent configuration: {agent}")
         
-
         # Add validation for required agent fields with detailed logging
         required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
         missing_fields = [field for field in required_fields if not agent.get(field)]
@@ -199,7 +198,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         print("Creating voice assistant with configuration")    
         fnc_ctx = AgentFunctions(job_ctx)
         # Initialize functions based on agent features
-        await fnc_ctx.initialize_functions()
+        # await fnc_ctx.initialize_functions()
         
         llm_instance = openai.LLM(
             model="gpt-4o",
@@ -225,6 +224,11 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
                 model=lang_options[agent['language']]['cartesia_model'],
                 voice=agent['voice'])
         
+        if agent['instructions'] == "multi_state":
+            instructions = agent['multi_state']
+        else:
+            instructions = agent['instructions']
+
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(
@@ -234,7 +238,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
             tts=tts_instance,
             chat_ctx=llm.ChatContext().append(
                 role="system",
-                text=agent['instructions']),
+                text=instructions),
             fnc_ctx=fnc_ctx,
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
