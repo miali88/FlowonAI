@@ -24,7 +24,7 @@ export default function HomePage() {
 
     // Create script element for chat widget
     const scriptEl = document.createElement('script');
-    scriptEl.src = 'https://5231de20.flowonwidget.pages.dev/iframeChat.min.js';
+    scriptEl.src = 'https://1669fd5d.flowonwidget.pages.dev/iframeChat.min.js';
     document.body.appendChild(scriptEl);
 
     // Initialize chat widget once script is loaded
