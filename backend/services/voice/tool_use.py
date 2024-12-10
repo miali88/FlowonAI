@@ -195,6 +195,7 @@ async def transfer_call(
     Returns a confirmation message about the call transfer.
     """
     caller_details = {
+        "transfer_reason": transfer_reason,
         "name": caller_name,
         "business_name": business_name
     }
@@ -205,7 +206,7 @@ async def transfer_call(
 
     room_name = AgentFunctions.current_room_name
     outbound_room_name = f"outbound_{room_name}"
-    agent_id = await detect_call_type_and_get_agent_id(outbound_room_name)
+    agent_id = await detect_call_type_and_get_agent_id(room_name)
 
     agent_metadata: Dict = await get_agent_metadata(agent_id)
 
@@ -221,8 +222,8 @@ async def transfer_call(
 
     print(f"\nInitiating call transfer - Reason: {transfer_reason}")
 
-    print(f"about to create sip participant for room_name: {outbound_room_name}")
-    await create_sip_participant(transfer_number, outbound_room_name)
+    print(f"about to create sip participant for room_name: {room_name}")
+    await create_sip_participant(transfer_number, room_name)
 
     """ to make sure the agent has mentioned the callee will be placed on hold """
     """ to put callee on hold, and isolate agent and callee """
