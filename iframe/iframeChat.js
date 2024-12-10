@@ -35,16 +35,16 @@ class ChatWidget {
 
       @media (max-width: 640px) {
         .chat-widget-container {
-          width: 100%;
-          height: 100vh;
-          ${this.config.position}: 0;
-          bottom: 0;
-          border-radius: 16px 16px 0 0;
-          border: 1px solid #ccc;
+          width: 80%;
+          max-width: 300px;
+          height: 100px;
+          ${this.config.position}: 10px;
+          bottom: 10px;
+          border-radius: 16px;
         }
         
         .chat-widget-iframe {
-          border-radius: 16px 16px 0 0;
+          border-radius: 16px;
         }
       }
     `;
