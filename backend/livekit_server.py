@@ -115,55 +115,10 @@ async def entrypoint(ctx: JobContext):
             ctx.shutdown(reason="No available participants")
 
 
-        print("about to call handle_transfer, sleeping for 10 seconds")
-        await asyncio.sleep(10)
-        # print("calling transfer_call")
-        # await transfer_call(transfer_reason="new enquiry", caller_name="Jake", business_name="Flowon AI")
-        # print("transfer_call called")
-
-
-        async def handle_transfer():
-            async with CallTransferHandler(room) as transfer_handler:
-                await transfer_handler.place_participant_on_hold(first_participant.identity)
-
-                # print("creating second agent")
-                # # Create a second agent
-                # second_agent_id = "1bf662cf-4d01-4c82-b919-8534ad071380"  # Replace with actual agent ID
-                # second_agent, second_opening_line = await create_voice_assistant(second_agent_id, ctx)
-                # second_agent.start(room)
-                # await second_agent.say("Hello, I'm the second agent. How can I help you today?", allow_interruptions=False)
-
-
-                local_participant = room.local_participant.identity
-                print("re-subscribing agent to its own tracks")
-                print("local_participant:", local_participant)
-                await transfer_handler.re_subscribe_agent(local_participant)
-
-
-                await asyncio.sleep(10)
-
-                print("re-subscribing participant to its own tracks")
-                print("first_participant:", first_participant.identity)
-                await transfer_handler.re_subscribe_participant(first_participant.identity)
-
-
-                await transfer_handler.get_participant(local_participant)
-                await transfer_handler.get_participant(first_participant.identity)
-
-
-        asyncio.create_task(handle_transfer())
-     
-
-
-
-
-
-
         @agent.on("function_calls_finished")
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
             """This event triggers when an assistant's function call completes."""
-            print("\n\n\n on_function_calls_finished method called")
-            print("called_functions:", called_functions)
+            print("\n\n\n[on_function_calls_finished] method called")
 
             for called_function in called_functions:
                 function_name = called_function.call_info.function_info.name
@@ -187,56 +142,62 @@ async def entrypoint(ctx: JobContext):
                     #print("\n\nagent.chat_ctx:", agent.chat_ctx)
 
                 elif function_name == "transfer_call":
-                    print("transfer_call called")
-                    
-
+                    print("[on_function_calls_finished] transfer_call called")
                     async def handle_transfer():
                         async with CallTransferHandler(room) as transfer_handler:
+                            await agent.say("I'm going to put you on hold for a moment while I check in with the staff member", allow_interruptions=False)
+                            await asyncio.sleep(5)
                             await transfer_handler.place_participant_on_hold(first_participant.identity)
 
-                            print("creating second agent")
-                            # Create a second agent
-                            second_agent_id = "1bf662cf-4d01-4c82-b919-8534ad071380"  # Replace with actual agent ID
-                            second_agent, second_opening_line = await create_voice_assistant(second_agent_id, ctx)
-                            second_agent.start(room)
-                            await second_agent.say("Hello, I'm the second agent. How can I help you today?", allow_interruptions=False)
-
-
                             local_participant = room.local_participant.identity
-                            print("re-subscribing agent to its own tracks")
-                            print("local_participant:", local_participant)
-                            await transfer_handler.re_subscribe_agent(local_participant.identity)
+                            print("[on_function_calls_finished] re-subscribing agent to its own tracks")
+                            print("[on_function_calls_finished] local_participant:", local_participant)
+                            await transfer_handler.re_subscribe_agent(local_participant)
+                            # Access the chat context
+                            print("appending to chat_ctx")
+                            agent.chat_ctx.append(text="## You have successfully placed the caller on hold. and are now speaking with the staff member", role="user")
+                            print("chat_ctx appended")
 
-
-                            # Find the second participant
-                            # second_participant = None
-                            # for participant in room.remote_participants.values():
-                            #     if participant.sid != first_participant.sid:
-                            #         second_participant = participant
-                            #         break
+                            ### Find the second participant (staff member)
+                            print("iterating through room.remote_participants to find second participant")
+                            second_participant = None
+                            for participant in room.remote_participants.values():
+                                if participant.sid != first_participant.sid:
+                                    second_participant = participant
+                                    break
                             
-                            # if second_participant:
-                            #     print(f"Found second participant: {second_participant.identity}")
-                            #     await asyncio.sleep(15)
-                            #     local_participant = room.local_participant.identity
-                            #     await transfer_handler.restore_participant_from_hold(
-                            #         local_participant, 
-                            #         second_participant_identity=second_participant.identity
-                            #     )
-                            # else:
-                            #     print("No second participant found in the room")
+                            if second_participant:
+                                print("about to call agent._link_participant to create audio track between agent and second participant")
+                                agent._link_participant(second_participant.identity)
+                                print(f"Found second participant: {second_participant.identity}")
+                                local_participant = room.local_participant.identity
+                                await transfer_handler.re_subscribe_participant(second_participant.identity)
 
-                    # Create the task for the async operation
+                            else:
+                                print("No second participant found in the room")
+   
+
+
+
+                            # await transfer_handler.get_participant(local_participant)
+                            # await transfer_handler.get_participant(first_participant.identity)
+
+                    
                     asyncio.create_task(handle_transfer())
-                    """
-                    TODO:
-                    - check to see if first_participant is in the outbound room, if not, add them
-                    - transfer_participant should be invoked by the 2nd agent based on result of outbound call. i.e if staff wants to speak or not. 
-                        - for now, we'll just assume they do want, and transfer the initial caller to the staff. 
-                    """
 
 
-        # """ EVENT HANDLERS FOR AGENT """            
+
+        # """ EVENT HANDLERS FOR AGENT """     
+        
+        
+        @ctx.room.on('participant_connected')
+        def on_participant_connected(participant: rtc.RemoteParticipant):
+            print(f"OOOH WOW,Participant connected: {participant.identity}")
+            if participant.identity == first_participant.identity:
+                print(f"First participant connected: {first_participant.identity}")
+            else:
+                print(f"Other participant connected: {participant.identity}")
+           
         # @ctx.room.on('participant_disconnected')
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             # Check if first_participant exists before comparing identities
