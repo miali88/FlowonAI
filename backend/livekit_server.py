@@ -248,10 +248,17 @@ async def entrypoint(ctx: JobContext):
                                              job_id: str, 
                                              participant_identity: str, 
                                              prospect_status: str,
-                                             call_duration: CallDuration):  # Update type hint
+                                             call_duration: CallDuration):
             print("store_conversation_history method called")
 
-            # Parse chat context into simplified format
+            # Check if there are any user messages in chat context
+            has_user_messages = any(message.role == 'user' for message in agent.chat_ctx.messages)
+            
+            if not has_user_messages:
+                print("No user messages found in chat context, skipping conversation storage")
+                return
+
+            # Rest of the function continues only if there are user messages
             conversation_history = []
             for message in agent.chat_ctx.messages:
                 message_dict = {}
