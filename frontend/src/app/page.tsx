@@ -1,6 +1,4 @@
 'use client';
-import { useEffect } from 'react';
-
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
@@ -15,29 +13,6 @@ import { DeploySection } from "@/components/deploy";
 import { Information } from "@/components/Information";
 
 export default function HomePage() {
-  useEffect(() => {
-    // Store config in window object so it's accessible to other scripts
-    window.chatConfig = {
-      agentId: 'ac0b4742-23ae-4cc1-8b9b-77392e27e410',
-      domain: 'https://flowon.ai/clients'
-    };
-
-    // Create script element for chat widget
-    const scriptEl = document.createElement('script');
-    scriptEl.src = 'https://1669fd5d.flowonwidget.pages.dev/iframeChat.min.js';
-    document.body.appendChild(scriptEl);
-
-    // Initialize chat widget once script is loaded
-    scriptEl.onload = function() {
-      new ChatWidget(window.chatConfig);
-    };
-
-    // Cleanup function to remove script when component unmounts
-    return () => {
-      document.body.removeChild(scriptEl);
-    };
-  }, []);
-
   return (
     <div className="overflow-x-hidden relative">
       <Header />
