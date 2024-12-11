@@ -89,6 +89,7 @@ async def livekit_room_webhook(request: Request):
 async def create_embeddings(request: Request):
     data = await request.json()
     conversation_logs = data['transcript']
+    
     print(f"Received data: {data}")
 
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
