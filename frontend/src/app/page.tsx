@@ -12,6 +12,7 @@ import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
 import { Information } from "@/components/Information";
+import { useEffect } from 'react';
 
 export default function HomePage() {
   useEffect(() => {

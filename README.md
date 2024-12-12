@@ -18,33 +18,40 @@
 - Warp for terminal
 - LLM Models: Openai, Anthropic, Meta. Awaiting cerebras and groq api for fast inference. 
 
-### Infra
+### Infra & CI/CD
 - DigitalOcean for hosting
 - Cloudflare for DNS and CDN
 - nginx for reverse proxy
+- Sentry for error monitoring
   
 
 ## Getting Started
 
 ### Backend
-1. Set up Python virtual environment:   ```bash
+1. Set up Python virtual environment:   
+```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate   ```
 
-2. Install dependencies:   ```bash
+2. Install dependencies:   
+```bash
    pip install -r requirements.txt   ```
 
-3. Run the development server:   ```bash
+3. Run the development server:   
+```bash
    python run_fast.py   ```
 
 ### Frontend
-1. Install Node.js dependencies:   ```bash
+1. Install Node.js dependencies:  
+```bash
    npm install   ```
 
-2. Start development server:   ```bash
+2. Start development server:   
+```bash
    npm run dev   ```
 
-3. For production build:   ```bash
+3. For production build:   
+```bash
    npm run build
    npm start   ```
    
@@ -55,12 +62,3 @@ The widget system consists of several interconnected components:
 - **TextWidget**: Text-based interaction component
 - **iframe**: Embedding framework for widget integration
 - **Clients**: Client-side implementations and examples
-
-To implement the widget:
-
-1. Choose your preferred widget type (Chat/Text)
-2. Follow the integration guide in `/Clients` directory
-3. Use the iframe wrapper for seamless embedding
-4. Configure widget settings in your application
-
-For detailed implementation instructions, see the respective component directories.
