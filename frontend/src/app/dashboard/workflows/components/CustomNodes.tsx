@@ -1,54 +1,33 @@
 import React from 'react';
-import { Handle, Position } from '@xyflow/react';
-import { 
-  Phone, 
-  Database, 
-  Webhook as WebhookIcon, 
-  Clock, 
-  GitFork, 
-  Wrench, 
-  MessageSquare,
-  BookOpen,
-  PhoneForwarded,
-  PhoneOff,
-  Square,
-  MessageCircle,
-  Play,
-  Flag
-} from 'lucide-react';
+import { Handle, Position, NodeProps, NodeTypes } from '@xyflow/react';
+import { Database, Phone, PhoneOff, Webhook, Clock, GitFork, Wrench, MessageSquare, Cloud, Play, Flag } from 'lucide-react';
+import { CustomNodeProps } from '../types';
 
-type NodeData = {
-  label: string;
-  content?: string;
-};
-
-type CustomNodeProps = {
-  data: NodeData;
-  selected?: boolean;
-};
-
+// Base node component with consistent styling
 const BaseNode = ({ 
   children, 
   selected, 
   topHandle = true, 
-  bottomHandle = true 
+  bottomHandle = true,
+  className = ""
 }: { 
   children: React.ReactNode; 
   selected?: boolean;
   topHandle?: boolean;
   bottomHandle?: boolean;
+  className?: string;
 }) => (
   <div className={`
     relative
-    bg-white
     rounded-lg
     border
-    ${selected ? 'border-blue-500' : 'border-gray-200'}
+    ${selected ? 'border-blue-500' : 'border-gray-200/20'}
     min-w-[200px]
     transition-all
     duration-200
     shadow-sm
     hover:shadow-md
+    ${className}
   `}>
     {topHandle && (
       <Handle
@@ -70,190 +49,131 @@ const BaseNode = ({
   </div>
 );
 
-const NodeContent = ({ icon: Icon, label, type, color = "blue" }: { 
-  icon: any; 
-  label: string; 
-  type: string;
-  color?: string;
+// Node content component for consistent internal styling
+const NodeContent = ({ icon: Icon, label, description }: { 
+  icon: React.ElementType; 
+  label: string;
+  description?: string;
 }) => (
-  <div className="p-3 space-y-2">
-    <div className="flex items-center gap-2">
-      <div className={`w-6 h-6 rounded bg-${color}-50 flex items-center justify-center`}>
-        <Icon className={`w-4 h-4 text-${color}-500`} />
+  <div className="p-4">
+    <div className="flex items-center gap-3">
+      <div className="p-2.5 rounded-lg bg-white/10 backdrop-blur-sm">
+        <Icon className="h-4 w-4" />
       </div>
-      <span className="font-medium text-gray-700">{label}</span>
-      <span className="ml-auto text-gray-400 text-xs">{type}</span>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium truncate">{label}</div>
+        {description && (
+          <div className="text-xs text-white/60 mt-1 truncate">{description}</div>
+        )}
+      </div>
     </div>
   </div>
 );
 
-export const DefaultNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={MessageSquare} 
-      label={data.label} 
-      type="Default"
-      color="blue"
-    />
+export const StartNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} topHandle={false} className="bg-emerald-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Play} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const KnowledgeBaseNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={BookOpen} 
-      label={data.label} 
-      type="Knowledge Base"
-      color="purple"
-    />
+export const DefaultNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-slate-800/90 text-white backdrop-blur-sm">
+    <NodeContent icon={MessageSquare} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const TransferCallNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={PhoneForwarded} 
-      label={data.label} 
-      type="Transfer Call"
-      color="green"
-    />
+export const ResponseNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} bottomHandle={false} className="bg-violet-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Flag} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const EndCallNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected} bottomHandle={false}>
-    <NodeContent 
-      icon={PhoneOff} 
-      label={data.label} 
-      type="End Call"
-      color="red"
-    />
+export const KnowledgeBaseNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-blue-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Database} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const WebhookNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={WebhookIcon} 
-      label={data.label} 
-      type="Webhook"
-      color="orange"
-    />
+export const TransferCallNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-purple-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Phone} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const WaitForResponseNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={Clock} 
-      label={data.label} 
-      type="Wait"
-      color="yellow"
-    />
+export const EndCallNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} bottomHandle={false} className="bg-red-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={PhoneOff} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const VectorDBNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={Database} 
-      label={data.label} 
-      type="Vector DB"
-      color="indigo"
-    />
+export const WebhookNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-teal-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Webhook} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const TransferPathwayNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
+export const WaitNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-amber-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Clock} label={data.label} description={data.description} />
+  </BaseNode>
+);
+
+export const TransferPathwayNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode 
+    selected={selected} 
+    className="bg-indigo-900/90 text-white backdrop-blur-sm border-2 border-white/10 shadow-lg hover:border-white/20"
+  >
     <NodeContent 
       icon={GitFork} 
       label={data.label} 
-      type="Transfer"
-      color="cyan"
+      description={data.description} 
     />
   </BaseNode>
 );
 
-export const CustomToolNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
+export const CustomToolNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode 
+    selected={selected} 
+    className="bg-cyan-700/90 text-white backdrop-blur-sm border-2 border-white/10 shadow-lg hover:border-white/20"
+  >
     <NodeContent 
       icon={Wrench} 
       label={data.label} 
-      type="Custom Tool"
-      color="pink"
+      description={data.description} 
     />
   </BaseNode>
 );
 
-export const PressButtonNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={Square} 
-      label={data.label} 
-      type="Button"
-      color="emerald"
-    />
+export const ButtonNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-orange-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={MessageSquare} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const SMSNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={MessageCircle} 
-      label={data.label} 
-      type="SMS"
-      color="violet"
-    />
+export const SMSNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-pink-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={MessageSquare} label={data.label} description={data.description} />
   </BaseNode>
 );
 
-export const AmazonConnectNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected}>
-    <NodeContent 
-      icon={Phone} 
-      label={data.label} 
-      type="Amazon Connect"
-      color="amber"
-    />
-  </BaseNode>
-);
-
-export const StartNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected} topHandle={false}>
-    <NodeContent 
-      icon={Play} 
-      label={data.label || "Start"} 
-      type="Start"
-      color="green"
-    />
-  </BaseNode>
-);
-
-export const ResponseNode = ({ data, selected }: CustomNodeProps) => (
-  <BaseNode selected={selected} bottomHandle={false}>
-    <NodeContent 
-      icon={Flag} 
-      label={data.label || "Response"} 
-      type="Response"
-      color="purple"
-    />
+export const AmazonConnectNode: React.FC<CustomNodeProps> = ({ data, selected }) => (
+  <BaseNode selected={selected} className="bg-rose-900/90 text-white backdrop-blur-sm">
+    <NodeContent icon={Cloud} label={data.label} description={data.description} />
   </BaseNode>
 );
 
 export const nodeTypes = {
   start: StartNode,
-  response: ResponseNode,
   default: DefaultNode,
+  response: ResponseNode,
   knowledge_base: KnowledgeBaseNode,
   transfer_call: TransferCallNode,
   end_call: EndCallNode,
   webhook: WebhookNode,
-  wait_for_response: WaitForResponseNode,
-  vector_db: VectorDBNode,
+  wait: WaitNode,
   transfer_pathway: TransferPathwayNode,
   custom_tool: CustomToolNode,
-  press_button: PressButtonNode,
+  button: ButtonNode,
   sms: SMSNode,
   amazon_connect: AmazonConnectNode,
-}; 
+} as unknown as NodeTypes; 

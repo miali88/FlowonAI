@@ -1,8 +1,8 @@
 import { WorkflowPreset, Priority, ResponseFormat, FallbackBehavior, NodeType, BaseNodeData } from '../types';
 
-const VERTICAL_SPACING = 120;  // Increased vertical gap between nodes
-const HORIZONTAL_SPACING = 300; // Increased horizontal gap between parallel branches
-const CENTER_X = 400;          // Center position for the main flow
+const VERTICAL_SPACING = 150;
+const HORIZONTAL_SPACING = 350;
+const CENTER_X = 500;
 
 const nodeStyle = {
   padding: 0,
@@ -17,7 +17,6 @@ const edgeStyle = {
   strokeDasharray: '5,5',
 };
 
-// Helper function to create base node data
 const createBaseNodeData = (label: string, type: NodeType): BaseNodeData => ({
   label,
   content: '',
@@ -60,154 +59,189 @@ const createBaseNodeData = (label: string, type: NodeType): BaseNodeData => ({
 
 export const lawFirmPreset: WorkflowPreset = {
   nodes: [
-    // Start node
-    { 
-      id: 'start', 
-      type: 'default', // This could be 'start' if you create a specific start node type
-      position: { x: CENTER_X, y: 0 }, 
-      data: createBaseNodeData('Start', 'default'),
-      style: nodeStyle 
+    // Initial Greeting
+    {
+      id: 'start',
+      type: 'start',
+      position: { x: CENTER_X, y: 0 },
+      data: {
+        ...createBaseNodeData('Start Call', 'start'),
+        prompt: 'Greet the caller professionally and identify yourself as a legal assistant from [Law Firm Name]. Ask how you can help them today.',
+        description: 'Initial greeting and purpose identification'
+      },
+      style: nodeStyle
     },
-    
-    // Authentication node
-    { 
-      id: 'auth', 
+
+    // Authentication Flow
+    {
+      id: 'authentication',
       type: 'default',
-      position: { x: CENTER_X, y: VERTICAL_SPACING }, 
+      position: { x: CENTER_X, y: VERTICAL_SPACING },
       data: {
-        ...createBaseNodeData('Authentication', 'default'),
-        prompt: 'Verify the user credentials and authorization level...',
-        systemPrompt: 'You are a law firm authentication system...',
+        ...createBaseNodeData('Caller Authentication', 'default'),
+        prompt: 'Ask for the caller\'s name and any existing case number or client ID. For new callers, explain our initial verification process.',
+        description: 'Verify caller identity',
+        priority: 'high'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
-    
-    // Categorization node
-    { 
-      id: 'categorize', 
-      type: 'knowledge', // Changed to knowledge type as it's making decisions
-      position: { x: CENTER_X, y: VERTICAL_SPACING * 2 }, 
+
+    // Call Classification with Response Options
+    {
+      id: 'call_category',
+      type: 'transfer_pathway',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 2 },
       data: {
-        ...createBaseNodeData('Categorize Request', 'knowledge'),
-        prompt: 'Analyze the incoming request and categorize it...',
+        ...createBaseNodeData('Call Category Classification', 'transfer_pathway'),
+        prompt: 'Based on the caller\'s response, determine if they are:\n1. A potential new client\n2. An existing client\n3. Calling about administrative matters',
+        description: 'Identify caller type and needs'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
-    
-    // New client intake node
-    { 
-      id: 'new-client', 
+
+    // New Client Branch
+    {
+      id: 'new_client',
       type: 'default',
-      position: { x: CENTER_X - HORIZONTAL_SPACING, y: VERTICAL_SPACING * 3 }, 
+      position: { x: CENTER_X - HORIZONTAL_SPACING, y: VERTICAL_SPACING * 3 },
       data: {
-        ...createBaseNodeData('New Client Intake', 'default'),
-        prompt: 'Process new client information...',
+        ...createBaseNodeData('New Client Inquiry', 'default'),
+        prompt: 'Ask about the nature of their legal matter. Gather key details:\n- Type of legal issue\n- Timeline of events\n- Urgency of the matter\n- Previous legal representation',
+        description: 'Initial case assessment',
+        priority: 'high'
       },
-      style: nodeStyle 
-    },
-    
-    // Conflict check node
-    { 
-      id: 'conflict-check', 
-      type: 'vector', // Changed to vector type as it's searching a database
-      position: { x: CENTER_X - HORIZONTAL_SPACING, y: VERTICAL_SPACING * 4 }, 
-      data: {
-        ...createBaseNodeData('Conflict Check', 'vector'),
-        prompt: 'Review client and case information against existing database...',
-      },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // Existing client node
-    { 
-      id: 'existing-client', 
-      type: 'knowledge', // Changed to knowledge type for client handling
-      position: { x: CENTER_X, y: VERTICAL_SPACING * 3 }, 
+    // Conflict Check
+    {
+      id: 'conflict_check',
+      type: 'custom_tool',
+      position: { x: CENTER_X - HORIZONTAL_SPACING, y: VERTICAL_SPACING * 4 },
       data: {
-        ...createBaseNodeData('Existing Client', 'knowledge'),
-        prompt: 'Retrieve existing client information...',
+        ...createBaseNodeData('Conflict Check', 'custom_tool'),
+        prompt: 'Run conflict check using provided information. If clear, proceed to scheduling. If conflict found, explain we cannot proceed and provide referral options.',
+        description: 'Verify no conflicts of interest'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // Case lookup node
-    { 
-      id: 'case-lookup', 
-      type: 'vector', // Changed to vector type for database search
-      position: { x: CENTER_X, y: VERTICAL_SPACING * 4 }, 
+    // Consultation Scheduling
+    {
+      id: 'consultation_scheduling',
+      type: 'custom_tool',
+      position: { x: CENTER_X - HORIZONTAL_SPACING, y: VERTICAL_SPACING * 5 },
       data: {
-        ...createBaseNodeData('Case Lookup', 'vector'),
-        prompt: 'Search and retrieve case details...',
+        ...createBaseNodeData('Schedule Consultation', 'custom_tool'),
+        prompt: 'Offer available consultation times. Explain:\n- Initial consultation process\n- Duration and cost\n- Required documents\n- Meeting format (in-person/virtual)',
+        description: 'Book initial consultation'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // Administrative node
-    { 
-      id: 'admin', 
-      type: 'pathway', // Changed to pathway type for routing
-      position: { x: CENTER_X + HORIZONTAL_SPACING, y: VERTICAL_SPACING * 3 }, 
+    // Existing Client Support
+    {
+      id: 'existing_client',
+      type: 'default',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 3 },
       data: {
-        ...createBaseNodeData('Administrative', 'pathway'),
-        prompt: 'Process administrative requests...',
+        ...createBaseNodeData('Existing Client Support', 'default'),
+        prompt: 'Verify case details and ask about specific needs:\n- Case status update\n- Document request\n- Meeting with attorney\n- Other concerns',
+        description: 'Handle current client needs'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // Billing node
-    { 
-      id: 'billing', 
-      type: 'tool', // Changed to tool type for billing operations
-      position: { x: CENTER_X + HORIZONTAL_SPACING, y: VERTICAL_SPACING * 4 }, 
+    // Case Management
+    {
+      id: 'case_management',
+      type: 'custom_tool',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 4 },
       data: {
-        ...createBaseNodeData('Billing', 'tool'),
-        prompt: 'Process billing requests...',
+        ...createBaseNodeData('Case Management', 'custom_tool'),
+        prompt: 'Access case management system to provide:\n- Current case status\n- Recent updates\n- Upcoming deadlines\n- Pending actions',
+        description: 'Provide case updates'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // Document action node
-    { 
-      id: 'document', 
-      type: 'webhook', // Changed to webhook type for system integration
-      position: { x: CENTER_X, y: VERTICAL_SPACING * 5 }, 
+    // Document Handling
+    {
+      id: 'document_handling',
+      type: 'custom_tool',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 5 },
       data: {
-        ...createBaseNodeData('Document Action', 'webhook'),
-        prompt: 'Document all actions taken...',
+        ...createBaseNodeData('Document Handling', 'custom_tool'),
+        prompt: 'Process document requests:\n- Verify authorization\n- Locate requested documents\n- Explain delivery options\n- Confirm delivery preferences',
+        description: 'Handle document requests'
       },
-      style: nodeStyle 
+      style: nodeStyle
     },
 
-    // End node
-    { 
-      id: 'end', 
-      type: 'end', // Changed to end type
-      position: { x: CENTER_X, y: VERTICAL_SPACING * 6 }, 
-      data: createBaseNodeData('End', 'end'),
-      style: nodeStyle 
+    // Administrative Branch
+    {
+      id: 'administrative',
+      type: 'default',
+      position: { x: CENTER_X + HORIZONTAL_SPACING, y: VERTICAL_SPACING * 3 },
+      data: {
+        ...createBaseNodeData('Administrative Matters', 'default'),
+        prompt: 'Handle administrative inquiries:\n- Billing questions\n- Office hours\n- Location information\n- General policies',
+        description: 'Address administrative questions'
+      },
+      style: nodeStyle
     },
+
+    // Documentation
+    {
+      id: 'documentation',
+      type: 'default',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 6 },
+      data: {
+        ...createBaseNodeData('Call Documentation', 'default'),
+        prompt: 'Summarize the call:\n- Key points discussed\n- Actions taken\n- Follow-up needed\n- Next steps',
+        description: 'Document call details'
+      },
+      style: nodeStyle
+    },
+
+    // End Call
+    {
+      id: 'end',
+      type: 'end_call',
+      position: { x: CENTER_X, y: VERTICAL_SPACING * 7 },
+      data: {
+        ...createBaseNodeData('End Call', 'end_call'),
+        prompt: 'Thank the caller for their time. Confirm any next steps or follow-up actions. Provide relevant contact information if needed.',
+        description: 'Conclude call professionally'
+      },
+      style: nodeStyle
+    }
   ],
   edges: [
     // Main flow
-    { id: 'e-start-auth', source: 'start', target: 'auth', animated: true, style: edgeStyle },
-    { id: 'e-auth-cat', source: 'auth', target: 'categorize', animated: true, style: edgeStyle },
+    { id: 'e1', source: 'start', target: 'authentication', animated: true, style: edgeStyle },
+    { id: 'e2', source: 'authentication', target: 'call_category', animated: true, style: edgeStyle },
     
     // New client branch
-    { id: 'e-cat-new', source: 'categorize', target: 'new-client', animated: true, style: edgeStyle },
-    { id: 'e-new-conflict', source: 'new-client', target: 'conflict-check', animated: true, style: edgeStyle },
-    { id: 'e-conflict-doc', source: 'conflict-check', target: 'document', animated: true, style: edgeStyle },
+    { id: 'e3', source: 'call_category', target: 'new_client', animated: true, style: edgeStyle },
+    { id: 'e4', source: 'new_client', target: 'conflict_check', animated: true, style: edgeStyle },
+    { id: 'e5', source: 'conflict_check', target: 'consultation_scheduling', animated: true, style: edgeStyle },
     
     // Existing client branch
-    { id: 'e-cat-existing', source: 'categorize', target: 'existing-client', animated: true, style: edgeStyle },
-    { id: 'e-existing-case', source: 'existing-client', target: 'case-lookup', animated: true, style: edgeStyle },
-    { id: 'e-case-doc', source: 'case-lookup', target: 'document', animated: true, style: edgeStyle },
+    { id: 'e6', source: 'call_category', target: 'existing_client', animated: true, style: edgeStyle },
+    { id: 'e7', source: 'existing_client', target: 'case_management', animated: true, style: edgeStyle },
+    { id: 'e8', source: 'case_management', target: 'document_handling', animated: true, style: edgeStyle },
     
     // Administrative branch
-    { id: 'e-cat-admin', source: 'categorize', target: 'admin', animated: true, style: edgeStyle },
-    { id: 'e-admin-billing', source: 'admin', target: 'billing', animated: true, style: edgeStyle },
-    { id: 'e-billing-doc', source: 'billing', target: 'document', animated: true, style: edgeStyle },
+    { id: 'e9', source: 'call_category', target: 'administrative', animated: true, style: edgeStyle },
+    { id: 'e10', source: 'administrative', target: 'billing_system', animated: true, style: edgeStyle },
     
-    // Final step
-    { id: 'e-doc-end', source: 'document', target: 'end', animated: true, style: edgeStyle },
-  ],
+    // Converging paths
+    { id: 'e11', source: 'consultation_scheduling', target: 'documentation', animated: true, style: edgeStyle },
+    { id: 'e12', source: 'document_handling', target: 'documentation', animated: true, style: edgeStyle },
+    { id: 'e13', source: 'billing_system', target: 'documentation', animated: true, style: edgeStyle },
+    
+    // Final connection
+    { id: 'e14', source: 'documentation', target: 'end', animated: true, style: edgeStyle }
+  ]
 }; 

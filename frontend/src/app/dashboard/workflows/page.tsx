@@ -46,32 +46,66 @@ import {
   CONTROLS_STYLE,
   MINIMAP_STYLE,
   LAYOUT_CONFIG,
+  Agent,
 } from './types';
-import { DefaultNode, StartNode, ResponseNode, nodeTypes } from './components/CustomNodes';
+import { nodeTypes } from './components/CustomNodes';
 import { presets, lawFirmPreset } from './presets/index';
+import { AgentSelect } from './components/AgentSelect';
 
-const customNodeTypes = {
-  default: DefaultNode,
-  start: StartNode,
-  response: ResponseNode
-};
+const API_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/workflows`;
+
+async function fetchWorkflows() {
+  const response = await fetch(API_BASE);
+  if (!response.ok) throw new Error('Failed to fetch workflows');
+  return response.json();
+}
+
+async function saveWorkflowToBackend(workflow: SavedWorkflow) {
+  const url = workflow.id ? `${API_BASE}/${workflow.id}` : API_BASE;
+  console.log('Making API request to:', url);
+  
+  try {
+    const response = await fetch(url, {
+      method: workflow.id ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: workflow.name,
+        nodes: workflow.nodes,
+        edges: workflow.edges,
+        assignedAgentId: workflow.assignedAgentId,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`Failed to save workflow: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Server response:', data);
+    return data;
+  } catch (error) {
+    console.error('Network or parsing error:', error);
+    throw error;
+  }
+}
+
+async function deleteWorkflowFromBackend(workflowId: string) {
+  const response = await fetch(`${API_BASE}/${workflowId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) throw new Error('Failed to delete workflow');
+}
 
 export default function WorkflowsPage() {
-  const nodeTypes = useMemo(() => ({
-    start: StartNode,
-    authentication: DefaultNode,
-    categorize_request: DefaultNode,
-    new_client_intake: DefaultNode,
-    existing_client: DefaultNode,
-    administrative: DefaultNode,
-    conflict_check: DefaultNode,
-    case_lookup: DefaultNode,
-    billing: DefaultNode,
-    document_action: DefaultNode,
-    end: ResponseNode,
-    default: DefaultNode
-  }), []);
-
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>(lawFirmPreset.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WorkflowEdge>(lawFirmPreset.edges);
   
@@ -89,6 +123,7 @@ export default function WorkflowsPage() {
   });
   const [currentWorkflow, setCurrentWorkflow] = useState<SavedWorkflow | null>(null);
   const [workflowName, setWorkflowName] = useState<string>('');
+  const [agents, setAgents] = useState<Agent[]>([]);
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({
@@ -283,48 +318,135 @@ export default function WorkflowsPage() {
     setShowNewWorkflowDialog(false);
   }, []);
 
-  // Save current workflow
-  const saveWorkflow = useCallback(() => {
-    if (!currentWorkflow || !workflowName) return;
+  // Save current workflow (INSERT)
+  const saveWorkflow = useCallback(async () => {
+    console.log('Save Workflow button clicked');
 
-    const updatedWorkflow: SavedWorkflow = {
-      id: currentWorkflow.id,
+    if (!workflowName) {
+      console.log('Cannot save: missing workflow name');
+      return;
+    }
+
+    const newWorkflow: SavedWorkflow = {
+      id: uuidv4(), // Generate new ID for new workflow
       name: workflowName,
       nodes,
       edges,
       lastModified: new Date().toISOString(),
+      assignedAgentId: null,
     };
 
-    setWorkflows(prevWorkflows => {
-      const newWorkflows = prevWorkflows.map(w => 
-        w.id === updatedWorkflow.id ? updatedWorkflow : w
-      );
-      
-      // If it's a new workflow, add it to the list
-      if (!prevWorkflows.find(w => w.id === updatedWorkflow.id)) {
-        newWorkflows.push(updatedWorkflow);
-      }
-      
-      // Save to localStorage
-      localStorage.setItem('workflows', JSON.stringify(newWorkflows));
-      return newWorkflows;
-    });
-  }, [currentWorkflow, workflowName, nodes, edges]);
+    console.log('Attempting to save new workflow:', newWorkflow);
 
-  const deleteWorkflow = useCallback((workflowId: string, e: React.MouseEvent) => {
+    try {
+      const response = await fetch(`${API_BASE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newWorkflow),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save workflow: ${await response.text()}`);
+      }
+
+      const savedWorkflow = await response.json();
+      console.log('Workflow saved successfully:', savedWorkflow);
+      
+      setCurrentWorkflow(savedWorkflow);
+      setWorkflows(prev => [...prev, savedWorkflow]);
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+    }
+  }, [workflowName, nodes, edges, API_BASE]);
+
+  // Update existing workflow (UPDATE)
+  const updateWorkflow = useCallback(async () => {
+    console.log('Back to Workflows clicked - updating workflow');
+
+    if (!currentWorkflow) {
+      setShowEditor(false);
+      return;
+    }
+
+    try {
+      const updatedWorkflow: SavedWorkflow = {
+        id: currentWorkflow.id,
+        name: workflowName,
+        nodes,
+        edges,
+        lastModified: new Date().toISOString(),
+        assignedAgentId: currentWorkflow.assignedAgentId,
+      };
+
+      const response = await fetch(`${API_BASE}/${currentWorkflow.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedWorkflow),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update workflow: ${await response.text()}`);
+      }
+
+      const savedWorkflow = await response.json();
+      setWorkflows(prev => 
+        prev.map(w => w.id === savedWorkflow.id ? savedWorkflow : w)
+      );
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+    }
+
+    setShowEditor(false);
+  }, [currentWorkflow, workflowName, nodes, edges, API_BASE]);
+
+  const deleteWorkflow = useCallback(async (workflowId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    setWorkflows(prevWorkflows => {
-      const newWorkflows = prevWorkflows.filter(w => w.id !== workflowId);
-      // Update localStorage
-      localStorage.setItem('workflows', JSON.stringify(newWorkflows));
-      return newWorkflows;
-    });
+    try {
+      await deleteWorkflowFromBackend(workflowId);
+      setWorkflows(prevWorkflows => 
+        prevWorkflows.filter(w => w.id !== workflowId)
+      );
+    } catch (error) {
+      console.error('Error deleting workflow:', error);
+      // TODO: Show error notification to user
+    }
   }, []);
+
+  const handleAgentAssignment = useCallback((agentId: string) => {
+    if (!currentWorkflow) return;
+    
+    setCurrentWorkflow(prev => ({
+      ...prev!,
+      assignedAgentId: agentId
+    }));
+  }, [currentWorkflow]);
 
   useEffect(() => {
     console.log('Current nodes:', nodes);
   }, [nodes]);
+
+  useEffect(() => {
+    // Fetch agents from your backend
+    const fetchAgents = async () => {
+      // Replace this with your actual API call
+      const response = await fetch('/api/agents');
+      const data = await response.json();
+      setAgents(data);
+    };
+    
+    fetchAgents();
+  }, []);
+
+  useEffect(() => {
+    fetchWorkflows()
+      .then(setWorkflows)
+      .catch(error => console.error('Error loading workflows:', error));
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -352,7 +474,7 @@ export default function WorkflowsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowEditor(false)}
+              onClick={updateWorkflow}  // Use updateWorkflow for Back button
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -366,7 +488,14 @@ export default function WorkflowsPage() {
                 className="w-[200px]"
                 placeholder="Workflow Name"
               />
-              <Button onClick={saveWorkflow}>Save Workflow</Button>
+              <AgentSelect
+                agents={agents}
+                selectedAgentId={currentWorkflow?.assignedAgentId}
+                onSelect={handleAgentAssignment}
+              />
+              <Button onClick={saveWorkflow}>  {/* Use saveWorkflow for Save button */}
+                Save Workflow
+              </Button>
             </div>
           </div>
           
@@ -444,6 +573,11 @@ export default function WorkflowsPage() {
                   <p className="text-sm text-muted-foreground">
                     Last modified: {new Date(workflow.lastModified).toLocaleDateString()}
                   </p>
+                  {workflow.assignedAgentId && (
+                    <p className="text-sm text-muted-foreground">
+                      Assigned to: {agents.find(a => a.id === workflow.assignedAgentId)?.name}
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"

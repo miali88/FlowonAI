@@ -14,18 +14,25 @@ export interface NodeTypeDefinition {
 
 // Define possible node types/
 export type NodeType = 
+  | 'start'
   | 'default'
-  | 'knowledge'
-  | 'transfer'
-  | 'end'
+  | 'response'
+  | 'knowledge_base'
+  | 'transfer_call'
+  | 'end_call'
   | 'webhook'
   | 'wait'
-  | 'vector'
-  | 'pathway'
-  | 'tool'
+  | 'transfer_pathway'
+  | 'custom_tool'
   | 'button'
   | 'sms'
-  | 'amazon';
+  | 'amazon_connect'
+  | 'pathway'
+  | 'tool'
+  | 'amazon'
+  | 'authentication'
+  | 'decision'
+  | 'process';
 
 // Define the data structure that will be stored in the node
 export interface BaseNodeData extends Record<string, unknown> {
@@ -50,12 +57,13 @@ export interface BaseNodeData extends Record<string, unknown> {
 }
 
 // Define the node interface explicitly
-export interface WorkflowNode {
+export interface WorkflowNode extends Node {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
   data: BaseNodeData;
   style?: Record<string, unknown>;
+  selected?: boolean;
 }
 
 // Edge type
@@ -83,6 +91,7 @@ export interface SavedWorkflow {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   lastModified: string;
+  assignedAgentId?: string;
 }
 
 export interface NodeTypeData {
@@ -92,16 +101,21 @@ export interface NodeTypeData {
 }
 
 // Use WorkflowNode instead of BaseNodeData for NodeProps
-export type CustomNodeProps = Omit<NodeProps, 'data'> & {
+export type CustomNodeProps = {
   data: BaseNodeData;
+  selected?: boolean;
+  id: string;
+  type: NodeType;
+  position: { x: number; y: number };
 };
 
 // Add configurations from interface.ts
 export const nodeStyle = {
-  padding: 0,
-  border: 'none',
-  boxShadow: 'none',
-  background: 'transparent',
+  padding: '10px',
+  borderRadius: '8px',
+  minWidth: '150px',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  fontSize: '12px',
 };
 
 export const edgeStyle = {
@@ -154,4 +168,34 @@ export const MINIMAP_STYLE = {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '8px',
   },
+};
+
+export const nodeStyles = {
+  knowledge_base: { backgroundColor: '#1e3a8a' },
+  transfer_call: { backgroundColor: '#581c87' },
+  end_call: { backgroundColor: '#7f1d1d' },
+  webhook: { backgroundColor: '#064e3b' },
+  wait: { backgroundColor: '#854d0e' },
+  transfer_pathway: { 
+    backgroundColor: '#312e81',
+    borderWidth: '2px',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  },
+  custom_tool: { 
+    backgroundColor: '#0e7490',  // Changed to a distinctive cyan color
+    borderWidth: '2px',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  },
+  button: { backgroundColor: '#9a3412' },
+  sms: { backgroundColor: '#831843' },
+  amazon_connect: { backgroundColor: '#78350f' },
 }; 
+
+export interface Agent {
+  id: string;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

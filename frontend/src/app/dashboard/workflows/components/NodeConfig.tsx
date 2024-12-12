@@ -72,7 +72,6 @@ const NODE_TYPES = [
   { value: 'end', label: 'End Call' },
   { value: 'webhook', label: 'Webhook' },
   { value: 'wait', label: 'Wait for Response' },
-  { value: 'vector', label: 'Vector DB' },
   { value: 'pathway', label: 'Transfer Pathway' },
   { value: 'tool', label: 'Custom Tool' },
   { value: 'button', label: 'Press Button' },
