@@ -76,3 +76,26 @@
   .sendButton:hover {
     background-color: #0056b3;
   }
+  
+  .suggestedQuestionsContainer {
+    padding: 0.5rem 1rem;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  
+  .suggestionBubble {
+    padding: 8px 16px;
+    background-color: #f0f0f0;
+    color: #333;
+    border-radius: 16px;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .suggestionBubble:hover {
+    background-color: #e0e0e0;
+  }
