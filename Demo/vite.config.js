@@ -18,6 +18,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        page1: '/pages/page1.html',
+        page2: '/pages/page2.html',
+        page3: '/pages/page3.html',
       },
       output: {
         dir: 'dist',
@@ -27,7 +30,7 @@ export default defineConfig({
       }
     }
   },
-  base: '/clients',
+  base: '/demo',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

@@ -1,5 +1,5 @@
 {
-  "name": "clients",
+  "name": "demo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,12 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.6.2",
     "vite": "^6.0.1"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

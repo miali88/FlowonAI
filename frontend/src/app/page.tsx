@@ -19,12 +19,12 @@ export default function HomePage() {
     // Store config in window object so it's accessible to other scripts
     window.chatConfig = {
       agentId: 'ac0b4742-23ae-4cc1-8b9b-77392e27e410',
-      domain: 'https://flowon.ai/clients'
+      domain: 'https://flowon.ai/chatwidget'
     };
 
     // Create script element for chat widget
     const scriptEl = document.createElement('script');
-    scriptEl.src = 'https://1669fd5d.flowonwidget.pages.dev/iframeChat.min.js';
+    scriptEl.src = 'https://c06c54b7.flowonwidget.pages.dev/iframeChat.min.js';
     document.body.appendChild(scriptEl);
 
     // Initialize chat widget once script is loaded

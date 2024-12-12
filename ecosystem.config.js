@@ -30,6 +30,17 @@ module.exports = {
         NODE_ENV: "development",
         PORT: 5173 
       }
+    },
+    {
+      name: "demo",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/Demo",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5175
+      }
     }
   ]
 }
