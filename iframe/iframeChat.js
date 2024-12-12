@@ -75,9 +75,9 @@ class ChatWidget {
   setupMessageListener() {
     window.addEventListener('message', (event) => {
       const expectedDomain = window.location.origin;
-      console.log('Received message:', event.data);
-      console.log('Message origin:', event.origin);
-      console.log('Expected domain:', expectedDomain);
+      // console.log('Received message:', event.data);
+      // console.log('Message origin:', event.origin);
+      // console.log('Expected domain:', expectedDomain);
 
       // TODO: should we check the origin?
       // if (event.origin !== expectedDomain) {

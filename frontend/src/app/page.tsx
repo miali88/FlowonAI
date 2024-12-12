@@ -1,4 +1,5 @@
 'use client';
+
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
@@ -11,6 +12,7 @@ import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
 import { Information } from "@/components/Information";
+import { useEffect } from 'react';
 
 export default function HomePage() {
   useEffect(() => {
