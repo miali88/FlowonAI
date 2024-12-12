@@ -280,7 +280,11 @@ async def lk_chat_process(message: str, agent_id: str):
                             yield result_chunk
                             
                     # Add tool response to history
-                    chat_history.add_message("function", tool_response)
+                    chat_history.add_message(
+                        "function", 
+                        tool_response,
+                        name=tool_call.name
+                    )
 
         # Add assistant's response to history
         if accumulated_response:

@@ -18,6 +18,12 @@ export default function ChatWidgetPage() {
       <TextWidget 
         agentId={params.agentId as string}
         apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'}
+        suggestedQuestions={[
+          "What services do you offer?",
+          "How can I get started?",
+          "What are your working hours?",
+          "Tell me more about your company",
+        ]}
       />
     </div>
   )

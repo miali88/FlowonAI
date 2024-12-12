@@ -11,9 +11,19 @@ interface Message {
 interface ChatInterfaceProps {
   agentId?: string;
   apiBaseUrl?: string;
+  suggestedQuestions?: string[];
 }
 
-const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
+const TextWidget: React.FC<ChatInterfaceProps> = ({ 
+  agentId, 
+  apiBaseUrl,
+  suggestedQuestions = [
+    "What services do you offer?",
+    "How can I get started?",
+    "What are your working hours?",
+  ]
+}) => {
+  console.log('Suggested questions:', suggestedQuestions);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -113,6 +123,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     }
   };
 
+  const handleSuggestionClick = (question: string) => {
+    setInputText(question);
+  };
+
   return (
     <div style={{ 
       width: '100%',
@@ -132,6 +146,18 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               }`}
             >
               {message.text}
+            </div>
+          ))}
+        </div>
+        
+        <div className={styles.suggestedQuestionsContainer}>
+          {suggestedQuestions.map((question, index) => (
+            <div
+              key={index}
+              className={styles.suggestionBubble}
+              onClick={() => handleSuggestionClick(question)}
+            >
+              {question}
             </div>
           ))}
         </div>
