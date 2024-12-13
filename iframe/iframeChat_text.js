@@ -2,7 +2,7 @@ class ChatWidget {
   constructor(config = {}) {
     this.config = {
       agentId: config.agentId || 'null',
-      domain: config.domain || 'http://localhost:5173',
+      domain: config.domain || '/textwidget',
       position: config.position || 'right',
     };
     
