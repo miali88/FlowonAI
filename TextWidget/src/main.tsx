@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
 import TextWidget from './text-widget/TextWidget'
 
 // Get configuration from window object if available
