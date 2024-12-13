@@ -1,5 +1,4 @@
 'use client';
-
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
