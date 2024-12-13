@@ -183,6 +183,14 @@ async def entrypoint(ctx: JobContext):
                     
                     asyncio.create_task(handle_transfer())
 
+        @agent.on("user_started_speaking")
+        def on_user_started_speaking(user_transcription: str):
+            print(f"User started speaking: {user_transcription}")
+
+        @agent.on("user_stopped_speaking")
+        def on_user_stopped_speaking():
+            print("User stopped speaking")
+
         # """ EVENT HANDLERS FOR AGENT """     
         @ctx.room.on('participant_connected')
         def on_participant_connected(participant: rtc.RemoteParticipant):
