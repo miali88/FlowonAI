@@ -199,6 +199,8 @@ class ChatHistory:
 chat_histories: Dict[str, ChatHistory] = {}
 
 async def lk_chat_process(message: str, agent_id: str):
+    print(f"lk_chat_process called with message: {message} and agent_id: {agent_id}")
+    
     try:
         # Initialize or get existing chat history
         if agent_id not in chat_histories:

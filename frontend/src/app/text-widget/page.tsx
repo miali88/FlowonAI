@@ -1,10 +1,11 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import TextWidget from './TextWidget'
 
 export default function ChatWidgetPage() {
-  const params = useParams()
+  const searchParams = useSearchParams()
+  const agentId = searchParams.get('agentId')
   
   return (
     <div style={{
@@ -16,8 +17,8 @@ export default function ChatWidgetPage() {
       justifyContent: 'center'
     }}>
       <TextWidget 
-        agentId={params.agentId as string}
-        apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'}
+        agentId={agentId || ''}
+        apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'please set NEXT_PUBLIC_API_BASE_URL'}
         suggestedQuestions={[
           "What services do you offer?",
           "How can I get started?",

@@ -73,7 +73,7 @@ async def entrypoint(ctx: JobContext):
 
     # Add call start time tracking
     call_start_time = datetime.now()
-    
+        
     # Add participant tracking dictionary and last_audio_time
     participant_prospects = {}
     last_audio_time = time.time()  # Track when we last received any audio
@@ -207,9 +207,6 @@ async def entrypoint(ctx: JobContext):
         @agent.on("agent_stopped_speaking")
         def on_agent_stopped_speaking():
             print("Agent stopped speaking")
-
-
-
 
         # """ EVENT HANDLERS FOR AGENT """     
         @ctx.room.on('participant_connected')

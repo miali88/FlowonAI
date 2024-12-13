@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import styles from './TextWidget.module.css';
+import LiveKitTextEntry from './LiveKitTextEntry';
 
 interface Message {
   text: string;
@@ -27,6 +28,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const [roomName, setRoomName] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -127,6 +129,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     setInputText(question);
   };
 
+  const handleRoomConnected = (newRoomName: string) => {
+    setRoomName(newRoomName);
+  };
+
   return (
     <div style={{ 
       width: '100%',
@@ -136,6 +142,11 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       alignItems: 'center',
       justifyContent: 'center'
     }}>
+      <LiveKitTextEntry 
+        agentId={agentId || ''} 
+        apiBaseUrl={apiBaseUrl || ''} 
+        onRoomConnected={handleRoomConnected}
+      />
       <div className={styles.chatContainer}>
         <div className={styles.messageContainer} ref={messageContainerRef}>
           {messages.map((message, index) => (

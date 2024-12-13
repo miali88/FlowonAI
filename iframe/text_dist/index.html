@@ -4,19 +4,17 @@
     <script>
       // Store config in window object so it's accessible to other scripts
       window.chatConfig = {
-        agentId:'a93ef199-3f74-4ab0-ac62-6284526d33d0',
-        // agentId: "replace-with-agent-id",
-        // domain: 'https://flowon.ai/chatwidget',
-        domain: 'http://localhost:3000/text-widget'
-
+        agentId: "replace-with-agent-id",
+        domain: 'https://flowon.ai/chatwidget'
       };
       // Use the domain from config for both script source and chat widget
       const scriptEl = document.createElement('script');
-      // scriptEl.src = 'https://c06c54b7.flowonwidget.pages.dev/iframeChat.min.js';
-      // scriptEl.src = '/iframeChat.js';
-      scriptEl.src = 'iframeChat_text.js';
-
-      document.body.appendChild(scriptEl);  
+      // Change to use iframeChat.min.js instead of iframeChat.js
+      scriptEl.src = 'iframeChat.min.js';
+      // Add type attribute explicitly
+      scriptEl.type = 'application/javascript';
+      
+      document.body.appendChild(scriptEl);
       
       scriptEl.onload = function() {
         new ChatWidget(window.chatConfig);

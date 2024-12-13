@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../AgentCards';
 import ChatWidget from './ChatWidget';
-import TextWidget from '@/app/text-widget/[agentId]/TextWidget';
+import TextWidget from '@/app/text-widget/TextWidget';
 import { Switch } from "@/components/ui/switch";
 import { useState } from 'react';
 
