@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Agent } from '../AgentCards';
 import { MultiSelect } from './multiselect_deploy';
 import { useEffect, useState } from 'react';
+import MicIcon from './MicIcon';
 
 interface DeployProps {
   selectedAgent: Agent | null;
@@ -104,8 +105,8 @@ frameborder="0"
           <AccordionItem value="website-integration">
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
-                Website Integration
-                <span role="img" aria-label="chat">🗨️</span>
+                Voice Agent
+                <MicIcon size={24} />
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -148,6 +149,35 @@ frameborder="0"
                       Copy
                     </Button>
                   </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="text-chat">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Text Chat Agent
+                <Image src="/icons/live-chat.png" alt="Chat" width={24} height={24} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Your agent is accessible via our text chat interface at:
+                </p>
+                <div className="relative">
+                  <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                    <code className="text-sm">https://www.flowon.ai/chat/{selectedAgent?.id}</code>
+                  </pre>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => navigator.clipboard.writeText(`https://www.flowon.ai/chat/${selectedAgent?.id}`)}
+                  >
+                    Copy
+                  </Button>
                 </div>
               </div>
             </AccordionContent>

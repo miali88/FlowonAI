@@ -126,7 +126,7 @@ frameborder="0"
           <AccordionItem value="website-integration">
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
-                Website Integration
+                Voice Agent Integration
                 <span role="img" aria-label="chat">🗨️</span>
               </div>
             </AccordionTrigger>

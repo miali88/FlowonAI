@@ -17,45 +17,75 @@ class ChatWidget {
       .chat-widget-container {
         position: fixed;
         ${this.config.position}: 20px;
-        bottom: 20px;
-        transition: all 0.3s ease;
+        bottom: 30px;
         z-index: 9999;
       }
 
-      .chat-widget-container.collapsed {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        cursor: pointer;
-        background: #007bff;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      }
-
-      .chat-widget-container.expanded {
-        width: 100%;
-        max-width: 400px;
+      .chat-widget-container .chat-frame {
+        position: absolute;
+        bottom: 70px;  /* Position above the icon */
+        ${this.config.position}: 0;
+        width: 400px;
         aspect-ratio: 9/16;
         border-radius: 12px;
         background: white;
         border: 1px solid rgba(255, 255, 255, 0.25);
         box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
       }
 
-      .chat-widget-icon {
+      .chat-widget-container.expanded .chat-frame {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .chat-widget-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
-        height: 100%;
-        color: white;
-        font-size: 24px;
+        padding: 12px;
       }
 
-      .chat-widget-iframe {
+      .chat-widget-icon {
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s ease;
+      }
+
+      .chat-widget-icon.chat {
+        display: block;
+      }
+
+      .chat-widget-icon.arrow {
+        display: none;
+        transform: rotate(180deg);
+      }
+
+      .expanded .chat-widget-icon.chat {
         display: none;
       }
 
-      .expanded .chat-widget-icon {
+      .expanded .chat-widget-icon.arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .chat-widget-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .chat-widget-iframe {
         display: none;
       }
 
@@ -82,14 +112,25 @@ class ChatWidget {
     
     // Add chat icon and iframe
     this.container.innerHTML = `
-      <div class="chat-widget-icon">💬</div>
-      <iframe 
-        class="chat-widget-iframe"
-        src="${this.config.domain}?agentId=${this.config.agentId}"
-        allow="microphone; camera"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-        crossorigin="anonymous"
-      ></iframe>
+      <div class="chat-frame">
+        <iframe 
+          class="chat-widget-iframe"
+          src="${this.config.domain}?agentId=${this.config.agentId}"
+          allow="microphone; camera"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+          crossorigin="anonymous"
+        ></iframe>
+      </div>
+      <div class="chat-widget-button">
+        <div class="chat-widget-icon chat">
+          <img src="/live-chat.png" alt="Live Chat">
+        </div>
+        <div class="chat-widget-icon arrow">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 14l5-5 5 5" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
     `;
 
     // Add click handler
