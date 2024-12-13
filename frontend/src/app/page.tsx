@@ -1,5 +1,4 @@
 'use client';
-import { useEffect } from 'react';
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";

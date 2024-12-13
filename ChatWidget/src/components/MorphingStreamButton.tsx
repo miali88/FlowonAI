@@ -28,9 +28,6 @@ const MorphingStreamButton: React.FC<MorphingStreamButtonProps> = ({
           <Mic />
         </button>
       </div>
-      {isStreaming && (
-        <span className={styles.streamStatus}>Chatting...</span>
-      )}
     </div>
   );
 };

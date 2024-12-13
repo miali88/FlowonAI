@@ -81,6 +81,8 @@ async def entrypoint(ctx: JobContext):
     last_agent_audio = time.time()  # Track agent's last audio
     SILENCE_TIMEOUT = 90  # Timeout in seconds
 
+    conversation_stored = False
+
     try:
 
         """ call types: inbound tel, outbound tel, web """
@@ -183,6 +185,32 @@ async def entrypoint(ctx: JobContext):
                     
                     asyncio.create_task(handle_transfer())
 
+        # @agent.on("user_started_speaking")
+        # def on_user_started_speaking(user_transcription: str = None):
+        #     if user_transcription:
+        #         print(f"User started speaking: {user_transcription}")
+        #     else:
+        #         print("User started speaking (no transcription available)")
+
+        # @agent.on("user_stopped_speaking")
+        # def on_user_stopped_speaking():
+        #     print("User stopped speaking")
+
+        @agent.on("agent_started_speaking")
+        def on_agent_started_speaking(user_transcription: str = None):
+            print("agent_started_speaking method called")
+            if user_transcription:
+                print(f"Agent started speaking: {user_transcription}")
+            else:
+                print("Agent started speaking (no transcription available)")
+
+        @agent.on("agent_stopped_speaking")
+        def on_agent_stopped_speaking():
+            print("Agent stopped speaking")
+
+
+
+
         # """ EVENT HANDLERS FOR AGENT """     
         @ctx.room.on('participant_connected')
         def on_participant_connected(participant: rtc.RemoteParticipant):
@@ -249,6 +277,11 @@ async def entrypoint(ctx: JobContext):
                                              participant_identity: str, 
                                              prospect_status: str,
                                              call_duration: CallDuration):
+            nonlocal conversation_stored
+            if conversation_stored:
+                print("Conversation already stored, skipping...")
+                return
+            
             print("store_conversation_history method called")
 
             # Check if there are any user messages in chat context
@@ -306,6 +339,8 @@ async def entrypoint(ctx: JobContext):
             if prospect_status == "yes":
                 print("prospect_status is yes, sending email")
                 await send_email(participant_identity, conversation_history, agent_id)
+
+            conversation_stored = True  # Set flag after successful storage
 
         def format_duration(start_time):
             duration = datetime.now() - start_time
@@ -440,7 +475,6 @@ async def entrypoint(ctx: JobContext):
     finally:
         # Ensure proper cleanup
         ctx.shutdown(reason="finally, session ended")
-
 
 # async def request_fnc(ctx: JobRequest):
 #     print("request_fnc called")
