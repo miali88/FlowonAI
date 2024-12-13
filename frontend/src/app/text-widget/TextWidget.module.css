@@ -1,7 +1,7 @@
 .chatContainer {
     position: relative;
     width: 100%;
-    max-width: 400px;
+    max-width: 430px;
     aspect-ratio: 9/16;
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(16px);
@@ -64,13 +64,17 @@
   }
   
   .sendButton {
-    padding: 12px 24px;
+    padding: 12px;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
   }
   
   .sendButton:hover {
@@ -98,4 +102,49 @@
   
   .suggestionBubble:hover {
     background-color: #e0e0e0;
+  }
+  
+  .formContainer {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  
+  .formField {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .formField label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .formField input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .submitButton {
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .submitButton:hover {
+    background-color: #0056b3;
   }

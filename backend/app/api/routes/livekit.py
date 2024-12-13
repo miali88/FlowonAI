@@ -38,14 +38,15 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
 
     agent_id = request.query_params.get("agent_id")
     user_id = request.query_params.get("user_id")
-    access_token, livekit_url, room_name = await token_gen(agent_id, user_id, background_tasks)
+    medium = request.query_params.get("medium")
+
+    access_token, livekit_url, room_name = await token_gen(agent_id, user_id, background_tasks, medium)
 
     return {
         "accessToken": access_token,
         "url": livekit_url,
         "roomName": room_name
     }
-
 
 @router.post("/new_agent")
 async def new_agent_handler(request: Request):

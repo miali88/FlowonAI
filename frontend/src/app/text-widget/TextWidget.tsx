@@ -3,10 +3,16 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from './TextWidget.module.css';
 import LiveKitTextEntry from './LiveKitTextEntry';
+import { IoSend } from "react-icons/io5";
 
 interface Message {
   text: string;
   isBot: boolean;
+}
+
+interface FormField {
+  type: string;
+  label: string;
 }
 
 interface ChatInterfaceProps {
@@ -29,12 +35,44 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [inputText, setInputText] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Add initial messages when component mounts
+  useEffect(() => {
+    setMessages([
+      { text: "👋 Hello! I'm Flowon's AI chatbot assistant, ask me anything about Flowon!", isBot: true },
+      { text: "Also, you can create a chatbot like me for your website! 👀", isBot: true }
+    ]);
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Add form fields fetch effect
+  useEffect(() => {
+    const fetchFormFields = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/conversation/form_fields/${agentId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch form fields');
+        }
+        const data = await response.json();
+        console.log('Retrieved form fields:', data);
+        setFormFields(data.fields || []);
+      } catch (error) {
+        console.error('Error fetching form fields:', error);
+      }
+    };
+
+    if (agentId) {
+      fetchFormFields();
+    }
+  }, [agentId, apiBaseUrl]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +171,52 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     setRoomName(newRoomName);
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch(`${apiBaseUrl}/conversation/chat_message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          user_id: null,
+          room_name: roomName,
+          participant_identity: null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      // Add success message to chat
+      setMessages(prev => [...prev, {
+        text: "Thank you for submitting the form!",
+        isBot: true
+      }]);
+      
+      // Clear form data and hide form
+      setFormData({});
+      setShowForm(false);
+    } catch (error) {
+      console.error('Failed to submit form:', error);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error submitting the form. Please try again.",
+        isBot: true
+      }]);
+    }
+  };
+
+  const handleInputChange = (fieldLabel: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldLabel]: value
+    }));
+  };
+
   return (
     <div style={{ 
       width: '100%',
@@ -161,6 +245,26 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
           ))}
         </div>
         
+        {showForm && (
+          <form onSubmit={handleFormSubmit} className={styles.formContainer}>
+            {formFields.map((field, index) => (
+              <div key={index} className={styles.formField}>
+                <label htmlFor={field.label}>{field.label}</label>
+                <input
+                  type={field.type}
+                  id={field.label}
+                  value={formData[field.label] || ''}
+                  onChange={(e) => handleInputChange(field.label, e.target.value)}
+                  required
+                />
+              </div>
+            ))}
+            <button type="submit" className={styles.submitButton}>
+              Submit
+            </button>
+          </form>
+        )}
+        
         <div className={styles.suggestedQuestionsContainer}>
           {suggestedQuestions.map((question, index) => (
             <div
@@ -180,10 +284,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               className={styles.chatInput}
-              placeholder="Type your message..."
+              placeholder="Message..."
             />
             <button type="submit" className={styles.sendButton}>
-              Send
+              <IoSend size={20} />
             </button>
           </form>
         </div>

@@ -17,15 +17,15 @@ class ChatWidget {
       .chat-widget-container {
         position: fixed;
         ${this.config.position}: 20px;
-        bottom: 30px;
+        bottom: 50px;
         z-index: 9999;
       }
 
       .chat-widget-container .chat-frame {
         position: absolute;
-        bottom: 70px;  /* Position above the icon */
+        bottom: 90px;
         ${this.config.position}: 0;
-        width: 400px;
+        width: 430px;
         aspect-ratio: 9/16;
         border-radius: 12px;
         background: white;

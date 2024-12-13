@@ -32,7 +32,7 @@ async def create_livekit_api():
 
 """ ROOM FUNCTIONS """
 
-async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
+async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks, medium: str = "voice"):
     logger.info(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
     print(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
 
@@ -40,7 +40,8 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         logger.error("Missing required parameters: agent_id or user_id")
         raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
 
-    room_name = f"agent_{agent_id}_room_{user_id}_{uuid.uuid4()}"
+    room_name = f"agent_{agent_id}_room_{user_id}_{uuid.uuid4()}" + ("_textbot" if medium == "textbot" else "")
+    
     logger.debug(f"Generated room name: {room_name}")
 
     # Use a lock to ensure only one token generation process happens at a time for this room

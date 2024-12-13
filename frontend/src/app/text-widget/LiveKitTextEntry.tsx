@@ -61,7 +61,7 @@ export function LiveKitTextEntry({
       }
 
       try {
-        const response = await fetch(`${apiBaseUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
+        const response = await fetch(`${apiBaseUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}&medium=textbot`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
