@@ -50,21 +50,26 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> str:
     Returns:
         str: The agent_id associated with the call
     """
-    
+    call_type = ""
+
     if room_name.startswith("call-"):
         print("entrypoint - telephone call detected")
+        call_type = "telephone"
         return await get_agent_id_from_call_data(room_name)
-        
     elif room_name.startswith("outbound_"):
         print("outbound call detected")
+        call_type = "outbound"
         modified_room_name = room_name[9:]  # Skip 'outbound_' prefix
         agent_id = await get_agent_id_from_call_data(modified_room_name)
-        
         if not agent_id:
             logger.error(f"Could not find agent_id for room: {room_name}")
             return "Error: Could not find agent configuration"
-        return agent_id
-        
+        return agent_id, call_type
+    elif room_name.endswith("_textbot"):
+        print("Textbot chat call detected")
+        call_type = "textbot"
+        return room_name.split('_')[1]  # Extract agent_id from room name
     else:
-        print("web call detected")
+        print("voice chat call detected")
+        call_type = "voice"
         return room_name.split('_')[1]  # Extract agent_id from room name

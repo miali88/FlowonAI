@@ -86,11 +86,13 @@ async def entrypoint(ctx: JobContext):
     try:
 
         """ call types: inbound tel, outbound tel, web """
-        agent_id = await detect_call_type_and_get_agent_id(room_name)
+        agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
 
         agent, opening_line = await create_voice_assistant(agent_id, ctx)
         agent.start(room)
-        await agent.say(opening_line, allow_interruptions=False)
+
+        if call_type != "textbot":
+            await agent.say(opening_line, allow_interruptions=False)
 
         agent_metadata: Dict = await get_agent_metadata(agent_id)
         user_id: str = agent_metadata['userId']
