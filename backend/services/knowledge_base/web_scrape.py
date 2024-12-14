@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 import asyncio
 from datetime import datetime
 import logging
+import aiohttp
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -24,12 +26,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def count_tokens(text, model="gpt-4o"):
+    print("hello, count_tokens")
     encoder = encoding_for_model(model)
     tokens = encoder.encode(text)
     return len(tokens)
 
 JINA_API_KEY = os.getenv('JINA_API_KEY')
 async def get_embedding(text):
+    print("hello, get_embedding")
     """ JINA EMBEDDINGS """
     url = 'https://api.jina.ai/v1/embeddings'
     headers = {
@@ -45,10 +49,14 @@ async def get_embedding(text):
         "embedding_type": "float",
         "input": text
     }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    return response.json()#['data'][0]['embedding']
+    
+    timeout = aiohttp.ClientTimeout(total=30)  # 30 seconds timeout
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.post(url, headers=headers, json=data) as response:
+            return await response.json()
 
 async def sliding_window_chunking(text, max_window_size=900, overlap=200):
+    print("hello, sliding_window_chunking")
     encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
     tokens = encoder.encode(text)
     chunks = []
@@ -68,102 +76,111 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 async def insert_to_db(data):
-    print("inserting to db")
-    # Remove "jina_embedding" and "content" from data for user_web_data_headers
+    print("hello, insert_to_db")
     headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
-    supabase.table('user_web_data').insert(data).execute()
-    supabase.table('user_web_data_headers').insert(headers_data).execute()
+    
+    async def insert_data():
+        return await asyncio.to_thread(
+            lambda: supabase.table('user_web_data').insert(data).execute()
+        )
+    
+    async def insert_headers():
+        return await asyncio.to_thread(
+            lambda: supabase.table('user_web_data_headers').insert(headers_data).execute()
+        )
+    
+    await asyncio.gather(insert_data(), insert_headers())
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10)
+)
+async def scrape_with_retry(url, params):
+    return await asyncio.to_thread(
+        lambda: app.scrape_url(url=url, params=params)
+    )
+
+async def process_single_url(site: str, user_id: str, root_url: str):
+    print("\nhello, process_single_url")
+    
+    if "screen" in site:
+        logger.info(f"Skipping screen {site}")
+        return None
+
+    try:
+        response = await scrape_with_retry(
+            site, 
+            {'formats': ['markdown'], 'waitFor': 1000}
+        )
+
+        content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
+        content = "\n\n".join(content)
+
+        try:
+            header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
+        except KeyError:
+            print(f"KeyError occurred for site {site}: Missing description")
+            header = "## Title: " + response['metadata']['title']
+
+        chunks = await sliding_window_chunking(content)
+        results = []
+
+        async def process_chunk(chunk):
+            sb_insert = {
+                "url": site,
+                "header": header,
+                "content": chunk,
+                "token_count": 0,
+                "jina_embedding": "",
+                "user_id": user_id,
+                "root_url": root_url
+            }
+            
+            chunk_text = header + chunk
+            jina_response = await get_embedding(chunk_text)
+            sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
+            sb_insert['token_count'] = jina_response['usage']['total_tokens']
+            
+            await insert_to_db(sb_insert)
+            return sb_insert
+
+        chunk_tasks = [process_chunk(chunk) for chunk in chunks]
+        results = await asyncio.gather(*chunk_tasks, return_exceptions=True)
+        
+        return [r for r in results if isinstance(r, dict)]
+
+    except Exception as e:
+        logger.error(f"Error processing site {site}: {str(e)}")
+        return None
+
+async def scrape_url(urls: List[str], user_id: str = None):
+    print("hello, scrape_url")
+    print(f"Starting scrape process for user {user_id} at {datetime.now()}")
+    
+    parsed_url = urlparse(urls[0])
+    root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    
+    tasks = [process_single_url(site, user_id, root_url) for site in urls]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    flat_results = []
+    for result in results:
+        if isinstance(result, list):
+            flat_results.extend(result)
+    
+    print("end, scrape_url")
+    return flat_results
 
 async def map_url(url):
+    print("hello, map_url")
     logger.info(f"Starting URL mapping for: {url}")
+    
     try:
-        map_result: List[str] = app.map_url(url, params={
-            'includeSubdomains': True
-        })
+        map_result: List[str] = await asyncio.to_thread(
+            lambda: app.map_url(url, params={'includeSubdomains': True})
+        )
         logger.info(f"Successfully mapped URL. Found {len(map_result)} URLs")
         return map_result
     except Exception as e:
         logger.error(f"Error mapping URL {url}: {str(e)}")
         raise
-
-async def scrape_url(urls: List[str], user_id: str = None):
-    print(f"Starting scrape process for user {user_id} at {datetime.now()}")
-    #await asyncio.sleep(1)  # Simulated long process
-    print(f"Finished sleep for user {user_id} at {datetime.now()}")
-    # Extract root URL from the first URL in the list
-    parsed_url = urlparse(urls[0])
-    root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-    sb_insert = {
-        "url": "",
-        "header": "",
-        "content": "",
-        "token_count": 0,
-        "jina_embedding": "",
-        "user_id": user_id,
-        "root_url": root_url  # Add root_url to the insert dictionary
-    }
-
-    results = []
-    for site in urls:
-        print(f"Processing site {site}")
-        try:
-            if "screen" not in site:
-                response = app.scrape_url(url=site, params={
-                    'formats': ['markdown'],
-                    'waitFor': 1000
-                })
-
-                content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
-                content = "\n\n".join(content)
-                
-                try:
-                    header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
-                except KeyError:
-                    print(f"KeyError occurred for site {site}: Missing description")
-                    header = "## Title: " + response['metadata']['title']
-
-                chunks = await sliding_window_chunking(content)
-
-                for chunk in chunks:
-                    print(f"processing chunk {chunks.index(chunk)} of {len(chunks)}")
-                    sb_insert['url'] = site
-                    sb_insert['header'] = header
-                    sb_insert['content'] = chunk
-                    chunk = header + chunk
-                    jina_response = await get_embedding(chunk)
-                    sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
-                    sb_insert['token_count'] = jina_response['usage']['total_tokens']
-
-                    await insert_to_db(sb_insert)
-                    results.append(sb_insert.copy())
-
-            else:
-                print(f"Skipping screen {site}")
-                continue
-        except KeyError as e:
-            print(f"KeyError occurred for site {site}: {str(e)}")
-            print("Proceeding without description")
-            chunks = await sliding_window_chunking(content)
-            #header = "## Title: " + response['metadata']['title'] 
-
-            for chunk in chunks: 
-                print(f"processing chunk {chunks.index(chunk)} of {len(chunks)}")
-                sb_insert['url'] = site
-                #sb_insert['header'] = header
-                sb_insert['content'] = chunk
-                #chunk = header + chunk
-                jina_response = await get_embedding(chunk)
-                sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
-                sb_insert['token_count'] = jina_response['usage']['total_tokens']
-
-                await insert_to_db(sb_insert)
-                results.append(sb_insert.copy())
-            continue
-        except Exception as e:
-            print(f"Error processing site {site}: {str(e)}")
-            continue
-
-
-    return results
