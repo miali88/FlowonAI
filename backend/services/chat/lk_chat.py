@@ -260,12 +260,13 @@ async def lk_chat_process(message: str, agent_id: str):
             fnc_ctx=fnc_ctx
         )
         
-        accumulated_response = ""
+        buffer = ""
         async for chunk in response_stream:
             if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                accumulated_response += content
-                yield content
+                buffer += chunk.choices[0].delta.content
+                if buffer.endswith((" ", ".", "!", "?", "\n")):  # Natural break points
+                    yield buffer
+                    buffer = ""
             elif chunk.choices[0].delta.tool_calls:
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
@@ -289,8 +290,8 @@ async def lk_chat_process(message: str, agent_id: str):
                     )
 
         # Add assistant's response to history
-        if accumulated_response:
-            chat_history.add_message("assistant", accumulated_response)
+        if buffer:
+            chat_history.add_message("assistant", buffer)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)

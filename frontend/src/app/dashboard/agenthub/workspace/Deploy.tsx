@@ -95,6 +95,17 @@ frameborder="0"
     <script defer type="module" src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"></script>
 `;
 
+  const textChatScriptCode = `
+    <div id="embedded-textchat-container"></div>
+    <script defer>
+      window.embeddedTextChatConfig = {
+        agentId: "${selectedAgent?.id}",
+        domain: "https://flowon.ai/textwidget/"
+      };
+    </script>
+    <script defer type="module" src="https://www.flowon.ai/embed-text.min.js"></script>
+`;
+
   return (
     <Card>
       <CardHeader>
@@ -163,21 +174,24 @@ frameborder="0"
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Your agent is accessible via our text chat interface at:
-                </p>
-                <div className="relative">
-                  <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
-                    <code className="text-sm">https://www.flowon.ai/chat/{selectedAgent?.id}</code>
-                  </pre>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => navigator.clipboard.writeText(`https://www.flowon.ai/chat/${selectedAgent?.id}`)}
-                  >
-                    Copy
-                  </Button>
+                <div>
+                  <Label className="text-sm font-medium">Script Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this script to your website to enable the text chat widget.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{textChatScriptCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
                 </div>
               </div>
             </AccordionContent>

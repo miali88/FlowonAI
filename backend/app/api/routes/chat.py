@@ -24,14 +24,14 @@ async def chat_message(request: Request):
 
         async def event_generator():
             try:
-                # Track the last chunk to avoid duplicates
-                last_chunk = ""
+                seen_chunks = set()  # Track all seen chunks
                 async for chunk in lk_chat_process(
                     user_query['message'], 
                     agent_id
                 ):
-                    if chunk and chunk != last_chunk:  # Only yield if chunk is new
-                        last_chunk = chunk
+                    chunk_hash = hash(chunk)  # Create a hash of the chunk
+                    if chunk and chunk_hash not in seen_chunks:
+                        seen_chunks.add(chunk_hash)
                         yield f"data: {json.dumps({'response': {'answer': str(chunk)}})}\n\n"
             except Exception as e:
                 logger.error(f"Error in stream: {str(e)}")
