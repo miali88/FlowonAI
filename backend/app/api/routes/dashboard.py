@@ -121,8 +121,6 @@ async def get_items_headers_handler(current_user: str = Depends(get_current_user
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
-
 @router.post("/knowledge_base")
 async def create_item_handler(request: Request, 
                             background_tasks: BackgroundTasks,
@@ -192,7 +190,7 @@ async def scrape_url_handler(
 ):
     try:
         request_data = await request.json()
-        request_data = request_data.get('urls')
+        request_data: List[str] = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
         
         # Schedule scraping to run in the background

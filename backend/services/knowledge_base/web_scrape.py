@@ -4,10 +4,11 @@ import os
 from typing import List, Dict
 from urllib.parse import urlparse
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential
+from asyncio import Semaphore
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -91,11 +92,51 @@ async def insert_to_db(data):
     
     await asyncio.gather(insert_data(), insert_headers())
 
+# Rate limit constants
+SCRAPE_RATE_LIMIT = 20  # per minute
+CRAWL_RATE_LIMIT = 3    # per minute
+MAX_PAGES = 3000
+
+# Create rate limiters
+class RateLimiter:
+    def __init__(self, calls_per_minute, name=""):
+        self.calls_per_minute = calls_per_minute
+        self.calls = []
+        self.name = name
+        
+    async def acquire(self):
+        now = datetime.now()
+        
+        # Clean up old calls
+        original_calls = len(self.calls)
+        self.calls = [call_time for call_time in self.calls 
+                     if now - call_time < timedelta(minutes=1)]
+        cleaned_calls = len(self.calls)
+        
+        logger.info(f"{self.name} Limiter - Current calls in window: {len(self.calls)}/{self.calls_per_minute}")
+        
+        if cleaned_calls < original_calls:
+            logger.info(f"{self.name} Limiter - Cleaned up {original_calls - cleaned_calls} old calls")
+        
+        if len(self.calls) >= self.calls_per_minute:
+            wait_time = 60 - (now - self.calls[0]).total_seconds()
+            if wait_time > 0:
+                logger.info(f"{self.name} Limiter - Rate limit reached. Waiting {wait_time:.2f} seconds")
+                await asyncio.sleep(wait_time)
+        
+        self.calls.append(now)
+        logger.info(f"{self.name} Limiter - Added new call. Total calls in window: {len(self.calls)}")
+
+# Create named limiters
+scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
+crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=10)
 )
 async def scrape_with_retry(url, params):
+    await scrape_limiter.acquire()
     return await asyncio.to_thread(
         lambda: app.scrape_url(url=url, params=params)
     )
@@ -176,9 +217,12 @@ async def map_url(url):
     logger.info(f"Starting URL mapping for: {url}")
     
     try:
+        await crawl_limiter.acquire()
         map_result: List[str] = await asyncio.to_thread(
             lambda: app.map_url(url, params={'includeSubdomains': True})
         )
+        # Enforce maximum pages limit
+        map_result = map_result[:MAX_PAGES]
         logger.info(f"Successfully mapped URL. Found {len(map_result)} URLs")
         return map_result
     except Exception as e:
