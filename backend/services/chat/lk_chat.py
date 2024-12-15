@@ -196,20 +196,23 @@ class ChatHistory:
         return self.messages
 
 # Global chat history store
-chat_histories: Dict[str, ChatHistory] = {}
+chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
 
-async def lk_chat_process(message: str, agent_id: str):
-    print(f"lk_chat_process called with message: {message} and agent_id: {agent_id}")
+async def lk_chat_process(message: str, agent_id: str, room_name: str):
+    print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     
     try:
-        # Initialize or get existing chat history
+        # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:
-            chat_histories[agent_id] = ChatHistory()
+            chat_histories[agent_id] = {}
+        if room_name not in chat_histories[agent_id]:
+            chat_histories[agent_id][room_name] = ChatHistory()
         
-        chat_history = chat_histories[agent_id]
+        chat_history = chat_histories[agent_id][room_name]
         
-        # Fetch agent configuration
+        AgentFunctions.current_room_name = room_name  # Set the room name for agent functions
 
+        # Fetch agent configuration
         agent_metadata = await get_agent_metadata(agent_id)
         print(f"agent_metadata: {agent_metadata['agentName']}")
         if not agent_metadata:

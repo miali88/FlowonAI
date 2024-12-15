@@ -11,15 +11,17 @@ logger = logging.getLogger(__name__)
 class ChatMessage(BaseModel):
     message: str
     agent_id: str
+    room_name: str
 
 @router.post("/")
 async def chat_message(request: Request):    
-    print("\n /chat endpoint, data:")
 
     try:
         user_query = await request.json()
-        agent_id = user_query.get("agent_id")
-        if not all(key in user_query for key in ['message', 'agent_id']):
+        print("\n /chat endpoint, data:")
+        print(user_query)
+
+        if not all(key in user_query for key in ['message', 'agent_id', 'room_name']):
             raise HTTPException(status_code=400, detail="Missing required fields")
 
         async def event_generator():
@@ -27,7 +29,8 @@ async def chat_message(request: Request):
                 seen_chunks = set()  # Track all seen chunks
                 async for chunk in lk_chat_process(
                     user_query['message'], 
-                    agent_id
+                    user_query['agent_id'],
+                    user_query['room_name']
                 ):
                     chunk_hash = hash(chunk)  # Create a hash of the chunk
                     if chunk and chunk_hash not in seen_chunks:

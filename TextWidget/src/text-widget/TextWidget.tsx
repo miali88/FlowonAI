@@ -81,7 +81,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       apiBaseUrl
     });
     
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !roomName) return;
 
     const userMessage: Message = { text: inputText, isBot: false };
     setMessages(prev => [...prev, userMessage]);
@@ -99,6 +99,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         body: JSON.stringify({
           message: currentInput,
           agent_id: agentId,
+          room_name: roomName
         }),
       });
 
@@ -169,6 +170,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
   const handleRoomConnected = (newRoomName: string) => {
     setRoomName(newRoomName);
+    console.log('Room connected:', newRoomName);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {

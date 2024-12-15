@@ -27,6 +27,8 @@ cloudpathlib==0.16.0
 coloredlogs==15.0.1
 comm==0.2.2
 confection==0.1.5
+composio-core==0.6.0
+composio-openai==0.6.0
 cryptography==43.0.1
 cssselect==1.2.0
 cssutils==2.11.1

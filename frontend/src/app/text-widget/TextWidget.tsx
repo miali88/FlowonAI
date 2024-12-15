@@ -38,6 +38,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
+  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -81,7 +82,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       apiBaseUrl
     });
     
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !participantIdentity) return;
 
     const userMessage: Message = { text: inputText, isBot: false };
     setMessages(prev => [...prev, userMessage]);
@@ -99,6 +100,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         body: JSON.stringify({
           message: currentInput,
           agent_id: agentId,
+          visitor_id: participantIdentity
         }),
       });
 
@@ -167,8 +169,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     setInputText(question);
   };
 
-  const handleRoomConnected = (newRoomName: string) => {
+  const handleRoomConnected = (newRoomName: string, newParticipantIdentity: string) => {
     setRoomName(newRoomName);
+    setParticipantIdentity(newParticipantIdentity);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
