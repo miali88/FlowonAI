@@ -88,7 +88,7 @@ async def entrypoint(ctx: JobContext):
         """ call types: inbound tel, outbound tel, web """
         agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
 
-        agent, opening_line = await create_voice_assistant(agent_id, ctx)
+        agent, opening_line = await create_voice_assistant(agent_id, ctx, call_type)
         
         agent.start(room)
 
@@ -357,11 +357,11 @@ async def entrypoint(ctx: JobContext):
                 time_since_participant = current_time - last_participant_audio
                 time_since_agent = current_time - last_agent_audio
 
-                # Log the silence durations for debugging
-                if time_since_last_audio > SILENCE_TIMEOUT / 2:  # Only log if silence is getting significant
-                    print(f"Time since last audio: {time_since_last_audio:.1f}s")
-                    print(f"Time since participant audio: {time_since_participant:.1f}s")
-                    print(f"Time since agent audio: {time_since_agent:.1f}s")
+                ### Log the silence durations for debugging
+                # if time_since_last_audio > SILENCE_TIMEOUT / 2:  # Only log if silence is getting significant
+                #     print(f"Time since last audio: {time_since_last_audio:.1f}s")
+                #     print(f"Time since participant audio: {time_since_participant:.1f}s")
+                #     print(f"Time since agent audio: {time_since_agent:.1f}s")
 
                 if time_since_last_audio > SILENCE_TIMEOUT:
                     print(f"Call duration before timeout: {format_duration(call_start_time)}")

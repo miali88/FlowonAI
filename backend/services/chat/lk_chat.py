@@ -220,6 +220,11 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
 
         features = agent_metadata.get('features', [])
         fnc_ctx = llm.FunctionContext()
+
+
+        # fnc_ctx = AgentFunctions(job_ctx)
+
+
         # Always register Q&A function
         fnc_ctx._register_ai_function(question_and_answer)
         print(f"Registered Q&A function")
@@ -234,6 +239,8 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             fnc_ctx._register_ai_function(fetch_calendar)
             print(f"Registered calendar function")
             logger.info(f"Registered calendar function")
+
+
 
         # Create chat context with history
         chat_ctx = llm.ChatContext()
@@ -253,6 +260,9 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         )
         chat_history.add_message("user", message)
         
+        print("=-=-=-\n\n\n-=-=-=-=chat_history:", chat_history.get_messages())
+
+        """ no need to create new instance of just use llm_instance variable."""
         # Get streaming response using agent-specific configuration
         llm_instance = openai.LLM(
             model="gpt-4o",
@@ -263,14 +273,18 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             fnc_ctx=fnc_ctx
         )
         
-        buffer = ""
+        current_assistant_message = ""
+        
         async for chunk in response_stream:
             if chunk.choices[0].delta.content:
-                buffer += chunk.choices[0].delta.content
-                if buffer.endswith((" ", ".", "!", "?", "\n")):  # Natural break points
-                    yield buffer
-                    buffer = ""
+                yield chunk.choices[0].delta.content
+                current_assistant_message += chunk.choices[0].delta.content
             elif chunk.choices[0].delta.tool_calls:
+                # Tool calls handling...
+                if current_assistant_message:
+                    chat_history.add_message("assistant", current_assistant_message)
+                    current_assistant_message = ""
+                
                 for tool_call in chunk.choices[0].delta.tool_calls:
                     called_function = tool_call.execute()
                     result = await called_function.task
@@ -284,17 +298,14 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                         async for result_chunk in result:
                             tool_response += result_chunk
                             yield result_chunk
-                            
-                    # Add tool response to history
-                    chat_history.add_message(
-                        "function", 
-                        tool_response,
-                        name=tool_call.name
-                    )
+                    
+                    # Add tool call and its response to chat history
+                    chat_history.add_message("assistant", f"Using tool: {tool_call.name}")
+                    chat_history.add_message("function", tool_response)
 
-        # Add assistant's response to history
-        if buffer:
-            chat_history.add_message("assistant", buffer)
+        # Add any remaining assistant message to history
+        if current_assistant_message:
+            chat_history.add_message("assistant", current_assistant_message)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)

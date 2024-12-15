@@ -76,10 +76,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TextWidget: handleSendMessage called', {
-      inputText,
-      apiBaseUrl
-    });
     
     if (!inputText.trim() || !roomName) return;
 
@@ -88,9 +84,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     
     const currentInput = inputText;
     setInputText('');
+    
+    let accumulatedResponse = '';
 
     try {
-      console.log('TextWidget: Sending message to:', `${apiBaseUrl}/chat`);
       const response = await fetch(`${apiBaseUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -103,9 +100,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
+      if (!response.ok) throw new Error('Failed to get response');
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No reader available');
@@ -118,7 +113,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split('\n');
         
@@ -126,41 +120,38 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
           if (line.startsWith('data: ')) {
             const content = line.slice(6).trim();
             
-            // Handle [DONE] case separately
             if (content === '[DONE]') {
-              console.log('Stream completed');
+              console.log('Complete response:', accumulatedResponse);
               break;
             }
 
             try {
               const data = JSON.parse(content);
               if (data.response?.answer) {
+                const newText = data.response.answer;
+                accumulatedResponse += newText;
+
                 setMessages(prev => {
                   const newMessages = [...prev];
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.isBot) {
-                    const newText = data.response.answer;
-                    if (!lastMessage.text.endsWith(newText)) {
-                      lastMessage.text += newText;
-                    }
+                    lastMessage.text = accumulatedResponse;
                   }
                   return newMessages;
                 });
               }
             } catch (parseError) {
               console.warn('Failed to parse chunk:', content, parseError);
-              continue;
             }
           }
         }
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: Message = { 
-        text: "Sorry, there was an error processing your message.", 
-        isBot: true 
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error processing your message.",
+        isBot: true
+      }]);
     }
   };
 

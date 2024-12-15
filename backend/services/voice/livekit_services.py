@@ -174,7 +174,7 @@ lang_options = {
     "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
 }
 
-async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
+async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None, call_type: str = "web"):
     logger.info(f"Creating voice assistant for agent_id: {agent_id}")
     try:
         agent = await get_agent(agent_id)
@@ -198,6 +198,9 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None):
         logger.info("Creating voice assistant with configuration")
         print("Creating voice assistant with configuration")    
         fnc_ctx = AgentFunctions(job_ctx)
+
+        # if call_type != "web":
+
         # Initialize functions based on agent features
         # await fnc_ctx.initialize_functions()
         
