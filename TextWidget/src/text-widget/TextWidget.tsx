@@ -155,8 +155,81 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const handleSuggestionClick = (question: string) => {
-    setInputText(question);
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (!roomName) return;
+
+    // Add user message to UI immediately
+    setMessages(prev => [...prev, { text: suggestion, isBot: false }]);
+    
+    // Send directly to chat API
+    try {
+      const response = await fetch(`${apiBaseUrl}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: suggestion,
+          agent_id: agentId,
+          room_name: roomName
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to get response');
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      // Add initial empty bot message
+      const botMessage: Message = { text: '', isBot: true };
+      setMessages(prev => [...prev, botMessage]);
+
+      let accumulatedResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const content = line.slice(6).trim();
+            
+            if (content === '[DONE]') {
+              console.log('Complete response:', accumulatedResponse);
+              break;
+            }
+
+            try {
+              const data = JSON.parse(content);
+              if (data.response?.answer) {
+                const newText = data.response.answer;
+                accumulatedResponse += newText;
+
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage.isBot) {
+                    lastMessage.text = accumulatedResponse;
+                  }
+                  return newMessages;
+                });
+              }
+            } catch (parseError) {
+              console.warn('Failed to parse chunk:', content, parseError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error processing your message.",
+        isBot: true
+      }]);
+    }
   };
 
   const handleRoomConnected = (newRoomName: string) => {
