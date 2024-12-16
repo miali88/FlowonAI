@@ -30,16 +30,18 @@ const LoadingBubbles = () => (
   </div>
 );
 
+const SUGGESTED_QUESTIONS = [
+  "What services do you offer?",
+  "How can I get started?",
+  "Tell me more about your company",
+  "Who's on your team at WeCreate?"
+];
+
 const TextWidget: React.FC<ChatInterfaceProps> = ({ 
   agentId, 
   apiBaseUrl,
-  suggestedQuestions = [
-    "What services do you offer?",
-    "How can I get started?",
-    "What are your working hours?",
-  ]
 }) => {
-  console.log('Suggested questions:', suggestedQuestions);
+  console.log('Received suggestedQuestions:', SUGGESTED_QUESTIONS);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
-  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(suggestedQuestions);
+  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(SUGGESTED_QUESTIONS);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -59,8 +61,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   // Add initial messages when component mounts
   useEffect(() => {
     setMessages([
-      { text: "👋 Hello! I'm Flowon's AI chatbot assistant, ask me anything about Flowon!", isBot: true },
-      { text: "Also, you can create a chatbot like me for your website! 👀", isBot: true }
+      { text: "👋 Hello! I'm WeCreate's AI assistant, ask me anything about WeCreate!", isBot: true },
     ]);
   }, []); // Empty dependency array means this runs once on mount
 
@@ -297,14 +298,19 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     }));
   };
 
+  console.log('Current activeSuggestions:', activeSuggestions);
+
   return (
     <div style={{ 
       width: '100%',
-      height: '100%',
-      position: 'relative',
+      height: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      background: 'rgba(0, 0, 0, 0.05)'
     }}>
       <LiveKitTextEntry 
         agentId={agentId || ''} 
