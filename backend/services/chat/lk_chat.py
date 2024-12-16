@@ -9,6 +9,7 @@ from pathlib import Path
 from livekit.agents import llm
 from livekit.plugins import openai, anthropic
 from livekit.agents.llm import USE_DOCSTRING
+from livekit.agents.llm.chat_context import ChatMessage
 
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
@@ -234,18 +235,22 @@ async def init_new_chat(agent_id: str, room_name: str):
 
 @dataclass
 class ChatHistory:
-    messages: List[Dict[str, str]] = field(default_factory=list)
+    messages: List[ChatMessage] = field(default_factory=list)
     llm_instance: Any = None
     chat_ctx: Any = None
     fnc_ctx: Any = None
     
     def add_message(self, role: str, content: str, name: str = None):
-        message = {"role": role, "text": content}
-        if name:
-            message["name"] = name
+        message = ChatMessage(
+            role=role,
+            content=content,
+            name=name
+        )
         self.messages.append(message)
+        if self.chat_ctx:
+            self.chat_ctx.messages.append(message)
       
-    def get_messages(self) -> List[Dict[str, str]]:
+    def get_messages(self) -> List[ChatMessage]:
         return self.messages
 
 # Global chat history store
@@ -272,27 +277,8 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         chat_ctx = chat_history.chat_ctx
         fnc_ctx = chat_history.fnc_ctx
         
-        # Add historical messages
-        for hist_message in chat_history.get_messages():
-            if "name" in hist_message:
-                chat_ctx.append(
-                    role=hist_message["role"],
-                    text=hist_message["text"],
-                    name=hist_message["name"]
-                )
-            else:
-                chat_ctx.append(
-                    role=hist_message["role"],
-                    text=hist_message["text"]
-                )
-        
-        # Add current message
-        chat_ctx.append(
-            role="user",
-            text=message
-        )
+        # Add the new message directly through chat_history
         chat_history.add_message("user", message)
-        print("\n\nchat_history.get_messages():", chat_history.get_messages())
 
         current_assistant_message = ""
         
@@ -301,13 +287,11 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             fnc_ctx=fnc_ctx
         )
 
-        # Stream response back
         async for chunk in response_stream:
             if chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
                 current_assistant_message += chunk.choices[0].delta.content
             elif chunk.choices[0].delta.tool_calls:
-                # Tool calls handling...
                 if current_assistant_message:
                     chat_history.add_message("assistant", current_assistant_message)
                     current_assistant_message = ""
@@ -316,21 +300,15 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     called_function = tool_call.execute()
                     result = await called_function.task
                     
-                    # Handle both string and generator responses
                     if isinstance(result, str):
-                        tool_response = result
-                        yield tool_response
-                        chat_history.add_message("function", tool_response, name=tool_call.function.name)
+                        yield result
+                        chat_history.add_message("function", result, name="unknown")
                     else:
                         tool_response = ""
                         async for result_chunk in result:
                             tool_response += result_chunk
                             yield result_chunk
-                        chat_history.add_message("function", tool_response, name=tool_call.function.name)
-                    
-                    # Add tool call and its response to chat history
-                    # chat_history.add_message("assistant", f"Using tool: {tool_call.name}")
-                    chat_history.add_message("function", tool_response)
+                        chat_history.add_message("function", tool_response, name="unknown")
 
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message)
@@ -338,7 +316,5 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         if current_assistant_message:
-            # Save partial message if we have one during error
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]")
         raise Exception("Failed to process chat message")
-
