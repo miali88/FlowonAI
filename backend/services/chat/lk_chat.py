@@ -238,7 +238,7 @@ class ChatHistory:
     
     def add_message(self, role: str, content: str, name: str = None):
         message = {"role": role, "text": content}
-        if role == "function" and name:
+        if name:
             message["name"] = name
         self.messages.append(message)
       
@@ -269,7 +269,17 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         
         # Add historical messages
         for hist_message in chat_history.get_messages():
-            chat_ctx.append(**hist_message)
+            if "name" in hist_message:
+                chat_ctx.append(
+                    role=hist_message["role"],
+                    text=hist_message["text"],
+                    name=hist_message["name"]
+                )
+            else:
+                chat_ctx.append(
+                    role=hist_message["role"],
+                    text=hist_message["text"]
+                )
         
         # Add current message
         chat_ctx.append(
@@ -304,11 +314,13 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     if isinstance(result, str):
                         tool_response = result
                         yield tool_response
+                        chat_history.add_message("function", tool_response, name=tool_call.name)
                     else:
                         tool_response = ""
                         async for result_chunk in result:
                             tool_response += result_chunk
                             yield result_chunk
+                        chat_history.add_message("function", tool_response, name=tool_call.name)
                     
                     # Add tool call and its response to chat history
                     # chat_history.add_message("assistant", f"Using tool: {tool_call.name}")

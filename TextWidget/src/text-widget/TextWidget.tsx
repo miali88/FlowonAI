@@ -22,6 +22,14 @@ interface ChatInterfaceProps {
   suggestedQuestions?: string[];
 }
 
+const LoadingBubbles = () => (
+  <div className={styles.loadingBubbles}>
+    <div className={styles.bubble}></div>
+    <div className={styles.bubble}></div>
+    <div className={styles.bubble}></div>
+  </div>
+);
+
 const TextWidget: React.FC<ChatInterfaceProps> = ({ 
   agentId, 
   apiBaseUrl,
@@ -40,6 +48,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>(suggestedQuestions);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -311,7 +320,11 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                 message.isBot ? styles.assistantMessage : styles.userMessage
               }`}
             >
-              <ReactMarkdown>{message.text}</ReactMarkdown>
+              {message.text ? (
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              ) : message.isBot ? (
+                <LoadingBubbles />
+              ) : null}
             </div>
           ))}
         </div>
