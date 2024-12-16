@@ -12,8 +12,7 @@ from livekit.agents.llm import USE_DOCSTRING
 
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
-from services.voice.tool_use import AgentFunctions
-from services.voice.livekit_services import get_agent
+from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
 
 import logging
@@ -207,7 +206,9 @@ async def init_new_chat(agent_id: str, room_name: str):
         ]
     ) -> str:
         logger.info(f"Personal data request triggered with message: {message}")
+        print(f"Personal data request triggered with message: {message}")
         return "Form presented to user. Waiting for user to complete and submit form."
+
 
     # Always register Q&A function
     fnc_ctx._register_ai_function(question_and_answer)
