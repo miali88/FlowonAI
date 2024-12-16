@@ -30,16 +30,18 @@ const LoadingBubbles = () => (
   </div>
 );
 
+const SUGGESTED_QUESTIONS = [
+  "What services do you offer?",
+  "How can I get started?",
+  "Tell me more about your company",
+  "Who's on your team at WeCreate?"
+];
+
 const TextWidget: React.FC<ChatInterfaceProps> = ({ 
   agentId, 
   apiBaseUrl,
-  suggestedQuestions = [
-    "What services do you offer?",
-    "How can I get started?",
-    "What are your working hours?",
-  ]
 }) => {
-  console.log('Suggested questions:', suggestedQuestions);
+  console.log('Received suggestedQuestions:', SUGGESTED_QUESTIONS);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
-  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(suggestedQuestions);
+  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(SUGGESTED_QUESTIONS);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -295,6 +297,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       [fieldLabel]: value
     }));
   };
+
+  console.log('Current activeSuggestions:', activeSuggestions);
 
   return (
     <div style={{ 

@@ -124,7 +124,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
             rag_prompt = f"""            
             ## User Query: {question}
-            ## Retrieved Information: {results}
+            ## WeCreate Information: {results}
             """
 
             chat_ctx = llm.ChatContext()
@@ -252,8 +252,10 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
     try:
         # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:
+            print(f"Initializing new chat history for agent_id: {agent_id}")
             chat_histories[agent_id] = {}
         if room_name not in chat_histories[agent_id]:
+            print(f"Initializing new chat history for room_name: {room_name}")
             llm_instance, chat_ctx, fnc_ctx = await init_new_chat(agent_id, room_name)
             chat_histories[agent_id][room_name] = ChatHistory()
             chat_histories[agent_id][room_name].llm_instance = llm_instance

@@ -8,21 +8,19 @@ export default function ChatWidgetPage() {
   
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
-      position: 'relative',
+      width: '100vw',
+      height: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      overflow: 'hidden'
     }}>
       <TextWidget 
         agentId={agentId || ''}
         apiBaseUrl={import.meta.env.VITE_API_BASE_URL || 'please set VITE_API_BASE_URL'}
-        suggestedQuestions={[
-          "What services do you offer?",
-          "How can I get started?",
-          "Tell me more about your company",
-        ]}
       />
     </div>
   )
