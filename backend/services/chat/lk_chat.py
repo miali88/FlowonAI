@@ -104,7 +104,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
                 print("data_source:", data_source)
                 results: List[Dict] = await similarity_search(question, data_source=data_source, user_id=user_id)
-                print(f"\n\n RAG: results: {results[0]}\n\n")
+                # print(f"\n\n RAG: results: {results[0]}\n\n")
 
                 # Extract URLs from results and include them in the RAG results
                 results_with_urls = []
@@ -115,16 +115,14 @@ async def init_new_chat(agent_id: str, room_name: str):
                     results_with_urls.append(result_dict)
 
                 # Yield the enhanced RAG results with URLs
-                print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
-                yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
+                # print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
+                # yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
 
             else:
                 data_source = {"web": ["all"], "text_files": ["all"]}
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
-            rag_prompt = f"""
-            Based on the following information, please provide a comprehensive and accurate answer to the user's question.
-            
+            rag_prompt = f"""            
             ## User Query: {question}
             ## Retrieved Information: {results}
             """
@@ -287,7 +285,8 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             text=message
         )
         chat_history.add_message("user", message)
-        
+        print("\n\nchat_history.get_messages():", chat_history.get_messages())
+
         current_assistant_message = ""
         
         response_stream = llm_instance.chat(
@@ -326,10 +325,13 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     # chat_history.add_message("assistant", f"Using tool: {tool_call.name}")
                     chat_history.add_message("function", tool_response)
 
-        # Add any remaining assistant message to history
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
+        if current_assistant_message:
+            # Save partial message if we have one during error
+            chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]")
         raise Exception("Failed to process chat message")
+

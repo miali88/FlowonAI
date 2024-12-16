@@ -59,8 +59,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   // Add initial messages when component mounts
   useEffect(() => {
     setMessages([
-      { text: "👋 Hello! I'm Flowon's AI chatbot assistant, ask me anything about Flowon!", isBot: true },
-      { text: "Also, you can create a chatbot like me for your website! 👀", isBot: true }
+      { text: "👋 Hello! I'm WeCreate's AI assistant, ask me anything about WeCreate!", isBot: true },
     ]);
   }, []); // Empty dependency array means this runs once on mount
 
@@ -300,11 +299,14 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   return (
     <div style={{ 
       width: '100%',
-      height: '100%',
-      position: 'relative',
+      height: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      background: 'rgba(0, 0, 0, 0.05)'
     }}>
       <LiveKitTextEntry 
         agentId={agentId || ''} 
