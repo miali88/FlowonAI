@@ -44,6 +44,11 @@ class ChatTester:
         except FileNotFoundError:
             return None
 
+class DataSource:
+    id: int
+    title: str
+    data_type: str
+
 async def init_new_chat(agent_id: str, room_name: str):
     chat_histories[agent_id][room_name] = ChatHistory()
 
@@ -86,7 +91,7 @@ async def init_new_chat(agent_id: str, room_name: str):
         """
         try:
             agent_metadata: Dict = await get_agent_metadata(agent_id)
-
+    
             user_id: str = agent_metadata['userId']
             data_source: str = agent_metadata.get('dataSource', None)
             
@@ -99,7 +104,10 @@ async def init_new_chat(agent_id: str, room_name: str):
 
                 print("data_source:", data_source)
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
-            
+                print(f"\n\n RAG: results: {results}\n\n")
+
+
+
             else:
                 data_source = {"web": ["all"], "text_files": ["all"]}
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
@@ -218,9 +226,12 @@ class ChatHistory:
     chat_ctx: Any = None
     fnc_ctx: Any = None
     
-    def add_message(self, role: str, content: str):
-        self.messages.append({"role": role, "text": content})
-    
+    def add_message(self, role: str, content: str, name: str = None):
+        message = {"role": role, "text": content}
+        if role == "function" and name:
+            message["name"] = name
+        self.messages.append(message)
+      
     def get_messages(self) -> List[Dict[str, str]]:
         return self.messages
 
