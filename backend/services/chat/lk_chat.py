@@ -103,10 +103,20 @@ async def init_new_chat(agent_id: str, room_name: str):
                 }
 
                 print("data_source:", data_source)
-                results = await similarity_search(question, data_source=data_source, user_id=user_id)
-                print(f"\n\n RAG: results: {results}\n\n")
+                results: List[Dict] = await similarity_search(question, data_source=data_source, user_id=user_id)
+                print(f"\n\n RAG: results: {results[0]}\n\n")
 
+                # Extract URLs from results and include them in the RAG results
+                results_with_urls = []
+                for result in results:
+                    result_dict = dict(result)
+                    if 'url' in result:
+                        result_dict['source_url'] = result['url']
+                    results_with_urls.append(result_dict)
 
+                # Yield the enhanced RAG results with URLs
+                print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
+                yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
 
             else:
                 data_source = {"web": ["all"], "text_files": ["all"]}
@@ -129,7 +139,7 @@ async def init_new_chat(agent_id: str, room_name: str):
             llm_instance = openai.LLM(model="gpt-4o")
             response_stream = llm_instance.chat(chat_ctx=chat_ctx)
             
-            # Stream the response chunks directly instead of accumulating
+            # Then yield the actual response chunks
             async for chunk in response_stream:
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content

@@ -16,34 +16,85 @@
   }
   
   .messageContainer {
+    position: relative;
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
   }
   
   .messageBubble {
+    position: relative;
     max-width: 80%;
     padding: 12px 16px;
     border-radius: 12px;
     word-wrap: break-word;
-    display: flex;
     margin: 4px 0;
-    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  .messageBubble > div {
+    width: 100%;
+  }
+  
+  .messageBubble ul,
+  .messageBubble ol {
+    margin: 8px 0;
+    padding-left: 20px;
+    width: 100%;
+  }
+  
+  .messageBubble p {
+    margin: 0 0 8px 0;
+    width: 100%;
+    line-height: 1.5;
+  }
+  
+  .messageBubble h1,
+  .messageBubble h2,
+  .messageBubble h3,
+  .messageBubble h4 {
+    margin: 16px 0 8px 0;
+    width: 100%;
+  }
+  
+  .messageBubble strong,
+  .messageBubble em {
+    display: inline;
   }
   
   .userMessage {
     align-self: flex-end;
-    background-color: #007bff;
-    color: white;
+    background-color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    hyphens: auto;
+    text-wrap: break-words;
+    border-radius: 20px;
+    text-align: left;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    -webkit-font-smoothing: antialiased;
+    margin-left: auto;
+    margin-right: 25px;
+    padding: 8px 16px;
+    white-space: pre-wrap;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: sans-serif;
+    max-width: min(calc(100% - 48px), 65ch);
   }
   
   .assistantMessage {
     align-self: flex-start;
     background-color: #f0f0f0;
     color: #333;
+    font-family: sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    -webkit-font-smoothing: antialiased;
   }
   
   .inputContainer {
@@ -148,4 +199,54 @@
   
   .submitButton:hover {
     background-color: #0056b3;
+  }
+  
+  .ragResultsButton {
+    padding: 5px 10px;
+    margin-top: 5px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  
+  .ragResultsContainer {
+    margin-top: 5px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  
+  .ragResultsList {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .messageBubble pre {
+    width: 100%;
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+  }
+  
+  .messageBubble code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+  }
+  
+  .messageBubble a {
+    color: #0066cc;
+    text-decoration: underline;
+  }
+  
+  .messageBubble ul, .messageBubble ol {
+    margin: 8px 0;
+    padding-left: 20px;
   }

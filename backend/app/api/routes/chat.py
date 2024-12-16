@@ -25,20 +25,25 @@ async def chat_message(request: Request):
             raise HTTPException(status_code=400, detail="Missing required fields")
 
         async def event_generator():
-            full_response = []  # Accumulate chunks here
+            full_response = []
             try:
                 async for chunk in lk_chat_process(
                     user_query['message'], 
                     user_query['agent_id'],
                     user_query['room_name']
                 ):
-                    full_response.append(str(chunk))  # Accumulate each chunk
-                    yield f"data: {json.dumps({'response': {'answer': str(chunk)}})}\n\n"
+                    if isinstance(chunk, str):
+                        if chunk.startswith("[RAG_RESULTS]:"):
+                            # Send RAG results as a separate event type
+                            yield f"data: {json.dumps({'rag_results': chunk[13:].strip()})}\n\n"
+                        else:
+                            # Send normal response chunks
+                            full_response.append(str(chunk))
+                            yield f"data: {json.dumps({'response': {'answer': str(chunk)}})}\n\n"
             except Exception as e:
                 logger.error(f"Error in stream: {str(e)}")
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
             finally:
-                # Print the complete accumulated response
                 yield "data: [DONE]\n\n"
 
         return StreamingResponse(

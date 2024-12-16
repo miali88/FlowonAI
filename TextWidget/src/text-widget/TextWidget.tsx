@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './TextWidget.module.css';
 import LiveKitTextEntry from './LiveKitTextEntry';
 import { IoSend } from "react-icons/io5";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   text: string;
@@ -310,7 +311,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                 message.isBot ? styles.assistantMessage : styles.userMessage
               }`}
             >
-              {message.text}
+              <ReactMarkdown>{message.text}</ReactMarkdown>
             </div>
           ))}
         </div>
