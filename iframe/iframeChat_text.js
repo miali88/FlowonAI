@@ -123,7 +123,7 @@ class ChatWidget {
       </div>
       <div class="chat-widget-button">
         <div class="chat-widget-icon chat">
-          <img src="/live-chat.png" alt="Live Chat">
+          <img src="./live-chat.png" alt="Live Chat">
         </div>
         <div class="chat-widget-icon arrow">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
