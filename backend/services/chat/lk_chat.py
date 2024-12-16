@@ -214,7 +214,6 @@ async def init_new_chat(agent_id: str, room_name: str):
         print(f"triggering show_chat_input in request_personal_datafor room_name: {room_name}")
         await trigger_show_chat_input(room_name, room_name, room_name)
 
-
     # Always register Q&A function
     fnc_ctx._register_ai_function(question_and_answer)
     print(f"Registered Q&A function")
@@ -321,13 +320,13 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     if isinstance(result, str):
                         tool_response = result
                         yield tool_response
-                        chat_history.add_message("function", tool_response, name=tool_call.name)
+                        chat_history.add_message("function", tool_response, name=tool_call.function.name)
                     else:
                         tool_response = ""
                         async for result_chunk in result:
                             tool_response += result_chunk
                             yield result_chunk
-                        chat_history.add_message("function", tool_response, name=tool_call.name)
+                        chat_history.add_message("function", tool_response, name=tool_call.function.name)
                     
                     # Add tool call and its response to chat history
                     # chat_history.add_message("assistant", f"Using tool: {tool_call.name}")

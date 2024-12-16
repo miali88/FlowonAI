@@ -121,7 +121,6 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
 
-
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
     print("\n\n chat_message endpoint reached\n\n")

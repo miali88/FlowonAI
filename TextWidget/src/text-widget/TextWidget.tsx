@@ -37,6 +37,8 @@ const SUGGESTED_QUESTIONS = [
   "Who's on your team at WeCreate?"
 ];
 
+const DEBUG_SHOW_FORM = false; // Set to true to always show the form for debugging
+
 const TextWidget: React.FC<ChatInterfaceProps> = ({ 
   agentId, 
   apiBaseUrl,
@@ -88,7 +90,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   }, [agentId, apiBaseUrl]);
 
   useEffect(() => {
-    if (participantIdentity) {
+    if (participantIdentity || DEBUG_SHOW_FORM) {
       const eventSource = new EventSource(`${apiBaseUrl}/conversation/events/${participantIdentity}`);
 
       eventSource.onmessage = (event) => {
@@ -284,7 +286,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
           ...formData,
           user_id: null,
           room_name: roomName,
-          participant_identity: null,
+          participant_identity: participantIdentity, // Include participantIdentity
         }),
       });
 
@@ -350,29 +352,30 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
               ) : message.isBot ? (
                 <LoadingBubbles />
               ) : null}
+
+              {/* Render form inside the assistant's message bubble */}
+              {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
+                <form onSubmit={handleFormSubmit} className={styles.formContainer}>
+                  {formFields.map((field, index) => (
+                    <div key={index} className={styles.formField}>
+                      <label htmlFor={field.label}>{field.label}</label>
+                      <input
+                        type={field.type}
+                        id={field.label}
+                        value={formData[field.label] || ''}
+                        onChange={(e) => handleInputChange(field.label, e.target.value)}
+                        required
+                      />
+                    </div>
+                  ))}
+                  <button type="submit" className={styles.submitButton}>
+                    Submit
+                  </button>
+                </form>
+              )}
             </div>
           ))}
         </div>
-        
-        {showForm && (
-          <form onSubmit={handleFormSubmit} className={styles.formContainer}>
-            {formFields.map((field, index) => (
-              <div key={index} className={styles.formField}>
-                <label htmlFor={field.label}>{field.label}</label>
-                <input
-                  type={field.type}
-                  id={field.label}
-                  value={formData[field.label] || ''}
-                  onChange={(e) => handleInputChange(field.label, e.target.value)}
-                  required
-                />
-              </div>
-            ))}
-            <button type="submit" className={styles.submitButton}>
-              Submit
-            </button>
-          </form>
-        )}
         
         <div className={styles.suggestedQuestionsContainer}>
           {activeSuggestions.map((question, index) => (
