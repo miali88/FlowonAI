@@ -1,8 +1,9 @@
-class ChatWidget {
+class TextChatWidget {
   constructor(config = {}) {
     this.config = {
       agentId: config.agentId || 'null',
-      domain: config.domain || '/textwidget',
+      widgetDomain: config.widgetDomain || '/textwidget',
+      iframeDomain: config.iframeDomain || 'iframe_domain_not_defined',
       position: config.position || 'right',
     };
     
@@ -14,14 +15,14 @@ class ChatWidget {
   init() {
     // Updated styles to include both collapsed and expanded states
     const styles = `
-      .chat-widget-container {
+      .text-chat-widget-container {
         position: fixed;
         ${this.config.position}: 20px;
         bottom: 50px;
         z-index: 9999;
       }
 
-      .chat-widget-container .chat-frame {
+      .text-chat-widget-container .chat-frame {
         position: absolute;
         bottom: 90px;
         ${this.config.position}: 0;
@@ -36,12 +37,12 @@ class ChatWidget {
         transition: opacity 0.3s ease;
       }
 
-      .chat-widget-container.expanded .chat-frame {
+      .text-chat-widget-container.expanded .chat-frame {
         opacity: 1;
         visibility: visible;
       }
 
-      .chat-widget-button {
+      .text-chat-widget-button {
         width: 60px;
         height: 60px;
         border-radius: 50%;
@@ -54,42 +55,42 @@ class ChatWidget {
         padding: 12px;
       }
 
-      .chat-widget-icon {
+      .text-chat-widget-icon {
         width: 100%;
         height: 100%;
         transition: transform 0.3s ease;
       }
 
-      .chat-widget-icon.chat {
+      .text-chat-widget-icon.chat {
         display: block;
       }
 
-      .chat-widget-icon.arrow {
+      .text-chat-widget-icon.arrow {
         display: none;
         transform: rotate(180deg);
       }
 
-      .expanded .chat-widget-icon.chat {
+      .expanded .text-chat-widget-icon.chat {
         display: none;
       }
 
-      .expanded .chat-widget-icon.arrow {
+      .expanded .text-chat-widget-icon.arrow {
         display: flex;
         align-items: center;
         justify-content: center;
       }
 
-      .chat-widget-icon img {
+      .text-chat-widget-icon img {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
 
-      .chat-widget-iframe {
+      .text-chat-widget-iframe {
         display: none;
       }
 
-      .expanded .chat-widget-iframe {
+      .expanded .text-chat-widget-iframe {
         display: block;
         width: 100%;
         height: 100%;
@@ -98,7 +99,7 @@ class ChatWidget {
       }
 
       @media (max-width: 640px) {
-        .chat-widget-container.expanded {
+        .text-chat-widget-container.expanded {
           width: 90%;
           ${this.config.position}: 10px;
           bottom: 10px;
@@ -108,24 +109,24 @@ class ChatWidget {
 
     // Create container with initial collapsed state
     this.container = document.createElement('div');
-    this.container.className = 'chat-widget-container collapsed';
+    this.container.className = 'text-chat-widget-container collapsed';
     
     // Add chat icon and iframe
     this.container.innerHTML = `
       <div class="chat-frame">
         <iframe 
-          class="chat-widget-iframe"
-          src="${this.config.domain}?agentId=${this.config.agentId}"
+          class="text-chat-widget-iframe"
+          src="${this.config.widgetDomain}/?agentId=${this.config.agentId}"
           allow="microphone; camera"
           sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
           crossorigin="anonymous"
         ></iframe>
       </div>
-      <div class="chat-widget-button">
-        <div class="chat-widget-icon chat">
-          <img src="/live-chat.png" alt="Live Chat">
+      <div class="text-chat-widget-button">
+        <div class="text-chat-widget-icon chat">
+          <img src="${this.config.iframeDomain}/live-chat.png" alt="Live Chat">
         </div>
-        <div class="chat-widget-icon arrow">
+        <div class="text-chat-widget-icon arrow">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 14l5-5 5 5" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -163,4 +164,4 @@ class ChatWidget {
   }
 }
 
-window.ChatWidget = ChatWidget;
+window.TextChatWidget = TextChatWidget;
