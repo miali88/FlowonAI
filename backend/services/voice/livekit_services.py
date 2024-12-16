@@ -1,8 +1,7 @@
 import os, random, uuid, asyncio
 from dotenv import load_dotenv
 from asyncio import Lock
-import logging
-import re
+import logging, re 
 from typing import Union, AsyncIterable
 
 from fastapi import HTTPException, BackgroundTasks
@@ -199,10 +198,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None, call
         print("Creating voice assistant with configuration")    
         fnc_ctx = AgentFunctions(job_ctx)
 
-        # if call_type != "web":
-
-        # Initialize functions based on agent features
-        # await fnc_ctx.initialize_functions()
+        await fnc_ctx.initialize_functions()
         
         llm_instance = openai.LLM(
             model="gpt-4o",

@@ -1,6 +1,5 @@
 from typing import Annotated, Optional, Literal, Union, Dict, List
-import json
-import aiohttp, os, logging, asyncio
+import aiohttp, os, logging, asyncio, json
 from dotenv import load_dotenv
 
 from livekit.agents import llm
@@ -9,7 +8,6 @@ from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache, agent_metadata_cache
 from services.composio import book_appointment_composio
 from services.voice.livekit_helper import detect_call_type_and_get_agent_id
-
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -249,7 +247,7 @@ class AgentFunctions(llm.FunctionContext):
 
         try:
             # Get agent ID and metadata
-            agent_id = await detect_call_type_and_get_agent_id(self.room_name)
+            agent_id, call_type = await detect_call_type_and_get_agent_id(self.room_name)
             agent_metadata: Dict = await get_agent_metadata(agent_id)
             
             if agent_metadata:

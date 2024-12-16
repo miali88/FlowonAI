@@ -38,6 +38,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
+  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(suggestedQuestions);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -157,6 +158,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
   const handleSuggestionClick = async (suggestion: string) => {
     if (!roomName) return;
+
+    // Remove the clicked suggestion
+    setActiveSuggestions(prev => prev.filter(s => s !== suggestion));
 
     // Add user message to UI immediately
     setMessages(prev => [...prev, { text: suggestion, isBot: false }]);
@@ -332,7 +336,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         )}
         
         <div className={styles.suggestedQuestionsContainer}>
-          {suggestedQuestions.map((question, index) => (
+          {activeSuggestions.map((question, index) => (
             <div
               key={index}
               className={styles.suggestionBubble}

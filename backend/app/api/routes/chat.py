@@ -39,9 +39,6 @@ async def chat_message(request: Request):
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
             finally:
                 # Print the complete accumulated response
-                print("\nComplete accumulated response:")
-                print("".join(full_response))
-                print("\nEnd of response")
                 yield "data: [DONE]\n\n"
 
         return StreamingResponse(
