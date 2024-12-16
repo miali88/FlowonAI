@@ -51,6 +51,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [showForm, setShowForm] = useState(false);
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>(SUGGESTED_QUESTIONS);
   const [isLoading, setIsLoading] = useState(false);
+  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -85,6 +86,23 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       fetchFormFields();
     }
   }, [agentId, apiBaseUrl]);
+
+  useEffect(() => {
+    if (participantIdentity) {
+      const eventSource = new EventSource(`${apiBaseUrl}/conversation/events/${participantIdentity}`);
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'show_chat_input') {
+          setShowForm(true);
+        }
+      };
+
+      return () => {
+        eventSource.close();
+      };
+    }
+  }, [participantIdentity, apiBaseUrl]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,6 +267,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
   const handleRoomConnected = (newRoomName: string) => {
     setRoomName(newRoomName);
+    setParticipantIdentity(newRoomName); // Assuming roomName is used as participantIdentity
     console.log('Room connected:', newRoomName);
   };
 

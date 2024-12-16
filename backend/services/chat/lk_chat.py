@@ -204,10 +204,15 @@ async def init_new_chat(agent_id: str, room_name: str):
                 description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
             )
         ]
-    ) -> str:
+    ) -> AsyncGenerator[str, None]:
         logger.info(f"Personal data request triggered with message: {message}")
         print(f"Personal data request triggered with message: {message}")
-        return "Form presented to user. Waiting for user to complete and submit form."
+        
+        yield message  # First yield the original message
+        yield "\n\nForm presented to user. Waiting for user to complete and submit form."
+
+        print(f"triggering show_chat_input in request_personal_datafor room_name: {room_name}")
+        await trigger_show_chat_input(room_name, room_name, room_name)
 
 
     # Always register Q&A function

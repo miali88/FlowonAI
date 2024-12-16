@@ -196,9 +196,11 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None, call
 
         logger.info("Creating voice assistant with configuration")
         print("Creating voice assistant with configuration")    
-        fnc_ctx = AgentFunctions(job_ctx)
+        fnc_ctx = None
 
-        await fnc_ctx.initialize_functions()
+        if call_type != "textbot":
+            fnc_ctx = AgentFunctions(job_ctx)
+            await fnc_ctx.initialize_functions()
         
         llm_instance = openai.LLM(
             model="gpt-4o",

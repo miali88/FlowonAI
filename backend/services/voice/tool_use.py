@@ -285,6 +285,7 @@ class AgentFunctions(llm.FunctionContext):
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
+    print(f"Triggering chat input for room={room_name}, job_id={job_id}")
     async with aiohttp.ClientSession() as session:
         try:
             # First, trigger the chat input form
