@@ -40,7 +40,20 @@ module.exports = {
       env: {
         NODE_ENV: "development",
         PORT: 5175
+      }      
+    },
+    {
+      name: "textwidget",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/TextWidget",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5180 
       }
     }
+
+
   ]
 }
