@@ -9,14 +9,21 @@ logging.info('Starting ngrok tunnel setup')
 try:
 
     """ static domain"""
-    port = 5180
+    port = 5175
     http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
     logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_static.public_url}")
     
-    # """ dynamic domain"""
-    # port = 5180
-    # http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}/textwidget/")
+    """ dynamic domain"""   
+    port = 5180
+    http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
+    logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
+
+    # """ dynamic domain"""   
+    # port = 5185
+    # http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
     # logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
+
+
 
     # Keep the script running
     ngrok_process = ngrok.get_ngrok_process()

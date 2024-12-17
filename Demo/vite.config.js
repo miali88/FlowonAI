@@ -30,7 +30,6 @@ export default defineConfig({
       }
     }
   },
-  base: '/demo',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

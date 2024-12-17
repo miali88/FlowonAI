@@ -189,6 +189,13 @@ class TextChatWidget {
       </div>
     `;
 
+    // Add click handler for the widget button
+    const widgetButton = this.container.querySelector('.text-chat-widget-button');
+    widgetButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleWidget();
+    });
+
     // Add click handler
     const closeButton = this.container.querySelector('.close-button');
     closeButton.addEventListener('click', (e) => {

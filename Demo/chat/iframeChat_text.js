@@ -129,7 +129,7 @@ class TextChatWidget {
       @media (max-width: 768px), (hover: none) {
         .text-chat-widget-container {
           ${this.config.position}: 10px;
-          bottom: 20px;
+          bottom: calc(20px + env(safe-area-inset-bottom));
         }
 
         .text-chat-widget-button {
@@ -146,9 +146,13 @@ class TextChatWidget {
           bottom: 0;
           width: 100vw !important;
           height: 100vh !important;
+          height: -webkit-fill-available !important;
+          min-height: -webkit-fill-available;
           margin: 0;
           padding: 0;
           ${this.config.position}: 0;
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-top: env(safe-area-inset-top);
         }
 
         .text-chat-widget-container.expanded .chat-frame {
@@ -159,6 +163,8 @@ class TextChatWidget {
           bottom: 0;
           width: 100vw !important;
           height: 100vh !important;
+          height: -webkit-fill-available !important;
+          min-height: -webkit-fill-available;
           margin: 0;
           padding: 0;
           border: none;
@@ -167,11 +173,13 @@ class TextChatWidget {
         }
 
         .text-chat-widget-container.expanded .text-chat-widget-iframe {
-          position: absolute;
+          position: fixed;
           top: 0;
           left: 0;
           width: 100vw !important;
           height: 100vh !important;
+          height: -webkit-fill-available !important;
+          min-height: -webkit-fill-available;
           margin: 0;
           padding: 0;
           border: none;
@@ -181,7 +189,7 @@ class TextChatWidget {
 
         .text-chat-widget-container .close-button {
           position: fixed;
-          top: 15px;
+          top: max(15px, env(safe-area-inset-top));
           right: 15px;
           width: 40px;
           height: 40px;
@@ -263,12 +271,30 @@ class TextChatWidget {
       this.container.classList.remove('collapsed');
       this.container.classList.add('expanded');
       if (this.isMobile) {
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        // Prevent all scrolling and bouncing effects
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        
+        // Store the current scroll position
+        this.scrollPosition = window.pageYOffset;
+        document.body.style.top = `-${this.scrollPosition}px`;
       }
     } else {
       this.container.classList.remove('expanded');
       this.container.classList.add('collapsed');
-      document.body.style.overflow = ''; // Restore scrolling
+      if (this.isMobile) {
+        // Restore scrolling and position
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.top = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, this.scrollPosition);
+      }
     }
   }
 
