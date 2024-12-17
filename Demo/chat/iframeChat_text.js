@@ -20,6 +20,7 @@ class TextChatWidget {
       document.getElementsByTagName('head')[0].appendChild(viewport);
     }
     
+    this.iframeLoaded = false;
     this.init();
     this.setupMessageListener();
   }
@@ -100,6 +101,12 @@ class TextChatWidget {
 
       .text-chat-widget-iframe {
         display: none;
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 12px;
+        margin: 0;
+        padding: 0;
       }
 
       .expanded .text-chat-widget-iframe {
@@ -137,11 +144,11 @@ class TextChatWidget {
           left: 0;
           right: 0;
           bottom: 0;
-          width: 100% !important;
-          height: 100% !important;
+          width: 100vw !important;
+          height: 100vh !important;
           margin: 0;
+          padding: 0;
           ${this.config.position}: 0;
-          z-index: 99999;
         }
 
         .text-chat-widget-container.expanded .chat-frame {
@@ -150,13 +157,25 @@ class TextChatWidget {
           left: 0;
           right: 0;
           bottom: 0;
-          width: 100% !important;
-          height: 100% !important;
-          max-width: 100%;
-          max-height: 100%;
-          aspect-ratio: unset;
-          border-radius: 0;
+          width: 100vw !important;
+          height: 100vh !important;
           margin: 0;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          transform: none;
+        }
+
+        .text-chat-widget-container.expanded .text-chat-widget-iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100vw !important;
+          height: 100vh !important;
+          margin: 0;
+          padding: 0;
+          border: none;
+          border-radius: 0;
           transform: none;
         }
 
@@ -173,7 +192,10 @@ class TextChatWidget {
           justify-content: center;
           z-index: 100000;
           cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
+        }
+
+        .text-chat-widget-container.expanded .close-button {
+          display: flex;
         }
       }
     `;
@@ -226,6 +248,13 @@ class TextChatWidget {
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
     document.body.appendChild(this.container);
+
+    // Add a load event listener to the iframe
+    const iframe = this.container.querySelector('.text-chat-widget-iframe');
+    iframe.addEventListener('load', () => {
+      this.iframeLoaded = true;
+      this.injectIframeStyles();
+    });
   }
 
   toggleWidget() {
@@ -243,11 +272,42 @@ class TextChatWidget {
     }
   }
 
+  injectIframeStyles() {
+    const iframe = this.container.querySelector('.text-chat-widget-iframe');
+    const styles = `
+      ._chatContainer_1dfai_1 {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+      }
+    `;
+
+    try {
+      const styleElement = document.createElement('style');
+      styleElement.textContent = styles;
+      iframe.contentDocument.head.appendChild(styleElement);
+    } catch (e) {
+      // If direct injection fails due to same-origin policy, use message passing
+      iframe.contentWindow.postMessage({
+        type: 'INJECT_STYLES',
+        styles: styles
+      }, '*');
+    }
+  }
+
   setupMessageListener() {
     window.addEventListener('message', (event) => {
-      // Keep the message listener as is, but remove the height adjustments
-      // since we're using aspect-ratio now
       console.log('Message received:', event.data);
+      
+      // If the iframe is requesting style injection
+      if (event.data.type === 'READY_FOR_STYLES' && this.iframeLoaded) {
+        this.injectIframeStyles();
+      }
     });
   }
 }

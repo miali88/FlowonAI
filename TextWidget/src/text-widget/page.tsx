@@ -8,8 +8,8 @@ export default function ChatWidgetPage() {
   
   return (
     <div style={{
-      width: '100vw',
-      height: '100vh',
+      width: '100%',
+      height: '100%',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -35,3 +35,15 @@ declare global {
     }
   }
 }
+
+// Add this to your iframe's JavaScript
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'INJECT_STYLES') {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = event.data.styles;
+    document.head.appendChild(styleElement);
+  }
+});
+
+// Notify parent when ready
+window.parent.postMessage({ type: 'READY_FOR_STYLES' }, '*');
