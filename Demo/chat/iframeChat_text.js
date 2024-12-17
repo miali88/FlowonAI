@@ -179,6 +179,10 @@ class TextChatWidget {
           transform: none;
         }
 
+        .text-chat-widget-container.expanded .text-chat-widget-button {
+          display: none;
+        }
+
         .text-chat-widget-container .close-button {
           position: fixed;
           top: 15px;
@@ -196,6 +200,12 @@ class TextChatWidget {
 
         .text-chat-widget-container.expanded .close-button {
           display: flex;
+        }
+      }
+
+      @media (min-width: 769px) {
+        .text-chat-widget-container .close-button {
+          display: none;
         }
       }
     `;
