@@ -8,10 +8,19 @@ class TextChatWidget {
     };
     
     this.isExpanded = false;
-    this.isMobile = window.innerWidth <= 768;
+    this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
     window.addEventListener('resize', () => {
-      this.isMobile = window.innerWidth <= 768;
+      this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
     });
+    
+    if (!document.querySelector('meta[name="viewport"]')) {
+      const viewport = document.createElement('meta');
+      viewport.name = 'viewport';
+      viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      document.getElementsByTagName('head')[0].appendChild(viewport);
+    }
+    
+    this.iframeLoaded = false;
     this.init();
     this.setupMessageListener();
   }
@@ -92,6 +101,12 @@ class TextChatWidget {
 
       .text-chat-widget-iframe {
         display: none;
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 12px;
+        margin: 0;
+        padding: 0;
       }
 
       .expanded .text-chat-widget-iframe {
@@ -111,16 +126,33 @@ class TextChatWidget {
       }
 
       /* New Mobile Styles */
-      @media (max-width: 768px) {
+      @media (max-width: 768px), (hover: none) {
+        .text-chat-widget-container {
+          ${this.config.position}: 10px;
+          bottom: calc(20px + env(safe-area-inset-bottom));
+        }
+
+        .text-chat-widget-button {
+          width: 50px;
+          height: 50px;
+          padding: 10px;
+        }
+
         .text-chat-widget-container.expanded {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          width: 100%;
+          width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
           margin: 0;
-          z-index: 99999;
+          padding: 0;
+          ${this.config.position}: 0;
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-top: env(safe-area-inset-top);
+          z-index: 2147483647;
         }
 
         .text-chat-widget-container.expanded .chat-frame {
@@ -129,31 +161,80 @@ class TextChatWidget {
           left: 0;
           right: 0;
           bottom: 0;
-          width: 100%;
-          height: 100%;
-          aspect-ratio: auto;
-          border-radius: 0;
+          width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
           margin: 0;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          transform: none;
+          z-index: 2147483647;
+        }
+
+        .text-chat-widget-container.expanded .text-chat-widget-iframe {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          margin: 0;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          transform: none;
+          z-index: 2147483647;
         }
 
         .text-chat-widget-container .close-button {
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          width: 30px;
-          height: 30px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 50%;
           display: none;
-          align-items: center;
-          justify-content: center;
-          z-index: 100000;
-          cursor: pointer;
         }
 
         .text-chat-widget-container.expanded .close-button {
-          display: flex;
+          display: none;
         }
+      }
+
+      /* Base close button styles */
+      .text-chat-widget-close-btn {
+        display: none;  /* Hidden by default */
+        position: fixed;  /* Always fixed position */
+        top: 20px;
+        right: 20px;
+        width: 40px;  /* Slightly larger for better touch target */
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.2);
+        border: none;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        z-index: 2147483647;
+      }
+
+      /* Remove any conflicting mobile styles elsewhere */
+      @media (max-width: 768px), (hover: none) {
+        .text-chat-widget-container.expanded .text-chat-widget-close-btn {
+          display: flex !important;  /* Force display on mobile */
+        }
+
+        /* Ensure iframe is below the close button */
+        .text-chat-widget-container.expanded .chat-frame,
+        .text-chat-widget-container.expanded .text-chat-widget-iframe {
+          z-index: 2147483646;
+        }
+      }
+
+      /* Remove any other close button related styles in other media queries */
+
+      .text-chat-widget-close-btn:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .text-chat-widget-close-btn svg {
+        width: 16px;
+        height: 16px;
       }
     `;
 
@@ -164,11 +245,11 @@ class TextChatWidget {
     // Add chat icon and iframe
     this.container.innerHTML = `
       <div class="chat-frame">
-        <div class="close-button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button class="text-chat-widget-close-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18 6L6 18M6 6l12 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </div>
+        </button>
         <iframe 
           class="text-chat-widget-iframe"
           src="${this.config.widgetDomain}/?agentId=${this.config.agentId}"
@@ -189,18 +270,26 @@ class TextChatWidget {
       </div>
     `;
 
-    // Add click handler
-    const closeButton = this.container.querySelector('.close-button');
-    closeButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggleWidget();
-    });
+    // After appending the container to the DOM, add the click handler
+    const chatButton = this.container.querySelector('.text-chat-widget-button');
+    chatButton.addEventListener('click', () => this.toggleWidget());
+
+    // Add click handler for close button
+    const closeButton = this.container.querySelector('.text-chat-widget-close-btn');
+    closeButton.addEventListener('click', () => this.toggleWidget());
 
     // Add styles and container to DOM
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
     document.body.appendChild(this.container);
+
+    // Add a load event listener to the iframe
+    const iframe = this.container.querySelector('.text-chat-widget-iframe');
+    iframe.addEventListener('load', () => {
+      this.iframeLoaded = true;
+      this.injectIframeStyles();
+    });
   }
 
   toggleWidget() {
@@ -209,22 +298,76 @@ class TextChatWidget {
       this.container.classList.remove('collapsed');
       this.container.classList.add('expanded');
       if (this.isMobile) {
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        // Prevent all scrolling and bouncing effects
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        
+        // Store the current scroll position
+        this.scrollPosition = window.pageYOffset;
+        document.body.style.top = `-${this.scrollPosition}px`;
       }
     } else {
       this.container.classList.remove('expanded');
       this.container.classList.add('collapsed');
-      document.body.style.overflow = ''; // Restore scrolling
+      if (this.isMobile) {
+        // Restore scrolling and position
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.top = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, this.scrollPosition);
+      }
+    }
+  }
+
+  injectIframeStyles() {
+    const iframe = this.container.querySelector('.text-chat-widget-iframe');
+    const styles = `
+      ._chatContainer_1dfai_1 {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+      }
+    `;
+
+    try {
+      const styleElement = document.createElement('style');
+      styleElement.textContent = styles;
+      iframe.contentDocument.head.appendChild(styleElement);
+    } catch (e) {
+      // If direct injection fails due to same-origin policy, use message passing
+      iframe.contentWindow.postMessage({
+        type: 'INJECT_STYLES',
+        styles: styles
+      }, '*');
     }
   }
 
   setupMessageListener() {
     window.addEventListener('message', (event) => {
-      // Keep the message listener as is, but remove the height adjustments
-      // since we're using aspect-ratio now
       console.log('Message received:', event.data);
+      
+      // If the iframe is requesting style injection
+      if (event.data.type === 'READY_FOR_STYLES' && this.iframeLoaded) {
+        this.injectIframeStyles();
+      }
     });
   }
 }
 
 window.TextChatWidget = TextChatWidget;
+// # prevent caching of iframe file
+// location /demo/chat/iframeChat_text.js {
+//     expires off;
+//     add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+// }
