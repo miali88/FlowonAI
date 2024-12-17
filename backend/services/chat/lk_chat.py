@@ -232,7 +232,6 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     return llm_instance, chat_ctx, fnc_ctx
 
-
 @dataclass
 class ChatHistory:
     messages: List[ChatMessage] = field(default_factory=list)
@@ -258,7 +257,6 @@ chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
-    
     try:
         # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:

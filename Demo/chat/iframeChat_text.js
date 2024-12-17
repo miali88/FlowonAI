@@ -8,6 +8,18 @@ class TextChatWidget {
     };
     
     this.isExpanded = false;
+    this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    window.addEventListener('resize', () => {
+      this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    });
+    
+    if (!document.querySelector('meta[name="viewport"]')) {
+      const viewport = document.createElement('meta');
+      viewport.name = 'viewport';
+      viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      document.getElementsByTagName('head')[0].appendChild(viewport);
+    }
+    
     this.init();
     this.setupMessageListener();
   }
@@ -34,7 +46,7 @@ class TextChatWidget {
         box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease;
+        transition: all 0.3s ease;
       }
 
       .text-chat-widget-container.expanded .chat-frame {
@@ -105,6 +117,65 @@ class TextChatWidget {
           bottom: 10px;
         }
       }
+
+      /* New Mobile Styles */
+      @media (max-width: 768px), (hover: none) {
+        .text-chat-widget-container {
+          ${this.config.position}: 10px;
+          bottom: 20px;
+        }
+
+        .text-chat-widget-button {
+          width: 50px;
+          height: 50px;
+          padding: 10px;
+        }
+
+        .text-chat-widget-container.expanded {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0;
+          ${this.config.position}: 0;
+          z-index: 99999;
+        }
+
+        .text-chat-widget-container.expanded .chat-frame {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 100%;
+          max-height: 100%;
+          aspect-ratio: unset;
+          border-radius: 0;
+          margin: 0;
+          transform: none;
+        }
+
+        .text-chat-widget-container .close-button {
+          position: fixed;
+          top: 15px;
+          right: 15px;
+          width: 40px;
+          height: 40px;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 50%;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 100000;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+      }
     `;
 
     // Create container with initial collapsed state
@@ -114,6 +185,11 @@ class TextChatWidget {
     // Add chat icon and iframe
     this.container.innerHTML = `
       <div class="chat-frame">
+        <div class="close-button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <iframe 
           class="text-chat-widget-iframe"
           src="${this.config.widgetDomain}/?agentId=${this.config.agentId}"
@@ -134,8 +210,16 @@ class TextChatWidget {
       </div>
     `;
 
-    // Add click handler
-    this.container.addEventListener('click', () => this.toggleWidget());
+    // After appending the container to the DOM, add the click handler
+    const chatButton = this.container.querySelector('.text-chat-widget-button');
+    chatButton.addEventListener('click', () => this.toggleWidget());
+
+    // The close button handler remains the same
+    const closeButton = this.container.querySelector('.close-button');
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleWidget();
+    });
 
     // Add styles and container to DOM
     const styleSheet = document.createElement('style');
@@ -149,9 +233,13 @@ class TextChatWidget {
     if (this.isExpanded) {
       this.container.classList.remove('collapsed');
       this.container.classList.add('expanded');
+      if (this.isMobile) {
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      }
     } else {
       this.container.classList.remove('expanded');
       this.container.classList.add('collapsed');
+      document.body.style.overflow = ''; // Restore scrolling
     }
   }
 
@@ -165,3 +253,8 @@ class TextChatWidget {
 }
 
 window.TextChatWidget = TextChatWidget;
+// # prevent caching of iframe file
+// location /demo/chat/iframeChat_text.js {
+//     expires off;
+//     add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+// }
