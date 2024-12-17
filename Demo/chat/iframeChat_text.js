@@ -146,13 +146,13 @@ class TextChatWidget {
           bottom: 0;
           width: 100vw !important;
           height: 100vh !important;
-          height: -webkit-fill-available !important;
-          min-height: -webkit-fill-available;
+          height: 100dvh !important;
           margin: 0;
           padding: 0;
           ${this.config.position}: 0;
           padding-bottom: env(safe-area-inset-bottom);
           padding-top: env(safe-area-inset-top);
+          z-index: 2147483647;
         }
 
         .text-chat-widget-container.expanded .chat-frame {
@@ -163,13 +163,13 @@ class TextChatWidget {
           bottom: 0;
           width: 100vw !important;
           height: 100vh !important;
-          height: -webkit-fill-available !important;
-          min-height: -webkit-fill-available;
+          height: 100dvh !important;
           margin: 0;
           padding: 0;
           border: none;
           border-radius: 0;
           transform: none;
+          z-index: 2147483647;
         }
 
         .text-chat-widget-container.expanded .text-chat-widget-iframe {
@@ -178,13 +178,13 @@ class TextChatWidget {
           left: 0;
           width: 100vw !important;
           height: 100vh !important;
-          height: -webkit-fill-available !important;
-          min-height: -webkit-fill-available;
+          height: 100dvh !important;
           margin: 0;
           padding: 0;
           border: none;
           border-radius: 0;
           transform: none;
+          z-index: 2147483647;
         }
 
         .text-chat-widget-container .close-button {
