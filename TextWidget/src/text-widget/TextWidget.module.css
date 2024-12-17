@@ -120,6 +120,16 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  
+  .chatInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.1);
   }
   
   .sendButton {
