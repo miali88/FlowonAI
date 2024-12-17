@@ -206,6 +206,35 @@ class TextChatWidget {
           display: flex;
         }
       }
+
+      /* Base close button styles - hidden by default */
+      .text-chat-widget-container .close-button {
+        display: none;  /* This ensures it's hidden on desktop */
+      }
+
+      /* Mobile-specific styles */
+      @media (max-width: 768px), (hover: none) {
+        // ... existing mobile styles ...
+
+        .text-chat-widget-container .close-button {
+          position: fixed;
+          top: max(15px, env(safe-area-inset-top));
+          right: 15px;
+          width: 40px;
+          height: 40px;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 50%;
+          display: none;  /* Still hidden by default */
+          align-items: center;
+          justify-content: center;
+          z-index: 100000;
+          cursor: pointer;
+        }
+
+        .text-chat-widget-container.expanded .close-button {
+          display: flex;  /* Only shown when expanded on mobile */
+        }
+      }
     `;
 
     // Create container with initial collapsed state
