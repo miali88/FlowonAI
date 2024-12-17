@@ -188,52 +188,53 @@ class TextChatWidget {
         }
 
         .text-chat-widget-container .close-button {
-          position: fixed;
-          top: max(15px, env(safe-area-inset-top));
-          right: 15px;
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 50%;
           display: none;
-          align-items: center;
-          justify-content: center;
-          z-index: 100000;
-          cursor: pointer;
         }
 
         .text-chat-widget-container.expanded .close-button {
-          display: flex;
+          display: none;
         }
       }
 
-      /* Base close button styles - hidden by default */
-      .text-chat-widget-container .close-button {
-        display: none;  /* This ensures it's hidden on desktop */
+      /* Base close button styles */
+      .text-chat-widget-close-btn {
+        display: none;  /* Hidden by default */
+        position: fixed;  /* Always fixed position */
+        top: 20px;
+        right: 20px;
+        width: 40px;  /* Slightly larger for better touch target */
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.2);
+        border: none;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        z-index: 2147483647;
       }
 
-      /* Mobile-specific styles */
+      /* Remove any conflicting mobile styles elsewhere */
       @media (max-width: 768px), (hover: none) {
-        // ... existing mobile styles ...
-
-        .text-chat-widget-container .close-button {
-          position: fixed;
-          top: max(15px, env(safe-area-inset-top));
-          right: 15px;
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 50%;
-          display: none;  /* Still hidden by default */
-          align-items: center;
-          justify-content: center;
-          z-index: 100000;
-          cursor: pointer;
+        .text-chat-widget-container.expanded .text-chat-widget-close-btn {
+          display: flex !important;  /* Force display on mobile */
         }
 
-        .text-chat-widget-container.expanded .close-button {
-          display: flex;  /* Only shown when expanded on mobile */
+        /* Ensure iframe is below the close button */
+        .text-chat-widget-container.expanded .chat-frame,
+        .text-chat-widget-container.expanded .text-chat-widget-iframe {
+          z-index: 2147483646;
         }
+      }
+
+      /* Remove any other close button related styles in other media queries */
+
+      .text-chat-widget-close-btn:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .text-chat-widget-close-btn svg {
+        width: 16px;
+        height: 16px;
       }
     `;
 
@@ -244,11 +245,11 @@ class TextChatWidget {
     // Add chat icon and iframe
     this.container.innerHTML = `
       <div class="chat-frame">
-        <div class="close-button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button class="text-chat-widget-close-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18 6L6 18M6 6l12 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </div>
+        </button>
         <iframe 
           class="text-chat-widget-iframe"
           src="${this.config.widgetDomain}/?agentId=${this.config.agentId}"
@@ -273,12 +274,9 @@ class TextChatWidget {
     const chatButton = this.container.querySelector('.text-chat-widget-button');
     chatButton.addEventListener('click', () => this.toggleWidget());
 
-    // The close button handler remains the same
-    const closeButton = this.container.querySelector('.close-button');
-    closeButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggleWidget();
-    });
+    // Add click handler for close button
+    const closeButton = this.container.querySelector('.text-chat-widget-close-btn');
+    closeButton.addEventListener('click', () => this.toggleWidget());
 
     // Add styles and container to DOM
     const styleSheet = document.createElement('style');
