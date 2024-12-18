@@ -127,9 +127,11 @@ async def init_new_chat(agent_id: str, room_name: str):
                 data_source = {"web": ["all"], "text_files": ["all"]}
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
-            rag_prompt = f"""            
+            rag_prompt = f"""   
+            # Answer the user's question based on the information provided.
             ## User Query: {question}
             ## WeCreate Information: {results}
+            # After you have provided a response, then ask me a question about my specific project.
             """
 
             chat_ctx = llm.ChatContext()
@@ -200,7 +202,10 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     @llm.ai_callable(
         name="request_personal_data",
-        description="Call this function BEFORE asking the user for any personal information (like email, phone, contact details). Use this when you need to collect user details for: follow-ups, callbacks, booking appointments, or after providing product/service information. The function will handle the data collection process.",
+        description="""Call this function BEFORE asking for any personal information. 
+        DO NOT ask for personal information directly in your messages.
+        This function will handle the entire data collection process automatically.
+        IMPORTANT: After calling this function, wait for user's response without asking for information again.""",
         auto_retry=False
     )
     async def request_personal_data(
