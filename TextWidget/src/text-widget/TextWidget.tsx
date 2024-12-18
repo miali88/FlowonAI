@@ -5,6 +5,7 @@ import styles from './TextWidget.module.css';
 import LiveKitTextEntry from './LiveKitTextEntry';
 import { IoSend } from "react-icons/io5";
 import ReactMarkdown from 'react-markdown';
+import Footer from './Footer';
 
 interface Message {
   text: string;
@@ -406,6 +407,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
             </button>
           </form>
         </div>
+        
+        <Footer />
       </div>
     </div>
   );

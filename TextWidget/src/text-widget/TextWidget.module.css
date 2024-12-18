@@ -391,3 +391,33 @@
     margin-bottom: -4px;
   }
 }
+
+.footer {
+  background-color: #f5f5f5;
+  padding: 8px;
+  text-align: center;
+  border-top: 1px solid #eaeaea;
+}
+
+.footerLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: #333;
+}
+
+.footerText {
+  font-size: 12px;
+}
+
+.footerLogo {
+  height: 16px;
+  width: auto;
+}
