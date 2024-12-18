@@ -65,7 +65,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   // Add initial messages when component mounts
   useEffect(() => {
     setMessages([
-      { text: "👋 Hello! I'm WeCreate's AI assistant, ask me anything about WeCreate!", isBot: true },
+      { text: "Welcome to WeCreate👋! Looking to boost your brand's online presence? What's your biggest goal right now?", isBot: true },
     ]);
   }, []); // Empty dependency array means this runs once on mount
 

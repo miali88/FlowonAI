@@ -69,6 +69,11 @@ async def init_new_chat(agent_id: str, room_name: str):
         text=agent_metadata['instructions']
     )
 
+    chat_ctx.append(
+        role="assistant",
+        text=agent_metadata['openingLine']
+    )
+
     features = agent_metadata.get('features', [])
     fnc_ctx = llm.FunctionContext()
 
@@ -195,24 +200,23 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     @llm.ai_callable(
         name="request_personal_data",
-        description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+        description="Call this function BEFORE asking the user for any personal information (like email, phone, contact details). Use this when you need to collect user details for: follow-ups, callbacks, booking appointments, or after providing product/service information. The function will handle the data collection process.",
         auto_retry=False
     )
     async def request_personal_data(
         message: Annotated[
             str,
             llm.TypeInfo(
-                description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+                description="Message explaining why you need their details (e.g., 'To help you with your £15k website project, we'll need your contact information')"
             )
         ]
     ) -> AsyncGenerator[str, None]:
         logger.info(f"Personal data request triggered with message: {message}")
         print(f"Personal data request triggered with message: {message}")
         
-        yield message  # First yield the original message
-        yield "\n\nForm presented to user. Waiting for user to complete and submit form."
+        yield message
 
-        print(f"triggering show_chat_input in request_personal_datafor room_name: {room_name}")
+        print(f"triggering show_chat_input in request_personal_data for room_name: {room_name}")
         await trigger_show_chat_input(room_name, room_name, room_name)
 
     # Always register Q&A function
