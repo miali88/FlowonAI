@@ -29,15 +29,15 @@ export function Hero() {
   // Mobile Component (only shows below sm breakpoint)
   const MobileHero = () => (
     <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden">
-      {/* <div className="min-h-[100dvh] flex flex-col items-center justify-center py-8">
-        <div className="inline-flex h-10 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-4 text-sm transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in mb-6">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center py-8">
+        {/* <div className="inline-flex h-10 items-center justify-between rounded-full border bg-secondary text-secondary-foreground px-4 text-sm transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in mb-6">
           <TextShimmer className="inline-flex items-center justify-center">
             <span className="text-sm text-secondary-foreground/60">
               ✨ Forms, a new way to collect info from callers
             </span>
           </TextShimmer>
         </div>
-        
+         */}
         <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
           <span className="whitespace-normal">Give Your Website A Voice That</span>{" "}
           <WordRotate words={["Drives Conversion", 
@@ -55,7 +55,7 @@ export function Hero() {
         <div className="scale-100">
           <OnboardingButton />
         </div>
-      </div> */}
+      </div>
 
       {/* <div className="min-h-[70vh] pt-6 animate-fade-up opacity-0 [--animation-delay:400ms] relative overflow-hidden">
         <div className="flex flex-col items-stretch justify-center">
