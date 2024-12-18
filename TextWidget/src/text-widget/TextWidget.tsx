@@ -24,7 +24,7 @@ interface ChatInterfaceProps {
 }
 
 const LoadingBubbles = () => (
-  <div className={styles.loadingBubbles}>
+  <div className={styles.loadingBubbles} data-loading-spinner>
     <div className={styles.bubble}></div>
     <div className={styles.bubble}></div>
     <div className={styles.bubble}></div>
@@ -118,6 +118,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     const currentInput = inputText;
     setInputText('');
     
+    // Add empty bot message immediately to show loading state
+    setMessages(prev => [...prev, { text: '', isBot: true }]);
+    
     let accumulatedResponse = '';
 
     try {
@@ -137,10 +140,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No reader available');
-
-      // Add initial empty bot message
-      const botMessage: Message = { text: '', isBot: true };
-      setMessages(prev => [...prev, botMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -345,39 +344,39 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       <div className={styles.chatContainer}>
         <div className={styles.messageContainer} ref={messageContainerRef}>
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`${styles.messageBubble} ${
-                message.isBot ? styles.assistantMessage : styles.userMessage
-              }`}
-            >
-              {message.text ? (
+            message.text ? (
+              <div
+                key={index}
+                className={`${styles.messageBubble} ${
+                  message.isBot ? styles.assistantMessage : styles.userMessage
+                }`}
+              >
                 <ReactMarkdown>{message.text}</ReactMarkdown>
-              ) : message.isBot ? (
-                <LoadingBubbles />
-              ) : null}
-
-              {/* Render form inside the assistant's message bubble */}
-              {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
-                <form onSubmit={handleFormSubmit} className={styles.formContainer}>
-                  {formFields.map((field, index) => (
-                    <div key={index} className={styles.formField}>
-                      <label htmlFor={field.label}>{field.label}</label>
-                      <input
-                        type={field.type}
-                        id={field.label}
-                        value={formData[field.label] || ''}
-                        onChange={(e) => handleInputChange(field.label, e.target.value)}
-                        required
-                      />
-                    </div>
-                  ))}
-                  <button type="submit" className={styles.submitButton}>
-                    Submit
-                  </button>
-                </form>
-              )}
-            </div>
+                
+                {/* Render form inside the assistant's message bubble */}
+                {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
+                  <form onSubmit={handleFormSubmit} className={styles.formContainer}>
+                    {formFields.map((field, index) => (
+                      <div key={index} className={styles.formField}>
+                        <label htmlFor={field.label}>{field.label}</label>
+                        <input
+                          type={field.type}
+                          id={field.label}
+                          value={formData[field.label] || ''}
+                          onChange={(e) => handleInputChange(field.label, e.target.value)}
+                          required
+                        />
+                      </div>
+                    ))}
+                    <button type="submit" className={styles.submitButton}>
+                      Submit
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : message.isBot ? (
+              <LoadingBubbles key={index} />
+            ) : null
           ))}
         </div>
         
