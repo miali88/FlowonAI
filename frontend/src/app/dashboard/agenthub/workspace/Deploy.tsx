@@ -96,14 +96,17 @@ frameborder="0"
 `;
 
   const textChatScriptCode = `
-    <div id="embedded-textchat-container"></div>
-    <script defer>
-      window.embeddedTextChatConfig = {
+<script>
+	window.chatConfig = {
         agentId: "${selectedAgent?.id}",
-        domain: "https://flowon.ai/textwidget/"
-      };
-    </script>
-    <script defer type="module" src="https://www.flowon.ai/embed-text.min.js"></script>
+        widgetDomain: 'https://flowon.ai/textwidget',
+        iframeDomain: 'https://03dfb8f6.flowonchatwidget.pages.dev/'
+		};
+	const scriptEl = document.createElement('script');
+	scriptEl.src = "https://03dfb8f6.flowonchatwidget.pages.dev/iframeChat_text.min.js"
+	document.body.appendChild(scriptEl);  
+	scriptEl.onload = function() {new TextChatWidget(window.chatConfig)};
+</script>
 `;
 
   return (
