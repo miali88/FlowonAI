@@ -56,8 +56,8 @@ class TextChatWidget {
       }
 
       .text-chat-widget-button {
-        width: 60px;
-        height: 60px;
+        width: 90px;
+        height: 90px;
         border-radius: 50%;
         background: white;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -65,7 +65,7 @@ class TextChatWidget {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 12px;
+        padding: 16px;
       }
 
       .text-chat-widget-icon {
@@ -133,8 +133,8 @@ class TextChatWidget {
         }
 
         .text-chat-widget-button {
-          width: 50px;
-          height: 50px;
+          width: 70px;
+          height: 70px;
           padding: 10px;
         }
 
