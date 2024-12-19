@@ -31,12 +31,18 @@
 .messageBubble {
   position: relative;
   max-width: 85%;
-  padding: 24px 32px !important;
+  padding: 16px !important;
   border-radius: 16px;
   word-wrap: break-word;
   margin: 12px 0;
   font-size: 16px !important;
   line-height: 1.5 !important;
+}
+
+.messageBubbleContent {
+  padding: 8px 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .messageBubble > div {
@@ -347,6 +353,10 @@
     bottom: 0;
     margin-top: -4px;
     margin-bottom: -4px;
+  }
+
+  .messageBubbleContent {
+    padding: 4px 8px;
   }
 }
 

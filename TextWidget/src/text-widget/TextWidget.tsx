@@ -351,7 +351,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                   message.isBot ? styles.assistantMessage : styles.userMessage
                 }`}
               >
-                <ReactMarkdown>{message.text}</ReactMarkdown>
+                <div className={styles.messageBubbleContent}>
+                  <ReactMarkdown>{message.text}</ReactMarkdown>
+                </div>
                 
                 {/* Render form inside the assistant's message bubble */}
                 {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
