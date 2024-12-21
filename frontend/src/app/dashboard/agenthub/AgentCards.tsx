@@ -67,7 +67,7 @@ function Loader() {
 }
 
 const formatPurpose = (purpose: string) => {
-  return "Purpose: " + purpose
+  return purpose
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');

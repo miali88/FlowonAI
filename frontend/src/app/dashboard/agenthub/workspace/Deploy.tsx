@@ -48,6 +48,10 @@ const Deploy: React.FC<DeployProps> = ({
     fetchCountryCodes();
   }, []);
 
+  useEffect(() => {
+    console.log('Selected Agent:', selectedAgent);
+  }, [selectedAgent]);
+
   const renderPhoneNumbers = () => {
     if (!userInfo) {
       return <div className="text-sm text-muted-foreground">Loading user information...</div>;
@@ -109,13 +113,84 @@ frameborder="0"
 </script>
 `;
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Deployment Options</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Accordion type="single" collapsible className="w-full">
+  const renderDeploymentOptions = () => {
+    if (!selectedAgent) return null;
+
+    switch (selectedAgent.agentPurpose) {
+      case "telephone-agent":
+        return (
+          <AccordionItem value="telephony">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Telephony Integration
+                <div className="flex-grow" />
+                <Image 
+                  src="/twilio-icon.svg" 
+                  alt="Twilio" 
+                  width={28} 
+                  height={28}
+                />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="twilioPhoneNumber">Assigned Number</Label>
+                  <div className="space-y-2">
+                    {renderPhoneNumbers()}
+                  </div>
+                </div>
+                <Button 
+                  className="mt-4"
+                  onClick={() => handleSaveChanges(selectedAgent)}
+                >
+                  Save Twilio Configuration
+                </Button>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    After saving your Twilio configuration, your agent will be accessible via phone calls to your Twilio number.
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      case "feedback-widget":
+        return (
+          <AccordionItem value="feedback-widget">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Feedback Widget
+                <Image src="/icons/feedback.png" alt="Feedback" width={24} height={24} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Script Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this script to your website to enable the feedback widget.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{textChatScriptCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      case "voice-web-agent":
+        return (
           <AccordionItem value="website-integration">
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
@@ -144,7 +219,6 @@ frameborder="0"
                     </Button>
                   </div>
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Script Embed</Label>
                   <p className="text-sm text-muted-foreground mb-2">
@@ -167,7 +241,9 @@ frameborder="0"
               </div>
             </AccordionContent>
           </AccordionItem>
-
+        );
+      case "text-chatbot-agent":
+        return (
           <AccordionItem value="text-chat">
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
@@ -199,43 +275,17 @@ frameborder="0"
               </div>
             </AccordionContent>
           </AccordionItem>
+        );
+      default:
+      return null;
+    }
+  };
 
-          <AccordionItem value="telephony">
-            <AccordionTrigger className="text-lg font-semibold">
-              <div className="flex items-center gap-2">
-                Telephony Integration
-                <div className="flex-grow" />
-                <Image 
-                  src="/twilio-icon.svg" 
-                  alt="Twilio" 
-                  width={28} 
-                  height={28}
-                />
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="twilioPhoneNumber">Assigned Number</Label>
-                  <div className="space-y-2">
-                    {renderPhoneNumbers()}
-                  </div>
-                </div>
-                <Button 
-                  className="mt-4"
-                  onClick={() => handleSaveChanges(selectedAgent)}
-                >
-                  Save Twilio Configuration
-                </Button>
-
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    After saving your Twilio configuration, your agent will be accessible via phone calls to your Twilio number.
-                  </p>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+  return (
+    <Card>
+      <CardContent className="space-y-6">
+        <Accordion type="single" collapsible={false} className="w-full">
+          {renderDeploymentOptions()}
         </Accordion>
       </CardContent>
     </Card>
