@@ -39,7 +39,7 @@ export function Header() {
           </Link>
 
           {/* Center Navigation */}
-          <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
+          {/* <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
             <ScrollLink
               to="pricing"
               spy={true}
@@ -56,7 +56,7 @@ export function Header() {
             >
               Resources
             </Link>
-          </div>
+          </div> */}
 
           {/* Right side - Auth buttons */}
           <div className="ml-auto hidden md:flex items-center gap-4">

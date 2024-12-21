@@ -32,7 +32,6 @@ export function AppSidebar({
   const items = [
     { title: "Agent Hub", icon: Mic },
     { title: "Phone Numbers", icon: Phone },
-    { title: "Batch Outbound Calls", icon: PhoneOutgoing },
     { title: "Knowledge Base", icon: BookOpen },
     { title: "Conversation Logs", icon: MessageSquare },
     { title: "Integrations", icon: Plug },

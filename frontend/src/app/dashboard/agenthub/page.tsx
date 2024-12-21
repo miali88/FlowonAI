@@ -301,7 +301,9 @@ const AgentHub = () => {
                     <Slash className="h-4 w-4" />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
-                    <BreadcrumbLink>{selectedAgent.agentName}</BreadcrumbLink>
+                    <BreadcrumbLink>
+                      {selectedAgent.agentName} ({selectedAgent.agentPurpose})
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                 </>
               )}

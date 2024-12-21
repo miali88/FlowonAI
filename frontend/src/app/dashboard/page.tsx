@@ -30,10 +30,8 @@ import ChatHistory from '@/app/dashboard/conversationlogs/page';
 import KnowledgeBaseContent from "./knowledgebase/page";
 import AgentHub from '@/app/dashboard/agenthub/page';  // Add this import
 import IntegrationsPage from "@/app/dashboard/integrations/page";
-import { BackgroundPattern } from "@/app/dashboard/BackgroundPattern";
 import ContactFounders from "@/app/dashboard/contactfounders/page";
 import Analytics from '@/app/dashboard/analytics/page';
-import { Particles } from '@/components/magicui/particles'; // Correct the import path
 //import { Sidebar } from './Sidebar';
 //console.log(Sidebar); // Should log a function or class, not an object
 
@@ -201,16 +199,6 @@ function AdminDashboard() {
     return (
       <div className={layoutStyles.wrapper}>
         <div className="absolute inset-0">
-          <BackgroundPattern />
-          <Particles
-            options={{
-              particles: {
-                number: { value: 50 },
-                size: { value: 3 },
-              },
-            }}
-            className="absolute inset-0"
-          />
         </div>
         <div className={layoutStyles.mainContainer}>
           {/* Skeleton sidebar with fixed width */}
@@ -271,26 +259,6 @@ function AdminDashboard() {
     <div className={layoutStyles.wrapper}>
       {/* Background elements */}
       <div className="absolute inset-0">
-        <BackgroundPattern />
-        <Particles
-          className="absolute inset-0"
-          options={{
-            particles: {
-              number: { value: 50 },
-              size: { value: 3 },
-              color: { value: "#93c5fd" },
-              opacity: { value: 0.3 },
-              move: {
-                direction: "none",
-                enable: true,
-                outModes: "bounce",
-                random: false,
-                speed: 1,
-                straight: false,
-              },
-            },
-          }}
-        />
       </div>
 
       {/* Main content container */}

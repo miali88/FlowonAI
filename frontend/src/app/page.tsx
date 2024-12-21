@@ -1,42 +1,19 @@
-'use client';
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { FeaturesSection } from "@/components/features-section";
 import { SetupSection } from "@/components/SetupSection";
-import { ConversationLogs } from "@/components/conversation-logs";
-import { Pricing } from "@/components/pricing";
 import { CtaSection } from "@/components/cta-section";
-import { Testimonials } from "@/components/testimonials";
 import { Footer } from "@/components/footer";
 import { Particles } from "@/components/magicui/particles";
 import { DeploySection } from "@/components/deploy";
-import { Information } from "@/components/Information";
-import { useEffect } from 'react';
+import { BenefitsSection } from "@/components/BenefitsSection";
+import TelephonySection from "@/components/TelephonySection";
+import FAQSection from "@/components/FAQSection";
+import { Pricing } from "@/components/pricing";
+import { LeadsMarquee } from "@/components/LeadsMarquee";
+import AppUILanding from "@/components/AppUILanding";
+
 
 export default function HomePage() {
-  useEffect(() => {
-    // Store config in window object so it's accessible to other scripts
-    window.chatConfig = {
-      agentId: 'ac0b4742-23ae-4cc1-8b9b-77392e27e410',
-      domain: 'https://flowon.ai/chatwidget'
-    };
-
-    // Create script element for chat widget
-    const scriptEl = document.createElement('script');
-    scriptEl.src = 'https://c06c54b7.flowonwidget.pages.dev/iframeChat.min.js';
-    document.body.appendChild(scriptEl);
-
-    // Initialize chat widget once script is loaded
-    scriptEl.onload = function() {
-      new ChatWidget(window.chatConfig);
-    };
-
-    // Cleanup function to remove script when component unmounts
-    return () => {
-      document.body.removeChild(scriptEl);
-    };
-  }, []);
-
   return (
     <div className="overflow-x-hidden relative">
       <Header />
@@ -49,21 +26,23 @@ export default function HomePage() {
           staticity={40}
           className="absolute inset-0 -z-10 h-full"
         />
-        <Hero />
-        <div className="mx-auto max-w-7xl">
+
+<div className="mx-auto max-w-7xl">
+          <Hero />
+          <AppUILanding />
           <SetupSection />
+
+          <LeadsMarquee /> 
           <DeploySection />
-          <Information />
-          <ConversationLogs />
-          <FeaturesSection />
-          {/* <div id="pricing" className="scroll-mt-20">
-            <Pricing />
-          </div> */}
-          <CtaSection />
-          {/* <Testimonials /> */}
+          <BenefitsSection />
+          <TelephonySection />
+          <FAQSection />
+          <Pricing />
+          <CtaSection /> 
+            
+          <Footer />
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Youtube, Twitter } from "lucide-react";
 import { useState, useEffect } from 'react';
+import Image from "next/image";
 
 interface GeoData {
   country: string;
@@ -33,12 +34,18 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between py-8 gap-8">
           <div className="flex flex-col gap-4 items-center md:items-start">
             <Link href="/" className="flex gap-2">
-              <img alt="Flowon AI Logo" src="/flowon.png" className="size-8 invert" />
+              <Image 
+                alt="Flowon AI Logo" 
+                src="/flowon.png" 
+                width={32}
+                height={32}
+                className="invert" 
+              />
             </Link>
             <p className="max-w-xs"> </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-6 sm:grid-cols-3">
-            <div>
+            {/* <div>
               <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Product</h2>
               <ul className="gap-2 grid list-none">
                 <li>
@@ -66,8 +73,8 @@ export function Footer() {
                   </Link>
                 </li>
               </ul>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Community</h2>
               <ul className="gap-2 grid list-none">
                 <li>
@@ -95,7 +102,7 @@ export function Footer() {
                   </Link>
                 </li>
               </ul>
-            </div>
+            </div> */}
             <div>
               <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Legal</h2>
               <ul className="gap-2 grid list-none">

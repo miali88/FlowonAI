@@ -31,7 +31,6 @@ export function DeploySection() {
               in real-time with AI-powered conversations.
             </p>
           </CardSpotlight>
-
           <CardSpotlight className="p-6">
             <h3 className="text-xl font-bold relative z-20 text-white mb-4">
               Telephony Integration
@@ -45,6 +44,21 @@ export function DeploySection() {
             </div>
             <p className="text-neutral-200 mb-4 relative z-20">
               Empower your AI agents with local phone numbers across 60 countries
+            </p>
+          </CardSpotlight>
+          <CardSpotlight className="p-6">
+            <h3 className="text-xl font-bold relative z-20 text-white mb-4">
+              Text Based Agent
+            </h3>
+            <div className="mb-4 relative z-20">
+              <img
+                src="/text.webp"
+                alt="Text Messaging"
+                className="w-full h-40 object-contain"
+              />
+            </div>
+            <p className="text-neutral-200 mb-4 relative z-20">
+              Deploy your AI agent via SMS and messaging platforms to engage with customers directly
             </p>
           </CardSpotlight>
         </div>
