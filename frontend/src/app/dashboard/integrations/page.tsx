@@ -95,14 +95,25 @@ export default function IntegrationsPage() {
             <span className="text-xs px-2 py-1 rounded-full bg-background mb-4 inline-block">
               {integration.category}
             </span>
-            <Button
-              variant={integration.status === "Connected" ? "secondary" : "default"}
-              className="w-full"
-              disabled={integration.status === "Coming soon"}
-              onClick={() => handleIntegrationClick(integration)}
-            >
-              {integration.status}
-            </Button>
+            {integration.id === "SHOPIFY" ? (
+              <a
+                href="https://flowon.ai/guide/shopify-integration"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-block text-center py-1.5 px-3 rounded bg-blue-700 text-white"
+              >
+                See Guide Here
+              </a>
+            ) : (
+              <Button
+                variant={integration.status === "Connected" ? "secondary" : "default"}
+                className="w-full"
+                disabled={integration.status === "Coming soon"}
+                onClick={() => handleIntegrationClick(integration)}
+              >
+                {integration.status}
+              </Button>
+            )}
           </div>
         ))}
       </div>

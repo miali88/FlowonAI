@@ -38,7 +38,17 @@ export const integrations = [
       )}`,
       description: "Connect Notion.",
       category: "Communication",
-      status: "",
+      status: "Not connected",
+    },
+    {
+      name: "Shopify",
+      id: "SHOPIFY",
+      icon: `data:image/svg+xml;utf8,${encodeURIComponent(
+        siShopify.svg.replace('<svg', `<svg fill="#${siShopify.hex}"`)
+      )}`,
+      description: "Integrate your Shopify store.",
+      category: "E-commerce",
+      status: "Not connected",
     },
     {
       name: "WhatsApp",
@@ -51,16 +61,6 @@ export const integrations = [
       status: "Coming soon",
     },
     {
-      name: "Shopify",
-      id: "SHOPIFY",
-      icon: `data:image/svg+xml;utf8,${encodeURIComponent(
-        siShopify.svg.replace('<svg', `<svg fill="#${siShopify.hex}"`)
-      )}`,
-      description: "Integrate your Shopify store.",
-      category: "E-commerce",
-      status: "Coming soon",
-    },
-    {
       name: "Slack",
       id: "SLACK",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -68,7 +68,7 @@ export const integrations = [
       )}`,
       description: "Connect with your Slack workspace.",
       category: "Communication",
-      status: "Coming soon",
+      status: "See Guide Here",
     },
     {
       name: "Outlook",
