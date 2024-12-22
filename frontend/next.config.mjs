@@ -54,7 +54,19 @@ const nextConfig = {
     });
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'assets.aceternity.com',
+        pathname: '/**',
+      },
+    ],
+    domains: ['assets.aceternity.com'],
+  }
 };
+
+export default nextConfig;
 
 // export default withSentryConfig(nextConfig, {
 //   org: process.env.SENTRY_ORG,

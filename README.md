@@ -6,6 +6,8 @@
 - Python, FastAPI (backend)
 - Typescript, Next.js, React, Tailwind CSS (frontend)
 - Supabase (for database)
+- Pinecone for vector database
+- Redis for in-memory 
 - Livekit for realtime conversational agent pipeline
 - Clerk for user management
 - Composio for LLM integration with 3rd party apps

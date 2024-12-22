@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function AppUILanding() {
   return (
     <div className="mt-8 w-full max-w-[900px] mx-auto">
@@ -25,7 +27,7 @@ export default function AppUILanding() {
                 <div className="flex-1 max-w-[80%]">
                   <div className="bg-purple-100 rounded-3xl rounded-tl-sm p-3 text-gray-800 chat-bubble"
                        style={{ transform: 'translateZ(10px)' }}>
-                    <p className="text-lg">J Cooper's Legal Practice, how can I help?</p>
+                    <p className="text-lg">Mason Brook's Estate Agents, how can I help?</p>
                   </div>
                 </div>
               </div>
@@ -36,7 +38,7 @@ export default function AppUILanding() {
                 <div className="flex-1 max-w-[80%]">
                   <div className="bg-blue-500 rounded-3xl rounded-tr-sm p-3 text-white chat-bubble"
                        style={{ transform: 'translateZ(20px)' }}>
-                    <p className="text-lg">Need some legal advice for my business</p>
+                    <p className="text-lg">I would like to schedule a viewing of the property in Surrey</p>
                   </div>
                 </div>
               </div>
@@ -55,11 +57,12 @@ export default function AppUILanding() {
               {/* Phone Icon */}
               <div className="flex justify-center mt-6 opacity-0"
                    style={{ animation: 'fadeIn 1s ease-out 2.4s forwards' }}>
-                <img 
-                  src="/images/phone.png" 
-                  alt="Phone Icon" 
-                  className="w-20 h-20 object-contain"
-                  style={{ transform: 'translateZ(40px)' }}
+                <Image 
+                  src="/images/phone.png"
+                  alt="Phone Icon"
+                  width={80}
+                  height={80}
+                  priority={false}
                 />
               </div>
             </div>

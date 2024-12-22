@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { memo, useState, useCallback } from "react";
 
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,25 +14,86 @@ interface PricingProps {
   currentPlan?: string;
 }
 
+// Extract price configuration
+const PRICING_CONFIG = {
+  taster: {
+    name: 'Taster',
+    description: 'A basic plan for startups and individual users',
+    price: '0',
+    features: [
+      'AI-powered analytics',
+      'Basic support',
+      '1 hour of conversation',
+      'All agent features'
+    ]
+  },
+  startup: {
+    name: 'Startup',
+    description: 'A basic plan for startups and individual users',
+    monthlyPrice: '169',
+    yearlyPrice: '1,690',
+    features: [
+      '10 hours of conversation. Renewable monthly',
+      'All integrations',
+      'Consultation to tune AI',
+      'Unlimited knowledge base size',
+      'Twilio integration',
+      'Web Widget'
+    ],
+    popular: true
+  },
+  enterprise: {
+    name: 'Enterprise',
+    description: 'The ultimate plan with all features for industry leaders',
+    features: [
+      'Unlimited conversations',
+      'Priority support',
+      'Custom AI model training',
+      'Advanced analytics',
+      'API access',
+      'Custom integrations',
+      'Dedicated account manager'
+    ]
+  }
+};
+  
+// Memoized check icon component
+const FeatureCheck = memo(function FeatureCheck() {
+  return (
+    <Check
+      size={16}
+      className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
+    />
+  );
+});
+
+// Memoized feature list component
+const FeatureList = memo(function FeatureList({ features }: { features: string[] }) {
+  return (
+    <ul className="flex flex-col gap-2 font-normal">
+      {features.map((feature) => (
+        <li key={feature} className="flex items-center gap-3 text-xs font-medium">
+          <FeatureCheck />
+          <span className="flex">{feature}</span>
+        </li>
+      ))}
+    </ul>
+  );
+});
+
 export function Pricing({ currentPlan }: PricingProps) {
-  // Add state for annual toggle
-  const [isAnnual, setIsAnnual] = React.useState(false);
-
-  const handlePlanClick = (planName: string) => {
-    if (currentPlan?.toLowerCase() === planName.toLowerCase()) {
-      return; // Handle manage plan case if needed
-    }
-    
-    // Redirect to sign-up page
+  const [isAnnual, setIsAnnual] = useState(false);
+  
+  // Memoize handlers
+  const handlePlanClick = useCallback((planName: string) => {
+    if (currentPlan?.toLowerCase() === planName.toLowerCase()) return;
     window.location.href = "/sign-up";
-  };
+  }, [currentPlan]);
 
-  const getButtonText = (planName: string) => {
-    if (currentPlan?.toLowerCase() === planName.toLowerCase()) {
-      return "Manage Plan";
-    }
+  const getButtonText = useCallback((planName: string) => {
+    if (currentPlan?.toLowerCase() === planName.toLowerCase()) return "Manage Plan";
     return planName.toLowerCase() === "enterprise" ? "Partner" : "Subscribe";
-  };
+  }, [currentPlan]);
 
   return (
     <section className="mx-auto flex max-w-screen-xl flex-col gap-8 px-4 py-14 md:px-8">
@@ -83,36 +145,7 @@ export function Pricing({ currentPlan }: PricingProps) {
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <ul className="flex flex-col gap-2 font-normal">
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">AI-powered analytics</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Basic support</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">1 hour of conversation</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">All agent features</span>
-                </li>
-              </ul>
+              <FeatureList features={PRICING_CONFIG.taster.features} />
             </CardContent>
           </Card>
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border bg-primary/5 border-primary">
@@ -146,50 +179,7 @@ export function Pricing({ currentPlan }: PricingProps) {
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <ul className="flex flex-col gap-2 font-normal">
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">10 hours of conversation. Renewable monthly</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">All integrations</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Consultation to tune AI</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Unlimited knowledge base size</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Twilio integration</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Web Widget</span>
-                </li>
-              </ul>
+              <FeatureList features={PRICING_CONFIG.startup.features} />
             </CardContent>
           </Card>
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
@@ -217,50 +207,7 @@ export function Pricing({ currentPlan }: PricingProps) {
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <ul className="flex flex-col gap-2 font-normal">
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Unlimited minutes</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">White-glove support</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Unlimited projects</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Priority access to new AI tools</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Custom integrations</span>
-                </li>
-                <li className="flex items-center gap-3 text-xs font-medium">
-                  <Check
-                    size={16}
-                    className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-                  />
-                  <span className="flex">Highest data security and compliance</span>
-                </li>
-              </ul>
+              <FeatureList features={PRICING_CONFIG.enterprise.features} />
             </CardContent>
           </Card>
         </div>

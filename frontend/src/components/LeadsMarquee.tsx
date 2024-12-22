@@ -1,6 +1,7 @@
 "use client"
 
 import Marquee from "@/components/ui/marquee";
+import Image from "next/image";
 
 const leads = [
   {
@@ -37,24 +38,36 @@ export function LeadsMarquee() {
         <h2 className="text-3xl font-bold mb-4">Real-Time Lead Generation</h2>
         <p className="text-gray-600">Watch as qualified leads flow into your inbox</p>
       </div>
-        
-      <Marquee
-        pauseOnHover
-        className="py-4 h-[500px] max-w-[340px] mx-auto"
-        reverse
-        vertical
-      >
-        {leads.map((lead, idx) => (
-          <div
-            key={idx}
-            className="my-4 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg w-[300px]"
-          >
-            <div className="text-sm text-blue-400">{lead.email}</div>
-            <div className="font-medium mb-1">{lead.subject}</div>
-            <div className="text-sm text-gray-400 truncate">{lead.preview}</div>
-          </div>
-        ))}
-      </Marquee>
+      
+      <div className="flex items-center justify-center gap-8 max-w-6xl mx-auto">
+        <Marquee
+          pauseOnHover
+          className="py-4 h-[500px] max-w-[340px]"
+          reverse
+          vertical
+        >
+          {leads.map((lead, idx) => (
+            <div
+              key={idx}
+              className="my-4 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg w-[300px]"
+            >
+              <div className="text-sm text-blue-400">{lead.email}</div>
+              <div className="font-medium mb-1">{lead.subject}</div>
+              <div className="text-sm text-gray-400 truncate">{lead.preview}</div>
+            </div>
+          ))}
+        </Marquee>
+
+        <div className="relative w-[650px] h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
+          <Image
+            src="/images/lead_form.png"
+            alt="Lead generation form"
+            fill
+            className="object-contain rounded-2xl"
+            priority
+          />
+        </div>
+      </div>
     </section>
   );
 } 

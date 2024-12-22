@@ -224,10 +224,10 @@ async def init_new_chat(agent_id: str, room_name: str):
         print(f"triggering show_chat_input in request_personal_data for room_name: {room_name}")
         await trigger_show_chat_input(room_name, room_name, room_name)
 
-    # Always register Q&A function
-    fnc_ctx._register_ai_function(question_and_answer)
-    print(f"Registered Q&A function")
-    logger.info(f"Registered Q&A function")
+    # # Always register Q&A function
+    # fnc_ctx._register_ai_function(question_and_answer)
+    # print(f"Registered Q&A function")
+    # logger.info(f"Registered Q&A function")
 
     if 'lead_gen' in features:
         fnc_ctx._register_ai_function(request_personal_data)

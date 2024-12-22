@@ -3,34 +3,61 @@
 import React from 'react';
 import { 
   Phone, 
-  PhoneCall,
-  MessageSquareQuote,
-  Mic,
   PhoneIncoming,
   Languages,
   Timer,
-  Zap
+  Zap,
+  Mic,
+  MessageSquareQuote
 } from 'lucide-react';
 
-const TelephonySection = () => {
-  const features = [
-    {
-      icon: <PhoneIncoming className="w-6 h-6 text-blue-400" />,
-      title: "Instant Call Handling",
-      description: "Automatically answers and manages incoming calls with zero wait time",
-    },
-    {
-      icon: <Languages className="w-6 h-6 text-green-400" />,
-      title: "Natural Conversations",
-      description: "Engages in human-like dialogue with context awareness and understanding",
-    },
-    {
-      icon: <Timer className="w-6 h-6 text-purple-400" />,
-      title: "24/7 Availability",
-      description: "Never miss a call with round-the-clock automated response",
-    }
-  ];
+const TELEPHONY_FEATURES = [
+  {
+    icon: 'phone-incoming',
+    title: "Instant Call Handling",
+    description: "Automatically answers and manages incoming calls with zero wait time",
+  },
+  {
+    icon: 'languages',
+    title: "Natural Conversations",
+    description: "Engages in human-like dialogue with context awareness and understanding",
+  },
+  {
+    icon: 'timer',
+    title: "24/7 Availability",
+    description: "Never miss a call with round-the-clock automated response",
+  }
+] as const;
 
+const IconWrapper = React.memo(({ name, className }: { name: string, className: string }) => {
+  const icons = {
+    'phone-incoming': PhoneIncoming,
+    'languages': Languages,
+    'timer': Timer,
+  };
+  const Icon = icons[name as keyof typeof icons];
+  return <Icon className={className} />;
+});
+
+const FeatureCard = React.memo(({ feature }: { feature: typeof TELEPHONY_FEATURES[number] }) => (
+  <div className="bg-zinc-800/20 rounded-xl p-4 hover:bg-zinc-800/30 transition-all">
+    <div className="flex gap-4 items-start">
+      <div className="flex-shrink-0 p-2 bg-zinc-800 rounded-lg">
+        <IconWrapper name={feature.icon} className="w-6 h-6 text-blue-400" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-1">
+          {feature.title}
+        </h3>
+        <p className="text-gray-400 text-sm">
+          {feature.description}
+        </p>
+      </div>
+    </div>
+  </div>
+));
+
+const TelephonySection = React.memo(() => {
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4">
@@ -72,25 +99,8 @@ const TelephonySection = () => {
 
               {/* Right side - Features */}
               <div className="space-y-6">
-                {features.map((feature, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-zinc-800/20 rounded-xl p-4 hover:bg-zinc-800/30 transition-all"
-                  >
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-shrink-0 p-2 bg-zinc-800 rounded-lg">
-                        {feature.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">
-                          {feature.title}
-                        </h3>
-                        <p className="text-gray-400 text-sm">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                {TELEPHONY_FEATURES.map((feature, index) => (
+                  <FeatureCard key={index} feature={feature} />
                 ))}
               </div>
             </div>
@@ -132,6 +142,6 @@ const TelephonySection = () => {
       </div>
     </section>
   );
-};
+});
 
 export default TelephonySection; 
