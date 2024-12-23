@@ -14,7 +14,8 @@ const ROTATING_WORDS = memo(() => (
       "Answer Questions",
       "Engage With Visitors",
       "Book Appointments",
-      "Get User Feedback"
+      "Draft Documents",
+      "Automate Tasks",
     ]}
   />
 ));

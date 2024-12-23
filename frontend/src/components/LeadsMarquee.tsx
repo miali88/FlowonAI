@@ -58,14 +58,16 @@ export function LeadsMarquee() {
           ))}
         </Marquee>
 
-        <div className="relative w-[650px] h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
-          <Image
-            src="/images/lead_form.png"
-            alt="Lead generation form"
-            fill
-            className="object-contain rounded-2xl"
-            priority
-          />
+        <div className="relative w-[500px] h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
+          <div className="relative w-full h-full">
+            <Image
+              src="/images/lead_form.png"
+              alt="Lead generation form"
+              fill
+              className="object-contain rounded-2xl opacity-90 transition-opacity duration-200"
+              priority
+            />
+          </div>
         </div>
       </div>
     </section>

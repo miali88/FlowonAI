@@ -5,7 +5,7 @@ import { Code, Check, X } from 'lucide-react';
 const ComparisonSection = () => {
   const checkboxInputs = React.useMemo(() => (
     <div className="space-y-4">
-      <div className="bg-gray-50 p-3 rounded">
+      <div className="bg-gray-900 p-3 rounded text-white">
         <label className="block text-sm font-medium mb-1">Questions to Ask</label>
         {[
           "What's your budget range?",
@@ -34,7 +34,7 @@ const ComparisonSection = () => {
       
       <div className="flex flex-row gap-8">
         <div className="flex-1">
-          <Card className="bg-gray-100 h-full">
+          <Card className="bg-black h-full">
             <CardContent className="p-6">
               <div className="flex items-center mb-4">
                 <Code className="w-6 h-6 mr-2 text-gray-600" />
@@ -44,22 +44,8 @@ const ComparisonSection = () => {
               <div className="bg-gray-900 text-gray-200 p-4 rounded-lg font-mono text-sm mb-4">
                 {`<agent>
   <system_prompt>
-    You are a lead generation assistant.
-    Follow this exact conversation flow:
-    1. Ask about budget range
-    2. Verify decision maker status
-    3. Inquire about timeline
-    ...
-    Must use formal language.
-    Must collect all required fields.
-    Must follow branching logic:
-    if budget < 10000 then...
-  </system_prompt>
-  <conversation_rules>
-    <rule>Always ask follow-up</rule>
-    <rule>Persist until data complete</rule>
-  </conversation_rules>
-</agent>`}
+    You are a lead generation assistant...
+`}
               </div>
 
               <div className="space-y-3">
@@ -84,8 +70,12 @@ const ComparisonSection = () => {
           <Card className="border-2 border-blue-500 h-full">
             <CardContent className="p-6">
               <div className="flex items-center mb-4">
-                <img src="/api/placeholder/24/24" alt="Flow AI Logo" className="mr-2" />
-                <h3 className="text-xl font-semibold">Flow AI</h3>
+                <img 
+                  src="/flowon.png" 
+                  alt="Flowon AI Logo" 
+                  className="w-6 h-6 mr-2 rounded-full"
+                />
+                <h3 className="text-xl font-semibold">Flowon AI</h3>
               </div>
 
               <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-4">

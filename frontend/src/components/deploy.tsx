@@ -2,14 +2,15 @@ import { CardSpotlight } from "@/components/ui/card-spotlight";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { IntegrationsSection } from "@/components/integrations";
 
 export function DeploySection() {
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-black">
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-8 text-white">
+        {/* <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-8 text-white">
           Deploy Your AI Agent
-        </h2>
+        </h2> */}
         <p className="text-xl text-neutral-200 mb-12">
           Choose how you want to integrate your AI assistant with your business
         </p>
@@ -62,7 +63,11 @@ export function DeploySection() {
             </p>
           </CardSpotlight>
         </div>
+        <IntegrationsSection />
 
+
+
+{/* 
         <div className="mt-20 flex items-center justify-center relative z-10">
           <Link 
             href="https://calendly.com/michael-flowon/30min" 
@@ -81,7 +86,7 @@ export function DeploySection() {
               />
             </Button>
           </Link>
-        </div>
+        </div> */}
       </div>
     </section>
   );
