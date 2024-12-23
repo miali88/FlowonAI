@@ -7,16 +7,21 @@ import {
   FaMicrosoft 
 } from "react-icons/fa";
 import { SiZendesk, SiHubspot, SiIntercom } from "react-icons/si";
+import { SiWebflow, SiShopify, SiWix, SiWordpress, SiBigcommerce } from "react-icons/si";
+import softrIcon from '/public/icons/softr.png';
+import bubbleIcon from '/public/icons/bubble.png';
+import squarespaceIcon from '/public/icons/squarespace.png';
+import Image from 'next/image';
 
 export function IntegrationsSection() {
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-black">
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 text-white">
+        {/* <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 text-white">
           Seamless Integrations
-        </h2>
+        </h2> */}
         <p className="text-xl text-neutral-200 mb-12">
-          Connect your AI assistant with your favorite tools and platforms
+          We support a wide range of web platforms and CMS systems
         </p>
 
         <CardSpotlight className="p-8">
@@ -37,12 +42,12 @@ export function IntegrationsSection() {
 }
 
 const platforms = [
-  { name: 'Slack', icon: FaSlack },
-  { name: 'Discord', icon: FaDiscord },
-  { name: 'Salesforce', icon: FaSalesforce },
-  { name: 'HubSpot', icon: SiHubspot },
-  { name: 'Zendesk', icon: SiZendesk },
-  { name: 'Microsoft Teams', icon: FaMicrosoft },
-  { name: 'Intercom', icon: SiIntercom },
-  { name: 'WhatsApp', icon: FaWhatsapp },
+  { name: 'Webflow', icon: SiWebflow },
+  { name: 'Softr', icon: () => <Image src={softrIcon} alt="Softr" width={48} height={48} className="brightness-0 invert" /> },
+  { name: 'BigCommerce', icon: SiBigcommerce },
+  { name: 'Shopify', icon: SiShopify },
+  { name: 'Wix', icon: SiWix },
+  { name: 'WordPress', icon: SiWordpress },
+  { name: 'Bubble', icon: () => <Image src={bubbleIcon} alt="Bubble" width={48} height={48} className="brightness-0 invert" /> },
+  { name: 'Squarespace', icon: () => <Image src={squarespaceIcon} alt="Squarespace" width={48} height={48} /> },
 ]; 
