@@ -1,16 +1,10 @@
 import { CardSpotlight } from "@/components/ui/card-spotlight";
-import { 
-  FaSlack, 
-  FaDiscord, 
-  FaSalesforce, 
-  FaWhatsapp,
-  FaMicrosoft 
-} from "react-icons/fa";
-import { SiZendesk, SiHubspot, SiIntercom } from "react-icons/si";
 import { SiWebflow, SiShopify, SiWix, SiWordpress, SiBigcommerce } from "react-icons/si";
 import softrIcon from '/public/icons/softr.png';
 import bubbleIcon from '/public/icons/bubble.png';
 import squarespaceIcon from '/public/icons/squarespace.png';
+import unicornIcon from '/public/icons/unicornplatform.svg';
+import retoolIcon from '/public/icons/retool.svg';
 import Image from 'next/image';
 
 export function IntegrationsSection() {
@@ -50,4 +44,7 @@ const platforms = [
   { name: 'WordPress', icon: SiWordpress },
   { name: 'Bubble', icon: () => <Image src={bubbleIcon} alt="Bubble" width={48} height={48} className="brightness-0 invert" /> },
   { name: 'Squarespace', icon: () => <Image src={squarespaceIcon} alt="Squarespace" width={48} height={48} /> },
+  { name: 'Unicorn Platform', icon: () => <Image src={unicornIcon} alt="Unicorn Platform" width={48} height={48} className="brightness-0 invert" /> },
+  { name: 'Retool', icon: () => <Image src={retoolIcon} alt="Retool" width={48} height={48} className="brightness-0 invert" /> },
+
 ]; 

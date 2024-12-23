@@ -55,7 +55,7 @@ export function DeploySection() {
               />
             </div>
             <p className="text-neutral-200 mb-4 relative z-20">
-              Engage users in real-time with AI-powered conversations.
+              Engage users in real-time with AI-powered conversations
             </p>
           </CardSpotlight>
 

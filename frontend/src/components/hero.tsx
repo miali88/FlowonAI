@@ -10,12 +10,14 @@ import Image from 'next/image';
 const ROTATING_WORDS = memo(() => (
   <WordRotate
     words={[
-      "Drive Conversion",
-      "Answer Questions",
-      "Engage With Visitors",
-      "Book Appointments",
+      "Know Your Business",
+      "Know Your Industry",
       "Draft Documents",
+      "Answer Questions",
       "Automate Tasks",
+      "Drive Conversion",
+      "Handle Enquiries",
+      "Book Appointments",
     ]}
   />
 ));
@@ -40,7 +42,7 @@ const MobileHero = memo(() => (
     after:content-[''] after:absolute after:w-[30rem] after:h-[30rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:bottom-[-10%] after:right-[-10%]">
     <div className="min-h-[100dvh] flex flex-col items-center justify-center">
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
-        <span className="whitespace-normal">Purpose Built AI Agents To</span>{" "}
+        <span className="whitespace-normal">Purpose Built AI Agents That</span>{" "}
         <ROTATING_WORDS />
       </h1>
 
@@ -75,7 +77,7 @@ const DesktopHero = memo(() => (
     after:content-[''] after:absolute after:w-[40rem] after:h-[40rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[20%] after:right-[10%]">
     <div className="min-h-[65vh] flex flex-col items-center justify-center py-16">
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
-        <span className="whitespace-nowrap">Purpose Built AI Agents To</span>{" "}
+        <span className="whitespace-nowrap">Purpose Built AI Agents That</span>{" "}
         <ROTATING_WORDS />
       </h1>
 

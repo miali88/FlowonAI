@@ -2,17 +2,29 @@ import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { CtaSection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
-import { BenefitsSection } from "@/components/BenefitsSection";
 import TelephonySection from "@/components/TelephonySection";
-// import FAQSection from "@/components/FAQSection";
-import { Pricing } from "@/components/pricing";
 import AppUILanding from "@/components/AppUILanding";
 import dynamic from "next/dynamic";
-import { TimelineDeploy } from "@/components/TimelineDeploy";
 
 const ComparisonSection = dynamic(() => import('@/components/Compare'), {
   loading: () => <div className="h-[600px]" />, // Adjust height as needed
   ssr: false
+});
+
+// Convert components to dynamic imports
+const DynamicTimelineDeploy = dynamic(() => import('@/components/TimelineDeploy').then(mod => mod.TimelineDeploy), {
+  loading: () => <div className="h-[400px]" />,
+  ssr: true
+});
+
+const DynamicBenefitsSection = dynamic(() => import('@/components/BenefitsSection').then(mod => mod.BenefitsSection), {
+  loading: () => <div className="h-[400px]" />,
+  ssr: true
+});
+
+const DynamicPricing = dynamic(() => import('@/components/pricing').then(mod => mod.Pricing), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
 });
 
 export default function HomePage() {
@@ -24,10 +36,11 @@ export default function HomePage() {
 <div className="mx-auto max-w-7xl">
           <Hero />
           <AppUILanding />
-          <TimelineDeploy />
-          <BenefitsSection />
+          <DynamicTimelineDeploy />
+          <DynamicBenefitsSection />
           {/* <TelephonySection /> */}
-          <Pricing />
+          {/* <MeetKenneth /> */}
+          <DynamicPricing />
           <CtaSection /> 
           <Footer />
         </div>

@@ -1,4 +1,5 @@
-import Image from "next/image";
+"use client"
+
 import React from "react";
 import { Timeline } from "@/components/ui/timeline";
 import { QandA } from "@/components/QandA";
@@ -7,6 +8,12 @@ import { LeadsMarquee } from "@/components/LeadsMarquee";
 import { DeploySection } from "@/components/deploy";
 import OrbitingCirclesDemo from "@/components/StayInSync";
 import ComparisonSection from "@/components/Compare";
+import { motion } from "framer-motion";
+
+const fadeInVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
 
 const BenefitItem = ({ icon: Icon, text }) => (
   <div className="flex gap-3 items-center text-neutral-700 dark:text-neutral-300 text-sm md:text-base py-2">
@@ -22,32 +29,55 @@ export function TimelineDeploy() {
     {
       title: "Import Data",
       content: (
-        <div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInVariants}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
           <OrbitingCirclesDemo />
-        </div>
+        </motion.div>
       ),
     },
     {
       title: "Suggest Agent Behaviour",
       content: (
-        <div>
-        <ComparisonSection />
-        </div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInVariants}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          <ComparisonSection />
+        </motion.div>
       ),
     },
     {
       title: "Deploy Your New Agent",
       content: (
-        <div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInVariants}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
           <DeploySection />
-
-        </div>
+        </motion.div>
       ),
     },
     {
       title: "Enjoy The Results",
       content: (
-        <div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInVariants}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
           <h3 className="text-neutral-800 dark:text-neutral-200 text-base md:text-lg font-medium mb-4">
             Experience these key benefits with your new AI agent
           </h3>
@@ -81,7 +111,7 @@ export function TimelineDeploy() {
             <LeadsMarquee />
           </div>
           <QandA />
-        </div>
+        </motion.div>
       ),
     },
   ];

@@ -8,28 +8,41 @@ export default function OrbitingCirclesDemo() {
         Stay In Sync
       </span>
 
-      {/* Inner Circles */}
+      {/* Inner Circles - Adjusted delays for even spacing */}
       <OrbitingCircles
         className="size-[30px] border-none bg-transparent"
         duration={20}
-        delay={10}
-        radius={80}
+        delay={0}
+        radius={100}
       >
         <Icons.notion />
       </OrbitingCircles>
       <OrbitingCircles
         className="size-[30px] border-none bg-transparent"
         duration={20}
-        delay={20}
-        radius={80}
+        delay={6.67}
+        radius={100}
       >
         <Icons.slack />
       </OrbitingCircles>
+      <OrbitingCircles
+        className="size-[30px] border-none bg-transparent"
+        duration={20}
+        delay={13.33}
+        radius={100}
+      >
+        <Image 
+          src="/icons/monday.svg" 
+          alt="Monday Logo" 
+          width={50} 
+          height={50}
+        />
+      </OrbitingCircles>
 
-      {/* Outer Circles (reverse) */}
+      {/* Outer Circles - Adjusted delays and increased radius */}
       <OrbitingCircles
         className="size-[50px] border-none bg-transparent"
-        radius={190}
+        radius={220}
         duration={20}
         delay={0}
         reverse
@@ -38,18 +51,46 @@ export default function OrbitingCirclesDemo() {
       </OrbitingCircles>
       <OrbitingCircles
         className="size-[50px] border-none bg-transparent"
-        radius={190}
+        radius={220}
         duration={20}
-        delay={15}
+        delay={4}
         reverse
       >
         <Icons.gmail />
       </OrbitingCircles>
       <OrbitingCircles
         className="size-[50px] border-none bg-transparent"
-        radius={190}
+        radius={220}
         duration={20}
-        delay={30}
+        delay={8}
+        reverse
+      >
+        <Image 
+          src="/icons/pdf.png" 
+          alt="PDF Icon" 
+          width={40}
+          height={40}
+        />
+      </OrbitingCircles>
+      <OrbitingCircles
+        className="size-[50px] border-none bg-transparent"
+        radius={220}
+        duration={20}
+        delay={12}
+        reverse
+      >
+        <Image 
+          src="/icons/word.svg" 
+          alt="Word Icon" 
+          width={90}
+          height={79}
+        />
+      </OrbitingCircles>
+      <OrbitingCircles
+        className="size-[50px] border-none bg-transparent"
+        radius={220}
+        duration={20}
+        delay={16}
         reverse
       >
         <Image 
@@ -163,6 +204,17 @@ const Icons = {
         d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"
         fill="#EA4335"
       />
+    </svg>
+  ),
+  monday: () => (
+    <svg
+      width="100"
+      height="100"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="7" cy="12" r="3" fill="#FF3D57"/>
+      <circle cx="17" cy="12" r="3" fill="#023AFF"/>
     </svg>
   ),
 };

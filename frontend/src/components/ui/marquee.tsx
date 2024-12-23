@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   reverse?: boolean;
-  pauseOnHover?: boolean;
   children?: React.ReactNode;
   vertical?: boolean;
   repeat?: number;
@@ -12,7 +11,6 @@ interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
 export default function Marquee({
   className,
   reverse,
-  pauseOnHover = false,
   children,
   vertical = false,
   repeat = 4,
@@ -22,7 +20,7 @@ export default function Marquee({
     <div
       {...props}
       className={cn(
-        "group flex overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]",
+        "group flex overflow-hidden p-2 [--duration:10s] [--gap:1rem] [gap:var(--gap)]",
         {
           "flex-row": !vertical,
           "flex-col": vertical,
@@ -38,7 +36,6 @@ export default function Marquee({
             className={cn("flex shrink-0 justify-around [gap:var(--gap)]", {
               "animate-marquee flex-row": !vertical,
               "animate-marquee-vertical flex-col": vertical,
-              "group-hover:[animation-play-state:paused]": pauseOnHover,
               "[animation-direction:reverse]": reverse,
             })}
           >

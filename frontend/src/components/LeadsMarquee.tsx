@@ -41,7 +41,6 @@ export function LeadsMarquee() {
       
       <div className="flex items-center justify-center gap-8 max-w-6xl mx-auto">
         <Marquee
-          pauseOnHover
           className="py-4 h-[500px] max-w-[340px]"
           reverse
           vertical
