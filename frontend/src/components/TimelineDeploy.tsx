@@ -48,9 +48,9 @@ export function TimelineDeploy() {
       title: "Enjoy The Results",
       content: (
         <div>
-          <p className="text-neutral-800 dark:text-neutral-200 text-xs md:text-sm font-normal mb-4">
+          <h3 className="text-neutral-800 dark:text-neutral-200 text-base md:text-lg font-medium mb-4">
             Experience these key benefits with your new AI agent
-          </p>
+          </h3>
           <div className="mb-8">
             <BenefitItem
               icon={Clock}

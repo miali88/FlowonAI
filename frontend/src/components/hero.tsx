@@ -25,11 +25,11 @@ ROTATING_WORDS.displayName = 'RotatingWords';
 const CallToActionButton = () => (
   <Link 
     href="https://calendly.com/michael-flowon/30min" 
-    className="inline-block relative z-20"
+    className="inline-block relative z-20 translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms]"
     target="_blank"
     rel="noopener noreferrer"
   >
-    <Button>Start handling customer calls automatically</Button>
+    <Button size="lg" className="text-lg px-8 py-6">Join the future of work</Button>
   </Link>
 );
 
