@@ -53,7 +53,7 @@ export default function OrbitingCirclesDemo() {
         className="size-[50px] border-none bg-transparent"
         radius={220}
         duration={20}
-        delay={4}
+        delay={5}
         reverse
       >
         <Icons.gmail />
@@ -62,7 +62,7 @@ export default function OrbitingCirclesDemo() {
         className="size-[50px] border-none bg-transparent"
         radius={220}
         duration={20}
-        delay={8}
+        delay={10}
         reverse
       >
         <Image 
@@ -76,7 +76,7 @@ export default function OrbitingCirclesDemo() {
         className="size-[50px] border-none bg-transparent"
         radius={220}
         duration={20}
-        delay={12}
+        delay={15}
         reverse
       >
         <Image 
@@ -84,20 +84,6 @@ export default function OrbitingCirclesDemo() {
           alt="Word Icon" 
           width={90}
           height={79}
-        />
-      </OrbitingCircles>
-      <OrbitingCircles
-        className="size-[50px] border-none bg-transparent"
-        radius={220}
-        duration={20}
-        delay={16}
-        reverse
-      >
-        <Image 
-          src="/integ/shopify-logo.svg" 
-          alt="Shopify Logo" 
-          width={50} 
-          height={50}
         />
       </OrbitingCircles>
     </div>
