@@ -51,6 +51,7 @@ async def chat_message(request: Request):
             media_type="text/event-stream"
         )
 
+
     except Exception as e:
         logger.error(f"Error processing chat message: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
