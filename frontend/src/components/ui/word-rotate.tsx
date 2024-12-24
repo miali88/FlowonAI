@@ -10,6 +10,7 @@ interface WordRotateProps {
   duration?: number;
   framerProps?: HTMLMotionProps<"h1">;
   className?: string;
+  initialWord?: string;
 }
 
 export default function WordRotate({
@@ -22,8 +23,15 @@ export default function WordRotate({
     transition: { duration: 0.25, ease: "easeOut" },
   },
   className,
+  initialWord,
 }: WordRotateProps) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => {
+    if (initialWord) {
+      const initialIndex = words.indexOf(initialWord);
+      return initialIndex >= 0 ? initialIndex : 0;
+    }
+    return 0;
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {

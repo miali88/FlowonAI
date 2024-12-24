@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, memo } from "react";
+import { useState, memo, Suspense } from "react";
 import WordRotate from "@/components/ui/word-rotate";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -8,18 +8,21 @@ import Image from 'next/image';
 
 // Memoize the rotating words since they never change
 const ROTATING_WORDS = memo(() => (
-  <WordRotate
-    words={[
-      "Know Your Business",
-      "Know Your Industry",
-      // "Draft Documents",
-      "Answer Questions",
-      "Automate Tasks",
-      "Drive Conversion",
-      "Handle Enquiries",
-      "Book Appointments",
-    ]}
-  />
+  <Suspense fallback={<span>Know Your Business</span>}>
+    <WordRotate
+      words={[
+        "Know Your Business",
+        "Know Your Industry",
+        // "Draft Documents",
+        "Answer Questions",
+        "Automate Tasks",
+        "Drive Conversion",
+        "Handle Enquiries",
+        "Book Appointments",
+      ]}
+      initialWord="Know Your Business"
+    />
+  </Suspense>
 ));
 ROTATING_WORDS.displayName = 'RotatingWords';
 
@@ -31,7 +34,7 @@ const CallToActionButton = () => (
     target="_blank"
     rel="noopener noreferrer"
   >
-    <Button size="lg" className="text-lg px-8 py-6">Join the future of work</Button>
+    <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base">Join the future of work</Button>
   </Link>
 );
 
@@ -40,18 +43,18 @@ const MobileHero = memo(() => (
   <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden 
     before:content-[''] before:absolute before:w-[30rem] before:h-[30rem] before:rounded-full before:bg-[#ff69b440] before:blur-3xl before:-z-10 before:animate-blob before:top-[20%] before:left-[10%]
     after:content-[''] after:absolute after:w-[30rem] after:h-[30rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[30%] after:right-[10%]">
-    <div className="min-h-[100dvh] pt-20 flex flex-col items-center justify-center">
-      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-4 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
+    <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8">
+      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-1 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
         <span className="whitespace-normal">Purpose Built AI Agents That</span>{" "}
         <ROTATING_WORDS />
       </h1>
 
-      <p className="mb-8 text-sm tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
+      <p className="mb-2 text-sm tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
         Easily deploy AI agents to assist with your business workflows, including prospecting, customer service,
         appointment booking, and more
       </p>
 
-      <div className="scale-100">
+      <div className="scale-100 mt-8">
         <CallToActionButton />
       </div> 
     </div>
@@ -75,7 +78,7 @@ const DesktopHero = memo(() => (
       appointment booking, and more
       </p>
 
-      <div className="scale-100">
+      <div className="scale-100 mt-8">
         <CallToActionButton />
       </div>
     </div>
