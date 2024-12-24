@@ -3,33 +3,39 @@ import Image from 'next/image';
 
 export default function OrbitingCirclesDemo() {
   return (
-    <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
-      <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300 bg-clip-text text-center text-8xl font-semibold leading-none text-transparent dark:from-white dark:to-black">
+    <div className="relative flex h-[300px] md:h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
+      <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300 bg-clip-text text-center text-4xl md:text-8xl font-semibold leading-none text-transparent dark:from-white dark:to-black">
         Stay In Sync
       </span>
 
-      {/* Inner Circles - Adjusted delays for even spacing */}
+      {/* Inner Circles - Mobile adjustments */}
       <OrbitingCircles
-        className="size-[30px] border-none bg-transparent"
+        className="size-[20px] md:size-[30px] border-none bg-transparent"
         duration={20}
         delay={0}
-        radius={100}
+        radius={60}
+        mobileRadius={60}
+        desktopRadius={100}
       >
         <Icons.notion />
       </OrbitingCircles>
       <OrbitingCircles
-        className="size-[30px] border-none bg-transparent"
+        className="size-[20px] md:size-[30px] border-none bg-transparent"
         duration={20}
         delay={6.67}
-        radius={100}
+        radius={60}
+        mobileRadius={60}
+        desktopRadius={100}
       >
         <Icons.slack />
       </OrbitingCircles>
       <OrbitingCircles
-        className="size-[30px] border-none bg-transparent"
+        className="size-[20px] md:size-[30px] border-none bg-transparent"
         duration={20}
         delay={13.33}
-        radius={100}
+        radius={60}
+        mobileRadius={60}
+        desktopRadius={100}
       >
         <Image 
           src="/icons/monday.svg" 
@@ -39,10 +45,12 @@ export default function OrbitingCirclesDemo() {
         />
       </OrbitingCircles>
 
-      {/* Outer Circles - Adjusted delays and increased radius */}
+      {/* Outer Circles - Mobile adjustments */}
       <OrbitingCircles
-        className="size-[50px] border-none bg-transparent"
-        radius={220}
+        className="size-[30px] md:size-[50px] border-none bg-transparent"
+        radius={130}
+        mobileRadius={130}
+        desktopRadius={220}
         duration={20}
         delay={0}
         reverse
@@ -50,8 +58,10 @@ export default function OrbitingCirclesDemo() {
         <Icons.googleDrive />
       </OrbitingCircles>
       <OrbitingCircles
-        className="size-[50px] border-none bg-transparent"
-        radius={220}
+        className="size-[30px] md:size-[50px] border-none bg-transparent"
+        radius={130}
+        mobileRadius={130}
+        desktopRadius={220}
         duration={20}
         delay={5}
         reverse
@@ -59,8 +69,10 @@ export default function OrbitingCirclesDemo() {
         <Icons.gmail />
       </OrbitingCircles>
       <OrbitingCircles
-        className="size-[50px] border-none bg-transparent"
-        radius={220}
+        className="size-[30px] md:size-[50px] border-none bg-transparent"
+        radius={130}
+        mobileRadius={130}
+        desktopRadius={220}
         duration={20}
         delay={10}
         reverse
@@ -73,8 +85,10 @@ export default function OrbitingCirclesDemo() {
         />
       </OrbitingCircles>
       <OrbitingCircles
-        className="size-[50px] border-none bg-transparent"
-        radius={220}
+        className="size-[30px] md:size-[50px] border-none bg-transparent"
+        radius={130}
+        mobileRadius={130}
+        desktopRadius={220}
         duration={20}
         delay={15}
         reverse

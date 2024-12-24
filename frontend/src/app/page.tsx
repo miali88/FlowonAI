@@ -33,6 +33,7 @@ export default function HomePage() {
       <Header />
       <main className="w-full relative pt-[64px] sm:pt-0">
 
+
 <div className="mx-auto max-w-7xl">
           <Hero />
           <AppUILanding />

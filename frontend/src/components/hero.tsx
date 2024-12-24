@@ -41,9 +41,9 @@ const CallToActionButton = () => (
 // First, let's add a keyframe animation at the top of the file
 const MobileHero = memo(() => (
   <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden 
-    before:content-[''] before:absolute before:w-[30rem] before:h-[30rem] before:rounded-full before:bg-[#ff69b440] before:blur-3xl before:-z-10 before:animate-blob before:top-[20%] before:left-[10%]
-    after:content-[''] after:absolute after:w-[30rem] after:h-[30rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[30%] after:right-[10%]">
-    <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8">
+    before:content-[''] before:absolute before:w-[30rem] before:h-[10rem] before:rounded-full before:bg-[#ff69b440] before:blur-3xl before:-z-10 before:animate-blob before:top-[20%] before:left-[10%]
+    after:content-[''] after:absolute after:w-[30rem] after:h-[10rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[30%] after:right-[10%]">
+    <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8 pb-32">
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-1 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
         <span className="whitespace-normal">Purpose Built AI Agents That</span>{" "}
         <ROTATING_WORDS />

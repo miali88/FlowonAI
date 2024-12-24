@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 export default function AppUILanding() {
   return (
-    <div className="mt-8 w-full max-w-[900px] mx-auto">
+    <div className="mt-8 w-full max-w-[900px] mx-auto pb-40 md:pb-32">
       {/* Flex container - Added responsive gap */}
       <div className="flex items-center justify-between gap-4 md:gap-32">
         {/* Chat Bubbles Section - Added responsive width */}
@@ -13,7 +13,7 @@ export default function AppUILanding() {
           }}
         >
           <div 
-            className="w-full scale-[0.6] md:scale-75"
+            className="w-full scale-[0.45] md:scale-75"
             style={{
               transform: 'rotateY(-20deg) rotateX(10deg)',
               transformStyle: 'preserve-3d'

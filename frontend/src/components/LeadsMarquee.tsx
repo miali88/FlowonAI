@@ -39,9 +39,9 @@ export function LeadsMarquee() {
         <p className="text-gray-600">Watch as qualified leads flow into your inbox</p>
       </div>
       
-      <div className="flex items-center justify-center gap-8 max-w-6xl mx-auto">
+      <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-8 max-w-6xl mx-auto">
         <Marquee
-          className="py-4 h-[500px] max-w-[340px]"
+          className="py-4 h-[500px] max-w-[340px] w-full"
           reverse
           vertical
         >
@@ -57,7 +57,7 @@ export function LeadsMarquee() {
           ))}
         </Marquee>
 
-        <div className="relative w-[500px] h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
+        <div className="relative w-[340px] h-[460px] md:w-[500px] md:h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
           <div className="relative w-full h-full">
             <Image
               src="/images/lead_form.png"
