@@ -5,12 +5,12 @@ import babel from '@rollup/plugin-babel';
 import postcss from 'rollup-plugin-postcss';
 
 export default {
-  input: './iframeChat.js',
+  input: './iframeChat_text.js',
   output: [
     {
-      file: 'dist/iframeChat.min.js',
+      file: 'text_dist/iframeChat_text.min.js',
       format: 'iife',
-      name: 'IframeChat',
+      name: 'IframeChatText',
       sourcemap: true
     },
   ],

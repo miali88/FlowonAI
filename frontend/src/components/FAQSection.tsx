@@ -11,10 +11,6 @@ import {
 const FAQSection = () => {
   const faqs = [
     {
-      question: "How quickly can Flowon AI be integrated with our phone system?",
-      answer: "Integration with Twilio can be completed within minutes. Our streamlined setup process ensures you can start handling calls automatically with minimal technical overhead."
-    },
-    {
       question: "What types of conversations can Flowon AI handle?",
       answer: "Flowon AI can handle a wide range of interactions including customer inquiries, appointment scheduling, lead qualification, support requests, and general information sharing. The AI adapts to your specific business needs and can be trained on your unique use cases."
     },
@@ -31,7 +27,7 @@ const FAQSection = () => {
       answer: "Flowon AI is designed to gracefully handle edge cases by either escalating to human agents when needed or collecting relevant information to ensure proper follow-up. This ensures no customer inquiry goes unaddressed."
     },
     {
-      question: "How does Flowon AI handle multiple concurrent calls?",
+      question: "Can Flowon AI handle multiple concurrent calls?",
       answer: "Flowon AI can handle unlimited concurrent conversations without any degradation in performance or response time, ensuring consistent service quality regardless of call volume."
     }
   ];

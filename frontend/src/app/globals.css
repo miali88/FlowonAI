@@ -74,8 +74,14 @@
 @layer utilities {
   /* Animation utilities */
   @keyframes fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+    0% { 
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% { 
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @keyframes fade-up {
@@ -114,8 +120,9 @@
   }
 
   .animate-fade-in {
-    animation: fade-in 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     animation-delay: var(--animation-delay, 0ms);
+    opacity: 0; /* Ensure initial state is hidden */
   }
 
   .animate-fade-up {

@@ -33,9 +33,13 @@ async def livekit_room_webhook(request: Request):
     
     webhook_extract = sip_call_extract(data)
     if webhook_extract:
-        call_data[webhook_extract['room_name']] = webhook_extract['twilio_phone_number']
+        call_data[webhook_extract['room_name']] = {
+            'twilio_phone_number': webhook_extract['twilio_phone_number'],
+            'twilio_call_sid': webhook_extract['twilio_call_sid'],
+            'twilio_account_sid': webhook_extract['twilio_account_sid']
+        }
         
-        print("call_data[webhook_extract['room_name']]:", call_data[webhook_extract['room_name']])
+        print(" printing call_data[webhook_extract['room_name']]:", call_data[webhook_extract['room_name']])
         # Write call_data to JSON file
         try:
             with open('call_data.json', 'w') as f:

@@ -46,64 +46,6 @@ export function Footer() {
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-6 sm:grid-cols-3">
             <div>
-              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Product</h2>
-              <ul className="gap-2 grid list-none">
-                <li>
-                  <Link
-                    href="/"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    Email Collection
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/faq"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Community</h2>
-              <ul className="gap-2 grid list-none">
-                <li>
-                  <Link
-                    href="/"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    Discord
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    Twitter
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="mailto:hello@chatcollect.com"
-                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
-                  >
-                    Email
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
               <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Legal</h2>
               <ul className="gap-2 grid list-none">
                 <li>

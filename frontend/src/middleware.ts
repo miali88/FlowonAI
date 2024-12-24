@@ -10,6 +10,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     await auth.protect();
   }
 
+  console.log('Auth object:', auth)
+  
   // Additional protection based on authorization status for admin routes
   if (req.nextUrl.pathname.startsWith('/admin')) {
     await auth.protect((has) => {

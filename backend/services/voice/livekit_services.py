@@ -1,15 +1,14 @@
 import os, random, uuid, asyncio
 from dotenv import load_dotenv
 from asyncio import Lock
-import logging
-import re
+import logging, re 
 from typing import Union, AsyncIterable
 
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
 from livekit.agents.voice_assistant import VoiceAssistant
 from livekit.agents import llm, JobContext
-from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest
+from livekit.api import LiveKitAPI, CreateRoomRequest, ListRoomsRequest, ListParticipantsRequest, RoomParticipantIdentity
 from livekit.plugins import cartesia, deepgram, openai, silero, anthropic, elevenlabs
 from supabase import create_client, Client
 
@@ -30,7 +29,9 @@ async def create_livekit_api():
         api_key=os.getenv("LIVEKIT_API_KEY"),
         api_secret=os.getenv("LIVEKIT_API_SECRET"))
 
-async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks):
+""" ROOM FUNCTIONS """
+
+async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTasks, medium: str = "voice"):
     logger.info(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
     print(f"Token generation requested for agent_id={agent_id}, user_id={user_id}")
 
@@ -38,7 +39,8 @@ async def token_gen(agent_id: str, user_id: str, background_tasks: BackgroundTas
         logger.error("Missing required parameters: agent_id or user_id")
         raise HTTPException(status_code=400, detail="Missing agent_id or user_id")
 
-    room_name = f"agent_{agent_id}_room_{user_id}_{uuid.uuid4()}"
+    room_name = f"agent_{agent_id}_room_{user_id}_{uuid.uuid4()}" + ("_textbot" if medium == "textbot" else "")
+    
     logger.debug(f"Generated room name: {room_name}")
 
     # Use a lock to ensure only one token generation process happens at a time for this room
@@ -136,6 +138,8 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
         await livekit_api.aclose()
         print("livekit_api closed in create_room")
 
+""" AGENT FUNCTIONS """
+
 async def start_agent_request(access_token: str, agent_id: str, room_name: str):
     logger.info(f"Starting agent request for room: {room_name}")
     livekit_api = await create_livekit_api()
@@ -169,7 +173,7 @@ lang_options = {
     "fr": {"deepgram": "fr", "cartesia": "fr", "cartesia_model": "sonic-multilingual"},
 }
 
-async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
+async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None, call_type: str = "web"):
     logger.info(f"Creating voice assistant for agent_id: {agent_id}")
     try:
         agent = await get_agent(agent_id)
@@ -177,24 +181,30 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
             logger.error(f"Agent not found: {agent_id}")
             raise ValueError(f"Agent {agent_id} not found")
             
-        logger.debug(f"Agent configuration: language={agent['language']}, voice={agent['voice']}, provider={agent.get('voiceProvider')}")
+        # Log full agent configuration for debugging
+        logger.debug(f"Full agent configuration: {agent}")
         
-        # Add validation for required agent fields
+        # Add validation for required agent fields with detailed logging
         required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
-        for field in required_fields:
-            if not agent.get(field):
-                logger.error(f"Missing required field: {field}")
-                raise ValueError(f"Agent configuration missing required field: {field}")
+        missing_fields = [field for field in required_fields if not agent.get(field)]
+        
+        if missing_fields:
+            error_msg = f"Agent configuration missing required fields: {', '.join(missing_fields)}"
+            logger.error(error_msg)
+            logger.error(f"Current agent configuration: {agent}")
+            raise ValueError(error_msg)
 
         logger.info("Creating voice assistant with configuration")
-        print("Creating voice assistant with configuration")
-        fnc_ctx = AgentFunctions(job_ctx)
-        # Initialize functions based on agent features
-        await fnc_ctx.initialize_functions()
+        print("Creating voice assistant with configuration")    
+        fnc_ctx = None
+
+        if call_type != "textbot":
+            fnc_ctx = AgentFunctions(job_ctx)
+            await fnc_ctx.initialize_functions()
         
         llm_instance = openai.LLM(
             model="gpt-4o",
-            temperature=0.2
+            temperature=0.4
         )
 
         # Select TTS provider based on voiceProvider field
@@ -216,19 +226,26 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext):
                 model=lang_options[agent['language']]['cartesia_model'],
                 voice=agent['voice'])
         
+        if agent['instructions'] == "multi_state":
+            instructions = agent['multi_state']
+        else:
+            instructions = agent['instructions']
+
         assistant = VoiceAssistant(
             vad=silero.VAD.load(),
-            stt=deepgram.STT(model="nova-2-general", language=lang_options[agent['language']]['deepgram']),
+            stt=deepgram.STT(
+                model="nova-2-general", 
+                language=lang_options[agent['language']]['deepgram']),
             llm=llm_instance,
             tts=tts_instance,
             chat_ctx=llm.ChatContext().append(
                 role="system",
-                text=agent['instructions']),
+                text=instructions),
             fnc_ctx=fnc_ctx,
             allow_interruptions=True,
             interrupt_speech_duration=0.5,
             interrupt_min_words=2,
-            min_endpointing_delay=1,
+            min_endpointing_delay=0.7,
             before_tts_cb=remove_special_characters)
                     
         logger.info("Voice assistant created successfully")

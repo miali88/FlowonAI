@@ -7,14 +7,24 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logging.info('Starting ngrok tunnel setup')
 
 try:
-    # # # Establish an HTTP tunnel to the server running on port 3000 with a specific subdomain
-    # http_tunnel_3000 = ngrok.connect(addr="http://localhost:5173",subdomain="internally-wise-spaniel")
-    # logging.info(f"ngrok tunnel for port 3000 established -> {http_tunnel_3000.public_url}")
+
+    """ static domain"""
+    port = 3000
+    http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
+    logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_static.public_url}")
     
-    # Establish another HTTP tunnel to the server running on port 8000 with a random subdomain
-    http_tunnel_8000 = ngrok.connect(addr="http://localhost:8000", subdomain="internally-wise-spaniel")
-    logging.info(f"ngrok tunnel for port 8000 established -> {http_tunnel_8000.public_url}")
-    
+    """ dynamic domain"""   
+    port = 5180
+    http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
+    logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
+
+    # """ dynamic domain"""   
+    # port = 5185
+    # http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
+    # logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
+
+
+
     # Keep the script running
     ngrok_process = ngrok.get_ngrok_process()
     try:

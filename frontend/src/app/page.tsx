@@ -1,62 +1,51 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { SetupSection } from "@/components/SetupSection";
 import { CtaSection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
-import { Particles } from "@/components/magicui/particles";
-import { DeploySection } from "@/components/deploy";
-import { KeySection } from "@/components/KeySection";
-import { BenefitsSection } from "@/components/BenefitsSection";
-import ComparisonSection from "@/components/ComparisonSection";
-import LeadGenSection from "@/components/LeadGenSection";
-import IndustrySection from "@/components/IndustrySection";
-import CommunicationSection from "@/components/CommunicationSection";
-import WorkloadSection from "@/components/WorkloadSection";
-import PsychologySection from "@/components/PsychologySection";
-import ROISection from "@/components/ROISection";
 import TelephonySection from "@/components/TelephonySection";
-import FAQSection from "@/components/FAQSection";
-import { Pricing } from "@/components/pricing";
-import { LeadsMarquee } from "@/components/LeadsMarquee";
-import FeedbackSection from "../components/FeedbackSection";
+import AppUILanding from "@/components/AppUILanding";
+import dynamic from "next/dynamic";
 
+const ComparisonSection = dynamic(() => import('@/components/Compare'), {
+  loading: () => <div className="h-[600px]" />, // Adjust height as needed
+  ssr: false
+});
 
+// Convert components to dynamic imports
+const DynamicTimelineDeploy = dynamic(() => import('@/components/TimelineDeploy').then(mod => mod.TimelineDeploy), {
+  loading: () => <div className="h-[400px]" />,
+  ssr: true
+});
+
+const DynamicBenefitsSection = dynamic(() => import('@/components/BenefitsSection').then(mod => mod.BenefitsSection), {
+  loading: () => <div className="h-[400px]" />,
+  ssr: true
+});
+
+const DynamicPricing = dynamic(() => import('@/components/pricing').then(mod => mod.Pricing), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
+});
 
 export default function HomePage() {
   return (
     <div className="overflow-x-hidden relative">
       <Header />
-      <main className="w-full relative">
-        <Particles
-          ease={70}
-          size={0.10}
-          color="#ffffff"
-          quantity={235}
-          staticity={40}
-          className="absolute inset-0 -z-10 h-full"
-        />
-        <Hero />
-        <div className="mx-auto max-w-7xl">
-          <KeySection />
-          <LeadsMarquee />
-          <SetupSection />
-          <DeploySection />
-          <BenefitsSection />
-          <ComparisonSection />
-          <LeadGenSection />
-          <IndustrySection />
-          <CommunicationSection />
-          <WorkloadSection />
-          <PsychologySection />
-          <ROISection />
-          <FeedbackSection />
-          <TelephonySection />
-          <FAQSection />
-          <Pricing />
-          <CtaSection />
+      <main className="w-full relative pt-[64px] sm:pt-0">
+
+
+<div className="mx-auto max-w-7xl">
+          <Hero />
+          <AppUILanding />
+          <DynamicTimelineDeploy />
+          <DynamicBenefitsSection />
+          {/* <TelephonySection /> */}
+          {/* <MeetKenneth /> */}
+          <DynamicPricing />
+          <CtaSection /> 
+          <Footer />
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

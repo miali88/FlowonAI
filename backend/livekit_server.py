@@ -1,6 +1,12 @@
-import os
-import sys
+from __future__ import annotations
+
+import os, sys
 from typing import Dict, List, Optional, Any
+import asyncio
+from dotenv import load_dotenv
+import logging
+import time
+from datetime import datetime, timedelta
 
 # Add both the project root and backend directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -10,20 +16,17 @@ for path in [project_root, backend_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
-import asyncio
-from dotenv import load_dotenv
-import logging
-import time
-from datetime import datetime, timedelta
-
-from livekit import agents, rtc
+from livekit import agents, rtc, api
 from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
 from livekit.plugins import silero
+from livekit.agents.voice_assistant import VoiceAssistant
 
 from services.voice.livekit_services import create_voice_assistant
-from services.voice.tool_use import trigger_show_chat_input
+from services.voice.tool_use import trigger_show_chat_input, transfer_call
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
+from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from backend.mute_track import CallTransferHandler
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
@@ -31,6 +34,9 @@ logging.getLogger('openai').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('hpack').setLevel(logging.WARNING)  # Add this line
 logging.getLogger('httpx').setLevel(logging.WARNING)  # Add this
 logging.getLogger('httpcore').setLevel(logging.WARNING)  # Add this
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -58,8 +64,6 @@ class CallDuration:
 
 async def entrypoint(ctx: JobContext):
     print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
-    # agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-    # agent, opening_line = await create_voice_assistant(agent_id, ctx)
     room_name = ctx.room.name
     room = ctx.room
     print("room_name:", room_name)
@@ -69,7 +73,7 @@ async def entrypoint(ctx: JobContext):
 
     # Add call start time tracking
     call_start_time = datetime.now()
-    
+        
     # Add participant tracking dictionary and last_audio_time
     participant_prospects = {}
     last_audio_time = time.time()  # Track when we last received any audio
@@ -77,197 +81,47 @@ async def entrypoint(ctx: JobContext):
     last_agent_audio = time.time()  # Track agent's last audio
     SILENCE_TIMEOUT = 90  # Timeout in seconds
 
+    conversation_stored = False
+
     try:
-        """ TEL CALL INIT """
-        if room_name.startswith("call-"):
-            print("telephone call detected")
 
-            async def get_agent_id(room_name: str):
-                import json
-                agents = await get_all_agents()
-                
-                # Add current directory printing
-                print("Current working directory:", os.getcwd())
-                
-                def get_agent_id_by_phone(data, phone_number):
-                    for agent in data:
-                        if agent.get('assigned_telephone') == phone_number:
-                            return agent.get('id')
-                    return None
-                
-                try:
-                    with open('backend/call_data.json', 'r') as f:
-                        call_data_from_file = json.load(f)
-                    twilio_number = call_data_from_file.get(room_name)
-                except FileNotFoundError:
-                    print("call_data.json not found")
-                    twilio_number = None
-                except json.JSONDecodeError:
-                    print("Error decoding call_data.json")
-                    twilio_number = None
-                except Exception as e:
-                    print(f"Error reading call_data.json: {str(e)}")
-                    twilio_number = None
+        """ call types: inbound tel, outbound tel, web """
+        agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
 
-                print(f"\nroom_name: {room_name}")
-                print(f"twilio_number from file: {twilio_number}")
-                agent_id = get_agent_id_by_phone(agents, twilio_number)
-                print(f"agent_id: {agent_id}")
-                return agent_id
+        agent, opening_line = await create_voice_assistant(agent_id, ctx, call_type)
+        agent.start(room)
         
-            agent_id = await get_agent_id(room_name)
-
-            agent, opening_line = await create_voice_assistant(agent_id, ctx)
-            agent.start(room)
+        if call_type != "textbot":
             await agent.say(opening_line, allow_interruptions=False)
 
-        else:
-            """ WEB CALL INIT """
-            print("web call detected")
-
-            print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
-
-            print("iterating through room.remote_participants")
-            for rp in room.remote_participants.values():
-                print("rp.identity", rp.identity)
-
-            agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
-            user_id: str = agent_metadata['userId']
-
-            agent, opening_line = await create_voice_assistant(agent_id, ctx)
-            agent.start(room)
-            await agent.say(opening_line, allow_interruptions=False)
+        agent_metadata: Dict = await get_agent_metadata(agent_id)
+        user_id: str = agent_metadata['userId']
 
         await asyncio.sleep(3)
 
-        print("iterating through room.remote_participants to find available participant")
-        available_participant = None
-        for rp in room.remote_participants.values():
-            print("remote participant:",rp)
-            available_participant = rp
-            break
+        #print("iterating through room.remote_participants to find first participant")
+        first_participant = None
+        # Sort participants by join time and get the first one
+        sorted_participants = sorted(
+            room.remote_participants.values(),
+            key=lambda p: p.joined_at if hasattr(p, 'joined_at') else 0
+        )
+        if sorted_participants:
+            first_participant = sorted_participants[0]
 
-        if available_participant:
+        if first_participant:
             # Add the participant to tracking dictionary with empty prospect status
-            participant_prospects[available_participant.sid] = ""
-            print(f"Added participant {available_participant.sid} to tracking with empty prospect status")
-            print(f"Found available participant: {available_participant.identity}")            
+            participant_prospects[first_participant.sid] = ""
+            print(f"Added participant {first_participant.sid} to tracking with empty prospect status")
+            print(f"Found available participant: {first_participant.identity}")            
         else:
             print("No available participants found.")
             ctx.shutdown(reason="No available participants")
 
-
-        # async def initialize_calendar_on_connect():
-        #     print("\n=== Starting Calendar Initialization ===")
-        #     try:
-        #         # Extract agent_id differently based on call type
-        #         if room_name.startswith("call-"):
-        #             print("Telephone call - using existing agent_id")
-        #             # agent_id is already set from telephone call flow
-        #         else:
-        #             print("Web call - extracting agent_id from room name")
-        #             agent_id = room_name.split('_')[1]
-
-        #         print(f"Getting metadata for agent_id: {agent_id}")
-        #         agent_metadata: Dict = await get_agent_metadata(agent_id)
-        #         user_id: str = agent_metadata['userId']
-                
-        #         print(f"Starting calendar cache initialization:")
-        #         print(f"- user_id: {user_id}")
-        #         print(f"- provider: googlecalendar")
-                
-        #         await initialize_calendar_cache(user_id, "googlecalendar")
-        #         print("Calendar cache initialization completed successfully")
-        #     except Exception as e:
-        #         print(f"Error in calendar initialization:")
-        #         print(f"- Error type: {type(e).__name__}")
-        #         print(f"- Error details: {str(e)}")
-        #         print(f"- Room name: {room_name}")
-        
-        # # Create background task for calendar initialization
-        # print("\n\n\n\n Creating calendar initialization task")
-        # asyncio.create_task(initialize_calendar_on_connect())
-
-
-        #room_sid = await ctx.room.sid
-        """ EVENT HANDLERS FOR AGENT """            
-        @ctx.room.on('participant_disconnected')
-        def on_participant_disconnected(participant: rtc.RemoteParticipant):
-            # Check if available_participant exists before comparing identities
-            if available_participant and participant.identity == available_participant.identity:
-                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
-                print(f"Call duration: {call_duration}")
-                ctx.add_shutdown_callback(
-                    lambda: store_conversation_history(agent, 
-                                                   room_name, 
-                                                   ctx.job.id, 
-                                                   available_participant.identity, 
-                                                   participant_prospects[available_participant.sid],
-                                                   call_duration)
-                )
-                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
-            else:
-                print(f"Participant disconnected but was not the available participant: {participant.identity}")
-
-        # Add handler for agent's audio
-        # Replace the previous agent.on("speaking_started") with these handlers
-        @agent.on("agent_started_speaking")
-        def on_agent_started_speaking():
-            nonlocal last_audio_time, last_agent_audio
-            current_time = time.time()
-            last_audio_time = current_time
-            last_agent_audio = current_time
-            print("Agent started speaking, updating last_audio_time:", current_time)
-
-        @agent.on("user_started_speaking")
-        def on_user_started_speaking():
-            nonlocal last_audio_time, last_participant_audio
-            current_time = time.time()
-            last_audio_time = current_time
-            last_participant_audio = current_time
-            print("User started speaking, updating last_audio_time:", current_time)
-
-        # Optional: You might also want to track when speaking stops
-        @agent.on("agent_stopped_speaking")
-        def on_agent_stopped_speaking():
-            print("Agent stopped speaking")
-
-        @agent.on("user_stopped_speaking")
-        def on_user_stopped_speaking():
-            print("User stopped speaking")
-
-        # @agent.on("response_created")
-        # async def on_response_created(text: str):
-        #     """This event is triggered when the LLM generates a response, before it's converted to speech"""
-        #     print("\n=== LLM Response ===")
-        #     print(text)
-        #     print("===================\n")
-
-        # # You can also add this handler to see the final processed text
-        # @agent.on("agent_speech_committed")
-        # def on_speech_committed(text: str):
-        #     """This event is triggered after the text has been processed and sent to TTS"""
-        #     print("\n=== Processed Speech Text ===")
-        #     print(text)
-        #     print("===========================\n")
-
-        @ctx.room.on('disconnected')
-        def on_disconnected(exception: Exception):
-            print(f"Room {room_name} disconnected. Reason: {str(exception)}")
-
-
-        @ctx.room.on('connected')
-        def on_connected():
-            print(f"Room {room_name} connected")
-            """ doesn't work :(, doesn't callback on room connect"""
-
-
         @agent.on("function_calls_finished")
         def on_function_calls_finished(called_functions: list[agents.llm.CalledFunction]):
             """This event triggers when an assistant's function call completes."""
-            print("\n\n\n on_function_calls_finished method called")
-            print("called_functions:", called_functions)
+            print("\n\n\n[on_function_calls_finished] method called")
 
             for called_function in called_functions:
                 function_name = called_function.call_info.function_info.name
@@ -276,19 +130,123 @@ async def entrypoint(ctx: JobContext):
                 if function_name == "request_personal_data":
                     print("Triggering show_chat_input")
                     # Update prospect status for the participant
-                    participant_prospects[available_participant.sid] = "yes"
-                    print(f"Updated {available_participant.sid} to prospect status")
+                    participant_prospects[first_participant.sid] = "yes"
+                    print(f"Updated {first_participant.sid} to prospect status")
                     # Create task for handling the chat input response
                     asyncio.create_task(handle_chat_input_response(agent, 
                                                                     ctx.room.name, 
                                                                     ctx.job.id, 
-                                                                    available_participant.identity,
-                                                                    participant_prospects[available_participant.sid])  # Pass the prospect_status
+                                                                    first_participant.identity,
+                                                                    participant_prospects[first_participant.sid])  # Pass the prospect_status
                                                                     )
 
                 elif function_name == "search_products_and_services":
                     print("search_products_and_services called")
                     #print("\n\nagent.chat_ctx:", agent.chat_ctx)
+
+                elif function_name == "transfer_call":
+                    print("[on_function_calls_finished] transfer_call called")
+                    async def handle_transfer():
+                        async with CallTransferHandler(room) as transfer_handler:
+                            await agent.say("I'm going to put you on hold for a moment while I check in with the staff member", allow_interruptions=False)
+                            await asyncio.sleep(5)
+                            await transfer_handler.place_participant_on_hold(first_participant.identity)
+
+                            local_participant = room.local_participant.identity
+                            print("[on_function_calls_finished] re-subscribing agent to its own tracks")
+                            print("[on_function_calls_finished] local_participant:", local_participant)
+                            await transfer_handler.re_subscribe_agent(local_participant)
+                            # Access the chat context
+                            print("appending to chat_ctx")
+                            agent.chat_ctx.append(text="## SYSTEM:You have successfully placed the caller on hold. and are now speaking with the staff member", role="user")
+                            print("chat_ctx appended")
+
+                            ### Find the second participant (staff member)
+                            print("iterating through room.remote_participants to find second participant")
+                            second_participant = None
+                            for participant in room.remote_participants.values():
+                                if participant.sid != first_participant.sid:
+                                    second_participant = participant
+                                    break
+                            
+                            if second_participant:
+                                print("about to call agent._link_participant to create audio track between agent and second participant")
+                                agent._link_participant(second_participant.identity)
+                                print(f"Found second participant: {second_participant.identity}")
+                                local_participant = room.local_participant.identity
+                                await transfer_handler.re_subscribe_participant(second_participant.identity)
+
+                            else:
+                                print("No second participant found in the room")
+   
+
+
+                            # await transfer_handler.get_participant(local_participant)
+                            # await transfer_handler.get_participant(first_participant.identity)
+
+                    
+                    asyncio.create_task(handle_transfer())
+
+        # @agent.on("user_started_speaking")
+        # def on_user_started_speaking(user_transcription: str = None):
+        #     if user_transcription:
+        #         print(f"User started speaking: {user_transcription}")
+        #     else:
+        #         print("User started speaking (no transcription available)")
+
+        # @agent.on("user_stopped_speaking")
+        # def on_user_stopped_speaking():
+        #     print("User stopped speaking")
+
+        @agent.on("agent_started_speaking")
+        def on_agent_started_speaking(user_transcription: str = None):
+            print("agent_started_speaking method called")
+            if user_transcription:
+                print(f"Agent started speaking: {user_transcription}")
+            else:
+                print("Agent started speaking (no transcription available)")
+
+        @agent.on("agent_stopped_speaking")
+        def on_agent_stopped_speaking():
+            print("Agent stopped speaking")
+
+        # """ EVENT HANDLERS FOR AGENT """     
+        @ctx.room.on('participant_connected')
+        def on_participant_connected(participant: rtc.RemoteParticipant):
+            print(f"OOOH WOW,Participant connected: {participant.identity}")
+            if participant.identity == first_participant.identity:
+                print(f"First participant connected: {first_participant.identity}")
+            else:
+                print(f"Other participant connected: {participant.identity}")
+           
+        @ctx.room.on('participant_disconnected')
+        def on_participant_disconnected(participant: rtc.RemoteParticipant):
+            # Check if first_participant exists before comparing identities
+            if first_participant and participant.identity == first_participant.identity:
+                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
+                print(f"Call duration: {call_duration}")
+                ctx.add_shutdown_callback(
+                    lambda: store_conversation_history(agent, 
+                                                   room_name, 
+                                                   ctx.job.id, 
+                                                   first_participant.identity, 
+                                                   participant_prospects[first_participant.sid],
+                                                   call_duration)
+                )
+                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
+            else:
+                print(f"Participant disconnected but was not the available participant: {participant.identity}")
+
+            print("User stopped speaking")
+
+        @ctx.room.on('disconnected')
+        def on_disconnected(exception: Exception):
+            print(f"Room {room_name} disconnected. Reason: {str(exception)}")
+
+        @ctx.room.on('connected')
+        def on_connected():
+            print(f"Room {room_name} connected")
+            """ doesn't work :(, doesn't callback on room connect"""
 
         async def handle_chat_input_response(agent, 
                                              room_name: str, 
@@ -317,10 +275,22 @@ async def entrypoint(ctx: JobContext):
                                              job_id: str, 
                                              participant_identity: str, 
                                              prospect_status: str,
-                                             call_duration: CallDuration):  # Update type hint
+                                             call_duration: CallDuration):
+            nonlocal conversation_stored
+            if conversation_stored:
+                print("Conversation already stored, skipping...")
+                return
+            
             print("store_conversation_history method called")
 
-            # Parse chat context into simplified format
+            # Check if there are any user messages in chat context
+            has_user_messages = any(message.role == 'user' for message in agent.chat_ctx.messages)
+            
+            if not has_user_messages:
+                print("No user messages found in chat context, skipping conversation storage")
+                return
+
+            # Rest of the function continues only if there are user messages
             conversation_history = []
             for message in agent.chat_ctx.messages:
                 message_dict = {}
@@ -369,6 +339,8 @@ async def entrypoint(ctx: JobContext):
                 print("prospect_status is yes, sending email")
                 await send_email(participant_identity, conversation_history, agent_id)
 
+            conversation_stored = True  # Set flag after successful storage
+
         def format_duration(start_time):
             duration = datetime.now() - start_time
             total_seconds = duration.total_seconds()
@@ -384,25 +356,104 @@ async def entrypoint(ctx: JobContext):
                 time_since_participant = current_time - last_participant_audio
                 time_since_agent = current_time - last_agent_audio
 
-                # Log the silence durations for debugging
-                if time_since_last_audio > SILENCE_TIMEOUT / 2:  # Only log if silence is getting significant
-                    print(f"Time since last audio: {time_since_last_audio:.1f}s")
-                    print(f"Time since participant audio: {time_since_participant:.1f}s")
-                    print(f"Time since agent audio: {time_since_agent:.1f}s")
+                ### Log the silence durations for debugging
+                # if time_since_last_audio > SILENCE_TIMEOUT / 2:  # Only log if silence is getting significant
+                #     print(f"Time since last audio: {time_since_last_audio:.1f}s")
+                #     print(f"Time since participant audio: {time_since_participant:.1f}s")
+                #     print(f"Time since agent audio: {time_since_agent:.1f}s")
 
                 if time_since_last_audio > SILENCE_TIMEOUT:
                     print(f"Call duration before timeout: {format_duration(call_start_time)}")
                     await store_conversation_history(agent, 
                                                   room_name, 
                                                   ctx.job.id, 
-                                                  available_participant.identity, 
-                                                  participant_prospects[available_participant.sid],
+                                                  first_participant.identity, 
+                                                  participant_prospects[first_participant.sid],
                                                   format_duration(call_start_time))  # Add duration
                     await ctx.shutdown(reason=f"Silence timeout reached after {format_duration(call_start_time)}")
                     break
 
         # Create and store the silence checker task
         silence_checker_task = asyncio.create_task(check_silence_timeout())
+
+        # Track state management
+        track_subscriptions = {}  # Keep track of subscribed tracks by participant
+        participant_states = {}   # Track participant connection states
+
+        @ctx.room.on("participant_connected")
+        def on_participant_connected(participant: rtc.RemoteParticipant):
+            logger.info(f"Participant connected: {participant.identity}")
+            participant_states[participant.sid] = {
+                "connected_at": datetime.now(),
+                "connection_quality": None,
+                "is_muted": False
+            }
+
+        # Update existing on_participant_disconnected to include cleanup
+        @ctx.room.on("participant_disconnected")
+        def on_participant_disconnected(participant: rtc.RemoteParticipant):
+            logger.info(f"Participant disconnected: {participant.identity}")
+            # Clean up tracking dictionaries
+            if participant.sid in track_subscriptions:
+                del track_subscriptions[participant.sid]
+            if participant.sid in participant_states:
+                del participant_states[participant.sid]
+            
+            # Existing disconnect logic
+            if first_participant and participant.identity == first_participant.identity:
+                call_duration = CallDuration.from_timestamps(call_start_time, datetime.now())
+                print(f"Call duration: {call_duration}")
+                ctx.add_shutdown_callback(
+                    lambda: store_conversation_history(agent, 
+                                                   room_name, 
+                                                   ctx.job.id, 
+                                                   first_participant.identity, 
+                                                   participant_prospects[first_participant.sid],
+                                                   call_duration)
+                )
+                ctx.shutdown(reason=f"Subscribed participant disconnected after {call_duration}")
+            else:
+                print(f"Participant disconnected but was not the available participant: {participant.identity}")
+
+            print("User stopped speaking")
+
+        @ctx.room.on("track_subscribed")
+        def on_track_subscribed(track, publication, participant):
+            logger.info(f"Track subscribed: {track.kind} from {participant.identity}")
+            if participant.sid not in track_subscriptions:
+                track_subscriptions[participant.sid] = []
+            track_subscriptions[participant.sid].append({
+                "track_sid": publication.sid,
+                "kind": track.kind,
+                "subscribed_at": datetime.now()
+            })
+
+        @ctx.room.on("track_unsubscribed")
+        def on_track_unsubscribed(track, publication, participant):
+            logger.info(f"Track unsubscribed: {track.kind} from {participant.identity}")
+            if participant.sid in track_subscriptions:
+                track_subscriptions[participant.sid] = [
+                    t for t in track_subscriptions[participant.sid] 
+                    if t["track_sid"] != publication.sid
+                ]
+
+        @ctx.room.on("connection_quality_changed")
+        def on_connection_quality_changed(participant, quality):
+            logger.info(f"Connection quality changed for {participant.identity}: {quality}")
+            if participant.sid in participant_states:
+                participant_states[participant.sid]["connection_quality"] = quality
+
+        @ctx.room.on("track_muted")
+        def on_track_muted(participant, publication):
+            logger.info(f"Track muted by {participant.identity}")
+            if participant.sid in participant_states:
+                participant_states[participant.sid]["is_muted"] = True
+
+        @ctx.room.on("track_unmuted")
+        def on_track_unmuted(participant, publication):
+            logger.info(f"Track unmuted by {participant.identity}")
+            if participant.sid in participant_states:
+                participant_states[participant.sid]["is_muted"] = False
 
         try:
             while True:
@@ -424,7 +475,6 @@ async def entrypoint(ctx: JobContext):
         # Ensure proper cleanup
         ctx.shutdown(reason="finally, session ended")
 
-
 # async def request_fnc(ctx: JobRequest):
 #     print("request_fnc called")
 #     return True
@@ -436,7 +486,6 @@ def prewarm_fnc(proc: JobProcess):
 # async def load_fnc(proc: JobProcess):
 #     print("load_fnc called")
 #     return True
-
 
 if __name__ == "__main__":
     opts = WorkerOptions(

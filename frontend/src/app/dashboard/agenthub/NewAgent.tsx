@@ -11,38 +11,28 @@ import styles from './NewAgent.module.css';
 import { useUser } from "@clerk/nextjs";
 import { Agent } from "./AgentCards";
 
-type SetupMethod = 'scratch' | 'quick' | 'template' | 'name' | null;
+type SetupMethod = 'telephone' | 'text' | 'voice-web' | 'feedback' | 'name' | null;
 type AgentType = 'widget' | 'outbound' | 'inbound' | null;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface NewAgentProps {
-  knowledgeBaseItems?: Array<{
-    id: string | number;
-    title: string;
-    data_type: string;
-  }>;
   onAgentCreated?: () => void;
   setSelectedAgent?: (agent: Agent) => void;
 }
 
-interface FeatureConfig {
-  enabled: boolean;
-  // Add other properties if needed
-}
-
-export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedAgent }: NewAgentProps) {
+export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [setupMethod, setSetupMethod] = useState<SetupMethod>(null);
+  const [setupMethod, setSetupMethod] = useState<'name' | null>(null);
   const [agentType, setAgentType] = useState<AgentType>(null);
   const [agentName, setAgentName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSetupMethodSelect = (method: SetupMethod) => {
-    setSetupMethod(method);
-    setAgentType(null);
+    setSetupMethod('name');
+    setAgentType(method === 'quick' ? 'widget' : null);
   };
 
   const handleAgentTypeSelect = (type: AgentType) => {
@@ -52,10 +42,9 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
   const handleBack = () => {
     if (agentName) {
       setAgentName('');
-    } else if (agentType !== null) {
-      setAgentType(null);
-    } else if (setupMethod !== null) {
+    } else {
       setSetupMethod(null);
+      setAgentType(null);
     }
   };
 
@@ -73,8 +62,18 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
   };
 
   const handleCreateAgent = async () => {
-    if (!user?.id || !agentName.trim() || !agentType) return;
-    
+    console.log("handleCreateAgent called");
+    console.log("User ID:", user?.id);
+    console.log("Agent Name:", agentName.trim());
+    console.log("Agent Type:", agentType);
+
+    if (!user?.id || !agentName.trim() || !agentType) {
+      console.log("Missing required fields");
+      return;
+    }
+
+    console.log("Creating agent...");
+
     setIsLoading(true);
     setError(null);
 
@@ -97,11 +96,14 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
         }),
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
         throw new Error('Failed to create agent');
       }
 
       const newAgent = await response.json();
+      console.log("Agent created:", newAgent);
 
       // Close dialog and reset state
       setIsOpen(false);
@@ -178,100 +180,59 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
       </DialogHeader>
       
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-6 text-center">
           <Button
             variant="outline"
-            className="h-24 flex items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('scratch')}
+            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('telephone')}
+            style={{ whiteSpace: 'normal', textAlign: 'center' }}
           >
             <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <PlusIcon className="w-6 h-6" />
+              <PhoneIcon className="w-6 h-6" />
             </div>
+            <h3 className="font-semibold mt-2">Telephone Agent</h3>
+            <p className="text-sm text-muted-foreground">Handle phone calls with AI</p>
           </Button>
 
           <Button
             variant="outline"
-            className="h-24 flex items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('quick')}
+            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('text')}
+            style={{ whiteSpace: 'normal', textAlign: 'center' }}
           >
             <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <SparklesIcon className="w-6 h-6" />
+              <MessageSquareIcon className="w-6 h-6" />
             </div>
+            <h3 className="font-semibold mt-2">Text Based Agent</h3>
+            <p className="text-sm text-muted-foreground">Advanced text based chatbot</p>
           </Button>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-          <div>
-            <h3 className="font-semibold mb-1">Start from scratch</h3>
-            <p className="text-sm text-muted-foreground">Build your AI Assistant from the ground up</p>
-          </div>
-          
-          <div>
-            <h3 className="font-semibold mb-1">Quick Assistant Setup</h3>
-            <p className="text-sm text-muted-foreground">Use presets to streamline setup & adjust settings</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAgentTypeSelection = () => (
-    <div className="grid gap-6">
-      <DialogHeader>
-        <DialogTitle className="text-foreground dark:text-gray-200">
-          <Button 
-            variant="ghost" 
-            className="mr-2 p-0 h-8 w-8"
-            onClick={handleBack}
+          <Button
+            variant="outline"
+            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('voice-web')}
+            style={{ whiteSpace: 'normal', textAlign: 'center' }}
           >
-            <ArrowLeftIcon className="h-4 w-4" />
+            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+              <MicIcon className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold mt-2">Voice Web Agent</h3>
+            <p className="text-sm text-muted-foreground">Real time voice AI agent anywhere on your webste</p>
           </Button>
-          Choose type of assistant
-        </DialogTitle>
-      </DialogHeader>
 
-      <div className="grid grid-cols-1 gap-4">
-        <Button
-          variant="outline"
-          className="h-24 flex items-center justify-start px-4 hover:border-primary"
-          onClick={() => handleAgentTypeSelect('outbound')}
-        >
-          <div className="flex items-center gap-4">
-            <ArrowUpRightIcon className="w-6 h-6" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold">Outbound</span>
-              <span className="text-sm text-muted-foreground">Automate calls within workflows using Zapier, REST API, or HighLevel</span>
+          <Button
+            variant="outline"
+            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+            onClick={() => handleSetupMethodSelect('feedback')}
+            style={{ whiteSpace: 'normal', textAlign: 'center' }}
+          >
+            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+              <MessageCircleIcon className="w-6 h-6" />
             </div>
-          </div>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="h-24 flex items-center justify-start px-4 hover:border-primary"
-          onClick={() => handleAgentTypeSelect('inbound')}
-        >
-          <div className="flex items-center gap-4">
-            <ArrowDownLeftIcon className="w-6 h-6" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold">Inbound</span>
-              <span className="text-sm text-muted-foreground">Manage incoming calls via phone, Zapier, REST API, or HighLevel</span>
-            </div>
-          </div>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="h-24 flex items-center justify-start px-4 hover:border-primary"
-          onClick={() => handleAgentTypeSelect('widget')}
-        >
-          <div className="flex items-center gap-4">
-            <MessageSquareIcon className="w-6 h-6" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold">Widget</span>
-              <span className="text-sm text-muted-foreground">Create a widget and easily embed it anywhere in your app</span>
-            </div>
-          </div>
-        </Button>
+            <h3 className="font-semibold mt-2">Feedback Widget</h3>
+            <p className="text-sm text-muted-foreground">Collect feedback in app and run campaigns</p>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -458,9 +419,6 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated, setSelectedA
       </DialogTrigger>
       <DialogContent className={`sm:max-w-[625px] ${styles.glassCard}`}>
         {setupMethod === null && renderInitialSelection()}
-        {setupMethod === 'scratch' && !agentType && renderAgentTypeSelection()}
-        {setupMethod === 'scratch' && agentType && renderNameInput()}
-        {setupMethod === 'quick' && !agentType && renderQuickSetup()}
         {setupMethod === 'name' && renderNameInput()}
       </DialogContent>
     </Dialog>
@@ -507,25 +465,6 @@ const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const LayoutTemplateIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect width="18" height="7" x="3" y="3" rx="1" />
-    <rect width="9" height="7" x="3" y="14" rx="1" />
-    <rect width="5" height="7" x="16" y="14" rx="1" />
-  </svg>
-);
-
 const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
@@ -544,7 +483,7 @@ const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const ArrowUpRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const PhoneIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
     xmlns="http://www.w3.org/2000/svg"
@@ -557,26 +496,7 @@ const ArrowUpRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M7 17V7h10" />
-    <path d="M7 7l10 10" />
-  </svg>
-);
-
-const ArrowDownLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 7L7 17" />
-    <path d="M17 17H7V7" />
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
   </svg>
 );
 
@@ -594,5 +514,42 @@ const MessageSquareIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
   >
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const MessageCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
   </svg>
 );

@@ -65,9 +65,8 @@ function Loader() {
   );
 }
 
-const formatPurpose = (purpose: string | string[]) => {
-  const purposeStr = Array.isArray(purpose) ? purpose.join('-') : purpose;
-  return "Purpose: " + purposeStr
+const formatPurpose = (purpose: string) => {
+  return purpose
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');

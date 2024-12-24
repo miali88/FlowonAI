@@ -1,14 +1,13 @@
 from typing import Annotated, Optional, Literal, Union, Dict, List
-import json
-import aiohttp, os, logging, asyncio
+import aiohttp, os, logging, asyncio, json
 from dotenv import load_dotenv
 
-from livekit.agents import llm, JobContext
-
+from livekit.agents import llm
 
 from services.chat.chat import similarity_search
-from services.cache import get_agent_metadata, calendar_cache
+from services.cache import get_agent_metadata, calendar_cache, agent_metadata_cache
 from services.composio import book_appointment_composio
+from services.voice.livekit_helper import detect_call_type_and_get_agent_id
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)
@@ -76,19 +75,19 @@ async def question_and_answer(
 ### TODO: rename to present_form
 @llm.ai_callable(
     name="request_personal_data",
-    description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or wants to bring their vehicle in to the garage, or the user has requested a callback",
+    description="Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback",
     auto_retry=False
 )
 async def request_personal_data(
     message: Annotated[
         str,
         llm.TypeInfo(
-            description="Call this function when the assistant has provided product information to the user, or the assistant requests the user's personal data, or the user wishes to speak to someone, or the user has requested a callback"
+            description="The message from the assistant requesting the user's personal details, or the user wishing to speak to someone, or the user requesting a callback"
         )
     ]
 ) -> str:
     logger.info(f"Personal data request triggered with message: {message}")
-
+    """ Call this function when the assistant requests the user's personal details, or the user wishes to speak to someone, or the user has requested a callback """
     
     return "Form presented to user. Waiting for user to complete and submit form."
 
@@ -162,74 +161,131 @@ async def book_appointment(
 """ CALL TRANSFER """
 @llm.ai_callable(
     name="transfer_call",
-    description="Transfer the call to a different number",
+    description="""Transfer the call to a specialist. Use this when:
+    1. Caller has completed the online quote form and needs to speak with a specialist
+    2. There is an urgent situation requiring immediate specialist attention
+    3. Caller is ready to discuss their business situation with the team""",
     auto_retry=True
 )
 async def transfer_call(
-    number: Annotated[str, llm.TypeInfo(description="The number to transfer the call to")]
+    transfer_reason: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Brief description of why the call is being transferred (e.g., 'Completed quote form', 'Urgent situation', 'Ready for specialist consultation')"
+        )
+    ],
+    caller_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The name of the caller"
+        )
+    ],
+    business_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="The name of the caller's business"
+        )
+    ]
 ) -> str:
     """
-    Once ready to transfer the call, 
+    Transfers the call to an available specialist based on the caller's situation.
     Returns a confirmation message about the call transfer.
     """
+    caller_details = {
+        "transfer_reason": transfer_reason,
+        "name": caller_name,
+        "business_name": business_name
+    }
+    print(f"\n\n\n\n tool transfer_call invoked - caller_details: {caller_details}")
+
     logger.info(f"tool transfer_call invoked")
+    from services.initiate_outbound import create_sip_participant
 
+    room_name = AgentFunctions.current_room_name
+    outbound_room_name = f"outbound_{room_name}"
+    agent_id = await detect_call_type_and_get_agent_id(room_name)
 
-    return f"Transferring call to {number}"
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
 
+    if not agent_metadata:
+        logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+        return "Error: Could not retrieve agent configuration"
+        
+    transfer_number: str = agent_metadata.get('features', {}).get('callTransfer', {}).get('number')
+    if not transfer_number:
+        logger.error(f"No transfer number configured for agent_id: {agent_id}")
+        return "Error: No transfer number configured for this agent"
+    print(f"transfer_number: {transfer_number}")
+
+    print(f"\nInitiating call transfer - Reason: {transfer_reason}")
+
+    print(f"about to create sip participant for room_name: {room_name}")
+    await create_sip_participant(transfer_number, room_name)
+
+    """ to make sure the agent has mentioned the callee will be placed on hold """
+    """ to put callee on hold, and isolate agent and callee """
+
+    return f"Call transfer initiated to {transfer_number}"
 
 class AgentFunctions(llm.FunctionContext):
-    current_room_name = None  # Class variable to store current room_name
+    current_room_name = None
+    current_job_ctx = None
     
     def __init__(self, job_ctx):
         super().__init__()
         self.job_ctx = job_ctx
         self.room_name = job_ctx.room.name
-        AgentFunctions.current_room_name = self.room_name  # Store room_name
+        AgentFunctions.current_room_name = self.room_name
+        AgentFunctions.current_job_ctx = job_ctx
+        # Initialize functions immediately in constructor
+        asyncio.create_task(self.initialize_functions())
 
     async def initialize_functions(self):
         print("Initializing functions for agent")
-        if not self.room_name.startswith("call-"):
-            print("telephone call detected")
+        features = {}
+        agent_id = None
 
-            room_name: str = self.job_ctx.room.name
-            agent_id: str = room_name.split('_')[1]
+        try:
+            # Get agent ID and metadata
+            agent_id, call_type = await detect_call_type_and_get_agent_id(self.room_name)
             agent_metadata: Dict = await get_agent_metadata(agent_id)
-            features: Dict = agent_metadata.get('features', {})
             
-        elif self.room_name.startswith("call-"):
-            print("telephone call detected")
+            if agent_metadata:
+                features = agent_metadata.get('features', {})
+                print(f"Retrieved features for agent {agent_id}: {features}")
+            else:
+                logger.error(f"No agent metadata found for agent_id: {agent_id}")
+                return
 
+            # Register functions before they're needed
+            await self._register_functions(features)
+            
+        except Exception as e:
+            logger.error(f"Error in initialize_functions: {str(e)}", exc_info=True)
+
+    async def _register_functions(self, features: Dict):
+        """Helper method to register all functions"""
         # Always register Q&A function
         self._register_ai_function(question_and_answer)
-        print(f"Registered Q&A function")
-        logger.info(f"Registered Q&A function")
+        logger.info("Registered Q&A function")
 
-        print(f"features: {features}")
-
-        # Check if feature exists in dict and is enabled
+        # Register optional functions based on features
         if features.get('lead_gen', {}).get('enabled', False):
             self._register_ai_function(request_personal_data)
-            print(f"Registered lead generation function")
-            logger.info(f"Registered lead generation function")
+            logger.info("Registered lead generation function")
 
         if features.get('appointmentBooking', {}).get('enabled', False):
             self._register_ai_function(fetch_calendar)
-            print(f"Registered calendar function")
-            logger.info(f"Registered calendar function")
-
             self._register_ai_function(book_appointment)
-            print(f"Registered book appointment function")
-            logger.info(f"Registered book appointment function")
+            logger.info("Registered calendar functions")
 
         if features.get('callTransfer', {}).get('enabled', False):
             self._register_ai_function(transfer_call)
-            print(f"Registered call transfer function")
-            logger.info(f"Registered call transfer function")
-
+            logger.info("Registered call transfer function")
 
 async def trigger_show_chat_input(room_name: str, job_id: str, participant_identity: str):
     logger.info(f"Triggering chat input for room={room_name}, job_id={job_id}")
+    print(f"Triggering chat input for room={room_name}, job_id={job_id}")
     async with aiohttp.ClientSession() as session:
         try:
             # First, trigger the chat input form

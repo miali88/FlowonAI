@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Agent as BaseAgent } from '../AgentCards';
 import { MultiSelect } from './multiselect_deploy';
 import { useEffect, useState } from 'react';
+import MicIcon from './MicIcon';
 
 // Define a type for telephony number details
 interface TelephonyNumberDetails {
@@ -67,6 +68,10 @@ const Deploy: React.FC<DeployProps> = ({
     fetchCountryCodes();
   }, []);
 
+  useEffect(() => {
+    console.log('Selected Agent:', selectedAgent);
+  }, [selectedAgent]);
+
   const renderPhoneNumbers = () => {
     if (!userInfo) {
       return <div className="text-sm text-muted-foreground">Loading user information...</div>;
@@ -116,65 +121,26 @@ frameborder="0"
     <script defer type="module" src="https://79c90be8.flowonwidget.pages.dev/embed.min.js"></script>
 `;
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Deployment Options</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="website-integration">
-            <AccordionTrigger className="text-lg font-semibold">
-              <div className="flex items-center gap-2">
-                Website Integration
-                <span role="img" aria-label="chat">🗨️</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">IFrame Embed</Label>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Add this code to embed the agent directly in your website.
-                  </p>
-                  <div className="relative">
-                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
-                      <code className="text-sm">{iframeCode}</code>
-                    </pre>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => navigator.clipboard.writeText(iframeCode)}
-                    >
-                      Copy
-                    </Button>
-                  </div>
-                </div>
+  const textChatScriptCode = `
+<script>
+	window.chatConfig = {
+        agentId: "${selectedAgent?.id}",
+        widgetDomain: 'https://flowon.ai/textwidget',
+        iframeDomain: 'https://03dfb8f6.flowonchatwidget.pages.dev/'
+		};
+	const scriptEl = document.createElement('script');
+	scriptEl.src = "https://03dfb8f6.flowonchatwidget.pages.dev/iframeChat_text.min.js"
+	document.body.appendChild(scriptEl);  
+	scriptEl.onload = function() {new TextChatWidget(window.chatConfig)};
+</script>
+`;
 
-                <div>
-                  <Label className="text-sm font-medium">Script Embed</Label>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Add this script to your website to enable the chat widget.
-                  </p>
-                  <div className="relative">
-                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
-                      <code className="text-sm">{scriptCode}</code>
-                    </pre>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => navigator.clipboard.writeText(scriptCode)}
-                    >
-                      Copy
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+  const renderDeploymentOptions = () => {
+    if (!selectedAgent) return null;
 
+    switch (selectedAgent.agentPurpose) {
+      case "telephone-agent":
+        return (
           <AccordionItem value="telephony">
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
@@ -202,7 +168,6 @@ frameborder="0"
                 >
                   Save Twilio Configuration
                 </Button>
-
                 <div className="mt-4 space-y-2">
                   <p className="text-sm text-muted-foreground">
                     After saving your Twilio configuration, your agent will be accessible via phone calls to your Twilio number.
@@ -211,6 +176,138 @@ frameborder="0"
               </div>
             </AccordionContent>
           </AccordionItem>
+        );
+      case "feedback-widget":
+        return (
+          <AccordionItem value="feedback-widget">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Feedback Widget
+                <Image src="/icons/feedback.png" alt="Feedback" width={24} height={24} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Script Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this script to your website to enable the feedback widget.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{textChatScriptCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      case "voice-web-agent":
+        return (
+          <AccordionItem value="website-integration">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Voice Agent
+                <MicIcon size={24} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">IFrame Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this code to embed the agent directly in your website.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{iframeCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(iframeCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Script Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this script to your website to enable the chat widget.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{scriptCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(scriptCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      case "text-chatbot-agent":
+        return (
+          <AccordionItem value="text-chat">
+            <AccordionTrigger className="text-lg font-semibold">
+              <div className="flex items-center gap-2">
+                Text Chat Agent
+                <Image src="/icons/live-chat.png" alt="Chat" width={24} height={24} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Script Embed</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add this script to your website to enable the text chat widget.
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
+                      <code className="text-sm">{textChatScriptCode}</code>
+                    </pre>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      default:
+      return null;
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="space-y-6">
+        <Accordion type="single" collapsible={false} className="w-full">
+          {renderDeploymentOptions()}
         </Accordion>
       </CardContent>
     </Card>

@@ -1,4 +1,7 @@
+"use client"
+
 import Marquee from "@/components/ui/marquee";
+import Image from "next/image";
 
 const leads = [
   {
@@ -36,22 +39,36 @@ export function LeadsMarquee() {
         <p className="text-gray-600">Watch as qualified leads flow into your inbox</p>
       </div>
       
-      <Marquee
-        pauseOnHover
-        className="py-4"
-        reverse
-      >
-        {leads.map((lead, idx) => (
-          <div
-            key={idx}
-            className="mx-4 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg min-w-[300px]"
-          >
-            <div className="text-sm text-blue-400">{lead.email}</div>
-            <div className="font-medium mb-1">{lead.subject}</div>
-            <div className="text-sm text-gray-400 truncate">{lead.preview}</div>
+      <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-8 max-w-6xl mx-auto">
+        <Marquee
+          className="py-4 h-[500px] max-w-[340px] w-full"
+          reverse
+          vertical
+        >
+          {leads.map((lead, idx) => (
+            <div
+              key={idx}
+              className="my-4 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg w-[300px]"
+            >
+              <div className="text-sm text-blue-400">{lead.email}</div>
+              <div className="font-medium mb-1">{lead.subject}</div>
+              <div className="text-sm text-gray-400 truncate">{lead.preview}</div>
+            </div>
+          ))}
+        </Marquee>
+
+        <div className="relative w-[340px] h-[460px] md:w-[500px] md:h-[650px] rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-lg">
+          <div className="relative w-full h-full">
+            <Image
+              src="/images/lead_form.png"
+              alt="Lead generation form"
+              fill
+              className="object-contain rounded-2xl opacity-90 transition-opacity duration-200"
+              priority
+            />
           </div>
-        ))}
-      </Marquee>
+        </div>
+      </div>
     </section>
   );
 } 

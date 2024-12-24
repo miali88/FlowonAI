@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Agent } from '../AgentCards';
 import ChatWidget from './ChatWidget';
-import TextWidget from '@/app/text-widget/[agentId]/TextWidget';
 import { Switch } from "@/components/ui/switch";
 import { useState } from 'react';
 
@@ -13,9 +12,10 @@ const Playground: React.FC<PlaygroundProps> = ({
   selectedAgent,
 }) => {
   const [useTextWidget, setUseTextWidget] = useState(true);
+  const textWidgetUrl = process.env.NEXT_PUBLIC_TEXT_WIDGET_URL || 'no-textwidget-url';
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Playground</CardTitle>
         <div className="flex items-center gap-2">
@@ -26,13 +26,15 @@ const Playground: React.FC<PlaygroundProps> = ({
           />
         </div>
       </CardHeader>
-      <CardContent className="min-h-[600px] h-full flex items-center justify-center relative">
+      <CardContent className="flex-1 h-[calc(100vh-12rem)] relative">
         {selectedAgent ? (
           <div className="w-full h-full">
             {useTextWidget ? (
-              <TextWidget 
-                agentId={selectedAgent.id}
-                apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'}
+              <iframe
+                src={`${textWidgetUrl}?agentId=${selectedAgent.id}&apiBaseUrl=${process.env.NEXT_PUBLIC_API_BASE_URL}`}
+                className="w-full h-full border-none rounded-lg"
+                style={{ minHeight: '100%', display: 'block' }}
+                title="Text Widget"
               />
             ) : (
               <ChatWidget 

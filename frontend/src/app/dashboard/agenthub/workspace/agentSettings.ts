@@ -11,9 +11,10 @@ export const LANGUAGE_OPTIONS = [
   
   // Agent Purpose Options
 export const AGENT_PURPOSE_OPTIONS = [
-  { id: "custom", title: "Custom" },
-  { id: "lead-gen", title: "Lead Gen" },
-  { id: "feedback", title: "Feedback" },
+  { id: "telephone-agent", title: "Telephone Agent" },
+  { id: "feedback-widget", title: "Feedback Widget" },
+  { id: "voice-web-agent", title: "Voice Web Agent" },
+  { id: "text-chatbot-agent", title: "Chatbot Agent" },
 ];
   
   // Voice Options

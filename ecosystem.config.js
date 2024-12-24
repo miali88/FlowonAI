@@ -19,6 +19,41 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: "1"
       }
+    },
+    {
+      name: "chatwidget",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/ChatWidget",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5173 
+      }
+    },
+    {
+      name: "demo",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/Demo",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5175
+      }      
+    },
+    {
+      name: "textwidget",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/TextWidget",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5180 
+      }
     }
+
+
   ]
 }

@@ -368,29 +368,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
                     />
                   </div>
 
-                  {/* Agent Skills */}
-                  <div>
-                    <Label htmlFor="agentPurpose" className="block text-sm font-medium mb-1">Agent Purpose</Label>
-                    <Select 
-                      value={selectedAgent?.agentPurpose || ""}
-                      onValueChange={(value) => {
-                        if (!selectedAgent) return;
-                        handleInputChange('agentPurpose', value);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select agent purpose" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AGENT_PURPOSE_OPTIONS.map((purpose) => (
-                          <SelectItem key={purpose.id} value={purpose.id}>
-                            {purpose.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* Data Sources */}
                   <div>
                     <Label htmlFor="dataSource" className="block text-sm font-medium mb-1">Data Sources</Label>

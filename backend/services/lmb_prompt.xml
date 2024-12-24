@@ -15,16 +15,14 @@
         <requirements>
             <field>Caller's name</field>
             <field>Business name</field>
-            <field>Contact number</field>
-            <field>Best time to reach them</field>
         </requirements>
     </step2_identification>
 
     <step3_assessment>
         <questions>
-            <question>Could you tell me a bit about your business situation?</question>
+            <!-- <question>Could you tell me a bit about your business situation?</question> -->
             <question>Have you completed our online quote form?</question>
-            <question>How urgent is your situation?</question>
+            <!-- <question>How urgent is your situation?</question> -->
         </questions>
     </step3_assessment>
 
@@ -51,8 +49,8 @@
     <step5_action>
         <scenarios>     
             <scenario name="completed_quote_followup">
-                <action>Check team availability and schedule callback</action>
-                <script>I'll check if one of our specialists is available now. If not, we'll arrange a callback at your preferred time.</script>
+                <action>Trigger function callTransfer</action>
+                <script>I'll check if one of our specialists is available now. Please hold the line.</script>
             </scenario>
         </scenarios>
     </step5_action>

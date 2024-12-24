@@ -85,6 +85,13 @@ async def livekit_room_webhook(request: Request):
         logger.error(f"Error saving to Supabase: {str(e)}")
     return {"message": "Webhook received successfully"}
 
+@router.post("/create_embeddings")
+async def create_embeddings(request: Request):
+    data = await request.json()
+    conversation_logs = data['transcript']
+    
+    print(f"Received data: {data}")
+
 async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     print("\n\n transcript_summary func called\n\n")
     system_prompt = f"""
@@ -113,7 +120,6 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     except Exception as e:
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
-
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
