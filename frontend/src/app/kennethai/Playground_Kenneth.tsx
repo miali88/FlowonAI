@@ -110,7 +110,7 @@ const kennethai_agent_id = "83b0f5db-9691-4328-8f47-6ab9cbf9f10d"
 
     try {
       const token = await getToken();
-      const payload = { 
+      const payload = {
         message: messageToSend,
         user_id: user.id,
         agent_id: kennethai_agent_id,
@@ -119,40 +119,72 @@ const kennethai_agent_id = "83b0f5db-9691-4328-8f47-6ab9cbf9f10d"
         session_id: session?.id,
         room_name: roomName,
       };
-      // console.log('Sending payload to backend:', payload);
 
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'X-User-ID': user.id,
-          // Removed 'X-Session-ID' from headers
         },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+
+      if (!response.ok) throw new Error('Network response was not ok');
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      // Add a temporary message that will be updated with chunks
+      setMessages(prev => [...prev, { text: '', type: 'incoming' }]);
       
-      // console.log('API response:', data);
+      let accumulatedText = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Convert the chunk to text
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const content = line.slice(6).trim();
+            
+            // Handle special messages
+            if (content === '[DONE]') {
+              continue; // Skip processing for done message
+            }
+
+            // Handle regular JSON data
+            try {
+              const data = JSON.parse(content);
+
+              if (data.response?.answer) {
+                accumulatedText += data.response.answer;
+                // Update the last message with accumulated text
+                setMessages(prev => [
+                  ...prev.slice(0, -1),
+                  {
+                    text: accumulatedText,
+                    type: 'incoming',
+                    references: currentReferences,
+                    searchType: searchType,
+                  }
+                ]);
+              } else if (data.rag_results) {
+                // Handle RAG results if needed
+                setCurrentReferences(data.rag_results);
+              }
+            } catch (parseError) {
+              console.warn('Failed to parse message:', content);
+              continue;
+            }
+          }
+        }
+      }
 
       setIsTyping(false);
-      const newReferences = data.response?.references || [];
-      setCurrentReferences(newReferences);
-      
-      // Update this section to parse the search_type and reasoning_steps
-      const responseSearchType = data.response?.search_type || "Quick Search";
-      const newReasoningSteps = responseSearchType === "Deep Search" ? (data.response?.reasoning_steps || []) : [];
-      setReasoningSteps(newReasoningSteps);
-
-      setMessages(prev => [
-        ...prev.filter(msg => msg.text !== "Typing..."),
-        { 
-          text: data.response?.answer?.trim() || "Sorry, I couldn't process that request.", 
-          type: 'incoming',
-          references: newReferences,
-          searchType: responseSearchType,
-        }
-      ]);
 
     } catch (error) {
       setIsTyping(false);
