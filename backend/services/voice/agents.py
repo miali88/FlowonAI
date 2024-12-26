@@ -200,7 +200,7 @@ async def create_agent(data):
         data['agentPurpose'] = data.pop('agentType')
 
     new_agent = supabase.table('agents').insert(data).execute()
-    
+    print(f"\n\nnew_agent: {new_agent}")
     return new_agent
 
 async def get_agents(user_id: str):

@@ -1,5 +1,6 @@
 import { CardSpotlight } from "@/components/ui/card-spotlight";
 import { IntegrationsSection } from "@/components/integrations";
+import Image from 'next/image'
 
 export function DeploySection() {
   return (
@@ -36,6 +37,8 @@ export function DeploySection() {
               <Image
                 src="/phone.webp"
                 alt="Phone System"
+                width={400}
+                height={320}
                 className="w-full h-40 object-contain rounded-lg"
               />
             </div>

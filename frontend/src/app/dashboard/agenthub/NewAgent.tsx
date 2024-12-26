@@ -32,7 +32,23 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
 
   const handleSetupMethodSelect = (method: SetupMethod) => {
     setSetupMethod('name');
-    setAgentType(method === 'quick' ? 'widget' : null);
+    // Map the setup method to the corresponding agent type
+    switch (method) {
+      case 'telephone':
+        setAgentType('inbound');
+        break;
+      case 'text':
+        setAgentType('widget');
+        break;
+      case 'voice-web':
+        setAgentType('widget');
+        break;
+      case 'feedback':
+        setAgentType('widget');
+        break;
+      default:
+        setAgentType(null);
+    }
   };
 
   const handleAgentTypeSelect = (type: AgentType) => {
@@ -102,8 +118,26 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
         throw new Error('Failed to create agent');
       }
 
-      const newAgent = await response.json();
+      const responseData = await response.json();
+      const newAgent = responseData.data[0];
       console.log("Agent created:", newAgent);
+
+      // Make sure we have an agent ID before proceeding
+      if (!newAgent?.id) {
+        throw new Error('No agent ID returned from server');
+      }
+
+      // Create a properly formatted agent object with the required properties
+      const formattedAgent: Agent = {
+        id: newAgent.id,
+        agentName: agentName.trim(),
+        agentPurpose: newAgent.agentPurpose || '', 
+        dataSource: newAgent.dataSource || '',
+        language: newAgent.language || 'en-GB',
+        voice: newAgent.voice || '',
+        openingLine: newAgent.openingLine || '',
+        features: newAgent.features || getDefaultFeatures(agentType),
+      };
 
       // Close dialog and reset state
       setIsOpen(false);
@@ -111,26 +145,13 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
       setAgentType(null);
       setAgentName('');
       
-      // Refresh the agents list
-      onAgentCreated?.();
-
-      // Create a properly formatted agent object with the required properties
-      const formattedAgent: Agent = {
-        id: newAgent.id,
-        agentName: agentName.trim(),
-        agentPurpose: '', // Set a default or get from response
-        dataSource: '',
-        language: 'en-GB',
-        voice: '',
-        openingLine: '',
-        features: getDefaultFeatures(agentType),
-        // Add any other required properties from the Agent interface
-      };
-
       // Navigate to the workspace by setting the selected agent
       if (setSelectedAgent) {
         setSelectedAgent(formattedAgent);
       }
+
+      // Refresh the agents list
+      onAgentCreated?.();
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create agent');
