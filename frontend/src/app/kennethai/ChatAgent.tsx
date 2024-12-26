@@ -1,5 +1,5 @@
 import React from 'react';
-import { Playground } from "@/components/Playground_Kenneth";
+import { Playground } from "./Playground_Kenneth";
 
 const ChatAgent: React.FC = () => {
   return (

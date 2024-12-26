@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { LiveKitTextEntry } from './LiveKitTextEntry';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -56,6 +57,7 @@ export function Playground() {
   const [showReasoningBoard, setShowReasoningBoard] = useState(false);
   const [searchType, setSearchType] = useState("Deep Search");
   const [reasoningSteps, setReasoningSteps] = useState<string[]>([]);
+  const [roomName, setRoomName] = useState<string | null>(null);
 
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -67,6 +69,8 @@ export function Playground() {
     "How does the Financial Services and Markets Act 2000 regulate financial activities?",
     "Explain how FSMA is 'applicable to a contract of insurance'"
   ];
+
+const kennethai_agent_id = "83b0f5db-9691-4328-8f47-6ab9cbf9f10d"
 
   useEffect(() => {
     const savedMessages = localStorage.getItem('chatMessages');
@@ -91,7 +95,11 @@ export function Playground() {
     }
   };
 
-  // Update the handleSendMessage function to accept an optional query parameter
+  const handleRoomConnected = (newRoomName: string) => {
+    setRoomName(newRoomName);
+    console.log('Room connected:', newRoomName);
+  };
+
   const handleSendMessage = async (query?: string) => {
     const messageToSend = query || inputMessage;
     if (!messageToSend.trim() || !user) return;
@@ -105,9 +113,11 @@ export function Playground() {
       const payload = { 
         message: messageToSend,
         user_id: user.id,
-        type: "playground",
+        agent_id: kennethai_agent_id,
+        type: "kennethai",
         search_type: searchType,
-        session_id: session?.id,  // Add session_id to the payload
+        session_id: session?.id,
+        room_name: roomName,
       };
       // console.log('Sending payload to backend:', payload);
 
@@ -282,6 +292,11 @@ export function Playground() {
 
   return (
     <div className="flex flex-col h-full">
+      <LiveKitTextEntry 
+        agentId={user?.id || ''} 
+        apiBaseUrl={API_BASE_URL || ''} 
+        onRoomConnected={handleRoomConnected}
+      />
       <div className="flex justify-start p-4">
         <TooltipProvider>
           <Tooltip>

@@ -1,17 +1,13 @@
 'use client';
 
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from 'axios';
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,41 +19,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
-  BarChart3,
   Bell,
   BookOpen,
   ChevronRight,
-  Edit,
   Globe,
   LogOut,
   Menu,
   MessageSquare,
-  Mic,
   Moon,
-  PlusCircle,
   Search,
-  SendIcon,
   Settings,
   Sun,
-  Trash2,
-  Upload,
   User,
   X,
 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDropzone } from 'react-dropzone';
 import { LiveKitEntry } from "@/components/LiveKitEntry";
-import ChatAgent from '@/components/dashboard/ChatAgent';
+import ChatAgent from './ChatAgent';
 import { Badge } from "@/components/ui/badge";
-import ChatHistory from '@/components/dashboard/ChatHistory';
-import ContactUs from '@/components/dashboard/ContactUs';
-import { Progress } from "@/components/ui/progress";
+import ChatHistory from '@/app/kennethai/ChatHistory';
+import ContactUs from '@/app/kennethai/ContactUs';
 import HowKenneth from '@/components/HowKenneth';
 import KnowledgeBaseContent from '@/app/dashboard/knowledgebase/page';
 
