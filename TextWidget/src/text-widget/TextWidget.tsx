@@ -443,14 +443,14 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
               </form>
             </div>
             
-            <div className={styles.scheduleButtonContainer}>
+            {/* <div className={styles.scheduleButtonContainer}>
               <button 
                 className={styles.scheduleButton}
                 onClick={() => setShowCalendly(true)}
               >
                 Schedule a Meeting
               </button>
-            </div>
+            </div> */}
             
             <Footer />
           </>
