@@ -38,10 +38,12 @@ async def get_all_agents() -> list:
     agent_metadata_cache.extend(response.data)
     return agent_metadata_cache
 
+
 async def get_agent_metadata(agent_id: str) -> Optional[dict]:
     """Get agent metadata from cache"""
     response = supabase.table("agents").select("*").execute()
     agents_dict = {agent['id']: agent for agent in response.data}
+    print("\n\n\n agents_dict:", agents_dict.get(agent_id).get('dataSource', None))
     return agents_dict.get(agent_id)
 
 # async def update_agent_metadata(agent_id: str, metadata: dict) -> None:

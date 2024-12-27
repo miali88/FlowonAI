@@ -96,15 +96,24 @@ async def init_new_chat(agent_id: str, room_name: str):
         """
         try:
             agent_metadata: Dict = await get_agent_metadata(agent_id)
-    
             user_id: str = agent_metadata['userId']
-            data_source: str = agent_metadata.get('dataSource', None)
+            data_source: str = agent_metadata.get('dataSource', '{}')  # Default to empty JSON if not found
             
-            if data_source != "all":
+            # Handle empty or invalid data_source
+            if not data_source or data_source.strip() == '':
+                data_source = '{}'  # Default empty JSON object
+                
+            try:
                 data_source: Dict = json.loads(data_source)
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON in data_source, using empty dict instead")
+                data_source = {}
+
+            if data_source != "all" and not "corporate_law" in data_source:
                 data_source: Dict = {
                     "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
-                    "text_files": [item['id'] for item in data_source if item['data_type'] != 'web']
+                    "text_files": [item['id'] for item in data_source if item['data_type'] != 'web' and item['data_type'] != 'corporate_law'],
+                    "corporate_law": [item['id'] for item in data_source if item['data_type'] == 'corporate_law']
                 }
 
                 print("data_source:", data_source)
@@ -130,8 +139,7 @@ async def init_new_chat(agent_id: str, room_name: str):
             rag_prompt = f"""   
             # Answer the user's question based on the information provided.
             ## User Query: {question}
-            ## WeCreate Information: {results}
-            # After you have provided a response, then ask me a question about my specific project.
+            ## Retrieved Information: {results}
             """
 
             chat_ctx = llm.ChatContext()
@@ -224,10 +232,10 @@ async def init_new_chat(agent_id: str, room_name: str):
         print(f"triggering show_chat_input in request_personal_data for room_name: {room_name}")
         await trigger_show_chat_input(room_name, room_name, room_name)
 
-    # # Always register Q&A function
-    # fnc_ctx._register_ai_function(question_and_answer)
-    # print(f"Registered Q&A function")
-    # logger.info(f"Registered Q&A function")
+    # Always register Q&A function
+    fnc_ctx._register_ai_function(question_and_answer)
+    print(f"Registered Q&A function")
+    logger.info(f"Registered Q&A function")
 
     if 'lead_gen' in features:
         fnc_ctx._register_ai_function(request_personal_data)

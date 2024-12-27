@@ -6,6 +6,7 @@ import LiveKitTextEntry from './LiveKitTextEntry';
 import { IoSend } from "react-icons/io5";
 import ReactMarkdown from 'react-markdown';
 import Footer from './Footer';
+import CalendlyWidget from './CalendlyWidget';
 
 interface Message {
   text: string;
@@ -55,6 +56,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>(SUGGESTED_QUESTIONS);
   const [isLoading, setIsLoading] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
+  const [showCalendly, setShowCalendly] = useState(false);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -112,6 +114,14 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     
     if (!inputText.trim() || !roomName) return;
 
+    // Check if the user wants to schedule a meeting
+    if (inputText.toLowerCase().includes('schedule') || 
+        inputText.toLowerCase().includes('book') || 
+        inputText.toLowerCase().includes('meeting')) {
+      setShowCalendly(true);
+      return;
+    }
+
     const userMessage: Message = { text: inputText, isBot: false };
     setMessages(prev => [...prev, userMessage]);
     
@@ -162,6 +172,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
               if (data.response?.answer) {
                 const newText = data.response.answer;
                 accumulatedResponse += newText;
+
+                // Check if the bot's response should trigger Calendly
+                handleBotResponse(accumulatedResponse);
 
                 setMessages(prev => {
                   const newMessages = [...prev];
@@ -319,6 +332,15 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     }));
   };
 
+  // Add this function to handle bot responses that should trigger Calendly
+  const handleBotResponse = (response: string) => {
+    // Check if the bot's response contains keywords that should trigger Calendly
+    if (response.toLowerCase().includes('schedule a meeting') || 
+        response.toLowerCase().includes('book a call')) {
+      setShowCalendly(true);
+    }
+  };
+
   console.log('Current activeSuggestions:', activeSuggestions);
 
   return (
@@ -342,74 +364,97 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
         onRoomConnected={handleRoomConnected}
       />
       <div className={styles.chatContainer}>
-        <div className={styles.messageContainer} ref={messageContainerRef}>
-          {messages.map((message, index) => (
-            message.text ? (
-              <div
-                key={index}
-                className={`${styles.messageBubble} ${
-                  message.isBot ? styles.assistantMessage : styles.userMessage
-                }`}
-              >
-                <div className={styles.messageBubbleContent}>
-                  <ReactMarkdown>{message.text}</ReactMarkdown>
-                </div>
-                
-                {/* Render form inside the assistant's message bubble */}
-                {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
-                  <form onSubmit={handleFormSubmit} className={styles.formContainer}>
-                    {formFields.map((field, index) => (
-                      <div key={index} className={styles.formField}>
-                        <label htmlFor={field.label}>{field.label}</label>
-                        <input
-                          type={field.type}
-                          id={field.label}
-                          value={formData[field.label] || ''}
-                          onChange={(e) => handleInputChange(field.label, e.target.value)}
-                          required
-                        />
-                      </div>
-                    ))}
-                    <button type="submit" className={styles.submitButton}>
-                      Submit
-                    </button>
-                  </form>
-                )}
-              </div>
-            ) : message.isBot ? (
-              <LoadingBubbles key={index} />
-            ) : null
-          ))}
-        </div>
-        
-        <div className={styles.suggestedQuestionsContainer}>
-          {activeSuggestions.map((question, index) => (
-            <div
-              key={index}
-              className={styles.suggestionBubble}
-              onClick={() => handleSuggestionClick(question)}
+        {showCalendly ? (
+          <div className={styles.calendlyContainer}>
+            <button 
+              className={styles.closeButton}
+              onClick={() => setShowCalendly(false)}
             >
-              {question}
-            </div>
-          ))}
-        </div>
-        
-        <div className={styles.inputContainer}>
-          <form onSubmit={handleSendMessage} className={styles.chatForm}>
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className={styles.chatInput}
-              placeholder="Message..."
-            />
-            <button type="submit" className={styles.sendButton}>
-              <IoSend size={20} />
+              Close Calendar
             </button>
-          </form>
-        </div>
-        
-        <Footer />
+            <CalendlyWidget />
+          </div>
+        ) : (
+          <>
+            <div className={styles.messageContainer} ref={messageContainerRef}>
+              {messages.map((message, index) => (
+                message.text ? (
+                  <div
+                    key={index}
+                    className={`${styles.messageBubble} ${
+                      message.isBot ? styles.assistantMessage : styles.userMessage
+                    }`}
+                  >
+                    <div className={styles.messageBubbleContent}>
+                      <ReactMarkdown>{message.text}</ReactMarkdown>
+                    </div>
+                    
+                    {/* Render form inside the assistant's message bubble */}
+                    {message.isBot && (showForm || DEBUG_SHOW_FORM) && index === messages.length - 1 && (
+                      <form onSubmit={handleFormSubmit} className={styles.formContainer}>
+                        {formFields.map((field, index) => (
+                          <div key={index} className={styles.formField}>
+                            <label htmlFor={field.label}>{field.label}</label>
+                            <input
+                              type={field.type}
+                              id={field.label}
+                              value={formData[field.label] || ''}
+                              onChange={(e) => handleInputChange(field.label, e.target.value)}
+                              required
+                            />
+                          </div>
+                        ))}
+                        <button type="submit" className={styles.submitButton}>
+                          Submit
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ) : message.isBot ? (
+                  <LoadingBubbles key={index} />
+                ) : null
+              ))}
+            </div>
+            
+            <div className={styles.suggestedQuestionsContainer}>
+              {activeSuggestions.map((question, index) => (
+                <div
+                  key={index}
+                  className={styles.suggestionBubble}
+                  onClick={() => handleSuggestionClick(question)}
+                >
+                  {question}
+                </div>
+              ))}
+            </div>
+            
+            <div className={styles.inputContainer}>
+              <form onSubmit={handleSendMessage} className={styles.chatForm}>
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  className={styles.chatInput}
+                  placeholder="Message..."
+                />
+                <button type="submit" className={styles.sendButton}>
+                  <IoSend size={20} />
+                </button>
+              </form>
+            </div>
+            
+            <div className={styles.scheduleButtonContainer}>
+              <button 
+                className={styles.scheduleButton}
+                onClick={() => setShowCalendly(true)}
+              >
+                Schedule a Meeting
+              </button>
+            </div>
+            
+            <Footer />
+          </>
+        )}
       </div>
     </div>
   );

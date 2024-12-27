@@ -1,4 +1,5 @@
 import styles from './TextWidget.module.css';
+import flowonLogo from '/src/assets/flowon.png'
 
 const Footer = () => {
   return (
@@ -10,7 +11,11 @@ const Footer = () => {
         className={styles.footerLink}
       >
         <span className={styles.footerText}>powered by Flowon.AI</span>
-        <img src="/flowon.png" alt="Flowon.AI Logo" className={styles.footerLogo} />
+        <img 
+          src={flowonLogo} 
+          alt="Flowon.AI Logo" 
+          className={styles.footerLogo} 
+        />
       </a>
     </div>
   );

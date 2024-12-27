@@ -53,6 +53,8 @@ async def get_embedding(text):
     response = requests.post(url, headers=headers, data=json.dumps(data))
     return response.json()['data'][0]['embedding']
 
+
+
 async def rerank_documents(user_query: str, top_n: int, docs: List):
     print("func rerank_documents..")
     url = 'https://api.jina.ai/v1/rerank'
@@ -193,12 +195,14 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
             else:
                 raise e 
 
-tables = ["user_web_data", "user_text_files"]
+
+tables = ["user_web_data", "user_text_files", "corporate_law"]
 async def similarity_search(query: str, data_source: Dict = None, table_names: List[str] = tables,
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 
                             embedding_column: str = "jina_embedding", max_results: int = 15,
                             user_id: str = None):
     print("\n\nsimilarity_search...")
+    print("\n\n data_source:", data_source)
     all_results = []
 
     # Set search parameters based on search type
@@ -224,6 +228,19 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
                     }
                 ).execute()
             
+            elif table == "corporate_law":
+                return supabase.rpc(
+                    "search_corporate_law",
+                    {
+                        'query_embedding': query_embedding,
+                        'embedding_column': embedding_column,
+                        'similarity_threshold': similarity_threshold,
+                        'max_results': max_results,
+                        'user_id_filter': user_id,
+                    }
+                ).execute()
+
+
             elif table == "user_text_files":
                 return supabase.rpc(
                     "search_chunks",
@@ -251,8 +268,9 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
     for response in responses:
         if response and hasattr(response, 'data') and response.data:
             all_results.extend(response.data)
-    
+    print("\n\n\n all_results:", all_results)
     return all_results
+
 
 async def rag_response(user_query: str, user_search_type: str, user_id: str):
     print("\nfunc rag_response..")
