@@ -106,7 +106,6 @@ const AgentHub = () => {
       const response = await fetch(`${API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
           'x-user-id': userId,
         },
         body: JSON.stringify({

@@ -3,6 +3,8 @@
 import React from "react";
 import { Timeline } from "@/components/ui/timeline";
 import { QandA } from "@/components/QandA";
+import { CalendlyWidget } from "@/components/CalendlyWidget";
+import { SecurityChat } from "@/components/SecurityChat";
 import { Clock, Brain, Zap, Bot, Shield, Database } from 'lucide-react';
 import { LeadsMarquee } from "@/components/LeadsMarquee";
 import { DeploySection } from "@/components/deploy";
@@ -111,6 +113,10 @@ export function TimelineDeploy() {
             <LeadsMarquee />
           </div>
           <QandA />
+          <div className="grid md:grid-cols-2 gap-8">
+            <CalendlyWidget />
+            <SecurityChat />
+          </div>
         </motion.div>
       ),
     },

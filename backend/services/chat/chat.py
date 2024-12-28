@@ -268,7 +268,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
     for response in responses:
         if response and hasattr(response, 'data') and response.data:
             all_results.extend(response.data)
-    print("\n\n\n all_results:", all_results)
+    print("Length of results:", len(all_results))
     return all_results
 
 

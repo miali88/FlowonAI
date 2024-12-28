@@ -64,6 +64,7 @@ async def get_kb_items(current_user):
     return all_items, total_tokens
 
 
+
 async def get_kb_headers(current_user):
     print("\n\n get_kb_headers current_user:", current_user)
     kb_tables = ["user_web_data_headers", "user_text_files_headers"]

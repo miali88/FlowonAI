@@ -49,10 +49,12 @@ async def get_token(request: Request, background_tasks: BackgroundTasks):
     }
 
 @router.post("/new_agent")
-async def new_agent_handler(request: Request):
+async def new_agent_handler(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
-        logger.debug(f"Received data: {data}")
+        # Extract user_id from header (via dependency) and add to data
+        data['userId'] = current_user
+        logger.debug(f"Received data with user_id: {data}")
 
         new_agent = await create_agent(data)
         return new_agent

@@ -52,8 +52,12 @@ class DataSource:
 async def init_new_chat(agent_id: str, room_name: str):
     chat_histories[agent_id][room_name] = ChatHistory()
 
-    llm_instance = openai.LLM(
-        model="gpt-4o",
+    # llm_instance = openai.LLM(
+    #     model="gpt-4o-",
+    # )
+
+    llm_instance = anthropic.LLM(
+        model="claude-3-5-sonnet-20240620",
     )
 
     # Fetch agent configuration
@@ -64,15 +68,32 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     # Create chat context with history
     chat_ctx = llm.ChatContext()
-    chat_ctx.append(
-        role="system",
-        text=agent_metadata['instructions']
-    )
+    
+    # Ensure system instructions are not empty
+    if agent_metadata.get('instructions'):
+        chat_ctx.append(
+            role="system",
+            text=agent_metadata['instructions']
+        )
+    else:
+        raise ValueError(f"Instructions are empty for agent {agent_id}")
+        # chat_ctx.append(
+        #     role="system",
+        #     text="You are a helpful AI assistant."
+        # )
 
-    chat_ctx.append(
-        role="assistant",
-        text=agent_metadata['openingLine']
-    )
+    # Ensure opening line is not empty
+    if agent_metadata.get('openingLine'):
+        chat_ctx.append(
+            role="assistant",
+            text=agent_metadata['openingLine']
+        )
+    else:
+        print(f"Opening line is empty for agent {agent_id}")
+        # chat_ctx.append(
+        #     role="assistant",
+        #     text="Hello! How can I help you today?"
+        # )
 
     features = agent_metadata.get('features', [])
     fnc_ctx = llm.FunctionContext()
@@ -149,7 +170,8 @@ async def init_new_chat(agent_id: str, room_name: str):
             )
 
             # Create LLM instance and get response
-            llm_instance = openai.LLM(model="gpt-4o")
+            # llm_instance = openai.LLM(model="gpt-4o")
+
             response_stream = llm_instance.chat(chat_ctx=chat_ctx)
             
             # Then yield the actual response chunks
