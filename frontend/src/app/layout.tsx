@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from 'next-themes';
 import { Metadata } from 'next';
 import Script from 'next/script';
+import { CSPostHogProvider } from './providers';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -54,13 +55,15 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ClerkProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-          >
-            {children}
-          </ThemeProvider>
+          <CSPostHogProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+            >
+              {children}
+            </ThemeProvider>
+          </CSPostHogProvider>
         </ClerkProvider>
       </body>
     </html>
