@@ -95,7 +95,8 @@ async def init_new_chat(agent_id: str, room_name: str):
         #     text="Hello! How can I help you today?"
         # )
 
-    features = agent_metadata.get('features', [])
+    # Add null check for features
+    features = agent_metadata.get('features', []) or []  # Default to empty list if None
     fnc_ctx = llm.FunctionContext()
 
     @llm.ai_callable(

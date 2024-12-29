@@ -183,10 +183,10 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 async def create_agent(data):
     # TODO: make system prompt dynamic for agent. i.e based on skills, features etc
     print(f"data: {data}")
-    if data.get('agentPurpose') == 'onboarding':
-        data['instructions'] = sys_prompt_onboarding
-    else:
-        data['instructions'] = sys_prompt_scaffold
+    # if data.get('agentPurpose') == 'onboarding':
+    #     data['instructions'] = sys_prompt_onboarding
+    # else:
+    #     data['instructions'] = sys_prompt_scaffold
 
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']

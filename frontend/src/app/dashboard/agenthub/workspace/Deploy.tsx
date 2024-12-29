@@ -303,10 +303,30 @@ frameborder="0"
     }
   };
 
+  const getDefaultAccordionValue = (agentPurpose?: string) => {
+    switch (agentPurpose) {
+      case "telephone-agent":
+        return "telephony";
+      case "feedback-widget":
+        return "feedback-widget";
+      case "voice-web-agent":
+        return "website-integration";
+      case "text-chatbot-agent":
+        return "text-chat";
+      default:
+        return undefined;
+    }
+  };
+
   return (
     <Card>
       <CardContent className="space-y-6">
-        <Accordion type="single" collapsible={false} className="w-full">
+        <Accordion 
+          type="single" 
+          defaultValue={getDefaultAccordionValue(selectedAgent?.agentPurpose)}
+          collapsible={false} 
+          className="w-full"
+        >
           {renderDeploymentOptions()}
         </Accordion>
       </CardContent>

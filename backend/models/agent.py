@@ -18,7 +18,8 @@ class AgentCreate(BaseModel):
     voiceProvider: Optional[str]
     instructions: Optional[str]
     uiConfig: Optional[Dict]
-    features: Optional[Dict]
+    features: Dict
+
 
 # Response Model - what the API returns
 class AgentResponse(BaseModel):
