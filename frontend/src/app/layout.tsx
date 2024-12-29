@@ -54,8 +54,8 @@ export default function RootLayout({
         </Script>
       </head>
       <body suppressHydrationWarning>
-        <ClerkProvider>
-          <CSPostHogProvider>
+        <CSPostHogProvider>
+          <ClerkProvider>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
@@ -63,8 +63,8 @@ export default function RootLayout({
             >
               {children}
             </ThemeProvider>
-          </CSPostHogProvider>
-        </ClerkProvider>
+          </ClerkProvider>
+        </CSPostHogProvider>
       </body>
     </html>
   );
