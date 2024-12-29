@@ -212,7 +212,7 @@ async def scrape_url(urls: List[str], user_id: str = None):
     print("end, scrape_url")
     return flat_results
 
-async def map_url(url):
+async def map_url(url) -> List[str]:
     print("hello, map_url")
     logger.info(f"Starting URL mapping for: {url}")
     

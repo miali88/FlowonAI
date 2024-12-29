@@ -27,20 +27,18 @@ const DynamicPricing = dynamic(() => import('@/components/pricing').then(mod => 
   ssr: true
 });
 
+
 export default function HomePage() {
   return (
     <div className="overflow-x-hidden relative">
       <Header />
       <main className="w-full relative pt-[64px] sm:pt-0">
-
-
-<div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-7xl">
           <Hero />
           <AppUILanding />
           <DynamicTimelineDeploy />
           <DynamicBenefitsSection />
           {/* <TelephonySection /> */}
-          {/* <MeetKenneth /> */}
           <DynamicPricing />
           <CtaSection /> 
           <Footer />
