@@ -101,7 +101,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     @llm.ai_callable(
         name="question_and_answer",
-        description="Extract user's question and perform information retrieval search to provide relevant answers",
+        description="Extract user's question and perform a search",
         auto_retry=True
     )
     async def question_and_answer(
@@ -159,9 +159,10 @@ async def init_new_chat(agent_id: str, room_name: str):
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
             rag_prompt = f"""   
-            # Answer the user's question based on the information provided.
+            # The user's query.
             ## User Query: {question}
-            ## Retrieved Information: {results}
+            # Retrieved context
+            ## {agent_metadata['company_name']} Information: {results}
             """
 
             chat_ctx = llm.ChatContext()

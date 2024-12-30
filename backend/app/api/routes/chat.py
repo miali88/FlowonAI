@@ -40,6 +40,7 @@ async def chat_message(request: Request):
                             # Send normal response chunks
                             full_response.append(str(chunk))
                             yield f"data: {json.dumps({'response': {'answer': str(chunk)}})}\n\n"
+                            print(f"llm response: {full_response}\n\n")
             except Exception as e:
                 logger.error(f"Error in stream: {str(e)}")
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"

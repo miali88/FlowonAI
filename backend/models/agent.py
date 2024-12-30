@@ -34,7 +34,7 @@ class AgentResponse(BaseModel):
     voiceProvider: Optional[str]
     instructions: Optional[str]
     uiConfig: Optional[Dict]
-    features: Optional[Dict]
+    features: Dict
     created_at: datetime
     updated_at: datetime
 
