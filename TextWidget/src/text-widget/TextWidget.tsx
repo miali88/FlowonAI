@@ -58,6 +58,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
   const [showCalendly, setShowCalendly] = useState(false);
+  const [openingLine, setOpeningLine] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -65,12 +66,47 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages]);
 
-  // Add initial messages when component mounts
+  // Add effect to fetch agent metadata
   useEffect(() => {
-    setMessages([
-      { text: "Welcome to WeCreate👋! Looking to boost your brand's online presence? What's your biggest goal right now?", isBot: true },
-    ]);
-  }, []); // Empty dependency array means this runs once on mount
+    const fetchAgentMetadata = async () => {
+      try {
+        console.log('Fetching agent metadata for agentId:', agentId);
+        const response = await fetch(`${apiBaseUrl}/livekit/agent_content/${agentId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch agent metadata: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Received agent metadata:', data);
+        
+        // Check if data.data exists and has content
+        if (!data.data || !data.data[0] || !data.data[0].openingLine) {
+          throw new Error('No opening line found in agent metadata');
+        }
+        
+        const openingLineFromData = data.data[0].openingLine;
+        console.log('Setting opening line to:', openingLineFromData);
+        setOpeningLine(openingLineFromData);
+      } catch (error) {
+        console.error('Error fetching agent metadata:', error);
+      }
+    };
+
+    if (agentId) {
+      fetchAgentMetadata();
+    } else {
+      console.log('No agentId provided');
+    }
+  }, [agentId, apiBaseUrl]);
+
+  // Add console log to check when opening line changes
+  useEffect(() => {
+    console.log('Opening line state changed to:', openingLine);
+    if (openingLine) {
+      setMessages([
+        { text: openingLine, isBot: true },
+      ]);
+    }
+  }, [openingLine]);
 
   // Add form fields fetch effect
   useEffect(() => {
