@@ -56,8 +56,8 @@ async def init_new_chat(agent_id: str, room_name: str):
     #     model="gpt-4o-",
     # )
 
-    llm_instance = anthropic.LLM(
-        model="claude-3-5-sonnet-20240620",
+    llm_instance = openai.LLM(
+        model="gpt-4o",
     )
 
     # Fetch agent configuration
@@ -298,6 +298,8 @@ chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
+    current_assistant_message = ""
+    chunk_count = 0
     try:
         # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:
@@ -319,41 +321,61 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         # Add the new message directly through chat_history
         chat_history.add_message("user", message)
 
-        current_assistant_message = ""
-        
+        logger.info("Starting LLM response stream")
         response_stream = llm_instance.chat(
             chat_ctx=chat_ctx,
             fnc_ctx=fnc_ctx
         )
 
         async for chunk in response_stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-                current_assistant_message += chunk.choices[0].delta.content
-            elif chunk.choices[0].delta.tool_calls:
-                if current_assistant_message:
-                    chat_history.add_message("assistant", current_assistant_message)
-                    current_assistant_message = ""
+            chunk_count += 1
+            try:
+                logger.debug(f"Processing LLM chunk #{chunk_count}")
                 
-                for tool_call in chunk.choices[0].delta.tool_calls:
-                    called_function = tool_call.execute()
-                    result = await called_function.task
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        logger.debug(f"Content chunk: {content[:50]}...")  # First 50 chars
+                        current_assistant_message += content
+                        yield content
+                elif chunk.choices[0].delta.tool_calls:
+                    logger.info("Tool call detected")
+                    if current_assistant_message:
+                        chat_history.add_message("assistant", current_assistant_message)
+                        current_assistant_message = ""
                     
-                    if isinstance(result, str):
-                        yield result
-                        chat_history.add_message("function", result, name="unknown")
-                    else:
-                        tool_response = ""
-                        async for result_chunk in result:
-                            tool_response += result_chunk
-                            yield result_chunk
-                        chat_history.add_message("function", tool_response, name="unknown")
+                    # Log tool execution
+                    for tool_call in chunk.choices[0].delta.tool_calls:
+                        logger.info(f"Executing tool: {tool_call}")
+                        called_function = tool_call.execute()
+                        result = await called_function.task
+                        
+                        if isinstance(result, str):
+                            logger.debug(f"Tool returned string result: {result[:50]}...")
+                            yield result
+                            chat_history.add_message("function", result, name="unknown")
+                        else:
+                            tool_response = ""
+                            async for result_chunk in result:
+                                tool_response += result_chunk
+                                yield result_chunk
+                            logger.debug(f"Tool returned streaming result: {tool_response[:50]}...")
+                            chat_history.add_message("function", tool_response, name="unknown")
 
+            except Exception as chunk_error:
+                logger.error(f"Error processing chunk #{chunk_count}: {str(chunk_error)}", exc_info=True)
+                yield f"[Error processing chunk: {str(chunk_error)}]"
+
+        logger.info(f"Stream completed. Total chunks: {chunk_count}")
+        
+        # Ensure the final message is added to history
         if current_assistant_message:
+            logger.info(f"Adding final message to history: {current_assistant_message[:50]}...")
             chat_history.add_message("assistant", current_assistant_message)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]")
-        raise Exception("Failed to process chat message")
+        # Re-raise with more context
+        raise Exception(f"Failed to process chat message: {str(e)}")
