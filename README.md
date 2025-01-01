@@ -25,6 +25,9 @@
 - Cloudflare for DNS and CDN
 - nginx for reverse proxy
 - Sentry for error monitoring
+- PostHog for analytics
+- Greptile web/app & API for Codebase chat, PR review
+- CodeRabbit for PR review
   
 
 ## Getting Started
@@ -33,29 +36,35 @@
 1. Set up Python virtual environment:   
 ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate   ```
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+```
 
-2. Install dependencies:   
+2. Install dependencies:
 ```bash
-   pip install -r requirements.txt   ```
+pip install -r requirements.txt
+```
 
-3. Run the development server:   
+4. Run the development server:   
 ```bash
-   python run_fast.py   ```
+   python run_fast.py
+```
 
 ### Frontend
 1. Install Node.js dependencies:  
 ```bash
-   npm install   ```
+   npm install
+```
 
 2. Start development server:   
 ```bash
-   npm run dev   ```
+   npm run dev
+```
 
 3. For production build:   
 ```bash
    npm run build
-   npm start   ```
+   npm start
+```
    
 ### Widget UI
 The widget system consists of several interconnected components:
