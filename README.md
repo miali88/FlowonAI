@@ -25,6 +25,9 @@
 - Cloudflare for DNS and CDN
 - nginx for reverse proxy
 - Sentry for error monitoring
+- PostHog for analytics
+- Greptile web/app & API for Codebase chat, PR review
+- CodeRabbit for PR review
   
 
 ## Getting Started
@@ -36,8 +39,7 @@
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate   ```
 
 2. Install dependencies:   
-```bash
-   pip install -r requirements.txt   ```
+```bash pip install -r requirements.txt   ```
 
 3. Run the development server:   
 ```bash
