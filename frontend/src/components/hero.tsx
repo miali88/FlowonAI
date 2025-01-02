@@ -1,28 +1,26 @@
 'use client';
 
 import { useState, memo, Suspense } from "react";
-import WordRotate from "@/components/ui/word-rotate";
+import { FlipWords } from "@/components/ui/flip-words";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 
 // Memoize the rotating words since they never change
 const ROTATING_WORDS = memo(() => (
-  <Suspense fallback={<span>Know Your Business</span>}>
-    <WordRotate
-      words={[
-        "Know Your Business",
-        "Know Your Industry",
-        // "Draft Documents",
-        "Answer Questions",
-        "Automate Tasks",
-        "Drive Conversion",
-        "Handle Enquiries",
-        "Book Appointments",
-      ]}
-      initialWord="Know Your Business"
-    />
-  </Suspense>
+  <FlipWords
+    words={[
+      "Know Your Business",
+      "Know Your Industry",
+      "Answer Questions",
+      "Automate Tasks",
+      "Drive Conversion",
+      "Handle Enquiries",
+      "Book Appointments",
+    ]}
+    className="inline-block"
+    duration={2}
+  />
 ));
 ROTATING_WORDS.displayName = 'RotatingWords';
 
@@ -45,8 +43,10 @@ const MobileHero = memo(() => (
     after:content-[''] after:absolute after:w-[30rem] after:h-[10rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[30%] after:right-[10%]">
     <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8 pb-32">
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-1 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground max-w-[95vw]">
-        <span className="whitespace-normal">Purpose Built AI Agents That</span>{" "}
-        <ROTATING_WORDS />
+        <div className="whitespace-nowrap">Purpose Built AI Agents That</div>
+        <div className="relative whitespace-nowrap mt-2">
+          <ROTATING_WORDS />
+        </div>
       </h1>
 
       <p className="mb-2 text-sm tracking-tight text-muted-foreground text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-[90vw] mx-auto px-2">
@@ -69,8 +69,10 @@ const DesktopHero = memo(() => (
     after:content-[''] after:absolute after:w-[40rem] after:h-[40rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[20%] after:right-[10%]">
     <div className="min-h-[65vh] flex flex-col items-center justify-center py-16">
       <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms] caret-foreground">
-        <span className="whitespace-nowrap">Purpose Built AI Agents That</span>{" "}
-        <ROTATING_WORDS />
+        <div className="whitespace-nowrap">Purpose Built AI Agents That</div>
+        <div className="relative whitespace-nowrap mt-2">
+          <ROTATING_WORDS />
+        </div>
       </h1>
 
       <p className="mb-16 text-lg tracking-tight text-muted-foreground md:text-xl lg:text-2xl text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms] max-w-3xl mx-auto">

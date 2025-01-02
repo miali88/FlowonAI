@@ -297,7 +297,7 @@ class ChatHistory:
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
-    print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
+    # print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
     chunk_count = 0
     try:
