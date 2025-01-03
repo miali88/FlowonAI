@@ -101,7 +101,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     @llm.ai_callable(
         name="question_and_answer",
-        description="Extract user's question and perform a search",
+        description="The user's topic of question that needs to be answered i.e products/services, company, team etc.",
         auto_retry=True
     )
     async def question_and_answer(
@@ -134,8 +134,7 @@ async def init_new_chat(agent_id: str, room_name: str):
             if data_source != "all" and not "corporate_law" in data_source:
                 data_source: Dict = {
                     "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
-                    "text_files": [item['id'] for item in data_source if item['data_type'] != 'web' and item['data_type'] != 'corporate_law'],
-                    "corporate_law": [item['id'] for item in data_source if item['data_type'] == 'corporate_law']
+                    "text_files": [item['id'] for item in data_source if item['data_type'] != 'web' and item['data_type']],
                 }
 
                 print("data_source:", data_source)
@@ -159,7 +158,7 @@ async def init_new_chat(agent_id: str, room_name: str):
                 results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
             rag_prompt = f"""   
-            # The user's query.
+            # Consider the user's query in line with your system instructions and your goal.
             ## User Query: {question}
             # Retrieved context
             ## {agent_metadata['company_name']} Information: {results}
@@ -295,6 +294,7 @@ class ChatHistory:
 
 # Global chat history store
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
+
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     # print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")

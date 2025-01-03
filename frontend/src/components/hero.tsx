@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, memo, Suspense } from "react";
+import { useState, memo } from "react";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image';
 
 // Memoize the rotating words since they never change
 const ROTATING_WORDS = memo(() => (

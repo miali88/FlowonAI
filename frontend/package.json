@@ -82,6 +82,7 @@
     "react-tagcloud": "^2.3.3",
     "recharts": "^2.14.1",
     "simple-icons": "^13.18.0",
+    "simplex-noise": "^4.0.3",
     "styled-components": "^6.1.13",
     "tag-cloud": "^2.0.2",
     "tailwind-merge": "^2.5.5",
