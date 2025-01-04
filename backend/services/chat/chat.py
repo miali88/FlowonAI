@@ -202,7 +202,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
                             embedding_column: str = "jina_embedding", max_results: int = 15,
                             user_id: str = None):
     print("\n\nsimilarity_search...")
-    print("\n\n data_source:", data_source)
+    print("\n\n data_source in similarity_search:", data_source)
     all_results = []
 
     # Set search parameters based on search type
@@ -210,8 +210,8 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         similarity_threshold = 0.30
         max_results = 10
     elif search_type == "Quick Search":
-        similarity_threshold = 0.35
-        max_results = 5
+        similarity_threshold = 0.20
+        max_results = 10
 
     async def fetch_table_data(table, query_embedding):
         try:
@@ -228,17 +228,17 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
                     }
                 ).execute()
             
-            elif table == "corporate_law":
-                return supabase.rpc(
-                    "search_corporate_law",
-                    {
-                        'query_embedding': query_embedding,
-                        'embedding_column': embedding_column,
-                        'similarity_threshold': similarity_threshold,
-                        'max_results': max_results,
-                        'user_id_filter': user_id,
-                    }
-                ).execute()
+            # elif table == "corporate_law":
+            #     return supabase.rpc(
+            #         "search_corporate_law",
+            #         {
+            #             'query_embedding': query_embedding,
+            #             'embedding_column': embedding_column,
+            #             'similarity_threshold': similarity_threshold,
+            #             'max_results': max_results,
+            #             'user_id_filter': user_id,
+            #         }
+            #     ).execute()
 
 
             elif table == "user_text_files":
@@ -269,6 +269,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         if response and hasattr(response, 'data') and response.data:
             all_results.extend(response.data)
     print("Length of results:", len(all_results))
+    print("\n\n\n all_results:", all_results)
     return all_results
 
 

@@ -117,10 +117,12 @@ async def init_new_chat(agent_id: str, room_name: str):
         Returns relevant information found in the knowledge base.
         """
         try:
+            print(f"\n\nquestion_and_answer func triggered with question: {question}")
             agent_metadata: Dict = await get_agent_metadata(agent_id)
             user_id: str = agent_metadata['userId']
             data_source: str = agent_metadata.get('dataSource', '{}')  # Default to empty JSON if not found
-            
+            print("data_source from get_agent_metadata:", data_source)
+
             # Handle empty or invalid data_source
             if not data_source or data_source.strip() == '':
                 data_source = '{}'  # Default empty JSON object
@@ -131,31 +133,28 @@ async def init_new_chat(agent_id: str, room_name: str):
                 logger.warning(f"Invalid JSON in data_source, using empty dict instead")
                 data_source = {}
 
-            if data_source != "all" and not "corporate_law" in data_source:
-                data_source: Dict = {
-                    "web": [item['title'] for item in data_source if item['data_type'] == 'web'],
+            # Check if data_source is "all" or has specific sources
+            if isinstance(data_source, str) and data_source == "all":
+                data_source = {"web": ["all"], "text_files": ["all"]}
+            else:
+                data_source = {
+                    "web": [item['title'].rstrip('/') for item in data_source if item['data_type'] == 'web'],
                     "text_files": [item['id'] for item in data_source if item['data_type'] != 'web' and item['data_type']],
                 }
 
-                print("data_source:", data_source)
-                results: List[Dict] = await similarity_search(question, data_source=data_source, user_id=user_id)
-                # print(f"\n\n RAG: results: {results[0]}\n\n")
+            results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
-                # Extract URLs from results and include them in the RAG results
-                results_with_urls = []
-                for result in results:
-                    result_dict = dict(result)
-                    if 'url' in result:
-                        result_dict['source_url'] = result['url']
-                    results_with_urls.append(result_dict)
+            # Extract URLs from results and include them in the RAG results
+            results_with_urls = []
+            for result in results:
+                result_dict = dict(result)
+                if 'url' in result:
+                    result_dict['source_url'] = result['url']
+                results_with_urls.append(result_dict)
 
-                # Yield the enhanced RAG results with URLs
-                # print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
-                # yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
-
-            else:
-                data_source = {"web": ["all"], "text_files": ["all"]}
-                results = await similarity_search(question, data_source=data_source, user_id=user_id)
+            # Yield the enhanced RAG results with URLs
+            # print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
+            # yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
 
             rag_prompt = f"""   
             # Consider the user's query in line with your system instructions and your goal.

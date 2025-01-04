@@ -203,7 +203,6 @@ async def events(participant_identity: str):  # Changed parameter
 
     return EventSourceResponse(event_generator())
 
-
 @router.get("/form_fields/{agent_id}")
 async def form_fields(agent_id: str):
     logger.info(f"Fetching form fields for agent_id: {agent_id}")
