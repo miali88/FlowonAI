@@ -309,6 +309,33 @@ class ChatHistory:
 # Global chat history store
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
 
+async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) -> List[dict]:
+    """
+    Retrieve RAG results for a specific chat response.
+    
+    Args:
+        agent_id (str): The ID of the agent
+        room_name (str): The name of the chat room
+        response_id (str): The ID of the specific response
+        
+    Returns:
+        List[dict]: List of RAG results associated with the response
+        
+    Raises:
+        ValueError: If chat history or response ID is not found
+    """
+    # Validate chat history exists
+    if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
+        raise ValueError("Chat history not found")
+    
+    chat_history = chat_histories[agent_id][room_name]
+    
+    # Validate response exists and has metadata
+    if response_id not in chat_history.response_metadata:
+        raise ValueError("Response ID not found")
+        
+    # Return the RAG results
+    return chat_history.response_metadata[response_id].rag_results
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")

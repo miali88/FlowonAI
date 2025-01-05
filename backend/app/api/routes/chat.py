@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 import logging
 import json
 from pydantic import BaseModel
-from services.chat.lk_chat import lk_chat_process
+from services.chat.lk_chat import lk_chat_process, get_chat_rag_results
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -70,4 +70,25 @@ async def chat_message(request: Request):
 
 @router.get("/get_sources")
 async def get_sources(request: Request):
-    return {"sources": "sources"}
+    try:
+        # Get query parameters
+        params = dict(request.query_params)
+        if not all(key in params for key in ['agent_id', 'room_name', 'response_id']):
+            raise HTTPException(status_code=400, detail="Missing required parameters: agent_id, room_name, response_id")
+        
+        try:
+            rag_results = await get_chat_rag_results(
+                agent_id=params['agent_id'],
+                room_name=params['room_name'],
+                response_id=params['response_id']
+            )
+            return {"sources": rag_results}
+            
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving sources: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
