@@ -1,14 +1,13 @@
-import asyncio
 import json
 from typing import Dict, Annotated, AsyncGenerator, Any
 from dataclasses import dataclass, field
-from typing import List, Optional, Union
+from typing import List, Optional
 import pickle
 from pathlib import Path
+from uuid import uuid4
 
 from livekit.agents import llm
 from livekit.plugins import openai, anthropic
-from livekit.agents.llm import USE_DOCSTRING
 from livekit.agents.llm.chat_context import ChatMessage
 
 from services.cache import get_agent_metadata
@@ -153,14 +152,19 @@ async def init_new_chat(agent_id: str, room_name: str):
                 results_with_urls.append(result_dict)
 
             # Yield the enhanced RAG results with URLs
-            # print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
-            # yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
+            print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
+            yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
 
             rag_prompt = f"""   
-            # Consider the user's query in line with your system instructions and your goal.
+            # User's query
             ## User Query: {question}
             # Retrieved context
             ## {agent_metadata['company_name']} Information: {results}
+
+            ## Instructions
+            - Respond as a representative of {agent_metadata['company_name']}, like "we" or "our"
+            - Show interest in the user's business
+
             """
 
             chat_ctx = llm.ChatContext()
@@ -272,13 +276,19 @@ async def init_new_chat(agent_id: str, room_name: str):
     return llm_instance, chat_ctx, fnc_ctx
 
 @dataclass
+class ResponseMetadata:
+    response_id: str
+    rag_results: List[dict] = field(default_factory=list)
+
+@dataclass
 class ChatHistory:
     messages: List[ChatMessage] = field(default_factory=list)
     llm_instance: Any = None
     chat_ctx: Any = None
     fnc_ctx: Any = None
+    response_metadata: Dict[str, ResponseMetadata] = field(default_factory=dict)
     
-    def add_message(self, role: str, content: str, name: str = None):
+    def add_message(self, role: str, content: str, name: str = None, response_id: str = None):
         message = ChatMessage(
             role=role,
             content=content,
@@ -287,18 +297,26 @@ class ChatHistory:
         self.messages.append(message)
         if self.chat_ctx:
             self.chat_ctx.messages.append(message)
-      
-    def get_messages(self) -> List[ChatMessage]:
-        return self.messages
+        
+        # Store metadata if this is an assistant message
+        if role == "assistant" and response_id:
+            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
+
+    def add_rag_results(self, response_id: str, rag_results: List[dict]):
+        if response_id in self.response_metadata:
+            self.response_metadata[response_id].rag_results = rag_results
 
 # Global chat history store
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
 
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
-    # print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
+    print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
     chunk_count = 0
+    response_id = str(uuid4())  # Generate a single response ID for the entire response
+    current_rag_results = []
+    
     try:
         # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:
@@ -326,31 +344,32 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             fnc_ctx=fnc_ctx
         )
 
+        # First yield the response_id separately
+        yield json.dumps({"type": "response_id", "response_id": response_id})
+
         async for chunk in response_stream:
             chunk_count += 1
             try:
-                logger.debug(f"Processing LLM chunk #{chunk_count}")
-                
                 if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     if content:
-                        logger.debug(f"Content chunk: {content[:50]}...")  # First 50 chars
                         current_assistant_message += content
                         yield content
                 elif chunk.choices[0].delta.tool_calls:
-                    logger.info("Tool call detected")
                     if current_assistant_message:
                         chat_history.add_message("assistant", current_assistant_message)
                         current_assistant_message = ""
                     
-                    # Log tool execution
                     for tool_call in chunk.choices[0].delta.tool_calls:
-                        logger.info(f"Executing tool: {tool_call}")
                         called_function = tool_call.execute()
                         result = await called_function.task
                         
                         if isinstance(result, str):
-                            logger.debug(f"Tool returned string result: {result[:50]}...")
+                            # Silently store RAG results without yielding them
+                            if result.startswith("[RAG_RESULTS]:"):
+                                rag_data = json.loads(result.replace("[RAG_RESULTS]:", "").strip())
+                                current_rag_results = rag_data
+                                continue  # Skip yielding RAG results
                             yield result
                             chat_history.add_message("function", result, name="unknown")
                         else:
@@ -358,7 +377,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                             async for result_chunk in result:
                                 tool_response += result_chunk
                                 yield result_chunk
-                            logger.debug(f"Tool returned streaming result: {tool_response[:50]}...")
                             chat_history.add_message("function", tool_response, name="unknown")
 
             except Exception as chunk_error:
@@ -367,14 +385,15 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
 
         logger.info(f"Stream completed. Total chunks: {chunk_count}")
         
-        # Ensure the final message is added to history
+        # Add the final message and store RAG results
         if current_assistant_message:
-            logger.info(f"Adding final message to history: {current_assistant_message[:50]}...")
-            chat_history.add_message("assistant", current_assistant_message)
+            chat_history.add_message("assistant", current_assistant_message, response_id=response_id)
+            if current_rag_results:
+                chat_history.add_rag_results(response_id, current_rag_results)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         if current_assistant_message:
-            chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]")
+            chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]", response_id=response_id)
         # Re-raise with more context
         raise Exception(f"Failed to process chat message: {str(e)}")
