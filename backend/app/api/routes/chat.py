@@ -25,6 +25,7 @@ async def chat_message(request: Request):
 
         async def event_generator():
             response_id = None
+            has_source = False  # Initialize has_source flag
             try:
                 async for chunk in lk_chat_process(
                     user_query['message'], 
@@ -32,8 +33,9 @@ async def chat_message(request: Request):
                     user_query['room_name'],
                 ):
                     if chunk:
-                        # Skip RAG results chunks
+                        # Track if we've seen RAG results
                         if isinstance(chunk, str) and chunk.startswith("[RAG_RESULTS]:"):
+                            has_source = True
                             continue
 
                         # Check if this is the response_id message
@@ -46,8 +48,8 @@ async def chat_message(request: Request):
                             # If it's not JSON, it's a regular content chunk
                             pass
 
-                        # Yield the chunk with the response_id
-                        yield f"data: {json.dumps({'response': {'answer': str(chunk), 'response_id': response_id}})}\n\n"
+                        # Yield the chunk with the response_id and has_source flag
+                        yield f"data: {json.dumps({'response': {'answer': str(chunk), 'response_id': response_id, 'has_source': has_source}})}\n\n"
                 
                 yield "data: [DONE]\n\n"
             except Exception as e:
