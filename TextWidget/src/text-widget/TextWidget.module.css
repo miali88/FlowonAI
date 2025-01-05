@@ -476,11 +476,27 @@
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06); /* Subtle black shadows */
-  max-width: min(calc(90% - 48px), 65ch);
 
   text-align: left;
   font-family: sans-serif;
   max-height: 60%;
   overflow: hidden;
   overflow-y: scroll;
+
+  z-index: 100;
+  position: fixed;
+}
+
+.sourceContainerHeader {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+
+.sourceCloseButton {
+  width: 20px;
+  height: 20px;
+  border: none;
+  cursor: pointer;
 }

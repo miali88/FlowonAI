@@ -8,9 +8,13 @@ import ReactMarkdown from "react-markdown";
 import Footer from "./Footer";
 import CalendlyWidget from "./CalendlyWidget";
 
+import CloseIcon from "../assets/close-icon.svg";
+
 interface Message {
   text: string;
   isBot: boolean;
+  responseId?: string;
+  hasSource?: boolean;
 }
 
 interface FormField {
@@ -59,7 +63,13 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   );
   const [showCalendly, setShowCalendly] = useState(false);
   const [openingLine, setOpeningLine] = useState<string | null>(null);
-  const [shouldShowActionMenu, setShouldShowActionMenu] = useState(false);
+  const [currentOpeningResponseId, setCurrentOpeningResponseId] = useState<
+    string | null
+  >(null);
+  const [hoveredMessageIndex, setHoveredMessageIndex] = useState<string | null>(
+    null
+  );
+  const [sources, setSources] = useState();
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -106,7 +116,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   useEffect(() => {
     console.log("Opening line state changed to:", openingLine);
     if (openingLine) {
-      setMessages([{ text: openingLine, isBot: true }]);
+      setMessages([
+        { text: openingLine, isBot: true, responseId: "1a", hasSource: false },
+      ]);
     }
   }, [openingLine]);
 
@@ -216,6 +228,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               const data = JSON.parse(content);
               if (data.response?.answer) {
                 const newText = data.response.answer;
+                const responseId = data.response?.response_id;
+                const hasSource = data.response?.has_source;
                 accumulatedResponse += newText;
 
                 // Check if the bot's response should trigger Calendly
@@ -226,6 +240,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.isBot) {
                     lastMessage.text = accumulatedResponse;
+                    lastMessage.responseId = responseId;
+                    lastMessage.hasSource = hasSource;
                   }
                   return newMessages;
                 });
@@ -243,6 +259,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         {
           text: "Sorry, there was an error processing your message.",
           isBot: true,
+          hasSource: false,
         },
       ]);
     }
@@ -277,7 +294,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       if (!reader) throw new Error("No reader available");
 
       // Add initial empty bot message
-      const botMessage: Message = { text: "", isBot: true };
+      const botMessage: Message = { text: "", isBot: true, hasSource: false };
       setMessages((prev) => [...prev, botMessage]);
 
       let accumulatedResponse = "";
@@ -302,6 +319,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               const data = JSON.parse(content);
               if (data.response?.answer) {
                 const newText = data.response.answer;
+                const responseId = data.response.response_id;
+                const hasSource = data.response.has_source;
                 accumulatedResponse += newText;
 
                 setMessages((prev) => {
@@ -309,6 +328,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.isBot) {
                     lastMessage.text = accumulatedResponse;
+                    lastMessage.responseId = responseId;
+                    lastMessage.hasSource = hasSource;
                   }
                   return newMessages;
                 });
@@ -326,6 +347,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         {
           text: "Sorry, there was an error processing your message.",
           isBot: true,
+          hasSource: false,
         },
       ]);
     }
@@ -364,6 +386,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         {
           text: "Thank you for submitting the form!",
           isBot: true,
+          hasSource: false,
         },
       ]);
 
@@ -377,6 +400,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         {
           text: "Sorry, there was an error submitting the form. Please try again.",
           isBot: true,
+          hasSource: false,
         },
       ]);
     }
@@ -400,7 +424,24 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     }
   };
 
-  console.log("Current activeSuggestions:", activeSuggestions);
+  async function fetchSources(responseId: string) {
+    if (responseId) {
+      try {
+        const sourcesResponse = await fetch(
+          `${apiBaseUrl}/chat/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
+        );
+
+        if (sourcesResponse.ok) {
+          const sourcesData = await sourcesResponse.json();
+          setSources(sourcesData.sources);
+
+          console.log(sources, "HELLO WORLD");
+        }
+      } catch (error) {
+        console.error("Error fetching sources:", error);
+      }
+    }
+  }
 
   return (
     <div
@@ -429,8 +470,12 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           {messages.map((message, index) =>
             message.text ? (
               <div
-                onMouseEnter={() => setShouldShowActionMenu(true)}
-                onMouseLeave={() => setShouldShowActionMenu(false)}
+                onMouseEnter={() =>
+                  message.isBot &&
+                  message.responseId &&
+                  setHoveredMessageIndex(message.responseId)
+                }
+                onMouseLeave={() => setHoveredMessageIndex(null)}
               >
                 <div
                   key={index}
@@ -470,9 +515,18 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                       </form>
                     )}
                 </div>
-                {message.isBot && shouldShowActionMenu && (
-                  <button>Show sources {message.isBot}</button>
-                )}
+                {message.isBot &&
+                  message.responseId &&
+                  hoveredMessageIndex === message.responseId && (
+                    <button
+                      onClick={() => {
+                        fetchSources(message.responseId);
+                        setCurrentOpeningResponseId(message.responseId);
+                      }}
+                    >
+                      Show sources
+                    </button>
+                  )}
               </div>
             ) : message.isBot ? (
               <LoadingBubbles key={index} />
@@ -492,45 +546,23 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
             </div>
           )}
 
-          <div className={styles.sourceContainer}>
-            <h1>Sources</h1>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-            <p>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio,
-              minus harum! Temporibus, rerum, asperiores vel officiis accusamus
-              quidem assumenda iusto sunt excepturi accusantium rem facilis, cum
-              autem laborum quaerat dolorem!
-            </p>
-          </div>
+          {currentOpeningResponseId && (
+            <div className={styles.sourceContainer}>
+              <div className={styles.sourceContainerHeader}>
+                <h1>Sources</h1>
+
+                <button
+                  className={styles.sourceCloseButton}
+                  onClick={() => setCurrentOpeningResponseId(null)}
+                >
+                  <img width={20} height={20} src={CloseIcon} />
+                </button>
+              </div>
+              <h1>{currentOpeningResponseId}</h1>
+              {/* fix format */}
+              {sources}
+            </div>
+          )}
         </div>
 
         <div className={styles.suggestedQuestionsContainer}>
