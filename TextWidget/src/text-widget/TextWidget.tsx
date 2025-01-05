@@ -516,12 +516,16 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                     )}
                 </div>
                 {message.isBot &&
+                  message.hasSource &&
                   message.responseId &&
                   hoveredMessageIndex === message.responseId && (
                     <button
                       onClick={() => {
-                        fetchSources(message.responseId);
-                        setCurrentOpeningResponseId(message.responseId);
+                        // FIXME: remove type asseration
+                        fetchSources(message.responseId as string);
+                        setCurrentOpeningResponseId(
+                          message.responseId as string
+                        );
                       }}
                     >
                       Show sources
