@@ -277,7 +277,8 @@
   text-decoration: underline;
 }
 
-.messageBubble ul, .messageBubble ol {
+.messageBubble ul,
+.messageBubble ol {
   margin: 8px 0;
   padding-left: 20px;
 }
@@ -430,7 +431,8 @@
 }
 
 @keyframes bubblePulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(0.8);
     opacity: 0.6;
   }
@@ -466,4 +468,19 @@
 
 .closeButton:hover {
   background: #0056b3;
+}
+
+.sourceContainer {
+  background: #ffffff;
+  color: #000;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06); /* Subtle black shadows */
+  max-width: min(calc(90% - 48px), 65ch);
+
+  text-align: left;
+  font-family: sans-serif;
+  max-height: 60%;
+  overflow: hidden;
+  overflow-y: scroll;
 }
