@@ -211,7 +211,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         max_results = 10
     elif search_type == "Quick Search":
         similarity_threshold = 0.20
-        max_results = 10
+        max_results = 2
 
     async def fetch_table_data(table, query_embedding):
         try:
@@ -269,7 +269,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         if response and hasattr(response, 'data') and response.data:
             all_results.extend(response.data)
     print("Length of results:", len(all_results))
-    print("\n\n\n all_results:", all_results)
+    # print("\n\n\n all_results:", all_results)
     return all_results
 
 

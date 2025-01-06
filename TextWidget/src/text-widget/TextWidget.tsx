@@ -431,12 +431,16 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           `${apiBaseUrl}/chat/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
         );
 
-        if (sourcesResponse.ok) {
-          const sourcesData = await sourcesResponse.json();
-          setSources(sourcesData.sources);
-
-          console.log(sources, "HELLO WORLD");
+        if (!sourcesResponse.ok) {
+          console.error(`Error fetching sources: ${sourcesResponse.status}`);
+          const errorText = await sourcesResponse.text();
+          console.error(`Error details: ${errorText}`);
+          return;
         }
+
+        const sourcesData = await sourcesResponse.json();
+        setSources(sourcesData.sources);
+        console.log("Sources fetched:", sourcesData.sources);
       } catch (error) {
         console.error("Error fetching sources:", error);
       }

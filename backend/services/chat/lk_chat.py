@@ -121,6 +121,9 @@ async def init_new_chat(agent_id: str, room_name: str):
             user_id: str = agent_metadata['userId']
             data_source: str = agent_metadata.get('dataSource', '{}')  # Default to empty JSON if not found
             print("data_source from get_agent_metadata:", data_source)
+            response_id = str(uuid4())
+
+            print(f"response_id in question_and_answer : {response_id}")
 
             # Handle empty or invalid data_source
             if not data_source or data_source.strip() == '':
@@ -143,7 +146,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
             results = await similarity_search(question, data_source=data_source, user_id=user_id)
 
-            # Extract URLs from results and include them in the RAG results
+            # Extract URLs and prepare RAG results
             results_with_urls = []
             for result in results:
                 result_dict = dict(result)
@@ -151,9 +154,20 @@ async def init_new_chat(agent_id: str, room_name: str):
                     result_dict['source_url'] = result['url']
                 results_with_urls.append(result_dict)
 
-            # Yield the enhanced RAG results with URLs
-            print(f"\n\n RAG: results_with_urls: {results_with_urls}\n\n")
-            yield f"[RAG_RESULTS]: {json.dumps(results_with_urls)}"
+            # Store RAG results immediately in chat history
+            print(f"\n=== Storing RAG Results in question_and_answer ===")
+            print(f"Response ID: {response_id}")
+            # print(f"RAG Results: {results_with_urls}")
+            
+            # Get the chat history for this room
+            if agent_id in chat_histories and room_name in chat_histories[agent_id]:
+                chat_history = chat_histories[agent_id][room_name]
+                chat_history.add_rag_results(response_id, results_with_urls)
+                # print(f"Stored RAG results. Current metadata: {chat_history.response_metadata}")
+
+            # Yield the RAG results marker for downstream processing
+            yield f"[RAG_RESULTS]: "
+            yield json.dumps({"response_id": response_id})
 
             rag_prompt = f"""   
             # User's query
@@ -183,6 +197,8 @@ async def init_new_chat(agent_id: str, room_name: str):
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
             
+
+
         except Exception as e:
             logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
             yield "I apologize, but I encountered an error while searching for an answer to your question."
@@ -303,8 +319,28 @@ class ChatHistory:
             self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
 
     def add_rag_results(self, response_id: str, rag_results: List[dict]):
-        if response_id in self.response_metadata:
-            self.response_metadata[response_id].rag_results = rag_results
+        """
+        Add RAG results to the response metadata, creating the entry if it doesn't exist.
+        """
+        if not response_id:
+            logger.error("Attempted to add RAG results with empty response_id")
+            return
+        
+        print(f"\n=== Adding RAG Results ===")
+        print(f"Response ID: {response_id}")
+        # print(f"Current metadata state: {self.response_metadata}")
+        
+        # Create or update ResponseMetadata
+        if response_id not in self.response_metadata:
+            print(f"Creating new ResponseMetadata for {response_id}")
+            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
+        
+        # Add the RAG results
+        self.response_metadata[response_id].rag_results = rag_results
+        
+        # Verify storage
+        # print(f"Updated metadata state: {self.response_metadata}")
+        # print(f"Stored RAG results for {response_id}: {rag_results}")
 
 # Global chat history store
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
@@ -312,38 +348,41 @@ chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_
 async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) -> List[dict]:
     """
     Retrieve RAG results for a specific chat response.
-    
-    Args:
-        agent_id (str): The ID of the agent
-        room_name (str): The name of the chat room
-        response_id (str): The ID of the specific response
-        
-    Returns:
-        List[dict]: List of RAG results associated with the response
-        
-    Raises:
-        ValueError: If chat history or response ID is not found
     """
-    # Validate chat history exists
+    # Add debug logging
+    print(f"\n=== Debug Chat Histories ===")
+    print(f"Looking for agent_id: {agent_id}")
+    print(f"Looking for room_name: {room_name}")
+    print(f"Looking for response_id: {response_id}")
+    print(f"Available agent_ids: {list(chat_histories.keys())}")
+    
+    # Check if agent exists
+    if agent_id in chat_histories:
+        print(f"Found agent. Available rooms: {list(chat_histories[agent_id].keys())}")
+        
+        if room_name in chat_histories[agent_id]:
+            chat_history = chat_histories[agent_id][room_name]
+            print(f"Found room. Available response_ids: {list(chat_history.response_metadata.keys())}")
+            print(f"Response metadata: {chat_history.response_metadata}")
+    
+    # Original validation
     if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
         raise ValueError("Chat history not found")
     
     chat_history = chat_histories[agent_id][room_name]
     
-    # Validate response exists and has metadata
     if response_id not in chat_history.response_metadata:
         raise ValueError("Response ID not found")
         
-    # Return the RAG results
     return chat_history.response_metadata[response_id].rag_results
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
     chunk_count = 0
-    response_id = str(uuid4())  # Generate a single response ID for the entire response
-    current_rag_results = []
-    
+    response_id = str(uuid4())
+    print(f"response_id in lk_chat_process : {response_id}")
+
     try:
         # Initialize or get existing chat history using both agent_id and room_name
         if agent_id not in chat_histories:
@@ -373,6 +412,10 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
 
         # First yield the response_id separately
         yield json.dumps({"type": "response_id", "response_id": response_id})
+        
+        # Create the response metadata entry immediately
+        chat_history.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
+        print(f"Created new response entry with ID: {response_id}")
 
         async for chunk in response_stream:
             chunk_count += 1
@@ -382,45 +425,38 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     if content:
                         current_assistant_message += content
                         yield content
+
                 elif chunk.choices[0].delta.tool_calls:
-                    if current_assistant_message:
-                        chat_history.add_message("assistant", current_assistant_message)
-                        current_assistant_message = ""
-                    
                     for tool_call in chunk.choices[0].delta.tool_calls:
                         called_function = tool_call.execute()
                         result = await called_function.task
                         
                         if isinstance(result, str):
-                            # Silently store RAG results without yielding them
                             if result.startswith("[RAG_RESULTS]:"):
-                                rag_data = json.loads(result.replace("[RAG_RESULTS]:", "").strip())
-                                current_rag_results = rag_data
-                                continue  # Skip yielding RAG results
+                                # RAG results are now stored in question_and_answer
+                                # Just skip the RAG marker here
+                                continue
+                            
                             yield result
-                            chat_history.add_message("function", result, name="unknown")
+                            chat_history.add_message("function", result, name="tool_response")
+
                         else:
                             tool_response = ""
                             async for result_chunk in result:
                                 tool_response += result_chunk
                                 yield result_chunk
-                            chat_history.add_message("function", tool_response, name="unknown")
+                            chat_history.add_message("function", tool_response, name="tool_response")
 
             except Exception as chunk_error:
                 logger.error(f"Error processing chunk #{chunk_count}: {str(chunk_error)}", exc_info=True)
                 yield f"[Error processing chunk: {str(chunk_error)}]"
 
-        logger.info(f"Stream completed. Total chunks: {chunk_count}")
-        
-        # Add the final message and store RAG results
+        # Save the final message
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message, response_id=response_id)
-            if current_rag_results:
-                chat_history.add_rag_results(response_id, current_rag_results)
 
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]", response_id=response_id)
-        # Re-raise with more context
         raise Exception(f"Failed to process chat message: {str(e)}")
