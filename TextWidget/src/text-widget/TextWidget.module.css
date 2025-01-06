@@ -478,8 +478,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 600px;
+  max-width: 88%;
   max-height: 80vh;
   overflow-y: auto;
   z-index: 1000;
@@ -515,7 +514,7 @@
 .sourceItem {
   background: #f8fafc;
   border-radius: 12px;
-  padding: 20px;
+  padding: 2px;
   transition: transform 0.2s ease;
   font-family: sans-serif;
 }
@@ -532,7 +531,8 @@
   font-size: 0.875rem;
   text-decoration: none;
   margin-bottom: 12px;
-  padding: 6px 12px;
+  padding: 6px 8px;
+  margin-top: 5px;
   background: #e0e7ff;
   border-radius: 6px;
   transition: background 0.2s ease;
