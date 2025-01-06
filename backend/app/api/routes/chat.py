@@ -33,15 +33,15 @@ async def chat_message(request: Request):
                     user_query['room_name'],
                 ):
                     if chunk:
-                        # Track if we've seen RAG results
+                        # Track if we've seen RAG results and get its response_id
                         if isinstance(chunk, str) and chunk.startswith("[RAG_RESULTS]:"):
                             has_source = True
                             continue
-
-                        # Check if this is the response_id message
+                        
+                        # Check if this is a RAG response_id message
                         try:
                             chunk_data = json.loads(chunk)
-                            if chunk_data.get("type") == "response_id":
+                            if isinstance(chunk_data, dict) and "response_id" in chunk_data:
                                 response_id = chunk_data["response_id"]
                                 continue  # Skip yielding this to the client
                         except json.JSONDecodeError:
@@ -72,9 +72,11 @@ async def chat_message(request: Request):
 
 @router.get("/get_sources")
 async def get_sources(request: Request):
+    print("\n=== /get_sources endpoint ===")
+    params = dict(request.query_params)
+    print(f"Request params: {params}")
+    
     try:
-        # Get query parameters
-        params = dict(request.query_params)
         if not all(key in params for key in ['agent_id', 'room_name', 'response_id']):
             raise HTTPException(status_code=400, detail="Missing required parameters: agent_id, room_name, response_id")
         
@@ -84,9 +86,11 @@ async def get_sources(request: Request):
                 room_name=params['room_name'],
                 response_id=params['response_id']
             )
+            print(f"Successfully retrieved RAG results: {[rag_results[0]['source_url']]}")
             return {"sources": rag_results}
             
         except ValueError as e:
+            logger.error(f"Value error in get_sources: {str(e)}")
             raise HTTPException(status_code=404, detail=str(e))
 
     except HTTPException:
