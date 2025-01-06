@@ -472,31 +472,132 @@
 
 .sourceContainer {
   background: #ffffff;
-  color: #000;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06); /* Subtle black shadows */
-
-  text-align: left;
-  font-family: sans-serif;
-  max-height: 60%;
-  overflow: hidden;
-  overflow-y: scroll;
-
-  z-index: 100;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 24px;
+  font-family: sans-serif;
 }
 
 .sourceContainerHeader {
   display: flex;
   justify-content: space-between;
-  width: 100%;
   align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eef2f6;
+  font-family: sans-serif;
+}
+
+.sourceContainerHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: sans-serif;
+}
+
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: sans-serif;
+}
+
+.sourceItem {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s ease;
+  font-family: sans-serif;
+}
+
+.sourceItem:hover {
+  transform: translateY(-2px);
+}
+
+.sourceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2563eb;
+  font-size: 0.875rem;
+  text-decoration: none;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  background: #e0e7ff;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  font-family: sans-serif;
+}
+
+.sourceLink:hover {
+  background: #c7d2fe;
+}
+
+.externalIcon {
+  opacity: 0.7;
+}
+
+.sourceContent {
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  font-family: sans-serif;
+}
+
+.sourceContent p {
+  margin: 0;
 }
 
 .sourceCloseButton {
-  width: 20px;
-  height: 20px;
+  background: none;
   border: none;
+  padding: 8px;
   cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+
+.sourceCloseButton:hover {
+  opacity: 1;
+  background: #f1f5f9;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+  .sourceContainer {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .sourceItem {
+    padding: 16px;
+  }
+}
+
+.sourceContentNoPadding {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.showSourcesButton {
+  cursor: pointer;
+  background: #f3f4f6;
+  border: none;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 16px;
 }

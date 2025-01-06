@@ -28,6 +28,11 @@ interface ChatInterfaceProps {
   suggestedQuestions?: string[];
 }
 
+interface Source {
+  content: string;
+  source_url: string;
+}
+
 const LoadingBubbles = () => (
   <div className={styles.loadingBubbles} data-loading-spinner>
     <div className={styles.bubble}></div>
@@ -69,7 +74,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   const [hoveredMessageIndex, setHoveredMessageIndex] = useState<string | null>(
     null
   );
-  const [sources, setSources] = useState();
+  const [sources, setSources] = useState<Source[]>([]);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -524,15 +529,30 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   message.responseId &&
                   hoveredMessageIndex === message.responseId && (
                     <button
+                      className={styles.showSourcesButton}
                       onClick={() => {
-                        // FIXME: remove type asseration
                         fetchSources(message.responseId as string);
                         setCurrentOpeningResponseId(
                           message.responseId as string
                         );
                       }}
                     >
-                      Show sources
+                      <svg
+                        className={styles.sourceIcon}
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      View references
                     </button>
                   )}
               </div>
@@ -557,18 +577,43 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           {currentOpeningResponseId && (
             <div className={styles.sourceContainer}>
               <div className={styles.sourceContainerHeader}>
-                <h1>Sources</h1>
-
+                <h2>References</h2>
                 <button
                   className={styles.sourceCloseButton}
                   onClick={() => setCurrentOpeningResponseId(null)}
                 >
-                  <img width={20} height={20} src={CloseIcon} />
+                  <img width={20} height={20} src={CloseIcon} alt="Close" />
                 </button>
               </div>
-              <h1>{currentOpeningResponseId}</h1>
-              {/* fix format */}
-              {sources}
+              <div className={styles.sourcesList}>
+                {sources.map((source, index) => (
+                  <div key={index} className={styles.sourceItem}>
+                    <span>URL: </span>
+
+                    <a
+                      href={source.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.sourceLink}
+                    >
+                      {source.source_url}
+                      <svg
+                        className={styles.externalIcon}
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
