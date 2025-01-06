@@ -348,6 +348,7 @@ chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_
 async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) -> List[dict]:
     """
     Retrieve RAG results for a specific chat response.
+    Returns a list of dictionaries containing unique source_urls.
     """
     # Add debug logging
     print(f"\n=== Debug Chat Histories ===")
@@ -373,8 +374,14 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
     
     if response_id not in chat_history.response_metadata:
         raise ValueError("Response ID not found")
-        
-    return chat_history.response_metadata[response_id].rag_results
+    
+    # Get original RAG results and extract unique source_urls
+    rag_results = chat_history.response_metadata[response_id].rag_results
+    unique_urls = {result.get('source_url') for result in rag_results if result.get('source_url')}
+    
+    # Return list of dictionaries with unique source_urls
+    return [{"source_url": url} for url in unique_urls]
+
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
