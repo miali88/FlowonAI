@@ -31,6 +31,7 @@ interface ChatInterfaceProps {
 interface Source {
   content: string;
   source_url: string;
+  source_file?: string;
 }
 
 const LoadingBubbles = () => (
@@ -606,29 +607,58 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               <div className={styles.sourcesList}>
                 {sources.map((source, index) => (
                   <div key={index} className={styles.sourceItem}>
-                    <span>URL: </span>
-
-                    <a
-                      href={source.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.sourceLink}
-                    >
-                      {source.source_url}
-                      <svg
-                        className={styles.externalIcon}
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </a>
+                    {source.source_url && (
+                      <div className={styles.sourceUrlContainer}>
+                        <span>URL: </span>
+                        <a
+                          href={source.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceLink}
+                        >
+                          {source.source_url}
+                          <svg
+                            className={styles.externalIcon}
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            />
+                          </svg>
+                        </a>
+                      </div>
+                    )}
+                    {source.source_file && (
+                      <div className={styles.sourceFileWrapper}>
+                        <p className={styles.sourceFileLabel}>Source File</p>
+                        <div className={styles.sourceFile}>
+                          <svg
+                            className={styles.fileIcon}
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                          >
+                            <path
+                              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                          <span className={styles.sourceFileText}>
+                            {source.source_file}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
