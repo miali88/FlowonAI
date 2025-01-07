@@ -182,22 +182,34 @@ async def init_new_chat(agent_id: str, room_name: str):
             ## User Query: {question}
             # Retrieved context
             ## {agent_metadata['company_name']} Information: {results}
-
             """
 
-            # ## Instructions
-            # - Respond as a representative of {agent_metadata['company_name']}, like "we" or "our"
-            # - Show interest in the user's business
+            # Add instructions only if showSourcesInChat is False
+            if not agent_metadata.get('showSourcesInChat', True):
+                rag_prompt += """
+                ## Instructions
+                - Respond as a representative of {agent_metadata['company_name']}, like "we" or "our"
+                - Show interest in the user's business
+                - Use markdown, bullet points, and line breaks to make the response more readable
+                """
 
-
-            chat_ctx = llm.ChatContext()
+            # Use existing chat context from chat history
+            if agent_id in chat_histories and room_name in chat_histories[agent_id]:
+                chat_ctx = chat_histories[agent_id][room_name].chat_ctx
+            else:
+                chat_ctx = llm.ChatContext()
+            
             chat_ctx.append(
                 role="user",
                 text=rag_prompt
             )
 
-            # Create LLM instance and get response
-            # llm_instance = openai.LLM(model="gpt-4o")
+            # Add debug logging to see full chat context
+            print("\n=== Chat Context Before RAG Response ===")
+            for msg in chat_ctx.messages:
+                print(f"Role: {msg.role}")
+                print(f"Content: {msg.content}")
+                print("---")
 
             response_stream = llm_instance.chat(chat_ctx=chat_ctx)
             

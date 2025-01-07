@@ -7,6 +7,7 @@ import { IoSend } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import Footer from "./Footer";
 import CalendlyWidget from "./CalendlyWidget";
+import { Components } from 'react-markdown'
 
 import CloseIcon from "../assets/close-icon.svg";
 
@@ -466,6 +467,17 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     }
   }
 
+  // Add this custom components configuration
+  const markdownComponents: Components = {
+    a: ({ node, ...props }) => (
+      <a 
+        {...props} 
+        target="_blank" 
+        rel="noopener noreferrer"
+      />
+    ),
+  };
+
   return (
     <div
       style={{
@@ -512,7 +524,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   }`}
                 >
                   <div className={styles.messageBubbleContent}>
-                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                    <ReactMarkdown components={markdownComponents}>
+                      {message.text}
+                    </ReactMarkdown>
                   </div>
 
                   {/* Show form if needed */}
