@@ -5,6 +5,7 @@ from typing import List, Optional
 import pickle
 from pathlib import Path
 from uuid import uuid4
+from datetime import datetime
 
 from livekit.agents import llm
 from livekit.plugins import openai, anthropic
@@ -14,6 +15,7 @@ from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
+from services.db.supabase_services import supabase_client
 
 import logging
 logger = logging.getLogger(__name__)
@@ -144,16 +146,18 @@ async def init_new_chat(agent_id: str, room_name: str):
                     "text_files": [item['id'] for item in data_source if item['data_type'] != 'web' and item['data_type']],
                 }
 
-            results = await similarity_search(question, data_source=data_source, user_id=user_id)
-
-            # Extract URLs and prepare RAG results
-            results_with_urls = []
+            results: list[dict] = await similarity_search(question, data_source=data_source, user_id=user_id)
+            # Extract source of data from the list of results
+            rag_results = []
             for result in results:
                 result_dict = dict(result)
                 if 'url' in result:
                     result_dict['source_url'] = result['url']
-                results_with_urls.append(result_dict)
-
+                else:
+                    result_dict['source_file'] = result['title']
+                print(f"result_dict: {result_dict}")
+                rag_results.append(result_dict)
+                
             # Store RAG results immediately in chat history
             print(f"\n=== Storing RAG Results in question_and_answer ===")
             print(f"Response ID: {response_id}")
@@ -162,24 +166,29 @@ async def init_new_chat(agent_id: str, room_name: str):
             # Get the chat history for this room
             if agent_id in chat_histories and room_name in chat_histories[agent_id]:
                 chat_history = chat_histories[agent_id][room_name]
-                chat_history.add_rag_results(response_id, results_with_urls)
+                if rag_results:   
+                    chat_history.add_rag_results(response_id, rag_results)
+                else:
+                    chat_history.add_rag_results(response_id, rag_results)
                 # print(f"Stored RAG results. Current metadata: {chat_history.response_metadata}")
 
             # Yield the RAG results marker for downstream processing
             yield f"[RAG_RESULTS]: "
             yield json.dumps({"response_id": response_id})
 
+            ## TODO: each agent has a different rag_prompt. 
             rag_prompt = f"""   
             # User's query
             ## User Query: {question}
             # Retrieved context
             ## {agent_metadata['company_name']} Information: {results}
 
-            ## Instructions
-            - Respond as a representative of {agent_metadata['company_name']}, like "we" or "our"
-            - Show interest in the user's business
-
             """
+
+            # ## Instructions
+            # - Respond as a representative of {agent_metadata['company_name']}, like "we" or "our"
+            # - Show interest in the user's business
+
 
             chat_ctx = llm.ChatContext()
             chat_ctx.append(
@@ -364,7 +373,7 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
         if room_name in chat_histories[agent_id]:
             chat_history = chat_histories[agent_id][room_name]
             print(f"Found room. Available response_ids: {list(chat_history.response_metadata.keys())}")
-            print(f"Response metadata: {chat_history.response_metadata}")
+            # print(f"Response metadata: {chat_history.response_metadata}")
     
     # Original validation
     if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
@@ -375,12 +384,21 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
     if response_id not in chat_history.response_metadata:
         raise ValueError("Response ID not found")
     
-    # Get original RAG results and extract unique source_urls
-    rag_results = chat_history.response_metadata[response_id].rag_results
-    unique_urls = {result.get('source_url') for result in rag_results if result.get('source_url')}
+    # Get original RAG results and extract unique sources (either URLs or files)
+    unique_sources = {
+        result.get('source_url') or result.get('source_file') 
+        for result in chat_history.response_metadata[response_id].rag_results 
+        if (result.get('source_url') or result.get('source_file'))
+    }
     
-    # Return list of dictionaries with unique source_urls
-    return [{"source_url": url} for url in unique_urls]
+    # Return list of dictionaries with source information
+    return [
+        {"source_url": source} if "http" in str(source) else {"source_file": source} 
+        for source in unique_sources
+    ]
+
+
+
 
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
@@ -467,3 +485,60 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]", response_id=response_id)
         raise Exception(f"Failed to process chat message: {str(e)}")
+
+# Add near other global variables
+supabase = supabase_client()
+
+async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
+    """
+    Save the chat history to Supabase conversation_logs table when a chat session ends.
+    """
+    try:
+        if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
+            logger.warning(f"No chat history found for agent_id: {agent_id}, room_name: {room_name}")
+            return
+
+        chat_history = chat_histories[agent_id][room_name]
+        
+        # Format messages for storage
+        formatted_transcript = []
+        for msg in chat_history.messages:
+            formatted_transcript.append({
+                "role": msg.role,
+                "content": msg.content,
+                "name": msg.name if hasattr(msg, 'name') else None,
+                "timestamp": datetime.now().isoformat()  # Add timestamp for each message
+            })
+
+        # Get agent metadata for user_id
+        agent_metadata = await get_agent_metadata(agent_id)
+        user_id = agent_metadata['userId']
+
+        # Prepare data for Supabase
+        conversation_data = {
+            "transcript": formatted_transcript,
+            "job_id": room_name,  # Using room_name as job_id
+            "participant_identity": room_name,  # Using room_name as participant_identity
+            "room_name": room_name,
+            "user_id": user_id,
+            "agent_id": agent_id,
+            "lead": "unknown",  # Default value
+            "call_duration": 0,  # Default value
+            "call_type": "chat"  # Specify this is a chat conversation
+        }
+
+        # Save to Supabase
+        print(f"Saving chat history to Supabase for room: {room_name}")
+        print(f"Number of messages: {len(formatted_transcript)}")
+        
+        response = supabase.table("conversation_logs").insert(conversation_data).execute()
+        print(f"Successfully saved chat history to Supabase")
+        
+        # Clean up the chat history
+        del chat_histories[agent_id][room_name]
+        if not chat_histories[agent_id]:
+            del chat_histories[agent_id]
+            
+    except Exception as e:
+        logger.error(f"Error saving chat history to Supabase: {str(e)}", exc_info=True)
+        print(f"Error saving chat history: {str(e)}")

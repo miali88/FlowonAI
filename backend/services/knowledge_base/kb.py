@@ -93,9 +93,8 @@ async def get_kb_headers(current_user):
                            .execute()
             formatted_items = [
                 {
-                    'id': item['id'],
+                    'id': item['parent_id'],
                     'title': item.get('heading', 'No Title'),
-                    'user_id': current_user,
                     'data_type': item.get('data_type'),
                     'tag': item.get('tag', ''),
                     'token_count': item.get('token_count', 0)

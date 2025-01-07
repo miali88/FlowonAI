@@ -196,7 +196,7 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                 raise e 
 
 
-tables = ["user_web_data", "user_text_files", "corporate_law"]
+tables = ["user_web_data", "user_text_files"]
 async def similarity_search(query: str, data_source: Dict = None, table_names: List[str] = tables,
                             search_type: str = "Quick Search", similarity_threshold: float = 0.20, 
                             embedding_column: str = "jina_embedding", max_results: int = 15,

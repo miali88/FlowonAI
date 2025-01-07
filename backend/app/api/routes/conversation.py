@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 from services.cache import get_agent_metadata
 from services.chat.chat import llm_response
 from services.db.supabase_services import supabase_client
+from services.chat.lk_chat import save_chat_history_to_supabase
 
 supabase = supabase_client()
 
@@ -179,8 +180,9 @@ async def trigger_show_chat_input(request: Request):
     
     return JSONResponse(content={"status": "success"})
 
-@router.get("/events/{participant_identity}")  # Changed route parameter
-async def events(participant_identity: str):  # Changed parameter
+
+@router.get("/events/{participant_identity}")
+async def events(participant_identity: str):
     logger.info(f"SSE connection established for participant_identity: {participant_identity}")
     
     async def event_generator():
@@ -199,6 +201,9 @@ async def events(participant_identity: str):  # Changed parameter
         finally:
             if participant_identity in event_broadcasters:
                 del event_broadcasters[participant_identity]
+                # Extract agent_id from participant_identity
+                agent_id = participant_identity.split('_')[1] if '_' in participant_identity else participant_identity
+                await save_chat_history_to_supabase(agent_id, participant_identity)
             logger.info(f"SSE connection closed for participant_identity: {participant_identity}")
 
     return EventSourceResponse(event_generator())

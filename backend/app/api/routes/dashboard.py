@@ -77,11 +77,22 @@ async def upload_file_handler(
             "data_type": file_extension
         }).execute()
 
+        # Also insert into headers table
+        headers_item = supabase.table('user_text_files_headers').insert({
+            "heading": file.filename,
+            "file_name": file.filename,
+            "user_id": x_user_id,
+            "data_type": file_extension,
+            "parent_id": new_item.data[0]['id']
+        }).execute()
+
         # Schedule the kb_item_to_chunks function to run in the background
         background_tasks.add_task(kb_item_to_chunks, 
         new_item.data[0]['id'], 
         content,
-        new_item.data[0]['user_id'])
+        new_item.data[0]['user_id'],
+        new_item.data[0]['title']
+        )
 
         return JSONResponse(status_code=200, content={
             "message": "File processed and added to knowledge base successfully",
@@ -120,6 +131,7 @@ async def get_items_headers_handler(current_user: str = Depends(get_current_user
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.post("/knowledge_base")
 async def create_item_handler(request: Request, 

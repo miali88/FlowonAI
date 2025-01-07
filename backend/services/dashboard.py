@@ -43,7 +43,7 @@ def sliding_window_chunking(text, max_window_size=600, overlap=200):
         start += max_window_size - overlap
     return chunks
 
-async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, token_count):
+async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, token_count, title):
     logger.info(f"Inserting chunk {chunk_index} for document {parent_id}")
     try:
         await asyncio.to_thread(
@@ -53,7 +53,8 @@ async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, toke
                 'chunk_index': chunk_index,
                 'jina_embedding': embedding,
                 'user_id': user_id,
-                'token_count' : token_count
+                'token_count' : token_count, 
+                "title": title
             }).execute
         )
         logger.debug(f"Successfully inserted chunk {chunk_index}")
@@ -88,7 +89,7 @@ async def get_embedding(text):
         logger.error(f"Failed to get embedding from Jina AI: {str(e)}")
         raise
 
-async def process_item(item_id, content, user_id):
+async def process_item(item_id, content, user_id, title):
     logger.info(f"Processing item {item_id} for user {user_id}")
     chunks = sliding_window_chunking(content)
     logger.info(f"Created {len(chunks)} chunks for processing")
@@ -97,15 +98,15 @@ async def process_item(item_id, content, user_id):
         logger.debug(f"Processing chunk {index}/{len(chunks)}")
         try:
             embedding, token_count = await get_embedding(chunk)
-            await insert_chunk(item_id, chunk, index, embedding, user_id, token_count)
+            await insert_chunk(item_id, chunk, index, embedding, user_id, token_count, title)
             total_tokens += token_count
-            return total_tokens
         except Exception as e:
             logger.error(f"Failed to process chunk {index}: {str(e)}")
             raise
+    return total_tokens
 
-async def update_file_tokens(data_id, total_tokens):
-    logger.info(f"Updating token count for file {data_id}")
+async def update_file_tokens(data_id, total_tokens, title):
+    logger.info(f"Updating token count for file {title}")
     try:
         await asyncio.to_thread(
             supabase.table('user_text_files')
@@ -113,25 +114,25 @@ async def update_file_tokens(data_id, total_tokens):
             .eq('id', data_id)
             .execute
         )
-        logger.debug(f"Successfully updated token count for file {data_id}")
+        logger.debug(f"Successfully updated token count for file {title}")
     except Exception as e:
         logger.error(f"Failed to update token count: {str(e)}")
         raise
 
-async def kb_item_to_chunks(data_id, data_content, user_id):
+async def kb_item_to_chunks(data_id, data_content, user_id, title):
     logger.info(f"Starting knowledge base item processing for ID {data_id}")
     cleaned_text = clean_data(data_content)
     logger.debug(f"Cleaned text length: {len(cleaned_text)} characters")
     
     if cleaned_text:
         try:
-            total_tokens = await process_item(item_id=data_id, content=cleaned_text, user_id=user_id)
-            logger.info(f"Successfully processed knowledge base item {data_id}")
-            await update_file_tokens(data_id, total_tokens)
+            total_tokens = await process_item(item_id=data_id, content=cleaned_text, user_id=user_id, title=title)
+            logger.info(f"Successfully processed knowledge base item {title}")
+            await update_file_tokens(data_id, total_tokens, title)
 
         except Exception as e:
-            logger.error(f"Failed to process knowledge base item {data_id}: {str(e)}")
+            logger.error(f"Failed to process knowledge base item {title}: {str(e)}")
             raise
     else:
-        logger.warning(f"No valid text content for item {data_id}")
+        logger.warning(f"No valid text content for item {title}")
 

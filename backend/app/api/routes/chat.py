@@ -70,6 +70,7 @@ async def chat_message(request: Request):
         logger.error(f"Error processing chat message: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.get("/get_sources")
 async def get_sources(request: Request):
     print("\n=== /get_sources endpoint ===")
@@ -86,7 +87,7 @@ async def get_sources(request: Request):
                 room_name=params['room_name'],
                 response_id=params['response_id']
             )
-            print(f"Successfully retrieved RAG results: {[rag_results[0]['source_url']]}")
+            print(f"Successfully retrieved RAG results: {rag_results}")
             return {"sources": rag_results}
             
         except ValueError as e:
