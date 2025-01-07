@@ -28,6 +28,14 @@
   width: 100%;
 }
 
+.messageAssistantBubbleContainer {
+  align-self: flex-start;
+}
+
+.messageUserBubbleContainer {
+  align-self: flex-end;
+}
+
 .messageBubble {
   position: relative;
   max-width: 85%;
@@ -79,7 +87,6 @@
 }
 
 .userMessage {
-  align-self: flex-end;
   background-color: rgb(0, 0, 0);
   color: rgb(255, 255, 255);
   text-wrap: break-words;
@@ -88,8 +95,9 @@
   font-size: 16px !important;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  margin-left: 80px;
-  margin-right: 40px;
+  width: fit-content;
+
+  margin-right: 130px;
   padding: 24px 32px !important;
   white-space: pre-wrap;
   border: 1px solid rgba(255, 255, 255, 0.1);

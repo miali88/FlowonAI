@@ -492,6 +492,11 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           {messages.map((message, index) =>
             message.text ? (
               <div
+                className={
+                  message.isBot
+                    ? styles.messageAssistantBubbleContainer
+                    : styles.messageUserBubbleContainer
+                }
                 onMouseEnter={() =>
                   message.isBot &&
                   message.responseId &&
