@@ -56,16 +56,21 @@ class TextChatWidget {
       }
 
       .text-chat-widget-button {
-        width: 90px;
-        height: 90px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        background: white;
+        background: black;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 16px;
+        padding: 12px;
+        transition: background 0.3s ease;
+      }
+
+      .expanded .text-chat-widget-button {
+        background: white;
       }
 
       .text-chat-widget-icon {
@@ -94,9 +99,10 @@ class TextChatWidget {
       }
 
       .text-chat-widget-icon img {
-        width: 100%;
-        height: 100%;
+        width: 180%;
+        height: 180%;
         object-fit: contain;
+        transform: translate(-12px, -18px);
       }
 
       .text-chat-widget-iframe {
@@ -133,9 +139,9 @@ class TextChatWidget {
         }
 
         .text-chat-widget-button {
-          width: 70px;
-          height: 70px;
-          padding: 10px;
+          width: 50px;
+          height: 50px;
+          padding: 8px;
         }
 
         .text-chat-widget-container.expanded {
@@ -260,7 +266,7 @@ class TextChatWidget {
       </div>
       <div class="text-chat-widget-button">
         <div class="text-chat-widget-icon chat">
-          <img src="${this.config.iframeDomain}/live-chat.png" alt="Live Chat">
+          <img src="./ng.png" alt="Live Chat">
         </div>
         <div class="text-chat-widget-icon arrow">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

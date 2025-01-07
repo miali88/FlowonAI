@@ -75,6 +75,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     null
   );
   const [sources, setSources] = useState<Source[]>([]);
+  const [agentName, setAgentName] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -103,8 +104,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         }
 
         const openingLineFromData = data.data[0].openingLine;
+        const agentNameFromData = data.data[0].agentName; // Assuming agentName is part of the data
         console.log("Setting opening line to:", openingLineFromData);
         setOpeningLine(openingLineFromData);
+        setAgentName(agentNameFromData); // Set the agentName
       } catch (error) {
         console.error("Error fetching agent metadata:", error);
       }
@@ -168,6 +171,16 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       };
     }
   }, [participantIdentity, apiBaseUrl]);
+
+  useEffect(() => {
+    if (agentName) {
+      console.log("Updating suggestions with agentName:", agentName);
+      setActiveSuggestions((prev) => [
+        ...prev.filter((q) => !q.includes("Who's on your team")),
+        `Who's on your team at ${agentName}?`,
+      ]);
+    }
+  }, [agentName]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
