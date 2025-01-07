@@ -398,7 +398,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                     />
                   </div>
 
-                  {/* Language Selection */}
+                  {/* Commenting out Language Selection
                   <div>
                     <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
                     <Select 
@@ -419,8 +419,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
+                  */}
 
-                  {/* Voice Selection */}
+                  {/* Commenting out Voice Selection
                   <div>
                     <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
                     <div className="flex items-center space-x-2">
@@ -449,106 +450,108 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       </Button>
                     </div>
                   </div>
-                    {/* Add the Retrain Agent button at the bottom */}
-                    <div className="pt-6">
-                      <Button onClick={handleSaveFeatures}>
-                        Retrain Agent
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="deploy">
-              <Deploy 
-                selectedAgent={selectedAgent as any}
-                setSelectedAgent={setSelectedAgent as any}
-                handleSaveChanges={handleSaveChanges as any}
-                userInfo={userId as any}
-              />
-            </TabsContent>
-            <TabsContent value="actions">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Agent Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AgentFeatures
-                    ref={agentFeaturesRef}
-                    selectedAgent={selectedAgent as unknown as SelectedAgent}
-                    setSelectedAgent={(agent: SelectedAgent) => {
-                      setSelectedAgent(prev => {
-                        if (!prev) return null;
-                        return {
-                          ...prev,
-                          features: {
-                            ...prev.features,
-                            ...agent.features
-                          }
-                        } as Agent;
-                      });
-                    }}
-                    onSave={handleSaveFeatures}
-                  />
+                  */}
+
+                  {/* Add the Retrain Agent button at the bottom */}
                   <div className="pt-6">
                     <Button onClick={handleSaveFeatures}>
                       Retrain Agent
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="advanced">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Advanced Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-6">
-                    <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
-                    <Textarea 
-                      id="instructions"
-                      value={selectedAgent?.instructions || ''} 
-                      onChange={(e) => handleInputChange('instructions', e.target.value)}
-                      className="min-h-[400px]"
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={handleSaveFeatures}>
-                      Retrain Agent
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive">Delete Agent</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the agent
-                            and remove all of its data from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDeleteAgent}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        <div className="w-1/3">
-          <Playground selectedAgent={selectedAgent as any} />
-        </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="deploy">
+            <Deploy 
+              selectedAgent={selectedAgent as any}
+              setSelectedAgent={setSelectedAgent as any}
+              handleSaveChanges={handleSaveChanges as any}
+              userInfo={userId as any}
+            />
+          </TabsContent>
+          <TabsContent value="actions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AgentFeatures
+                  ref={agentFeaturesRef}
+                  selectedAgent={selectedAgent as unknown as SelectedAgent}
+                  setSelectedAgent={(agent: SelectedAgent) => {
+                    setSelectedAgent(prev => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        features: {
+                          ...prev.features,
+                          ...agent.features
+                        }
+                      } as Agent;
+                    });
+                  }}
+                  onSave={handleSaveFeatures}
+                />
+                <div className="pt-6">
+                  <Button onClick={handleSaveFeatures}>
+                    Retrain Agent
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="advanced">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <Label htmlFor="instructions" className="block text-sm font-medium mb-1">Instructions</Label>
+                  <Textarea 
+                    id="instructions"
+                    value={selectedAgent?.instructions || ''} 
+                    onChange={(e) => handleInputChange('instructions', e.target.value)}
+                    className="min-h-[400px]"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button onClick={handleSaveFeatures}>
+                    Retrain Agent
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete Agent</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the agent
+                          and remove all of its data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAgent}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    );
-  };
 
-  export default Workspace;
+      <div className="w-1/3">
+        <Playground selectedAgent={selectedAgent as any} />
+      </div>
+    </div>
+  );
+};
+
+export default Workspace;

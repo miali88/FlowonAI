@@ -161,6 +161,8 @@ async def chat_message(request: Request):
             logger.error(f"Error in GET /chat_message: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
+
 @router.post("/trigger_show_chat_input")
 async def trigger_show_chat_input(request: Request):
     """ Invoked by tool_use.py """

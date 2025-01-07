@@ -301,7 +301,7 @@ const AgentHub = () => {
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
                     <BreadcrumbLink>
-                      {selectedAgent.agentName} ({selectedAgent.agentPurpose})
+                      {selectedAgent.agentName}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                 </>
