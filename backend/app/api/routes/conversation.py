@@ -13,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 from services.cache import get_agent_metadata
 from services.chat.chat import llm_response
 from services.db.supabase_services import supabase_client
-from services.chat.lk_chat import save_chat_history_to_supabase
+from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat
 
 supabase = supabase_client()
 
@@ -128,6 +128,13 @@ async def chat_message(request: Request):
     if request.method == "POST":
         try:
             chat_message_data = await request.json()
+            if chat_message_data['room_name'].endswith("textbot"):
+                print("\n\n form_data_to_chat called\n\n")
+                await form_data_to_chat(
+                    room_name=chat_message_data['room_name'],
+                    content=chat_message_data,
+                )
+
             chat_message_data['timestamp'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
             print("\n\n chat_message data:", chat_message_data, "\n\n")
             
@@ -205,7 +212,7 @@ async def events(participant_identity: str):
                 del event_broadcasters[participant_identity]
                 # Extract agent_id from participant_identity
                 agent_id = participant_identity.split('_')[1] if '_' in participant_identity else participant_identity
-                await save_chat_history_to_supabase(
+                await save_chat_history_to_supabase( ### lk_chat.py holds the chat history 
                     agent_id = agent_id, 
                     room_name = participant_identity)
             logger.info(f"SSE connection closed for participant_identity: {participant_identity}")

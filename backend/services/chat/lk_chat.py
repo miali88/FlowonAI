@@ -540,3 +540,49 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     except Exception as e:
         logger.error(f"Error saving chat history to Supabase: {str(e)}", exc_info=True)
         print(f"Error saving chat history: {str(e)}")
+
+async def form_data_to_chat(
+    room_name: str, 
+    content: dict, 
+) -> bool:
+    try:
+        # Extract agent_id from room_name and remove "agent_" prefix
+        agent_id = room_name.split("_room_visitor_")[0].replace("agent_", "")
+        if not agent_id:
+            logger.warning(f"Could not extract agent_id from room_name: {room_name}")
+            return False
+            
+        # Check if chat history exists
+        if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
+            logger.warning(f"Chat history not found for agent_id: {agent_id}, room_name: {room_name}")
+            return False
+            
+        # Filter out metadata fields from content
+        metadata = ["user_id", "room_name", "participant_identity"]
+        filtered_content = {k: v for k, v in content.items() if k not in metadata}
+
+        # Format the form data as a readable string
+        formatted_content = "Form submitted with the following information:\n" + \
+            "\n".join([f"{k}: {v}" for k, v in filtered_content.items()])
+            
+        chat_history = chat_histories[agent_id][room_name]
+        print("adding message to chat history:", formatted_content)
+        
+        # Add the formatted string message
+        chat_history.add_message(
+            role="user",
+            content=formatted_content,
+            name="form_data",
+        )
+
+        # Add a system message to guide the AI's response
+        chat_history.add_message(
+            role="system",
+            content="The user has submitted their contact information. Please acknowledge receipt of their information and ask how you can help them further.",
+        )
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error adding message to chat: {str(e)}", exc_info=True)
+        return False

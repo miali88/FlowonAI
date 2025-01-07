@@ -299,7 +299,6 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
             max_attempts = 60  # 60 seconds total (1 second intervals)
             attempt = 0
             
-            metadata = ["user_id", "room_name", "participant_identity"]
 
             while attempt < max_attempts:
                 logger.debug(f"Polling for chat message, attempt {attempt + 1}")
@@ -315,6 +314,7 @@ async def trigger_show_chat_input(room_name: str, job_id: str, participant_ident
                     chat_message: Dict = response_data[0]
 
                     # Filter out metadata fields from chat_message
+                    metadata = ["user_id", "room_name", "participant_identity"]
                     filtered_chat_message = {k: v for k, v in chat_message.items() if k not in metadata}
                     await send_lead_notification(filtered_chat_message)
                     print("filtered_chat_message:", filtered_chat_message)

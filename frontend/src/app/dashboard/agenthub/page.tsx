@@ -120,6 +120,7 @@ const AgentHub = () => {
           instructions: selectedAgent.instructions,
           uiConfig: selectedAgent.uiConfig,
           features: selectedAgent.features,
+          showSourcesInChat: selectedAgent.showSourcesInChat,
         }),
       });
 

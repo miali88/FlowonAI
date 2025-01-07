@@ -117,6 +117,29 @@ interface SelectedAgent extends Omit<Agent, 'features'> {
   };
 }
 
+interface Agent {
+  id?: string;
+  agentName: string;
+  openingLine?: string;
+  instructions?: string;
+  language?: string;
+  voice?: string;
+  voiceProvider?: string;
+  showSourcesInChat?: boolean;
+  dataSource?: Array<{
+    id: string;
+    title: string;
+    data_type: string;
+  }>;
+  knowledgeBaseIds?: string[];
+  features?: {
+    [key: string]: {
+      enabled: boolean;
+      [key: string]: any;
+    };
+  };
+}
+
 const Workspace: React.FC<WorkspaceProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -169,13 +192,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
     const agentToSave = {
       ...selectedAgent,
       voiceProvider: voiceOption?.voiceProvider || null,
-      features: selectedAgent.features, // This will now contain the properly structured features object
+      features: selectedAgent.features,
       knowledgeBaseIds: selectedAgent.dataSource?.includes('all')
         ? undefined
-        : selectedAgent.knowledgeBaseIds
+        : selectedAgent.knowledgeBaseIds,
+      showSourcesInChat: selectedAgent.showSourcesInChat
     };
 
-    console.log('Saving agent with features:', agentToSave.features);
+    console.log('Saving agent with features:', agentToSave);
     await handleSaveChanges(agentToSave);
   };
 
@@ -386,6 +410,19 @@ const Workspace: React.FC<WorkspaceProps> = ({
                         onChange={handleDataSourceChange}
                       />
                     </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="showSourcesInChat"
+                      checked={selectedAgent?.showSourcesInChat || false}
+                      onChange={(e) => handleInputChange('showSourcesInChat', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="showSourcesInChat" className="text-sm font-medium">
+                      Show sources in chat
+                    </Label>
                   </div>
 
                   {/* Opening Line */}

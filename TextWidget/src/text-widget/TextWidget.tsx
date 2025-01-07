@@ -77,6 +77,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   );
   const [sources, setSources] = useState<Source[]>([]);
   const [agentName, setAgentName] = useState<string | null>(null);
+  const [showSourcesInChat, setShowSourcesInChat] = useState<boolean>(false);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -99,16 +100,17 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         const data = await response.json();
         console.log("Received agent metadata:", data);
 
-        // Check if data.data exists and has content
         if (!data.data || !data.data[0] || !data.data[0].openingLine) {
           throw new Error("No opening line found in agent metadata");
         }
 
         const openingLineFromData = data.data[0].openingLine;
-        const agentNameFromData = data.data[0].agentName; // Assuming agentName is part of the data
-        console.log("Setting opening line to:", openingLineFromData);
+        const agentNameFromData = data.data[0].agentName;
+        const showSourcesFromData = data.data[0].showSourcesInChat || false;
+        
         setOpeningLine(openingLineFromData);
-        setAgentName(agentNameFromData); // Set the agentName
+        setAgentName(agentNameFromData);
+        setShowSourcesInChat(showSourcesFromData);
       } catch (error) {
         console.error("Error fetching agent metadata:", error);
       }
@@ -116,8 +118,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
 
     if (agentId) {
       fetchAgentMetadata();
-    } else {
-      console.log("No agentId provided");
     }
   }, [agentId, apiBaseUrl]);
 
@@ -403,7 +403,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       setMessages((prev) => [
         ...prev,
         {
-          text: "Thank you for submitting the form!",
+          text: "Thank you for submitting the form! We will get back to you shortly",
           isBot: true,
           hasSource: false,
         },
@@ -546,6 +546,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                 {message.isBot &&
                   message.hasSource &&
                   message.responseId &&
+                  showSourcesInChat &&
                   hoveredMessageIndex === message.responseId && (
                     <button
                       className={styles.showSourcesButton}
