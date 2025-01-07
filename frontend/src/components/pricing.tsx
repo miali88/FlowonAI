@@ -23,22 +23,21 @@ const PRICING_CONFIG = {
     features: [
       'AI-powered analytics',
       'Basic support',
-      '1 hour of conversation',
+      '50 interactions',
       'All agent features'
     ]
   },
   startup: {
     name: 'Startup',
     description: 'A basic plan for startups and individual users',
-    monthlyPrice: '169',
-    yearlyPrice: '1,690',
+    monthlyPrice: '19',
+    yearlyPrice: '190',
     features: [
-      '10 hours of conversation. Renewable monthly',
+      '1,000 interactions',
       'All integrations',
       'Consultation to tune AI',
       'Unlimited knowledge base size',
       'Twilio integration',
-      'Web Widget'
     ],
     popular: true
   },
@@ -46,7 +45,7 @@ const PRICING_CONFIG = {
     name: 'Enterprise',
     description: 'The ultimate plan with all features for industry leaders',
     features: [
-      'Unlimited conversations',
+      'Unlimited interactions',
       'Priority support',
       'Custom AI model training',
       'Advanced analytics',
