@@ -399,8 +399,6 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
 
 
 
-
-
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
@@ -524,7 +522,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
             "agent_id": agent_id,
             "lead": "unknown",  # Default value
             "call_duration": 0,  # Default value
-            "call_type": "chat"  # Specify this is a chat conversation
+            "call_type": "text-chat"  # Specify this is a chat conversation
         }
 
         # Save to Supabase

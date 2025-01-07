@@ -102,7 +102,7 @@ class TextChatWidget {
         width: 180%;
         height: 180%;
         object-fit: contain;
-        transform: translate(-12px, -18px);
+        transform: translate(-9px, -21px);
       }
 
       .text-chat-widget-iframe {

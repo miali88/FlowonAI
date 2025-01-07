@@ -12,7 +12,7 @@ import { useUser } from "@clerk/nextjs";
 import { Agent } from "./AgentCards";
 
 type SetupMethod = 'telephone' | 'text' | 'voice-web' | 'feedback' | 'name' | null;
-type AgentType = 'widget' | 'outbound' | 'inbound' | null;
+type AgentType = 'telephone-agent' | 'feedback-widget' | 'voice-web-agent' | 'text-chatbot-agent' | null;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -24,32 +24,34 @@ interface NewAgentProps {
 export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [setupMethod, setSetupMethod] = useState<'name' | null>(null);
-  const [agentType, setAgentType] = useState<AgentType>(null);
+  // const [setupMethod, setSetupMethod] = useState<'name' | null>(null);
+  // const [agentType, setAgentType] = useState<AgentType>(null);
+  const [setupMethod, setSetupMethod] = useState<'name' | null>('name');
+  const [agentType, setAgentType] = useState<AgentType>('text-chatbot-agent');
   const [agentName, setAgentName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSetupMethodSelect = (method: SetupMethod) => {
-    setSetupMethod('name');
-    // Map the setup method to the corresponding agent type
-    switch (method) {
-      case 'telephone':
-        setAgentType('inbound');
-        break;
-      case 'text':
-        setAgentType('widget');
-        break;
-      case 'voice-web':
-        setAgentType('widget');
-        break;
-      case 'feedback':
-        setAgentType('widget');
-        break;
-      default:
-        setAgentType(null);
-    }
-  };
+  // const handleSetupMethodSelect = (method: SetupMethod) => {
+  //   setSetupMethod('name');
+  //   // Map the setup method to the corresponding agent type
+  //   switch (method) {
+  //     case 'telephone':
+  //       setAgentType('telephone-agent');
+  //       break;
+  //     case 'text':
+  //       setAgentType('text-chatbot-agent');
+  //       break;
+  //     case 'voice-web':
+  //       setAgentType('voice-web-agent');
+  //       break;
+  //     case 'feedback':
+  //       setAgentType('feedback-widget');
+  //       break;
+  //     default:
+  //       setAgentType(null);
+  //   }
+  // };
 
   const handleAgentTypeSelect = (type: AgentType) => {
     setAgentType(type);
@@ -66,12 +68,14 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
 
   const getPlaceholderName = () => {
     switch (agentType) {
-      case 'widget':
-        return 'My Widget Agent';
-      case 'outbound':
-        return 'My Outbound Agent';
-      case 'inbound':
-        return 'My Inbound Agent';
+      case 'text-chatbot-agent':
+        return 'My Chatbot Agent';
+      case 'telephone-agent':
+        return 'My Telephone Agent';
+      case 'voice-web-agent':
+        return 'My Voice Web Agent';
+      case 'feedback-widget':
+        return 'My Feedback Widget';
       default:
         return 'My Agent';
     }
@@ -194,69 +198,69 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
     }
   };
 
-  const renderInitialSelection = () => (
-    <div className="grid gap-6">
-      <DialogHeader>
-        <DialogTitle className="text-foreground dark:text-gray-200">Create New Assistant</DialogTitle>
-      </DialogHeader>
+  // const renderInitialSelection = () => (
+  //   <div className="grid gap-6">
+  //     <DialogHeader>
+  //       <DialogTitle className="text-foreground dark:text-gray-200">Create New Assistant</DialogTitle>
+  //     </DialogHeader>
       
-      <div>
-        <div className="grid grid-cols-2 gap-4 mb-6 text-center">
-          <Button
-            variant="outline"
-            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('telephone')}
-            style={{ whiteSpace: 'normal', textAlign: 'center' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <PhoneIcon className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold mt-2">Telephone Agent</h3>
-            <p className="text-sm text-muted-foreground">Handle phone calls with AI</p>
-          </Button>
+  //     <div>
+  //       <div className="grid grid-cols-2 gap-4 mb-6 text-center">
+  //         <Button
+  //           variant="outline"
+  //           className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+  //           onClick={() => handleSetupMethodSelect('telephone')}
+  //           style={{ whiteSpace: 'normal', textAlign: 'center' }}
+  //         >
+  //           <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+  //             <PhoneIcon className="w-6 h-6" />
+  //           </div>
+  //           <h3 className="font-semibold mt-2">Telephone Agent</h3>
+  //           <p className="text-sm text-muted-foreground">Handle phone calls with AI</p>
+  //         </Button>
 
-          <Button
-            variant="outline"
-            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('text')}
-            style={{ whiteSpace: 'normal', textAlign: 'center' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <MessageSquareIcon className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold mt-2">Text Based Agent</h3>
-            <p className="text-sm text-muted-foreground">Advanced text based chatbot</p>
-          </Button>
+  //         <Button
+  //           variant="outline"
+  //           className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+  //           onClick={() => handleSetupMethodSelect('text')}
+  //           style={{ whiteSpace: 'normal', textAlign: 'center' }}
+  //         >
+  //           <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+  //             <MessageSquareIcon className="w-6 h-6" />
+  //           </div>
+  //           <h3 className="font-semibold mt-2">Text Based Agent</h3>
+  //           <p className="text-sm text-muted-foreground">Advanced text based chatbot</p>
+  //         </Button>
 
-          <Button
-            variant="outline"
-            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('voice-web')}
-            style={{ whiteSpace: 'normal', textAlign: 'center' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <MicIcon className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold mt-2">Voice Web Agent</h3>
-            <p className="text-sm text-muted-foreground">Real time voice AI agent anywhere on your webste</p>
-          </Button>
+  //         <Button
+  //           variant="outline"
+  //           className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+  //           onClick={() => handleSetupMethodSelect('voice-web')}
+  //           style={{ whiteSpace: 'normal', textAlign: 'center' }}
+  //         >
+  //           <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+  //             <MicIcon className="w-6 h-6" />
+  //           </div>
+  //           <h3 className="font-semibold mt-2">Voice Web Agent</h3>
+  //           <p className="text-sm text-muted-foreground">Real time voice AI agent anywhere on your webste</p>
+  //         </Button>
 
-          <Button
-            variant="outline"
-            className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
-            onClick={() => handleSetupMethodSelect('feedback')}
-            style={{ whiteSpace: 'normal', textAlign: 'center' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
-              <MessageCircleIcon className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold mt-2">Feedback Widget</h3>
-            <p className="text-sm text-muted-foreground">Collect feedback in app and run campaigns</p>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  //         <Button
+  //           variant="outline"
+  //           className="h-40 w-full relative group flex flex-col items-center justify-center hover:border-primary"
+  //           onClick={() => handleSetupMethodSelect('feedback')}
+  //           style={{ whiteSpace: 'normal', textAlign: 'center' }}
+  //         >
+  //           <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center">
+  //             <MessageCircleIcon className="w-6 h-6" />
+  //           </div>
+  //           <h3 className="font-semibold mt-2">Feedback Widget</h3>
+  //           <p className="text-sm text-muted-foreground">Collect feedback in app and run campaigns</p>
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   const renderNameInput = () => (
     <div className="grid gap-6">
@@ -439,8 +443,9 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
         <Button variant="outline" onClick={() => setIsOpen(true)}>Create New Agent</Button>
       </DialogTrigger>
       <DialogContent className={`sm:max-w-[625px] ${styles.glassCard}`}>
-        {setupMethod === null && renderInitialSelection()}
-        {setupMethod === 'name' && renderNameInput()}
+        {/* {setupMethod === null && renderInitialSelection()}
+        {setupMethod === 'name' && renderNameInput()} */}
+        {renderNameInput()}
       </DialogContent>
     </Dialog>
   );

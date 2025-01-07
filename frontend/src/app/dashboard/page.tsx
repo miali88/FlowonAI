@@ -246,8 +246,8 @@ function AdminDashboard() {
         return <ContactFounders />;
       case "Analytics":
         return <Analytics />;
-      case "Phone Numbers":
-        return <PhoneNumbersPage />;
+      // case "Phone Numbers":
+      //   return <PhoneNumbersPage />;
       default:
         return <AgentHub />;
     }

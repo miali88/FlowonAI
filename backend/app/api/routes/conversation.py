@@ -203,7 +203,9 @@ async def events(participant_identity: str):
                 del event_broadcasters[participant_identity]
                 # Extract agent_id from participant_identity
                 agent_id = participant_identity.split('_')[1] if '_' in participant_identity else participant_identity
-                await save_chat_history_to_supabase(agent_id, participant_identity)
+                await save_chat_history_to_supabase(
+                    agent_id = agent_id, 
+                    room_name = participant_identity)
             logger.info(f"SSE connection closed for participant_identity: {participant_identity}")
 
     return EventSourceResponse(event_generator())

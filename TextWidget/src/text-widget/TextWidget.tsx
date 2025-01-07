@@ -42,9 +42,9 @@ const LoadingBubbles = () => (
 );
 
 const SUGGESTED_QUESTIONS = [
-  "What services do you offer?",
   "How can I get started?",
   "Tell me more about your company",
+  "What services do you offer?",
   "Who's on your team at WeCreate?",
 ];
 
