@@ -99,10 +99,10 @@ class TextChatWidget {
       }
 
       .text-chat-widget-icon img {
-        width: 180%;
-        height: 180%;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
-        transform: translate(-9px, -21px);
+        transform: none;
       }
 
       .text-chat-widget-iframe {
