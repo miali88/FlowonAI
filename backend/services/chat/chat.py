@@ -211,7 +211,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         max_results = 10
     elif search_type == "Quick Search":
         similarity_threshold = 0.20
-        max_results = 2
+        max_results = 7
 
     async def fetch_table_data(table, query_embedding):
         try:
