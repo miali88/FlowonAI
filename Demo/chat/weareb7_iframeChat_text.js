@@ -59,7 +59,7 @@ class TextChatWidget {
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background: black;
+        background: white;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         cursor: pointer;
         display: flex;
