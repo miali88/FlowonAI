@@ -7,7 +7,7 @@ import { IoSend } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import Footer from "./Footer";
 import CalendlyWidget from "./CalendlyWidget";
-import { Components } from 'react-markdown'
+import { Components } from "react-markdown";
 
 import CloseIcon from "../assets/close-icon.svg";
 
@@ -108,7 +108,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         const openingLineFromData = data.data[0].openingLine;
         const agentNameFromData = data.data[0].agentName;
         const showSourcesFromData = data.data[0].showSourcesInChat || false;
-        
+
         setOpeningLine(openingLineFromData);
         setAgentName(agentNameFromData);
         setShowSourcesInChat(showSourcesFromData);
@@ -470,11 +470,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   // Add this custom components configuration
   const markdownComponents: Components = {
     a: ({ node, ...props }) => (
-      <a 
-        {...props} 
-        target="_blank" 
-        rel="noopener noreferrer"
-      />
+      <a {...props} target="_blank" rel="noopener noreferrer" />
     ),
   };
 
@@ -501,6 +497,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         onRoomConnected={handleRoomConnected}
       />
       <div className={styles.chatContainer}>
+        <div className={styles.topBar}>
+          Chat with {agentName || "AI Assistant"}
+        </div>
+
         <div className={styles.messageContainer} ref={messageContainerRef}>
           {messages.map((message, index) =>
             message.text ? (
