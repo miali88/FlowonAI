@@ -79,6 +79,11 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   const [sources, setSources] = useState<Source[]>([]);
   const [agentName, setAgentName] = useState<string | null>(null);
   const [showSourcesInChat, setShowSourcesInChat] = useState<boolean>(false);
+  const [chatUi, setChatUi] = useState<{
+    primaryColor?: string;
+    secondaryColor?: string;
+  } | null>(null);
+  const [agentLogo, setAgentLogo] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -101,17 +106,21 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         const data = await response.json();
         console.log("Received agent metadata:", data);
 
-        if (!data.data || !data.data[0] || !data.data[0].openingLine) {
-          throw new Error("No opening line found in agent metadata");
+        if (!data.data || !data.data[0]) {
+          throw new Error("No agent metadata found");
         }
 
-        const openingLineFromData = data.data[0].openingLine;
-        const agentNameFromData = data.data[0].agentName;
-        const showSourcesFromData = data.data[0].showSourcesInChat || false;
+        const agentData = data.data[0];
+        setOpeningLine(agentData.openingLine);
+        setAgentName(agentData.agentName);
+        setShowSourcesInChat(agentData.showSourcesInChat || false);
 
-        setOpeningLine(openingLineFromData);
-        setAgentName(agentNameFromData);
-        setShowSourcesInChat(showSourcesFromData);
+        // Set the new states
+        setChatUi({
+          primaryColor: agentData.chat_ui?.primaryColor || "#000000",
+          secondaryColor: agentData.chat_ui?.secondaryColor || "#FFFFFF",
+        });
+        setAgentLogo(agentData.agent_logo || null);
       } catch (error) {
         console.error("Error fetching agent metadata:", error);
       }
@@ -497,8 +506,23 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         onRoomConnected={handleRoomConnected}
       />
       <div className={styles.chatContainer}>
-        <div className={styles.topBar}>
-          Chat with {agentName || "AI Assistant"}
+        <div
+          className={styles.topBar}
+          style={{
+            backgroundColor: chatUi?.primaryColor || "#000000",
+            color: chatUi?.secondaryColor || "#FFFFFF",
+          }}
+        >
+          {agentLogo ? (
+            <div className={styles.agentLogoContainer}>
+              <img
+                src={agentLogo}
+                alt="Agent Logo"
+                className={styles.agentLogo}
+              />
+            </div>
+          ) : null}
+          <span>Chat with {agentName || "AI Assistant"}</span>
         </div>
 
         <div className={styles.messageContainer} ref={messageContainerRef}>
@@ -702,8 +726,20 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               onChange={(e) => setInputText(e.target.value)}
               className={styles.chatInput}
               placeholder="Message..."
+              style={
+                {
+                  "--primary-color": chatUi?.primaryColor || "#000000",
+                } as React.CSSProperties
+              }
             />
-            <button type="submit" className={styles.sendButton}>
+            <button
+              type="submit"
+              className={styles.sendButton}
+              style={{
+                backgroundColor: chatUi?.primaryColor || "#000000",
+                color: chatUi?.secondaryColor || "#FFFFFF",
+              }}
+            >
               <IoSend size={20} />
             </button>
           </form>
