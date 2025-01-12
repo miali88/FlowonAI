@@ -91,7 +91,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
       }
 
       const updatedAgent = await response.json();
-      setSelectedAgent(updatedAgent);
+      setSelectedAgent(updatedAgent.data[0]);
     } catch (error) {
       console.error("Error saving settings:", error);
       setSaveError(error.message || "Failed to save settings");
