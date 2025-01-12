@@ -182,7 +182,7 @@ async def create_voice_assistant(agent_id: str, job_ctx: JobContext = None, call
             raise ValueError(f"Agent {agent_id} not found")
             
         # Log full agent configuration for debugging
-        logger.debug(f"Full agent configuration: {agent}")
+        # logger.debug(f"Full agent configuration: {agent}")
         
         # Add validation for required agent fields with detailed logging
         required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']

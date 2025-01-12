@@ -90,7 +90,7 @@ async def get_agent_content_handler(agent_id: str):
         logger.info(f"Fetching agent content for agent_id: {agent_id}")
         print(f"\n\nFetching agent content for agent_id: {agent_id}")
         agent_content = await get_agent_content(agent_id)
-        logger.info(f"Successfully fetched agent content: {agent_content}")
+        # logger.info(f"Successfully fetched agent content: {agent_content}")
         return agent_content
     except Exception as e:
         logger.error(f"Error fetching agent content: {str(e)}")
