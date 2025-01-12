@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,16 +11,105 @@ interface UiProps {
 }
 
 const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
-  // Handler for updating UI settings
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Updated color derivation to handle nested data structure
+  const primaryColor =
+    selectedAgent?.data?.[0]?.chat_ui?.primaryColor ||
+    selectedAgent?.chat_ui?.primaryColor ||
+    "#000000";
+
+  const secondaryColor =
+    selectedAgent?.data?.[0]?.chat_ui?.secondaryColor ||
+    selectedAgent?.chat_ui?.secondaryColor ||
+    "#ffffff";
+
+  const agentLogo =
+    selectedAgent?.ui?.logo ||
+    selectedAgent?.agent_logo ||
+    selectedAgent?.data?.[0]?.agent_logo;
+
+  // Updated handler to manage both ui and chat_ui colors
   const handleUiChange = (key: string, value: any) => {
     setSelectedAgent({
       ...selectedAgent,
+      data: selectedAgent.data
+        ? [
+            {
+              ...selectedAgent.data[0],
+              chat_ui: {
+                ...selectedAgent.data[0]?.chat_ui,
+                [key]: value,
+              },
+            },
+            ...selectedAgent.data.slice(1),
+          ]
+        : [],
       ui: {
         ...selectedAgent.ui,
         [key]: value,
       },
     });
   };
+
+  // Updated save handler to separate colors and logo
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const agentId = selectedAgent.id || selectedAgent?.data[0]?.id;
+
+      if (!agentId) {
+        throw new Error("Agent ID is undefined");
+      }
+
+      // Single API call with both chat_ui and agent_logo
+      const response = await fetch(
+        `${API_BASE_URL}/livekit/agents/${agentId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": selectedAgent.userId,
+          },
+          body: JSON.stringify({
+            chat_ui: {
+              primaryColor: primaryColor,
+              secondaryColor: secondaryColor,
+            },
+            agent_logo: agentLogo,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to save settings: ${response.status}`);
+      }
+
+      const updatedAgent = await response.json();
+      setSelectedAgent(updatedAgent);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setSaveError(error.message || "Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  console.log(selectedAgent, "TESTT");
 
   return (
     <div className="flex gap-6">
@@ -36,13 +125,13 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
               <Input
                 id="primaryColor"
                 type="color"
-                value={selectedAgent?.ui?.primaryColor || "#000000"}
+                value={primaryColor}
                 onChange={(e) => handleUiChange("primaryColor", e.target.value)}
                 className="w-[100px]"
               />
               <Input
                 type="text"
-                value={selectedAgent?.ui?.primaryColor || "#000000"}
+                value={primaryColor}
                 onChange={(e) => handleUiChange("primaryColor", e.target.value)}
                 className="w-[120px] font-mono"
               />
@@ -56,7 +145,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
               <Input
                 id="secondaryColor"
                 type="color"
-                value={selectedAgent?.ui?.secondaryColor || "#000000"}
+                value={secondaryColor}
                 onChange={(e) =>
                   handleUiChange("secondaryColor", e.target.value)
                 }
@@ -64,7 +153,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
               />
               <Input
                 type="text"
-                value={selectedAgent?.ui?.secondaryColor || "#000000"}
+                value={secondaryColor}
                 onChange={(e) =>
                   handleUiChange("secondaryColor", e.target.value)
                 }
@@ -82,11 +171,16 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
               id="logo"
               type="file"
               accept="image/*"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  const imageUrl = URL.createObjectURL(file);
-                  handleUiChange("logo", imageUrl);
+                  try {
+                    const base64String = await convertFileToBase64(file);
+                    handleUiChange("logo", base64String);
+                  } catch (error) {
+                    console.error("Error converting file to base64:", error);
+                    setSaveError("Failed to process logo image");
+                  }
                 }
               }}
               className="mt-2 w-[250px]"
@@ -94,16 +188,15 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
           </div>
 
           {/* Save Button */}
-          <div className="pt-4 flex justify-start">
+          <div className="pt-4 flex flex-col gap-2">
             <button
-              className="py-2 px-4 bg-primary text-black rounded-md hover:bg-primary/90 transition-colors w-[250px]"
-              onClick={() => {
-                // Add your save logic here
-                console.log("Saving UI settings:", selectedAgent.ui);
-              }}
+              className="py-2 px-4 bg-primary text-black rounded-md hover:bg-primary/90 transition-colors w-[250px] disabled:opacity-50"
+              onClick={handleSaveSettings}
+              disabled={isSaving}
             >
-              Save Changes
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
+            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
           </div>
         </CardContent>
       </Card>
@@ -115,8 +208,8 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
           <div
             className="px-4 h-[50px] flex items-center"
             style={{
-              background: selectedAgent?.ui?.primaryColor || "#000000",
-              color: selectedAgent?.ui?.secondaryColor || "#ffffff",
+              background: primaryColor,
+              color: secondaryColor,
             }}
           >
             Chat with {selectedAgent?.agentName}
@@ -181,8 +274,8 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
               <button
                 className="px-3 rounded-md flex items-center justify-center min-w-[40px]"
                 style={{
-                  background: selectedAgent?.ui?.primaryColor || "#0066ff",
-                  color: selectedAgent?.ui?.secondaryColor || "#ffffff",
+                  background: primaryColor,
+                  color: secondaryColor,
                 }}
               >
                 <svg
@@ -221,12 +314,12 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
             <div
               className="w-24 h-24 rounded-full flex items-center justify-center"
               style={{
-                backgroundColor: selectedAgent?.ui?.primaryColor || "#000000",
+                backgroundColor: primaryColor,
               }}
             >
-              {selectedAgent?.ui?.logo ? (
+              {agentLogo ? (
                 <img
-                  src={selectedAgent?.ui?.logo}
+                  src={agentLogo}
                   alt="Logo"
                   className="w-16 h-16 object-contain"
                 />
