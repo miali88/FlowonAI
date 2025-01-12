@@ -27,11 +27,11 @@ const FLAGS_COMPONENTS: Record<string, React.ComponentType> = {
 export default function AnalyticsPage() {
   // Example data - replace with actual API calls
   const metrics: AnalyticsMetric[] = [
-    { label: "Total Talk Time", value: "328h 45m", change: "+12.3%" },
-    { label: "Number of Calls", value: 1247, change: "+5.8%" },
-    { label: "Average Call Duration", value: "15m 47s", change: "-2.1%" },
-    { label: "Unique Callers", value: 856, change: "+8.4%" },
-    { label: "Repeat Callers", value: 391, change: "+15.2%" },
+    { label: "Total Agent Interactions", value: "328h 45m", change: "+12.3%" },
+    { label: "% Form Presented", value: 1247, change: "+5.8%" },
+    { label: "% Form Completed", value: "15m 47s", change: "-2.1%" },
+    { label: "% Appointment Set", value: 856, change: "+8.4%" },
+    { label: "", value: 391, change: "+15.2%" },
     { 
       label: "Languages Used", 
       value: 5, 
@@ -96,7 +96,7 @@ export default function AnalyticsPage() {
       {/* Popular Agents Chart */}
       <Card className="mt-6">
         <CardHeader>
-          <h3 className="text-lg font-semibold">Most Popular Agents</h3>
+          <h3 className="text-lg font-semibold">Most Popular Topics</h3>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">

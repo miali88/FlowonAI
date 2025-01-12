@@ -16,6 +16,7 @@ from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
 from services.db.supabase_services import supabase_client
+from services.helper import format_transcript_messages
 
 import logging
 logger = logging.getLogger(__name__)
@@ -410,7 +411,6 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
     ]
 
 
-
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
@@ -510,15 +510,8 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
 
         chat_history = chat_histories[agent_id][room_name]
         
-        # Format messages for storage
-        formatted_transcript = []
-        for msg in chat_history.messages:
-            formatted_transcript.append({
-                "role": msg.role,
-                "content": msg.content,
-                "name": msg.name if hasattr(msg, 'name') else None,
-                "timestamp": datetime.now().isoformat()  # Add timestamp for each message
-            })
+        # Use the helper function to format the transcript
+        formatted_transcript = format_transcript_messages(chat_history.messages)
 
         # Get agent metadata for user_id
         agent_metadata = await get_agent_metadata(agent_id)
@@ -527,14 +520,14 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
         # Prepare data for Supabase
         conversation_data = {
             "transcript": formatted_transcript,
-            "job_id": room_name,  # Using room_name as job_id
-            "participant_identity": room_name,  # Using room_name as participant_identity
+            "job_id": room_name,
+            "participant_identity": room_name,
             "room_name": room_name,
             "user_id": user_id,
             "agent_id": agent_id,
-            "lead": "unknown",  # Default value
-            "call_duration": 0,  # Default value
-            "call_type": "text-chat"  # Specify this is a chat conversation
+            "lead": "unknown",
+            "call_duration": 0,
+            "call_type": "text-chat"
         }
 
         # Save to Supabase
