@@ -73,38 +73,47 @@ def kill_processes_on_port(port: int) -> None:
     """
     try:
         if platform.system() == "Windows":
-            subprocess.run(
-                [
-                    'taskkill',
-                    '/F',
-                    '/PID',
-                    '$(netstat -ano | findstr :%d | awk \'{print $5}\')'
-                    % port
-                ],
-                shell=True
+            # Use safer Windows-specific commands without shell=True
+            netstat = subprocess.run(
+                ["netstat", "-ano"],
+                capture_output=True,
+                text=True,
+                shell=False
             )
+            for line in netstat.stdout.splitlines():
+                if f":{port}" in line:
+                    try:
+                        pid = line.strip().split()[-1]
+                        subprocess.run(
+                            ["taskkill", "/F", "/PID", pid],
+                            shell=False
+                        )
+                    except (IndexError, ValueError):
+                        continue
         else:
             # Get the current process ID
             current_pid = os.getpid()
-
-            # Get all processes on the port
-            result = subprocess.run(
-                f"lsof -ti:{port}",
-                shell=True,
-                capture_output=True,
-                text=True
-            )
-            if result.stdout:
-                pids = result.stdout.strip().split('\n')
-                for pid in pids:
-                    try:
-                        pid = int(pid)
-                        # Don't kill our own process
-                        if pid != current_pid:
-                            os.kill(pid, 9)
-                            logger.info(f"Killed process {pid} on port {port}")
-                    except (ValueError, ProcessLookupError) as e:
-                        logger.error(f"Error processing PID {pid}: {e}")
+            
+            # Safer way to check for processes on port
+            try:
+                result = subprocess.run(
+                    ["lsof", "-ti", f":{port}"],
+                    capture_output=True,
+                    text=True,
+                    shell=False
+                )
+                if result.stdout:
+                    pids = result.stdout.strip().split('\n')
+                    for pid in pids:
+                        try:
+                            pid = int(pid)
+                            if pid != current_pid:
+                                os.kill(pid, 9)
+                                logger.info(f"Killed process {pid} on port {port}")
+                        except (ValueError, ProcessLookupError) as e:
+                            logger.error(f"Error processing PID {pid}: {e}")
+            except FileNotFoundError:
+                logger.error("lsof command not found")
 
         logger.info(f"Finished checking processes on port {port}")
     except Exception as e:
@@ -124,18 +133,17 @@ async def startup_event() -> None:
         MAX_RETRIES = 3
         RETRY_DELAY = 2
 
-        # Get the absolute path to the project root
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), '../..')
         )
-
-        # Get the current Python executable path
         python_executable = sys.executable
-
-        # Set up the environment for the subprocess
         env = os.environ.copy()
 
-        # Ensure PYTHONPATH includes project root and site-packages
+        # Validate paths before execution
+        livekit_script = os.path.join(project_root, 'backend', 'livekit_server.py')
+        if not os.path.isfile(livekit_script):
+            raise FileNotFoundError(f"LiveKit server script not found at {livekit_script}")
+
         site_packages = os.path.join(
             os.path.dirname(python_executable),
             'Lib',
@@ -153,11 +161,12 @@ async def startup_event() -> None:
                 livekit_process = subprocess.Popen(
                     [
                         python_executable,
-                        os.path.join(project_root, 'backend', 'livekit_server.py'),
+                        livekit_script,
                         'start'
                     ],
                     env=env,
-                    cwd=project_root
+                    cwd=project_root,
+                    shell=False  # Explicitly set shell=False
                 )
                 logger.info(
                     f"LiveKit server started with PYTHONPATH: {env['PYTHONPATH']}"
