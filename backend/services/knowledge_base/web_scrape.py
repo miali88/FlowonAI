@@ -8,7 +8,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
 import os
 
-
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
@@ -39,7 +38,7 @@ async def get_embedding(text):
     url = 'https://api.jina.ai/v1/embeddings'
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {JINA_API_KEY}'
+        'Authorization': f'Bearer {os.getenv("JINA_API_KEY")}'
     }
 
     data = {

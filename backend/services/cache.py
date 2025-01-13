@@ -10,7 +10,7 @@ supabase = supabase_client()
 calendar_cache: Dict[str, dict] = {}
 
 
-async def initialize_calendar_cache(user_id: str, app: str) -> None:
+async def initialize_calendar_cache(user_id: str, app: str) -> Dict:
     """Initialize the calendar cache"""
     calendar_slots: Dict = await get_calendar_slots(user_id, "googlecalendar")
     calendar_cache[user_id] = calendar_slots
@@ -19,7 +19,7 @@ async def initialize_calendar_cache(user_id: str, app: str) -> None:
 
 
 """ LIVEKIT WEBHOOK CACHE """
-call_data = {}
+call_data: Dict[str, dict] = {}
 
 
 """ DATABASE CACHE """
@@ -44,8 +44,10 @@ async def get_agent_metadata(agent_id: str) -> Optional[dict]:
     """Get agent metadata from cache"""
     response = supabase.table("agents").select("*").execute()
     agents_dict = {agent['id']: agent for agent in response.data}
-    print("\n\n\n agents_dict:", agents_dict.get(agent_id).get('dataSource', None))
-    return agents_dict.get(agent_id)
+    agent = agents_dict.get(agent_id)
+    if agent is not None:
+        print("\n\n\n agents_dict:", agent.get('dataSource', None))
+    return agent
 
 # async def update_agent_metadata(agent_id: str, metadata: dict) -> None:
 #     """Update agent metadata in cache"""
