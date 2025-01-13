@@ -84,6 +84,12 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     secondaryColor?: string;
   } | null>(null);
   const [agentLogo, setAgentLogo] = useState<string | null>(null);
+  const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [dislikedMessages, setDislikedMessages] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -483,6 +489,63 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     ),
   };
 
+  const handleFeedback = async (messageId: string, isLike: boolean) => {
+    try {
+      // First update the UI state
+      if (isLike) {
+        setLikedMessages((prev) => ({
+          ...prev,
+          [messageId]: !prev[messageId],
+        }));
+        setDislikedMessages((prev) => ({
+          ...prev,
+          [messageId]: false,
+        }));
+      } else {
+        setDislikedMessages((prev) => ({
+          ...prev,
+          [messageId]: !prev[messageId],
+        }));
+        setLikedMessages((prev) => ({
+          ...prev,
+          [messageId]: false,
+        }));
+      }
+
+      // Get the response ID for the message
+      const message = messages[parseInt(messageId)];
+      if (!message?.responseId) {
+        console.error("No response ID found for message");
+        return;
+      }
+
+      // Send feedback to backend
+      const response = await fetch(
+        `${apiBaseUrl}/feedback/response-feedback/${message.responseId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            thumbs_up: isLike,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send feedback");
+      }
+
+      const data = await response.json();
+      console.log("Feedback sent successfully:", data);
+    } catch (error) {
+      console.error("Error sending feedback:", error);
+      // Optionally revert the UI state if the request failed
+      // You could add error handling UI here
+    }
+  };
+
   return (
     <div
       style={{
@@ -529,6 +592,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           {messages.map((message, index) =>
             message.text ? (
               <div
+                key={index}
                 className={
                   message.isBot
                     ? styles.messageAssistantBubbleContainer
@@ -542,7 +606,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                 onMouseLeave={() => setHoveredMessageIndex(null)}
               >
                 <div
-                  key={index}
                   className={`${styles.messageBubble} ${
                     message.isBot ? styles.assistantMessage : styles.userMessage
                   }`}
@@ -613,6 +676,56 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                       View references
                     </button>
                   )}
+                {message.isBot && hoveredMessageIndex && (
+                  <div className={styles.messageBubbleActions}>
+                    <button
+                      className={`${styles.actionButton} ${
+                        likedMessages[index] ? styles.liked : ""
+                      }`}
+                      onClick={() => handleFeedback(index.toString(), true)}
+                      aria-label="Like message"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path
+                          d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                          fill={likedMessages[index] ? "currentColor" : "none"}
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      className={`${styles.actionButton} ${
+                        dislikedMessages[index] ? styles.disliked : ""
+                      }`}
+                      onClick={() => handleFeedback(index.toString(), false)}
+                      aria-label="Dislike message"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path
+                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
+                          fill={
+                            dislikedMessages[index] ? "currentColor" : "none"
+                          }
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : message.isBot ? (
               <LoadingBubbles key={index} />

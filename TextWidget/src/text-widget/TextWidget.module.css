@@ -30,6 +30,10 @@
 
 .messageAssistantBubbleContainer {
   align-self: flex-start;
+  position: relative;
+  padding-right: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .messageUserBubbleContainer {
@@ -704,5 +708,79 @@
     width: 24px;
     height: 24px;
     margin-right: 8px;
+  }
+}
+
+.messageBubbleActions {
+  position: static;
+  display: inline-flex;
+  gap: 8px;
+  margin-left: 8px;
+  opacity: 1;
+}
+
+.messageAssistantBubbleContainer:hover .messageBubbleActions {
+  opacity: 1;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  border-radius: 16px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  color: #6b7280;
+}
+
+.actionButton:hover {
+  transform: scale(1.1);
+  color: #374151;
+}
+
+.actionButton.liked svg,
+.actionButton.disliked svg {
+  fill: black;
+  stroke: black;
+}
+
+/* Mobile responsive styles */
+@media screen and (max-width: 768px) {
+  .messageBubbleActions {
+    right: -50px;
+    transform: scale(0.8) translateY(-60%);
+  }
+
+  .messageAssistantBubbleContainer {
+    padding-right: 50px;
+  }
+
+  .actionButton {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.messageActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media screen and (max-width: 768px) {
+  .messageActionsRow {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .actionButton {
+    width: 24px;
+    height: 24px;
   }
 }
