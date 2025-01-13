@@ -1,17 +1,11 @@
-import os, logging
+import os
+import logging
 from typing import List, Dict, Any
-import subprocess
-import asyncio
 import json
 
-from fastapi import Request, APIRouter, WebSocket
-from fastapi.responses import JSONResponse
+from fastapi import Request, APIRouter
 from twilio.rest import Client
-from twilio.twiml.voice_response import VoiceResponse
-from supabase import create_client, Client
-from services.chat.chat import llm_response
-
-from services.voice.rag import similarity_search
+from supabase import create_client
 
 from services.cache import call_data
 router = APIRouter()
@@ -30,7 +24,7 @@ supabase: Client = create_client(supabase_url, supabase_key)
 async def livekit_room_webhook(request: Request):
     data = await request.json()
     print("call_data id in webhook:", id(call_data))
-    
+
     webhook_extract = sip_call_extract(data)
     if webhook_extract:
         call_data[webhook_extract['room_name']] = {
@@ -38,8 +32,11 @@ async def livekit_room_webhook(request: Request):
             'twilio_call_sid': webhook_extract['twilio_call_sid'],
             'twilio_account_sid': webhook_extract['twilio_account_sid']
         }
-        
-        print(" printing call_data[webhook_extract['room_name']]:", call_data[webhook_extract['room_name']])
+
+        print(
+            " printing call_data[webhook_extract['room_name']]:",
+            call_data[webhook_extract['room_name']]
+        )
         # Write call_data to JSON file
         try:
             with open('call_data.json', 'w') as f:
@@ -64,7 +61,7 @@ def sip_call_extract(data) -> Dict[str, Any]:
             'state': data.get('participant', {}).get('state'),
             'event_id': data.get('id'),
         }
-        
+
         # Get nested Twilio attributes safely
         attributes = data.get('participant', {}).get('attributes', {})
         result.update({
@@ -74,5 +71,5 @@ def sip_call_extract(data) -> Dict[str, Any]:
         })
         return result
     else:
-        #logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
+        # logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
         return None

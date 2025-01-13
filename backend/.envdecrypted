@@ -1,0 +1,118 @@
+# Domain
+# This would be set to the production domain with an env var on deployment
+#DOMAIN=localhost
+DOMAIN = http://localhost:8000/api/v1
+API_BASE_URL=http://localhost:8000/api/v1
+
+# Environment: local, staging, production
+ENVIRONMENT=local
+
+PROJECT_NAME="Flowon AI"
+STACK_NAME=fastapi_react
+
+# Backend
+BACKEND_CORS_ORIGINS=["http://localhost:3000", "https://localhost:3000", "https://internally-wise-spaniel.in.ngrok.io",
+                    "https://internally-wise-spaniel.eu.ngrok.io/",
+                    "ngrok.io"
+                    "http://ngrok.io"
+                    "https://ngrok.io"
+                    "http://internally-wise-spaniel.ngrok.io"]
+## prod backend cords
+#BACKEND_CORS_ORIGINS="https://flowon.ai,https://www.flowon.ai"
+SECRET_KEY=j2384fny734734b
+FIRST_SUPERUSER=m.ali@gacm.co.uk
+FIRST_SUPERUSER_PASSWORD=Legowaygo88
+USERS_OPEN_REGISTRATION=True
+
+# Supabase
+SUPABASE_URL=https://isfghqgmaigvrvohuxbx.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzZmdocWdtYWlndnJ2b2h1eGJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI5OTUxMzMsImV4cCI6MjAzODU3MTEzM30.koSLaS4NMWK_bjPP898_bJCjg6VONgYLPUaXSqu-COI
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzZmdocWdtYWlndnJ2b2h1eGJ4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyMjk5NTEzMywiZXhwIjoyMDM4NTcxMTMzfQ.GacsdMRTPwTrmmHRrEOdeRiboCjxsn8AmMInNSHGdno
+
+# Pinecone
+PINECONE_API_KEY=pcsk_U3PJ7_H8HbEikju7yAeF7D2jcKNw6quLVgaPic4rsntWoacSqRci66pGFgfU3uTFiHjJf
+
+# Humanloop
+HUMANLOOP_API_KEY=hl_sk_f6f9e2939408c94cd781d2f8c0d45e83e1084ec484153618
+
+# Logging
+SENTRY_DSN=
+POSTHOG_API_KEY=
+
+# Configure these with your own Docker registry images
+DOCKER_IMAGE_BACKEND=backend
+DOCKER_IMAGE_FRONTEND=frontend
+
+# Twilio
+TWILIO_ACCOUNT_SID=AC2e61d0942c25dd6db0c6c1049fe1d3b1
+TWILIO_AUTH_TOKEN=f2454926f9603411f87e9db96415a37d
+TWILIO_NUMBER=447723180506
+
+# Retell
+RETELL_API_KEY=532836eb-5402-478b-93df-5113871fb9c4
+AGENT_FIRST=57c0035476745b1aef86cca2b8fd4745
+AGENT_SECOND=1ec1785f892efc61a78366bf1d52e179
+AGENT_FF=agent_6fbcc967dde3c2e6c59a12d6dc
+
+# Vapi
+VAPI_API_PRIVATE_KEY=89487bb9-da21-49a1-9550-6fed78158f84
+VAPI_API_PUBLIC_KEY=2c1402e4-e88b-4057-9cbc-c9759296a052
+
+# Composio
+COMPOSIO_API_KEY=5z8t4g1e2xigxw6urlywf5
+
+# CAL.COM
+CAL_API_KEY=cal_live_0b2fb9a4a9eb90a6f30dfe6430fe867a
+
+# NYLAS SANDBOX
+NYLAS_API_KEY=nyk_v0_3rL6a1ElpMlb3x6riUT84orU4S2s2hoKL5J5F0xZo2T6SLODS7TedbdwiGqbMmKs
+NYLAS_CLIENT_ID=b39310e3-7a3d-4f9f-877d-a9193e905b81
+NYLAS_API_URI=https://api.us.nylas.com
+#NYLAS_API_URI=https://api.eu.nylas.com
+NYLAS_CALLBACK_URI=http://localhost:8000/api/v1/nylas/oauth/exchange
+
+## PROD
+#NYLAS_API_KEY=nyk_v0_rGEVtsxMbRdEFdnN9cFps0zPoaI62yCTKS3pSB4iUtKySvjZq5tqR3kI3aiZenoU
+
+
+# LLM services
+OPENAI_API_KEY=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
+ANTHROPIC_API_KEY=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
+COHERE_PROD_API_KEY=4QjxYZeCqNWfB0oGrDUpaUqVqR85nVN6J5ciL8Z5
+COHERE_TRIAL_API_KEY=OuALtSzKL4IoLC4VXfbEhOQgfMS3Kxs077TtDk72
+JINA_API_KEY=jina_f286ad37141f4058b863b70d01a37b99pbpTAdX3yJSPsVN6C-BDxZJlxtjR
+
+FIRECRAWL_API_KEY=fc-cdb88ca127b74ce89039524e256c370e
+
+# TTS, STT
+DEEPGRAM_API_KEY=98e2c5e7de067d9892581f0c0ebe4414972ad6fb
+ELEVENLABS_API_KEY=9fcadcb695794ed2065bf9e3233b181d
+ELEVENLABS_VOICE_ID=aTbnroHRGIomiKpqAQR8
+CARTESIA_API_KEY=64a6c271-6f79-4cb8-b413-cc98c8dba9da
+
+### PRODUCTION
+# LIVEKIT_API_KEY=APIaFbDoRZd6MDf
+# LIVEKIT_API_SECRET=9vdvrfPEZUTh3kklJuWZS1kLJMzr4M5l0SalgS4XaSV
+LIVEKIT_API_KEY=APIdAMbjDAMCbgf
+LIVEKIT_API_SECRET=KGQj63yjcnJCLdN5eCh539J2hP4Orr29YRUMZ67OTtC
+LIVEKIT_URL=wss://flowon-f7dobs7m.livekit.cloud
+LIVEKIT_SIP_URL=sip:4g7wyi6dyof.sip.livekit.cloud
+
+# #### DEVELOPMENT   
+# LIVEKIT_API_KEY=API6X8CuJrUcgCs
+# LIVEKIT_API_SECRET=nsyMSzO3hdBAyb0s2W7567Rib5UQaSeS0ugv79fTm1n
+# LIVEKIT_URL=wss://flowon-dev-96l2y93v.livekit.cloud
+# LIVEKIT_SIP_URL=sip:55lj5ykkhq4.sip.livekit.cloud
+
+
+
+# Daily
+DAILY_SAMPLE_ROOM_URL=https://flowoni.daily.co/zBSLFJwv20Bz9Yhq3o1e
+DAILY_API_KEY=7a7484a1d4fbaf4258b976254867e83072b8f116181703b8f98ac3313a07e7b6
+DAILY_API_URL=https://api.daily.co/v1
+
+# Weviate 
+WEAVIATE_API_KEY=YzEqU07qxyccKewQ7DMC97ua3gzJ0dl8Meg3
+WEAVIATE_URL=https://l8zwpbz7qcqxxf8ciicq.c0.europe-west3.gcp.weaviate.cloud
+
+

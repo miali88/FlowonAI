@@ -1,24 +1,26 @@
 from services.cache import get_all_agents
 import os
-import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-""" DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE ASSISTANT """
+"""
+DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE ASSISTANT
+"""
+
 
 async def get_agent_id_from_call_data(room_name: str):
     import json
     agents = await get_all_agents()
-    
+
     print("Current working directory:", os.getcwd())
-    
+
     def get_agent_id_by_phone(data, phone_number):
         for agent in data:
             if agent.get('assigned_telephone') == phone_number:
                 return agent.get('id')
         return None
-    
+
     try:
         with open('backend/call_data.json', 'r') as f:
             call_data_from_file = json.load(f)
@@ -40,13 +42,15 @@ async def get_agent_id_from_call_data(room_name: str):
     print(f"agent_id: {agent_id}")
     return agent_id
 
+
 async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
     """
-    Detects the call type (inbound, outbound, web) and returns the associated agent_id and call_type.
-    
+    Detects the call type (inbound, outbound, web) and returns
+    the associated agent_id and call_type.
+
     Args:
         room_name (str): The name of the room/call
-        
+
     Returns:
         tuple[str, str]: A tuple containing (agent_id, call_type)
     """
@@ -54,7 +58,7 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
         print("entrypoint - telephone call detected")
         agent_id = await get_agent_id_from_call_data(room_name)
         return agent_id, "telephone"
-        
+
     elif room_name.startswith("outbound_"):
         print("outbound call detected")
         modified_room_name = room_name[9:]  # Skip 'outbound_' prefix
@@ -63,13 +67,14 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
             logger.error(f"Could not find agent_id for room: {room_name}")
             return "Error: Could not find agent configuration", "error"
         return agent_id, "outbound"
-        
+
     elif room_name.endswith("_textbot"):
         print("Textbot chat call detected")
-        # Extract agent_id from room name format: agent_{agent_id}_room_{visitor_id}_textbot
+        # Extract agent_id from room name
+        # format: agent_{agent_id}_room_{visitor_id}_textbot
         agent_id = room_name.split("_room_")[0].replace("agent_", "")
         return agent_id, "textbot"
-        
+
     else:
         print("voice chat call detected")
         # Extract agent_id from room name format: agent_{agent_id}_room_{visitor_id}

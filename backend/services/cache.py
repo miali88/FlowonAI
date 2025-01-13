@@ -9,13 +9,13 @@ supabase = supabase_client()
 """ CALENDAR CACHE """
 calendar_cache: Dict[str, dict] = {}
 
+
 async def initialize_calendar_cache(user_id: str, app: str) -> None:
     """Initialize the calendar cache"""
     calendar_slots: Dict = await get_calendar_slots(user_id, "googlecalendar")
     calendar_cache[user_id] = calendar_slots
     print(f"Calendar cache initialized for user_id: {user_id}")
     return calendar_slots
-
 
 
 """ LIVEKIT WEBHOOK CACHE """
@@ -32,6 +32,7 @@ kb_cache: Dict[str, dict] = {}
 """ AGENT METADATA CACHE """
 # The main cache dictionary
 agent_metadata_cache: List[Dict[str, dict]] = []
+
 
 async def get_all_agents() -> list:
     response = supabase.table("agents").select("*").execute()

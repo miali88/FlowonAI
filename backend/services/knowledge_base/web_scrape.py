@@ -1,21 +1,18 @@
-import requests
-import json
-import os 
-from typing import List, Dict
+from typing import List
 from urllib.parse import urlparse
 import asyncio
 from datetime import datetime, timedelta
 import logging
 import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential
-from asyncio import Semaphore
-from aiohttp import ClientError, ClientTimeout
 from requests.exceptions import RequestException
+import os
+
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -28,13 +25,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 async def count_tokens(text, model="gpt-4o"):
     print("hello, count_tokens")
     encoder = encoding_for_model(model)
     tokens = encoder.encode(text)
     return len(tokens)
 
-JINA_API_KEY = os.getenv('JINA_API_KEY')
+
 async def get_embedding(text):
     print("hello, get_embedding")
     """ JINA EMBEDDINGS """
@@ -52,15 +50,16 @@ async def get_embedding(text):
         "embedding_type": "float",
         "input": text
     }
-    
+
     timeout = aiohttp.ClientTimeout(total=30)  # 30 seconds timeout
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.post(url, headers=headers, json=data) as response:
             return await response.json()
 
+
 async def sliding_window_chunking(text, max_window_size=900, overlap=200):
     print("hello, sliding_window_chunking")
-    encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
+    encoder = encoding_for_model("gpt-4o")
     tokens = encoder.encode(text)
     chunks = []
     start = 0
@@ -72,66 +71,91 @@ async def sliding_window_chunking(text, max_window_size=900, overlap=200):
         start += max_window_size - overlap
     return chunks
 
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+
 async def insert_to_db(data):
     print("hello, insert_to_db")
-    headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
-    
+    headers_data = {
+        k: v for k, v in data.items()
+        if k not in ["jina_embedding", "content"]
+    }
+
     async def insert_data():
         return await asyncio.to_thread(
             lambda: supabase.table('user_web_data').insert(data).execute()
         )
-    
+
     async def insert_headers():
         return await asyncio.to_thread(
-            lambda: supabase.table('user_web_data_headers').insert(headers_data).execute()
+            lambda: (
+                supabase.table('user_web_data_headers')
+                .insert(headers_data).execute()
+            )
         )
-    
+
     await asyncio.gather(insert_data(), insert_headers())
+
 
 # Rate limit constants
 SCRAPE_RATE_LIMIT = 20  # per minute
 CRAWL_RATE_LIMIT = 3    # per minute
 MAX_PAGES = 3000
 
-# Create rate limiters
+
 class RateLimiter:
     def __init__(self, calls_per_minute, name=""):
         self.calls_per_minute = calls_per_minute
         self.calls = []
         self.name = name
-        
+
     async def acquire(self):
         now = datetime.now()
-        
+
         # Clean up old calls
         original_calls = len(self.calls)
-        self.calls = [call_time for call_time in self.calls 
-                     if now - call_time < timedelta(minutes=1)]
+        self.calls = [
+            call_time for call_time in self.calls
+            if now - call_time < timedelta(minutes=1)
+        ]
         cleaned_calls = len(self.calls)
-        
-        logger.info(f"{self.name} Limiter - Current calls in window: {len(self.calls)}/{self.calls_per_minute}")
-        
+
+        logger.info(
+            f"{self.name} Limiter - Current calls in window: "
+            f"{len(self.calls)}/{self.calls_per_minute}"
+        )
+
         if cleaned_calls < original_calls:
-            logger.info(f"{self.name} Limiter - Cleaned up {original_calls - cleaned_calls} old calls")
-        
+            logger.info(
+                f"{self.name} Limiter - Cleaned up "
+                f"{original_calls - cleaned_calls} old calls"
+            )
+
         if len(self.calls) >= self.calls_per_minute:
             wait_time = 60 - (now - self.calls[0]).total_seconds()
             if wait_time > 0:
-                logger.info(f"{self.name} Limiter - Rate limit reached. Waiting {wait_time:.2f} seconds")
+                logger.info(
+                    f"{self.name} Limiter - Rate limit reached. "
+                    f"Waiting {wait_time:.2f} seconds"
+                )
                 await asyncio.sleep(wait_time)
-        
+
         self.calls.append(now)
-        logger.info(f"{self.name} Limiter - Added new call. Total calls in window: {len(self.calls)}")
+        logger.info(
+            f"{self.name} Limiter - Added new call. "
+            f"Total calls in window: {len(self.calls)}"
+        )
+
 
 # Create named limiters
 scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
 crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
+
 
 @retry(
     stop=stop_after_attempt(5),
@@ -150,24 +174,31 @@ async def scrape_with_retry(url, params):
         logger.error(f"Unexpected error while scraping {url}: {str(e)}")
         raise
 
+
 async def process_single_url(site: str, user_id: str, root_url: str):
     print("\nhello, process_single_url")
-    
+
     if "screen" in site:
         logger.info(f"Skipping screen {site}")
         return None
 
     try:
         response = await scrape_with_retry(
-            site, 
+            site,
             {'formats': ['markdown'], 'waitFor': 2000}
         )
 
-        content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
+        content = [
+            item for item in response['markdown'].split('\n\n')
+            if not item.startswith('[![]')
+        ]
         content = "\n\n".join(content)
 
         try:
-            header = "## Title: " + response['metadata']['title'] + " ## Description: " + response['metadata']['description']
+            header = (
+                "## Title: " + response['metadata']['title'] +
+                " ## Description: " + response['metadata']['description']
+            )
         except KeyError:
             print(f"KeyError occurred for site {site}: Missing description")
             header = "## Title: " + response['metadata']['title']
@@ -185,46 +216,48 @@ async def process_single_url(site: str, user_id: str, root_url: str):
                 "user_id": user_id,
                 "root_url": root_url
             }
-            
+
             chunk_text = header + chunk
             jina_response = await get_embedding(chunk_text)
             sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
             sb_insert['token_count'] = jina_response['usage']['total_tokens']
-            
+
             await insert_to_db(sb_insert)
             return sb_insert
 
         chunk_tasks = [process_chunk(chunk) for chunk in chunks]
         results = await asyncio.gather(*chunk_tasks, return_exceptions=True)
-        
+
         return [r for r in results if isinstance(r, dict)]
 
     except Exception as e:
         logger.error(f"Error processing site {site}: {str(e)}", exc_info=True)
         return None
 
+
 async def scrape_url(urls: List[str], user_id: str = None):
     print("hello, scrape_url")
     print(f"Starting scrape process for user {user_id} at {datetime.now()}")
-    
+
     parsed_url = urlparse(urls[0])
     root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    
+
     tasks = [process_single_url(site, user_id, root_url) for site in urls]
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     flat_results = []
     for result in results:
         if isinstance(result, list):
             flat_results.extend(result)
-    
+
     print("end, scrape_url")
     return flat_results
+
 
 async def map_url(url) -> List[str]:
     print("hello, map_url")
     logger.info(f"Starting URL mapping for: {url}")
-    
+
     try:
         await crawl_limiter.acquire()
         map_result: List[str] = await asyncio.to_thread(

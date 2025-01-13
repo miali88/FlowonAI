@@ -1,10 +1,11 @@
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 from sqlalchemy import Column, String, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
 
 # Request Model - what the frontend sends
 class AgentCreate(BaseModel):
@@ -38,10 +39,11 @@ class AgentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
 # Database Model (if using SQLAlchemy)
 class AgentDB(Base):
     __tablename__ = "agents"
-    
+
     id = Column(String, primary_key=True)
     agent_name = Column(String, nullable=False)
     agent_purpose = Column(String, nullable=False)
@@ -55,4 +57,4 @@ class AgentDB(Base):
     ui_config = Column(JSON)
     features = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) 
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

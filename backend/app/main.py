@@ -2,37 +2,36 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-#from services.twilio import cleanup
+# from services.twilio import cleanup
 
 from app.api.main import api_router
 from app.core.config import settings
-from contextlib import asynccontextmanager
-import os 
+import os
+import logging
 from dotenv import load_dotenv
 import subprocess
 import psutil
 import time
 import platform
 import sys
-import logging
 
 load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
+
 sentry_sdk.init(
-    dsn="https://e0f7361d6f043e1f2d7a42549e152498@o4508208175906816.ingest.us.sentry.io/4508208188882944",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
+    dsn=(
+        "https://e0f7361d6f043e1f2d7a42549e152498@"
+        "o4508208175906816.ingest.us.sentry.io/4508208188882944"
+    ),
     traces_sample_rate=1.0,
     _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
         "continuous_profiling_auto_start": True,
     },
 )
@@ -46,12 +45,13 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
-origins = ["flowon.ai",
-           "https://flowon.ai",
-           "https://www.flowon.ai",
-           "http://localhost:3000", 
-           "https://localhost:3000", 
-           ]
+origins = [
+    "flowon.ai",
+    "https://flowon.ai",
+    "https://www.flowon.ai",
+    "http://localhost:3000",
+    "https://localhost:3000",
+]
 
 if origins:
     app.add_middleware(
@@ -62,20 +62,38 @@ if origins:
         allow_headers=["*"],
     )
 
-#print("origins",[str(origins).strip(",") for origin in settings.BACKEND_CORS_ORIGINS])
-
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-def kill_processes_on_port(port):
+
+def kill_processes_on_port(port: int) -> None:
+    """Kill processes running on specified port.
+
+    Args:
+        port: Port number to check for processes
+    """
     try:
         if platform.system() == "Windows":
-            subprocess.run(['taskkill', '/F', '/PID', '$(netstat -ano | findstr :%d | awk \'{print $5}\')' % port], shell=True)
-        else:  # Unix-like systems (Linux, macOS)
+            subprocess.run(
+                [
+                    'taskkill',
+                    '/F',
+                    '/PID',
+                    '$(netstat -ano | findstr :%d | awk \'{print $5}\')'
+                    % port
+                ],
+                shell=True
+            )
+        else:
             # Get the current process ID
             current_pid = os.getpid()
-            
+
             # Get all processes on the port
-            result = subprocess.run(f"lsof -ti:{port}", shell=True, capture_output=True, text=True)
+            result = subprocess.run(
+                f"lsof -ti:{port}",
+                shell=True,
+                capture_output=True,
+                text=True
+            )
             if result.stdout:
                 pids = result.stdout.strip().split('\n')
                 for pid in pids:
@@ -84,37 +102,45 @@ def kill_processes_on_port(port):
                         # Don't kill our own process
                         if pid != current_pid:
                             os.kill(pid, 9)
-                            print(f"Killed process {pid} on port {port}")
+                            logger.info(f"Killed process {pid} on port {port}")
                     except (ValueError, ProcessLookupError) as e:
-                        print(f"Error processing PID {pid}: {e}")
-            
-        print(f"Finished checking processes on port {port}")
+                        logger.error(f"Error processing PID {pid}: {e}")
+
+        logger.info(f"Finished checking processes on port {port}")
     except Exception as e:
-        print(f"Error in kill_processes_on_port: {e}")
+        logger.error(f"Error in kill_processes_on_port: {e}")
+
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
+    """Initialize FastAPI server and start LiveKit server."""
     logger.debug("Starting up FastAPI server...")
     global livekit_process
-    
+
     try:
         logger.debug("Attempting to start LiveKit server...")
         time.sleep(1)
-        
+
         MAX_RETRIES = 3
         RETRY_DELAY = 2
 
         # Get the absolute path to the project root
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-        
-        # Get the current Python executable path (ensures using the same virtual environment)
+        project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../..')
+        )
+
+        # Get the current Python executable path
         python_executable = sys.executable
-        
+
         # Set up the environment for the subprocess
         env = os.environ.copy()
-        
+
         # Ensure PYTHONPATH includes project root and site-packages
-        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
+        site_packages = os.path.join(
+            os.path.dirname(python_executable),
+            'Lib',
+            'site-packages'
+        )
         python_path = [
             project_root,
             site_packages,
@@ -125,37 +151,43 @@ async def startup_event():
         for attempt in range(MAX_RETRIES):
             try:
                 livekit_process = subprocess.Popen(
-                    [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
+                    [
+                        python_executable,
+                        os.path.join(project_root, 'backend', 'livekit_server.py'),
+                        'start'
+                    ],
                     env=env,
                     cwd=project_root
                 )
-                print(f"LiveKit server started with PYTHONPATH: {env['PYTHONPATH']}")
+                logger.info(
+                    f"LiveKit server started with PYTHONPATH: {env['PYTHONPATH']}"
+                )
                 break
             except subprocess.SubprocessError as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
+                logger.error(f"Attempt {attempt + 1} failed: {e}")
                 if attempt < MAX_RETRIES - 1:
-                    print(f"Retrying in {RETRY_DELAY} seconds...")
+                    logger.info(f"Retrying in {RETRY_DELAY} seconds...")
                     time.sleep(RETRY_DELAY)
                 else:
-                    print("Failed to start LiveKit server after maximum retries")
+                    logger.error("Failed to start LiveKit server after maximum retries")
                     raise
     except Exception as e:
-        print(f"Error in startup_event: {e}")
+        logger.error(f"Error in startup_event: {e}")
+
 
 @app.on_event("shutdown")
-async def shutdown_event():
-
+async def shutdown_event() -> None:
+    """Cleanup and shutdown LiveKit server."""
     global livekit_process
     if livekit_process:
         try:
-            # Terminate the LiveKit server process
-            print("\n\nTerminating LiveKit server")
+            logger.info("Terminating LiveKit server")
             parent = psutil.Process(livekit_process.pid)
             for child in parent.children(recursive=True):
                 child.terminate()
             parent.terminate()
-            print("LiveKit server terminated")
+            logger.info("LiveKit server terminated")
         except psutil.NoSuchProcess:
-            print("LiveKit server process not found")
+            logger.error("LiveKit server process not found")
         except Exception as e:
-            print(f"Error terminating LiveKit server: {e}")
+            logger.error(f"Error terminating LiveKit server: {e}")
