@@ -6,6 +6,7 @@ from supabase import create_client, Client
 from app.core.config import settings
 from services.voice.livekit_services import token_gen, start_agent_request
 from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content, update_agent
+from services.agent_create import create_agents_from_urls
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -104,3 +105,37 @@ async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_cu
     except Exception as e:
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/auto_create_agent")
+async def auto_create_agent_handler(request: Request, current_user: str = Depends(get_current_user)):
+    try:
+        data = await request.json()
+        url = data.get('url')
+        
+        if not url:
+            raise HTTPException(status_code=400, detail="URL is required")
+            
+        # Process the URL and create agent
+        agent_id = await create_agents_from_urls(url)
+        
+        return {
+            "status": "success",
+            "message": "Agent creation started",
+            "agent_id": agent_id
+        }
+    except Exception as e:
+        logger.error(f"Error in auto create agent: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/check_agent_status")
+async def check_agent_status(request: Request, current_user: str = Depends(get_current_user)):
+    try:
+        # Here you would check the status of the agent creation task
+        # For now, we'll simulate a response
+        return {
+            "status": "completed",
+            "agent_url": "https://flowon.ai/iframe?agentId=AGENT_ID"  # Replace with actual agent URL
+        }
+    except Exception as e:
+        logger.error(f"Error checking agent status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
