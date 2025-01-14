@@ -40,6 +40,14 @@ export const integrations = [
       status: "Not connected",
     },
     {
+      name: "Greptile",
+      id: "GREPTILE",
+      icon: `/icons/greptile_logo.jpeg?w=32&h=32`,
+      description: "Talk to your codebase.",
+      category: "Development",
+      status: "Not connected",
+    },
+    {
       name: "Shopify",
       id: "SHOPIFY",
       icon: `data:image/svg+xml;utf8,${encodeURIComponent(
