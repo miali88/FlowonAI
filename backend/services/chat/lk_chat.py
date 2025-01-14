@@ -2,7 +2,6 @@ import json
 from typing import Dict, Annotated, AsyncGenerator, Any
 from dataclasses import dataclass, field
 from typing import List, Optional
-import pickle
 from pathlib import Path
 from uuid import uuid4
 from datetime import datetime
@@ -15,6 +14,7 @@ from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.composio import get_calendar_slots
 from services.db.supabase_services import supabase_client
+from services.voice.tool_use import trigger_show_chat_input
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,13 +36,27 @@ class ChatTester:
         self.current_scenario = None
 
     def save_scenario(self, scenario: ChatScenario):
-        with open(self.scenarios_dir / f"{scenario.name}.pkl", "wb") as f:
-            pickle.dump(scenario, f)
+        scenario_dict = {
+            "name": scenario.name,
+            "description": scenario.description,
+            "messages": scenario.messages,
+            "expected_function_calls": scenario.expected_function_calls,
+            "actual_function_calls": scenario.actual_function_calls
+        }
+        with open(self.scenarios_dir / f"{scenario.name}.json", "w") as f:
+            json.dump(scenario_dict, f)
 
     def load_scenario(self, name: str) -> Optional[ChatScenario]:
         try:
-            with open(self.scenarios_dir / f"{name}.pkl", "rb") as f:
-                return pickle.dump(f)
+            with open(self.scenarios_dir / f"{name}.json", "r") as f:
+                data = json.load(f)
+                return ChatScenario(
+                    name=data["name"],
+                    description=data["description"],
+                    messages=data["messages"],
+                    expected_function_calls=data["expected_function_calls"],
+                    actual_function_calls=data["actual_function_calls"]
+                )
         except FileNotFoundError:
             return None
 
@@ -335,14 +349,17 @@ class ChatInitializer:
     @llm.ai_callable(
         name="request_personal_data",
         description=(
-            """Call this function BEFORE asking for any personal information..."""
+            "Call this function BEFORE asking for any personal information. "
+            "DO NOT ask for personal information directly in your messages. "
+            "This function will handle the entire data collection process automatically. "
+            "IMPORTANT: After calling this function, wait for user's response without asking for information again."
         ),
         auto_retry=False
     )
     async def _request_personal_data(
         self, message: Annotated[
             str, llm.TypeInfo(
-                description="Message explaining why you need their details"
+                description="Message explaining why you need their details (e.g., 'To help you with your £15k website project, we'll need your contact information')"
             )
         ]
     ) -> AsyncGenerator[str, None]:
@@ -355,6 +372,8 @@ class ChatInitializer:
             f"triggering show_chat_input in request_personal_data for room_name: "
             f"{self.room_name}"
         )
+        await trigger_show_chat_input(self.room_name, self.room_name, self.room_name)
+
 
 
 @dataclass
@@ -635,6 +654,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
         # Save to Supabase
         print(f"Saving chat history to Supabase for room: {room_name}")
         print(f"Number of messages: {len(formatted_transcript)}")
+        response = supabase.table("conversation_logs").insert(conversation_data).execute()
 
         print("Successfully saved chat history to Supabase")
 

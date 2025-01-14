@@ -20,6 +20,10 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Use full paths for executables
+NETSTAT_PATH = "C:\\Windows\\System32\\netstat.exe" if platform.system() == "Windows" else "/usr/bin/netstat"
+TASKKILL_PATH = "C:\\Windows\\System32\\taskkill.exe" if platform.system() == "Windows" else None
+LSOF_PATH = "/usr/bin/lsof" if platform.system() != "Windows" else None
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -73,9 +77,8 @@ def kill_processes_on_port(port: int) -> None:
     """
     try:
         if platform.system() == "Windows":
-            # Use safer Windows-specific commands without shell=True
             netstat = subprocess.run(
-                ["netstat", "-ano"],
+                [NETSTAT_PATH, "-ano"],
                 capture_output=True,
                 text=True,
                 shell=False
@@ -84,20 +87,21 @@ def kill_processes_on_port(port: int) -> None:
                 if f":{port}" in line:
                     try:
                         pid = line.strip().split()[-1]
-                        subprocess.run(
-                            ["taskkill", "/F", "/PID", pid],
-                            shell=False
-                        )
+                        if pid.isdigit():
+                            subprocess.run(
+                                [TASKKILL_PATH, "/F", "/PID", pid],
+                                shell=False
+                            )
                     except (IndexError, ValueError):
                         continue
         else:
-            # Get the current process ID
             current_pid = os.getpid()
-            
-            # Safer way to check for processes on port
             try:
+                if not os.path.isfile(LSOF_PATH):
+                    raise FileNotFoundError("lsof command not found")
+                    
                 result = subprocess.run(
-                    ["lsof", "-ti", f":{port}"],
+                    [LSOF_PATH, "-ti", f":{port}"],
                     capture_output=True,
                     text=True,
                     shell=False
