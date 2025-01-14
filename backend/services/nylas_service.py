@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from nylas import Client
 from services.db.supabase_services import supabase_client
 from services.cache import get_all_agents
+import ast
+import html
 
 supabase = supabase_client()
 load_dotenv()
@@ -67,8 +69,8 @@ async def send_email(participant_identity, conversation_history, agent_id):
                 data_str: str = (
                     message["user_message"].split("user input data:")[1].strip()
                 )
-                # Note: eval() can be unsafe, consider using ast.literal_eval()
-                user_data: Dict = eval(data_str)
+                # Use ast.literal_eval instead of eval for safety
+                user_data: Dict = ast.literal_eval(data_str)
 
                 print("\n\n\n\n +_+_+_ nylas convo extracted user_data:", user_data)
                 print("Email Address:", user_data.get("Email Address"))
@@ -102,36 +104,39 @@ async def send_email(participant_identity, conversation_history, agent_id):
 
         # Email to Lead
         lead_email = user_data.get("Email Address")
-        lead_name = user_data.get("Full Name")
+        lead_name = html.escape(user_data.get("Full Name", ""))
+        
         if lead_email:
+            email_template = """
+                <div>
+                    <p>Hi {name}</p>
+                    <p>Thank you for connecting with our landing page agent! At Flowon AI, 
+                    we're offering a select group of business owners the chance to collaborate 
+                    with us on building bespoke conversational AI agents tailored to their 
+                    unique needs.</p>
+                    <p>These agents are designed to revolutionize customer interactions, 
+                    streamline operations, and give businesses a competitive edge—but we can 
+                    only take on a limited number of projects at a time.</p>
+                    <p>If you'd like to secure your spot, let's chat soon before the 
+                    remaining slots fill up:</p>
+                    <p>Book a quick demo here: 
+                    <a href='https://calendly.com/michael-flowon/30min?month=2024-11'>
+                    https://calendly.com/michael-flowon/30min?month=2024-11</a><br>
+                    Or simply reply to this email to start the conversation.</p>
+                    <p>I'd love to explore how we can create a custom AI solution for 
+                    your business!</p>
+                    <p>Looking forward to hearing from you,<br>
+                    Michael<br>
+                    Founder @ Flowon AI<br>
+                    michael@flowon.ai</p>
+                </div>
+            """
+            
             lead_request_body = {
                 "to": [{"email": lead_email}],
                 "reply_to": [{"email": recipient_email}],
                 "subject": "Flowon: Custom AI Agents for Visionary Businesses",
-                "body": (
-                    f"<div>"
-                    f"<p>Hi {lead_name},</p>"
-                    f"<p>Thank you for connecting with our landing page agent! At Flowon AI, "
-                    f"we're offering a select group of business owners the chance to collaborate "
-                    f"with us on building bespoke conversational AI agents tailored to their "
-                    f"unique needs.</p>"
-                    f"<p>These agents are designed to revolutionize customer interactions, "
-                    f"streamline operations, and give businesses a competitive edge—but we can "
-                    f"only take on a limited number of projects at a time.</p>"
-                    f"<p>If you'd like to secure your spot, let's chat soon before the "
-                    f"remaining slots fill up:</p>"
-                    f"<p>Book a quick demo here: "
-                    f"<a href='https://calendly.com/michael-flowon/30min?month=2024-11'>"
-                    f"https://calendly.com/michael-flowon/30min?month=2024-11</a><br>"
-                    f"Or simply reply to this email to start the conversation.</p>"
-                    f"<p>I'd love to explore how we can create a custom AI solution for "
-                    f"your business!</p>"
-                    f"<p>Looking forward to hearing from you,<br>"
-                    f"Michael<br>"
-                    f"Founder @ Flowon AI<br>"
-                    f"michael@flowon.ai</p>"
-                    f"</div>"
-                )
+                "body": email_template.format(name=lead_name)
             }
 
             # Send email, grant_id default from michael@flowon.ai

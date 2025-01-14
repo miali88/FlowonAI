@@ -8,6 +8,7 @@ from typing import List
 import random
 import re
 import json
+from requests.exceptions import Timeout, RequestException
 
 from supabase import create_client, Client
 from openai import OpenAI
@@ -53,8 +54,21 @@ async def get_embedding(text):
         "embedding_type": "float",
         "input": text
     }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    return response.json()['data'][0]['embedding']
+    try:
+        response = requests.post(
+            url, 
+            headers=headers, 
+            data=json.dumps(data),
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.json()['data'][0]['embedding']
+    except Timeout:
+        logger.error("Timeout while getting embedding from Jina AI")
+        raise
+    except RequestException as e:
+        logger.error(f"Error getting embedding from Jina AI: {str(e)}")
+        raise
 
 
 async def rerank_documents(user_query: str, top_n: int, docs: List):
@@ -66,16 +80,29 @@ async def rerank_documents(user_query: str, top_n: int, docs: List):
         'Authorization': f'Bearer {JINA_API_KEY}'
     }
     data = {
-        "model": "jina-reranker-v2-base-multilingual",
+        "model": "jina-reranker-v2-base-multilingual",  
         "query": user_query,
         "top_n": top_n,
         "documents": docs
     }
-    response = requests.post(url, headers=headers, json=data)
-    reranked_docs = response.json()['results']
-    reranked_docs = [i['document']['text'] for i in reranked_docs]
+    try:
+        response = requests.post(
+            url, 
+            headers=headers, 
+            json=data,
+            timeout=30
+        )
+        response.raise_for_status()
+        reranked_docs = response.json()['results']
+        reranked_docs = [i['document']['text'] for i in reranked_docs]
 
-    return reranked_docs
+        return reranked_docs
+    except Timeout:
+        logger.error("Timeout while reranking documents with Cohere")
+        raise
+    except RequestException as e:
+        logger.error(f"Error reranking documents with Cohere: {str(e)}")
+        raise
 
 """ *_ AMEND SYS PROMPT """
 

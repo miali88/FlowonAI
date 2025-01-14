@@ -87,8 +87,13 @@ async def get_embedding(text):
             "embedding_type": "float",
             "input": text
         }
-        response = requests.post(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()  # Raise exception for non-200 status codes
+        response = requests.post(
+            url, 
+            headers=headers, 
+            data=json.dumps(data),
+            timeout=30  # Add timeout to prevent potential DoS attacks
+        )
+        response.raise_for_status()
         logger.debug("Successfully received embedding from Jina AI")
 
         embedding = response.json()['data'][0]['embedding']
