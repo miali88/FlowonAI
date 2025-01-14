@@ -86,7 +86,7 @@ async def get_kb_headers(current_user):
 
             grouped: List[Dict] = group_by_root_url(results.data)
             all_items.extend(grouped)
-            total_tokens += sum(item.get('token_count', 0) for item in results.data)
+            total_tokens += sum(item.get('token_count', 0) or 0 for item in results.data)
 
         elif table == "user_text_files_headers":
             items = (
@@ -103,12 +103,12 @@ async def get_kb_headers(current_user):
                     'title': item.get('heading', 'No Title'),
                     'data_type': item.get('data_type'),
                     'tag': item.get('tag', ''),
-                    'token_count': item.get('token_count', 0)
+                    'token_count': item.get('token_count', 0) or 0
                 }
                 for item in items.data
             ]
             all_items.extend(formatted_items)
-            total_tokens += sum(item.get('token_count', 0) for item in items.data)
+            total_tokens += sum(item.get('token_count', 0) or 0 for item in items.data)
 
     return all_items, total_tokens
 
