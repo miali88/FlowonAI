@@ -14,6 +14,8 @@ import psutil
 import time
 import platform
 import sys
+from typing import Optional
+from os import PathLike
 
 load_dotenv()
 
@@ -21,9 +23,11 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Use full paths for executables
-NETSTAT_PATH = "C:\\Windows\\System32\\netstat.exe" if platform.system() == "Windows" else "/usr/bin/netstat"
-TASKKILL_PATH = "C:\\Windows\\System32\\taskkill.exe" if platform.system() == "Windows" else None
-LSOF_PATH = "/usr/bin/lsof" if platform.system() != "Windows" else None
+NETSTAT_PATH: str = "C:\\Windows\\System32\\netstat.exe" if platform.system() == "Windows" else "/usr/bin/netstat"
+TASKKILL_PATH: str = "C:\\Windows\\System32\\taskkill.exe" if platform.system() == "Windows" else "/bin/kill"  # Provide default for non-Windows
+LSOF_PATH: str = "/usr/bin/lsof" if platform.system() != "Windows" else "/bin/lsof"  # Provide default path
+
+livekit_process = None  # Global variable to store LiveKit server process
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -108,14 +112,14 @@ def kill_processes_on_port(port: int) -> None:
                 )
                 if result.stdout:
                     pids = result.stdout.strip().split('\n')
-                    for pid in pids:
+                    for pid_str in pids:
                         try:
-                            pid = int(pid)
+                            pid = int(pid_str)
                             if pid != current_pid:
                                 os.kill(pid, 9)
                                 logger.info(f"Killed process {pid} on port {port}")
                         except (ValueError, ProcessLookupError) as e:
-                            logger.error(f"Error processing PID {pid}: {e}")
+                            logger.error(f"Error processing PID {pid_str}: {e}")
             except FileNotFoundError:
                 logger.error("lsof command not found")
 

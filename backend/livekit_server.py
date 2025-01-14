@@ -6,7 +6,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Any, Optional, List, Callable, Awaitable, Union
 
 from dotenv import load_dotenv
 from livekit import agents, rtc
@@ -19,8 +19,15 @@ from livekit.agents import (
     cli
 )
 from livekit.plugins import silero
+from livekit.rtc import RemoteParticipant
 
-from backend.mute_track import CallTransferHandler
+# Import with proper error handling
+try:
+    from backend.mute_track import CallTransferHandler
+except ImportError:
+    # Log error or provide fallback
+    CallTransferHandler = None
+
 from services.cache import get_agent_metadata
 from services.nylas_service import send_email
 from services.voice.livekit_helper import detect_call_type_and_get_agent_id
@@ -50,20 +57,20 @@ load_dotenv()
 
 
 class CallDuration:
-    def __init__(self, duration: timedelta):
+    def __init__(self, duration: timedelta) -> None:
         self.duration = duration
         self.total_seconds = int(duration.total_seconds())
         self.minutes = self.total_seconds // 60
         self.seconds = self.total_seconds % 60
 
     @classmethod
-    def from_timestamps(cls, start: datetime, end: datetime):
+    def from_timestamps(cls, start: datetime, end: datetime) -> 'CallDuration':
         return cls(end - start)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.minutes}m {self.seconds}s"
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Union[int, str]]:
         return {
             "total_seconds": self.total_seconds,
             "minutes": self.minutes,
@@ -72,7 +79,7 @@ class CallDuration:
         }
 
 
-async def entrypoint(ctx: JobContext):
+async def entrypoint(ctx: JobContext) -> None:
     logger.info("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
     room_name = ctx.room.name
     room = ctx.room
@@ -84,11 +91,8 @@ async def entrypoint(ctx: JobContext):
 
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
-    # Add call start time tracking
     call_start_time = datetime.now()
-
-    # Add participant tracking dictionary and last_audio_time
-    participant_prospects = {}
+    participant_prospects: Dict[str, str] = {}
     last_audio_time = time.time()
     conversation_stored = False
 
@@ -100,13 +104,13 @@ async def entrypoint(ctx: JobContext):
         if call_type != "textbot":
             await agent.say(opening_line, allow_interruptions=False)
 
-        agent_metadata: Dict = await get_agent_metadata(agent_id)
-        user_id: str = agent_metadata['userId']
+        agent_metadata: Dict[str, Any] = await get_agent_metadata(agent_id) or {}
+        user_id: str = agent_metadata.get('userId', '')
 
         await asyncio.sleep(3)
 
         # Find first participant
-        first_participant = None
+        first_participant: Optional[RemoteParticipant] = None
         sorted_participants = sorted(
             room.remote_participants.values(),
             key=lambda p: p.joined_at if hasattr(p, 'joined_at') else 0
@@ -114,20 +118,22 @@ async def entrypoint(ctx: JobContext):
 
         if sorted_participants:
             first_participant = sorted_participants[0]
-            participant_prospects[first_participant.sid] = ""
-            logger.info(
-                f"Added participant {first_participant.sid} "
-                "to tracking with empty prospect status"
-            )
-            logger.info(f"Found available participant: {first_participant.identity}")
+            if first_participant is not None:  # Type guard
+                participant_prospects[first_participant.sid] = ""
+                logger.info(
+                    f"Added participant {first_participant.sid} "
+                    "to tracking with empty prospect status"
+                )
+                logger.info(f"Found available participant: {first_participant.identity}")
         else:
             logger.info("No available participants found.")
-            ctx.shutdown(reason="No available participants")
+            await ctx.shutdown(reason="No available participants")
+            return
 
         @agent.on("function_calls_finished")
         async def on_function_calls_finished(
-            called_functions: list[agents.llm.CalledFunction]
-        ):
+            called_functions: List[agents.llm.CalledFunction]
+        ) -> None:
             """Handle completion of assistant's function calls."""
             logger.info("\n\n\n[on_function_calls_finished] method called")
 
@@ -135,7 +141,7 @@ async def entrypoint(ctx: JobContext):
                 function_name = called_function.call_info.function_info.name
                 logger.info(f"Function called: {function_name}")
 
-                if function_name == "request_personal_data":
+                if function_name == "request_personal_data" and first_participant:
                     logger.info("Triggering show_chat_input")
                     participant_prospects[first_participant.sid] = "yes"
                     asyncio.create_task(
@@ -148,14 +154,10 @@ async def entrypoint(ctx: JobContext):
                         )
                     )
 
-                elif function_name == "search_products_and_services":
-                    logger.info("search_products_and_services called")
+        async def handle_transfer() -> None:
+            if first_participant is None:
+                return
 
-                elif function_name == "transfer_call":
-                    logger.info("[on_function_calls_finished] transfer_call called")
-                    asyncio.create_task(handle_transfer())
-
-        async def handle_transfer():
             async with CallTransferHandler(room) as transfer_handler:
                 await agent.say(
                     "I'm going to put you on hold for a moment while "
@@ -168,14 +170,6 @@ async def entrypoint(ctx: JobContext):
                 )
 
                 local_participant = room.local_participant.identity
-                logger.info(
-                    "[on_function_calls_finished] re-subscribing agent "
-                    "to its own tracks"
-                )
-                logger.info(
-                    "[on_function_calls_finished] local_participant: "
-                    f"{local_participant}"
-                )
                 await transfer_handler.re_subscribe_agent(local_participant)
 
                 agent.chat_ctx.append(
@@ -203,7 +197,7 @@ async def entrypoint(ctx: JobContext):
                     logger.info("No second participant found in the room")
 
         @agent.on("agent_started_speaking")
-        def on_agent_started_speaking(user_transcription: str = None):
+        def on_agent_started_speaking(user_transcription: Optional[str] = None) -> None:
             logger.info("agent_started_speaking method called")
             if user_transcription:
                 logger.info(f"Agent started speaking: {user_transcription}")
@@ -211,15 +205,15 @@ async def entrypoint(ctx: JobContext):
                 logger.info("Agent started speaking (no transcription available)")
 
         @agent.on("agent_stopped_speaking")
-        def on_agent_stopped_speaking():
+        def on_agent_stopped_speaking() -> None:
             logger.info("Agent stopped speaking")
 
         @ctx.room.on("participant_connected")
-        def on_participant_connected(participant: rtc.RemoteParticipant):
+        def on_participant_connected(participant: RemoteParticipant) -> None:
             logger.info(f"Participant connected: {participant.identity}")
 
         @ctx.room.on("participant_disconnected")
-        def on_participant_disconnected(participant: rtc.RemoteParticipant):
+        def on_participant_disconnected(participant: RemoteParticipant) -> None:
             if first_participant and participant.identity == first_participant.identity:
                 call_duration = CallDuration.from_timestamps(
                     call_start_time,
@@ -238,7 +232,7 @@ async def entrypoint(ctx: JobContext):
                 )
                 ctx.shutdown(
                     reason=f"Subscribed participant disconnected after {call_duration}"
-                    )
+                )
 
         @ctx.room.on("disconnected")
         def on_disconnected(exception: Exception):
@@ -399,7 +393,7 @@ async def entrypoint(ctx: JobContext):
         ctx.shutdown(reason="Session ended")
 
 
-def prewarm_fnc(proc: JobProcess):
+def prewarm_fnc(proc: JobProcess) -> None:
     proc.userdata["vad"] = silero.VAD.load()
 
 

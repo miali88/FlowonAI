@@ -4,6 +4,7 @@ import logging
 import json
 from pydantic import BaseModel
 from services.chat.lk_chat import lk_chat_process, get_chat_rag_results
+from typing import AsyncGenerator
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class ChatMessage(BaseModel):
 
 
 @router.post("/")
-async def chat_message(request: Request):
+async def chat_message(request: Request) -> StreamingResponse:
     try:
         user_query = await request.json()
         print("\n /chat endpoint, data:")
@@ -30,9 +31,9 @@ async def chat_message(request: Request):
                 detail="Missing required fields"
             )
 
-        async def event_generator():
+        async def event_generator() -> AsyncGenerator[str, None]:
             response_id = None
-            has_source = False  # Initialize has_source flag
+            has_source = False
             try:
                 async for chunk in lk_chat_process(
                     user_query['message'],
@@ -91,7 +92,7 @@ async def chat_message(request: Request):
 
 
 @router.get("/get_sources")
-async def get_sources(request: Request):
+async def get_sources(request: Request) -> dict:
     print("\n=== /get_sources endpoint ===")
     params = dict(request.query_params)
     print(f"Request params: {params}")

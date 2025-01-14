@@ -1,11 +1,11 @@
-from typing import Annotated, List, Dict
+from typing import Annotated, List, Dict, Any, Optional
 import asyncio
 import logging
 from collections import defaultdict
 from datetime import datetime
 
 from fastapi import Request, HTTPException, APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import run_in_threadpool
 
@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-chat_messages = defaultdict(list)
-event_broadcasters = {}
-conversation_logs = defaultdict(list)
+chat_messages: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+event_broadcasters: Dict[str, asyncio.Event] = {}
+conversation_logs: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
 
 async def get_user_id(request: Request) -> str:
@@ -37,7 +37,7 @@ async def get_user_id(request: Request) -> str:
 @router.get("/history")
 async def get_conversation_history(
     user_id: Annotated[str, Depends(get_user_id)]
-):
+) -> Response:
     try:
         response = (
             supabase.table("conversation_logs")
@@ -59,7 +59,7 @@ async def get_conversation_history(
 async def delete_conversation_history(
     conversation_id: str,
     user_id: Annotated[str, Depends(get_user_id)]
-):
+) -> Response:
     try:
         supabase.table("conversation_logs").delete().eq(
             "id", conversation_id
@@ -73,9 +73,11 @@ async def delete_conversation_history(
 
 
 @router.post("/store_history")
-async def livekit_room_webhook(request: Request):
-    data = await request.json()
+async def livekit_room_webhook(request: Request) -> Dict[str, str]:
+    data: Dict[str, Any] = await request.json()
     user_id = await get_agent_metadata(data['agent_id'])
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID not found")
     user_id = user_id['userId']
     logger.info(f"call_duration: {data['call_duration']}")
     logger.info(f"Received webhook data: {data}")
@@ -105,12 +107,15 @@ async def livekit_room_webhook(request: Request):
 
 
 @router.post("/create_embeddings")
-async def create_embeddings(request: Request):
+async def create_embeddings(request: Request) -> None:
     data = await request.json()
     logger.info(f"Received data: {data}")
 
 
-async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
+async def transcript_summary(
+    transcript: List[Dict[str, str]], 
+    job_id: str
+) -> Optional[str]:
     logger.info("transcript_summary func called")
     system_prompt = """
     you are an ai agent designed to summarise transcript of phone conversations
@@ -126,10 +131,10 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
     """
     transcript_str = str(transcript)
     try:
-        summary = await llm_response(
+        summary: str = str(await llm_response(
             user_prompt=transcript_str,
             system_prompt=system_prompt
-        )
+        ))
         logger.info("Transcript summary generated successfully")
 
         try:
@@ -138,17 +143,18 @@ async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
             }).eq("job_id", job_id).execute()
 
             logger.info(f"Summary inserted into summary table for job_id: {job_id}")
+            return summary
         except Exception as e:
             logger.error(f"Error inserting summary to Supabase: {str(e)}")
+            return None
 
-        return summary
     except Exception as e:
         logger.error(f"Error generating transcript summary: {str(e)}")
         return None
 
 
 @router.api_route("/chat_message", methods=["POST", "GET"])
-async def chat_message(request: Request):
+async def chat_message(request: Request) -> Response:
     logger.info("chat_message endpoint reached")
     if request.method == "POST":
         try:
@@ -212,9 +218,11 @@ async def chat_message(request: Request):
                 detail=f"Internal server error: {str(e)}"
             )
 
+    return JSONResponse(content=messages)
+
 
 @router.post("/trigger_show_chat_input")
-async def trigger_show_chat_input(request: Request):
+async def trigger_show_chat_input(request: Request) -> Response:
     """Invoked by tool_use.py"""
     logger.info("post conversation/trigger_show_chat_input")
 
@@ -243,11 +251,11 @@ async def trigger_show_chat_input(request: Request):
 
 
 @router.get("/events/{participant_identity}")
-async def events(participant_identity: str):
+async def events(participant_identity: str) -> EventSourceResponse:
     logger.info(f"SSE connection established for participant_identity: "
                 f"{participant_identity}")
 
-    async def event_generator():
+    async def event_generator() -> Any:
         if participant_identity not in event_broadcasters:
             event_broadcasters[participant_identity] = asyncio.Event()
         try:
@@ -288,7 +296,7 @@ async def events(participant_identity: str):
 
 
 @router.get("/form_fields/{agent_id}")
-async def form_fields(agent_id: str):
+async def form_fields(agent_id: str) -> Response:
     logger.info(f"Fetching form fields for agent_id: {agent_id}")
     try:
         response = (
