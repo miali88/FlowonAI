@@ -624,14 +624,16 @@
 
 .showSourcesButton {
   cursor: pointer;
-  background: #f3f4f6;
+  background: #f3f4f6 !important;
   border: none;
   color: #1a1a1a;
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-radius: 16px;
+  font-size: 14px !important;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 .sourceFileWrapper {
@@ -712,11 +714,9 @@
 }
 
 .messageBubbleActions {
-  position: static;
-  display: inline-flex;
+  display: flex;
   gap: 8px;
-  margin-left: 8px;
-  opacity: 1;
+  align-items: center;
 }
 
 .messageAssistantBubbleContainer:hover .messageBubbleActions {
@@ -783,4 +783,21 @@
     width: 24px;
     height: 24px;
   }
+}
+
+.showSourcesButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.sourceIcon {
+  width: 16px;
+  height: 16px;
 }

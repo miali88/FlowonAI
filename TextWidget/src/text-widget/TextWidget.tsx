@@ -645,87 +645,90 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                     )}
                 </div>
                 {message.isBot &&
-                  message.hasSource &&
-                  message.responseId &&
-                  showSourcesInChat &&
                   hoveredMessageIndex === message.responseId && (
-                    <button
-                      className={styles.showSourcesButton}
-                      onClick={() => {
-                        fetchSources(message.responseId as string);
-                        setCurrentOpeningResponseId(
-                          message.responseId as string
-                        );
-                      }}
-                    >
-                      <svg
-                        className={styles.sourceIcon}
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
+                    <div className={styles.messageBubbleActions}>
+                      {message.hasSource &&
+                        message.responseId &&
+                        showSourcesInChat &&
+                        hoveredMessageIndex === message.responseId && (
+                          <button
+                            className={styles.showSourcesButton}
+                            onClick={() => {
+                              fetchSources(message.responseId as string);
+                              setCurrentOpeningResponseId(
+                                message.responseId as string
+                              );
+                            }}
+                          >
+                            <svg
+                              className={styles.sourceIcon}
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                            >
+                              <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            View references
+                          </button>
+                        )}
+
+                      <button
+                        className={`${styles.actionButton} ${
+                          likedMessages[index] ? styles.liked : ""
+                        }`}
+                        onClick={() => handleFeedback(index.toString(), true)}
+                        aria-label="Like message"
                       >
-                        <path
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                        />
-                      </svg>
-                      View references
-                    </button>
+                        >
+                          <path
+                            d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                            fill={
+                              likedMessages[index] ? "currentColor" : "none"
+                            }
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className={`${styles.actionButton} ${
+                          dislikedMessages[index] ? styles.disliked : ""
+                        }`}
+                        onClick={() => handleFeedback(index.toString(), false)}
+                        aria-label="Dislike message"
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path
+                            d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
+                            fill={
+                              dislikedMessages[index] ? "currentColor" : "none"
+                            }
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   )}
-                {message.isBot && hoveredMessageIndex && (
-                  <div className={styles.messageBubbleActions}>
-                    <button
-                      className={`${styles.actionButton} ${
-                        likedMessages[index] ? styles.liked : ""
-                      }`}
-                      onClick={() => handleFeedback(index.toString(), true)}
-                      aria-label="Like message"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path
-                          d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                          fill={likedMessages[index] ? "currentColor" : "none"}
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      className={`${styles.actionButton} ${
-                        dislikedMessages[index] ? styles.disliked : ""
-                      }`}
-                      onClick={() => handleFeedback(index.toString(), false)}
-                      aria-label="Dislike message"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path
-                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
-                          fill={
-                            dislikedMessages[index] ? "currentColor" : "none"
-                          }
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )}
               </div>
             ) : message.isBot ? (
               <LoadingBubbles key={index} />
