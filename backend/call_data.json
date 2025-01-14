@@ -1,12 +1,7 @@
 {
-    "call-_+447745187688_wvVu7WhpSYNN": {
+    "call-_+441733347970_Tz3LyWww7PTr": {
         "twilio_phone_number": "+447723180506",
-        "twilio_call_sid": "CA8908a451dba79016a3fd9b801d507557",
-        "twilio_account_sid": "AC2e61d0942c25dd6db0c6c1049fe1d3b1"
-    },
-    "call-_+447745187688_mNRetWhs3UFD": {
-        "twilio_phone_number": "+447723180506",
-        "twilio_call_sid": "CA80c071314dc54fe20ffeb296d8ffeba2",
+        "twilio_call_sid": "CA6130a551bbcbaeefe1f9f27bd1ca9529",
         "twilio_account_sid": "AC2e61d0942c25dd6db0c6c1049fe1d3b1"
     }
 }

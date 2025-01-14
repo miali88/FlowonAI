@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Widget</title>
+</head>
+<body>
+    <script>
+        window.chatConfig = {
+            agentId: '82472b85-d3df-40f5-92e0-0d293cba6cb8',
+            widgetDomain: 'https://flowon.ai/textwidget',
+            // widgetDomain: 'http://localhost:5180/textwidget',
+
+            // iframeDomain: 'https://03dfb8f6.flowonchatwidget.pages.dev/'
+        };
+        const scriptEl = document.createElement('script');
+        // scriptEl.src = "https://03dfb8f6.flowonchatwidget.pages.dev/iframeChat_text.min.js"
+        scriptEl.src = "./quickfire_iframeChat_text.js"
+        document.body.appendChild(scriptEl);
+        scriptEl.onload = function() {
+            new TextChatWidget(window.chatConfig);
+        };
+    </script>
+</body>
+</html>

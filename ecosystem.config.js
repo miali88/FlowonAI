@@ -52,8 +52,17 @@ module.exports = {
         NODE_ENV: "development",
         PORT: 5180 
       }
-    }
-
-
+    },
+    {
+      name: "iframe",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "/root/FlowonAI/iframe",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5185 
+      }
+    },
   ]
 }
