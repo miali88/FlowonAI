@@ -17,7 +17,7 @@ jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 # Initialize Supabase client
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase: Client = create_client(supabase_url, supabase_key)
+supabase = create_client(supabase_url, supabase_key)
 
 
 @router.post("/wh")
