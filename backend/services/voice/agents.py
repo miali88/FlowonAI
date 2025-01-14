@@ -188,6 +188,8 @@ async def create_agent(data):
     # else:
     #     data['instructions'] = sys_prompt_scaffold
 
+    # data['openingLine'] = "Hey👋, how can I help you today?"
+
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']
         del data['tag']  # Remove the 'tag' key from the data

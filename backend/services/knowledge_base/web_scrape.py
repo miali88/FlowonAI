@@ -9,6 +9,8 @@ import logging
 import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential
 from asyncio import Semaphore
+from aiohttp import ClientError, ClientTimeout
+from requests.exceptions import RequestException
 
 from firecrawl import FirecrawlApp
 from tiktoken import encoding_for_model
@@ -132,14 +134,21 @@ scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
 crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10)
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=20)
 )
 async def scrape_with_retry(url, params):
     await scrape_limiter.acquire()
-    return await asyncio.to_thread(
-        lambda: app.scrape_url(url=url, params=params)
-    )
+    try:
+        return await asyncio.to_thread(
+            lambda: app.scrape_url(url=url, params=params)
+        )
+    except RequestException as e:
+        logger.error(f"HTTP error while scraping {url}: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error while scraping {url}: {str(e)}")
+        raise
 
 async def process_single_url(site: str, user_id: str, root_url: str):
     print("\nhello, process_single_url")
@@ -151,7 +160,7 @@ async def process_single_url(site: str, user_id: str, root_url: str):
     try:
         response = await scrape_with_retry(
             site, 
-            {'formats': ['markdown'], 'waitFor': 1000}
+            {'formats': ['markdown'], 'waitFor': 2000}
         )
 
         content = [item for item in response['markdown'].split('\n\n') if not item.startswith('[![]')]
@@ -191,7 +200,7 @@ async def process_single_url(site: str, user_id: str, root_url: str):
         return [r for r in results if isinstance(r, dict)]
 
     except Exception as e:
-        logger.error(f"Error processing site {site}: {str(e)}")
+        logger.error(f"Error processing site {site}: {str(e)}", exc_info=True)
         return None
 
 async def scrape_url(urls: List[str], user_id: str = None):

@@ -16,8 +16,12 @@ from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
 from services.db.supabase_services import supabase_client
+from services.helper import format_transcript_messages
+from services.conversation import transcript_summary
 
 import logging
+import asyncio
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -410,7 +414,6 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
     ]
 
 
-
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
@@ -503,6 +506,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """
     Save the chat history to Supabase conversation_logs table when a chat session ends.
     """
+    print(f"save_chat_history_to_supabase called with agent_id: {agent_id}, room_name: {room_name}")
     try:
         if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
             logger.warning(f"No chat history found for agent_id: {agent_id}, room_name: {room_name}")
@@ -510,15 +514,13 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
 
         chat_history = chat_histories[agent_id][room_name]
         
-        # Format messages for storage
-        formatted_transcript = []
-        for msg in chat_history.messages:
-            formatted_transcript.append({
-                "role": msg.role,
-                "content": msg.content,
-                "name": msg.name if hasattr(msg, 'name') else None,
-                "timestamp": datetime.now().isoformat()  # Add timestamp for each message
-            })
+        # Use the helper function to format the transcript
+        formatted_transcript = format_transcript_messages(chat_history.messages)
+
+        # Check if there are actual messages to save
+        if not formatted_transcript:
+            logger.warning(f"No messages to save for room: {room_name}")
+            return
 
         # Get agent metadata for user_id
         agent_metadata = await get_agent_metadata(agent_id)
@@ -527,30 +529,52 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
         # Prepare data for Supabase
         conversation_data = {
             "transcript": formatted_transcript,
-            "job_id": room_name,  # Using room_name as job_id
-            "participant_identity": room_name,  # Using room_name as participant_identity
+            "job_id": room_name,
+            "participant_identity": room_name,
             "room_name": room_name,
             "user_id": user_id,
             "agent_id": agent_id,
-            "lead": "unknown",  # Default value
-            "call_duration": 0,  # Default value
-            "call_type": "text-chat"  # Specify this is a chat conversation
+            "lead": "unknown",
+            "call_duration": 0,
+            "call_type": "text-chat"
         }
 
-        # Save to Supabase
+        # Save to Supabase and wait for completion
         print(f"Saving chat history to Supabase for room: {room_name}")
         print(f"Number of messages: {len(formatted_transcript)}")
         
         response = supabase.table("conversation_logs").insert(conversation_data).execute()
         print(f"Successfully saved chat history to Supabase")
         
-        # Clean up the chat history
-        del chat_histories[agent_id][room_name]
-        if not chat_histories[agent_id]:
-            del chat_histories[agent_id]
+        # Add error handling for empty transcripts
+        if not formatted_transcript or len(formatted_transcript) < 2:
+            logger.warning("Transcript too short or empty - skipping summary")
+            return
             
+        try:
+            # Create a background task for the summary
+            async def generate_summary_background():
+                try:
+                    summary = await transcript_summary(str(formatted_transcript), room_name)
+                    if summary:
+                        logger.info(f"Summary generated successfully in background: {summary[:100]}...")
+                except Exception as e:
+                    logger.error(f"Background summary generation failed: {str(e)}", exc_info=True)
+
+            # Launch the summary generation in the background
+            asyncio.create_task(generate_summary_background())
+            
+            # Continue with cleanup immediately
+            print("deleting chat history", room_name)
+            del chat_histories[agent_id][room_name]
+            if not chat_histories[agent_id]:
+                del chat_histories[agent_id]
+            
+        except Exception as e:
+            logger.error(f"Error saving chat history: {str(e)}", exc_info=True)
+
     except Exception as e:
-        logger.error(f"Error saving chat history to Supabase: {str(e)}", exc_info=True)
+        logger.error(f"Error saving chat history: {str(e)}", exc_info=True)
         print(f"Error saving chat history: {str(e)}")
 
 async def form_data_to_chat(

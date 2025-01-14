@@ -25,6 +25,7 @@
 - Cloudflare for DNS and CDN
 - nginx for reverse proxy
 - Sentry for error monitoring
+- flake8 for linting, mypy for type checking, bandit for security checks
 - PostHog for analytics
 - Greptile web/app & API for Codebase chat, PR review
 - CodeRabbit for PR review

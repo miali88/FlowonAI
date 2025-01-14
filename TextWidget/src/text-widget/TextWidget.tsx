@@ -681,8 +681,9 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           )}
         </div>
 
-        <div className={styles.suggestedQuestionsContainer}>
-          {activeSuggestions.map((question, index) => (
+        {/* Temporarily commenting out suggested questions */}
+        {/* <div className={styles.suggestedQuestionsContainer}>
+          {activeSuggestions.map((question, =index) => (
             <div
               key={index}
               className={styles.suggestionBubble}
@@ -691,7 +692,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               {question}
             </div>
           ))}
-        </div>
+        </div> */}
 
         <div className={styles.inputContainer}>
           <form onSubmit={handleSendMessage} className={styles.chatForm}>

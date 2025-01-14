@@ -26,6 +26,8 @@ from services.voice.tool_use import trigger_show_chat_input, transfer_call
 from services.nylas_service import send_email
 from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
 from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from services.helper import format_transcript_messages
+
 from backend.mute_track import CallTransferHandler
 
 # Add logging configuration
@@ -290,22 +292,9 @@ async def entrypoint(ctx: JobContext):
                 print("No user messages found in chat context, skipping conversation storage")
                 return
 
-            # Rest of the function continues only if there are user messages
-            conversation_history = []
-            for message in agent.chat_ctx.messages:
-                message_dict = {}
-                if message.role == 'assistant':
-                    message_dict['assistant_message'] = message.content
-                elif message.role == 'user':
-                    message_dict['user_message'] = message.content
-                elif message.role == 'tool':
-                    message_dict['tool'] = {
-                        'name': message.name,
-                        'content': message.content
-                    }
-                
-                if message_dict:
-                    conversation_history.append(message_dict)
+            # Use the helper function to format the transcript
+            conversation_history = format_transcript_messages(agent.chat_ctx.messages)
+
             print("\n\nconversation_history:", conversation_history)
             try:
                 import os
@@ -486,6 +475,7 @@ def prewarm_fnc(proc: JobProcess):
 # async def load_fnc(proc: JobProcess):
 #     print("load_fnc called")
 #     return True
+
 
 if __name__ == "__main__":
     opts = WorkerOptions(

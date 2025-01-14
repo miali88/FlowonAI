@@ -53,8 +53,6 @@ async def get_embedding(text):
     response = requests.post(url, headers=headers, data=json.dumps(data))
     return response.json()['data'][0]['embedding']
 
-
-
 async def rerank_documents(user_query: str, top_n: int, docs: List):
     print("func rerank_documents..")
     url = 'https://api.jina.ai/v1/rerank'
@@ -74,7 +72,6 @@ async def rerank_documents(user_query: str, top_n: int, docs: List):
 
     return reranked_docs
 
-""" *_ AMEND SYS PROMPT """
 async def filter_relevant_docs(user_query: str, docs: List):
     print("\nfunc Filtering relevant documents...")
     sys_prompt_filtering_agents = """
@@ -132,9 +129,11 @@ async def filter_relevant_docs(user_query: str, docs: List):
 
 async def llm_response(system_prompt, user_prompt, conversation_history=None, 
                        model="claude", token_size=1000, max_retries=5):
+    logger.info(f"Starting llm_response with model: {model}, token_size: {token_size}")
     messages = []
 
     if conversation_history:
+        logger.debug(f"Processing conversation history with {len(conversation_history['user_history'])} messages")
         # Add the conversation history for this session
         for i, msg in enumerate(conversation_history['user_history']):
             messages.append({"role": "user", "content": msg['content']})
@@ -143,16 +142,20 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
 
         # If the last message is from the user, add a placeholder assistant message
         if messages and messages[-1]['role'] == 'user':
+            logger.debug("Adding placeholder assistant message")
             messages.append({"role": "assistant", "content": "Processing your query."})
 
     # Add the current user prompt
     messages.append({"role": "user", "content": user_prompt})
+    logger.debug(f"Final message count: {len(messages)}")
 
     #print("\n\n\n =-[=-[=-[=-[=-[ \n\n\n\nmessages:", messages)
     for attempt in range(max_retries):
         try:
+            logger.info(f"About to call {model} API with message length: {len(str(messages))}")
+            
             if model == "openai":
-                # Use asyncio.to_thread to run the synchronous OpenAI call in a separate thread
+                logger.debug("Using OpenAI model")
                 response = await asyncio.to_thread(
                     openai.chat.completions.create,
                     model="gpt-4o",
@@ -160,18 +163,23 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                     stream=False
                 )
                 response_content = response.choices[0].message.content
+                logger.info("Successfully received OpenAI response")
+                
             elif model == "claude":
                 try:
+                    logger.debug("Calling Claude API...")
                     response = await anthropic.messages.create(
                         model="claude-3-5-sonnet-20240620",
                         system=system_prompt,
                         messages=messages,
                         max_tokens=token_size
                     )
+                    logger.debug("Claude API call completed")
                     response_content = response.content[0].text
+                    logger.info("Successfully received Claude response")
+                    
                 except Exception as claude_error:
-                    # If Claude is overloaded, switch to OpenAI
-                    print("Claude API overloaded, switching to OpenAI...")
+                    logger.warning(f"Claude API error: {str(claude_error)}. Switching to OpenAI...")
                     response = await asyncio.to_thread(
                         openai.chat.completions.create,
                         model="gpt-4o",
@@ -179,22 +187,27 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                         stream=False
                     )
                     response_content = response.choices[0].message.content
+                    logger.info("Successfully received fallback OpenAI response")
             else:
+                logger.error(f"Invalid model specified: {model}")
                 raise ValueError("Invalid model specified. Choose 'openai' or 'claude'.")
 
+            logger.debug(f"Response length: {len(response_content)} characters")
             return response_content
 
         except Exception as e:
             if hasattr(e, 'response') and e.response.status_code == 529:
                 if attempt < max_retries - 1:
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"API overloaded. Retrying in {wait_time:.2f} seconds...")
+                    logger.warning(f"API overloaded. Attempt {attempt + 1}/{max_retries}. "
+                                 f"Retrying in {wait_time:.2f} seconds...")
                     await asyncio.sleep(wait_time)
                 else:
+                    logger.error(f"Max retries ({max_retries}) reached. Final error: {str(e)}")
                     raise e
             else:
-                raise e 
-
+                logger.error(f"Unexpected error in llm_response: {str(e)}", exc_info=True)
+                raise e
 
 tables = ["user_web_data", "user_text_files"]
 async def similarity_search(query: str, data_source: Dict = None, table_names: List[str] = tables,
@@ -211,7 +224,7 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
         max_results = 10
     elif search_type == "Quick Search":
         similarity_threshold = 0.20
-        max_results = 2
+        max_results = 7
 
     async def fetch_table_data(table, query_embedding):
         try:
@@ -271,7 +284,6 @@ async def similarity_search(query: str, data_source: Dict = None, table_names: L
     print("Length of results:", len(all_results))
     # print("\n\n\n all_results:", all_results)
     return all_results
-
 
 async def rag_response(user_query: str, user_search_type: str, user_id: str):
     print("\nfunc rag_response..")
@@ -336,211 +348,6 @@ async def rag_response(user_query: str, user_search_type: str, user_id: str):
         return docs, kb_titles
     else:
         raise ValueError("No relevant documents found for the given query.")
-
-async def chat_process(user_message, session_id="dev", user_id=None, user_search_type="Quick Search"):
-    print("\nfunc chat_process...")
-    try:
-        
-        if session_id not in conversation_histories:
-        # """ clearing conv history """
-        # if session_id:
-            conversation_histories[session_id] = {
-                "user_history": [],
-                "assistant_history": [],
-                "function_history": []
-            }
-        
-        # Get the conversation history for this session
-        conversation_history = conversation_histories[session_id]
-
-        # Add user message to conversation history
-        conversation_history['user_history'].append({"role": "user", "content": user_message})
-        
-        # Add a placeholder assistant message
-        conversation_history['assistant_history'].append({"role": "assistant", "content": "Processing your query..."})
-
-        if user_search_type == "Deep Search":
-            print("\n\n\n\n\n\n\n=-=-=-=-=-=-=-=-=-=- NEW PROMPT", user_message)
-            # user_message = await chat_augment(user_message, user_id)
-            # print("\naugmented nuser message:",user_message)
-            retrieved_docs, titles = await rag_response(user_message, user_search_type, user_id)
-
-            user_prompt = f""" 
-            # User Query:
-            {user_message}
-            # Retrieved Docs:
-            {retrieved_docs}"""
-            print("\n\n\n USER PROMPT")
-            print(user_prompt)
-
-            token_size = 8192
-
-            system_prompt = """
-            You are Kenneth, an excellent conversational AI agent specialised in UK Corporate Law. Your expertise lies in the Insolvency Act 1986, Insolvency Rules 2016, Companies Act 2006, and other relevant primary legislation and statutory instruments. 
-
-            You will first begin with <thinking> tags to understand the context of the question and the intent of the user. You will then review the retrieved results. Your thoughts must always be grounded to the documents retrieved. This will include legislation, and items saved to the knowledge base by the user.  
-
-            IMPORTANT. Your responses must always be grounded in the retrieved results. If there are no retrieved results provided. You must apologise to the user giving the reason that the knowledge base does not provide sufficient information for you to be able to answer their query, and that you'll be happy to answer any other queries.
-
-            Once your understanding has been formulated, you will structure your response as such:
-
-            # Output Instructions
-            - For legislations, the act name should be abbreviated. For example Insolvency Act 1986 = IA-1986, Companies Act 2006 = CA-2006, Financial Services & Markets Act 2000 = FSMA-2000, Insolvency Rules 2016 = IR-2016. 
-            - For legislations, state in full the provision concerned, i.e chapter, part or section, seperated by comma.
-                    *CA-2006, Part 19, Section 747* \n
-                    section commentary \n
-                    *FSMA-2000, Part II, Section 24* \n
-                    section commentary \n
-            - Where appropriate, each point you make will always begin with the reference to the retrieved document. This may mean citation from the legislation, or item from the knowldge base. 
-            - For knowledge base items, you will cite the title exactly as stated in the "heading" field. Ensure it is stated on a seperate, new line. 
-            - Provide detailed information, organised in a clear and logical manner.
-            - Use markdown formatting to bold key terms, sub headings. The use of asterisks is stricly limited to legislations references only, and may not be used for any other words or sentences. 
-            - Your language and spelling will be UK english. 
-            - All references to the retrieved docs must be on a seperate line, in italics using asterisks.
-
-            No need to repeat the user's query. 
-
-            Input Format:
-            User prompts will be structured as follows:
-            ```markdown
-            # User Query:
-            <user_message>
-            # Retrieved Docs:
-            <retrieved_docs>
-
-            Your priority is to respond to <user_message>. Use information from <retrieved_docs> when it's relevant to answering the user's legal questions.
-
-            IMPORTANT. Where there is no results from <retrieved_docs>, you must apologise to the user, and offer to help with anything else that they may need help with.
-            """
-
-            response = await llm_response(system_prompt, user_prompt, conversation_history=conversation_history, token_size=token_size)
-
-            # Replace the placeholder with the actual response
-            conversation_history['assistant_history'][-1] = {"role": "assistant", "content": response}
-
-            thinking_steps = extract_thinking(response)
-
-            response = re.split(r'</thinking>', response)[-1].strip()
-
-        elif user_search_type == "Quick Search":
-            retrieved_docs, titles = await rag_response(user_message, user_search_type, user_id)
-            
-            user_prompt = f""" 
-            # User Query:
-            {user_message}
-            # Retrieved Docs:
-            {retrieved_docs}"""
-            print("\n\n\n USER PROMPT")
-            print(user_prompt)
-
-            token_size = 1000
-
-            system_prompt = """
-            You are Kenneth, an excellent conversational AI agent specialised in UK Corporate Law. Your expertise lies in the Insolvency Act 1986, Insolvency Rules 2016, Companies Act 2006, and other relevant primary legislation and statutory instruments. 
-                        
-            Your thoughts and responses must always be grounded to the documents retrieved. This will include legislation, and items saved to the knowledge base by the user. Respond in a concise, to the point manner.
-
-            Once your understanding has been formulated, you will structure your response as such:
-
-            # Output Instructions
-            - For legislations, the act name should be abbreviated. For example Insolvency Act 1986 = IA-1986, Companies Act 2006 = CA-2006, Financial Services & Markets Act 2000 = FSMA-2000, Insolvency Rules 2016 = IR-2016. 
-            - For legislations, state in full the provision concerned, i.e chapter, part, section, rule etc. Ensure they are seperated by comma, i.e:
-                    *CA-2006, Part 19, Section 747* \n
-                    section commentary \n
-                    *FSMA-2000, Part II, Section 24* \n
-                    section commentary \n
-            - Where appropriate, each point you make will always begin with the reference to the retrieved document. This may mean citation from the legislation, or item from the knowldge base. 
-            - For knowledge base items, you will cite the title exactly as stated in the "heading" field. Ensure it is stated on a seperate, new line. 
-            - Provide detailed information, organised in a clear and logical manner.
-            - Use markdown formatting to bold key terms, sub headings. The use of asterisks is stricly limited to legislations references only, and may not be used for any other words or sentences. 
-            - Your language and spelling will be UK english. 
-            - All references to the retrieved docs must be on a seperate line, in italics using asterisks.
-
-            No need to repeat the user's query. 
-
-            Input Format:
-            User prompts will be structured as follows:
-            ```markdown
-            # User Query:
-            <user_message>
-            # Retrieved Docs:
-            <retrieved_docs>
-
-            IMPORTANT. Where there is no results from <retrieved_docs>, you must apologise to the user, and offer to help with anything else that they may need help with.
-            """
-
-            response = await llm_response(system_prompt, user_prompt, conversation_history, token_size=token_size)
-
-            # Replace the placeholder with the actual response
-            conversation_history['assistant_history'][-1] = {"role": "assistant", "content": response}
-
-            reasoning_cache[session_id] = []
-        
-        return response, titles
-    
-    except ValueError as e:
-        ve_sys_prompt = """
-        You an AI assistant specialising in UK insolvency and restructuring matters. 
-        Explain to the user that their query has not returned any relevant information from the knowledge base.
-        Say things like:
-        "I couldn't find any relevant information for your question. Could you please rephrase it or add more details? I'm here to help and want to make sure I understand your needs correctly."
-
-        Ensure your responses do the following:
-        - Expresses a desire to help the user
-        - Encourages the user to provide more information
-        - Maintains a friendly and supportive tone
-        """
-        response = await llm_response(ve_sys_prompt, user_message, conversation_history)
-
-        # Replace the placeholder with the actual response
-        conversation_history['assistant_history'][-1] = {"role": "assistant", "content": response}
-        
-        return response, []
-
-async def non_kb_chat_process(user_message, session_id, user_id='user_2lKpUPRJD4g5IErIdhbO7rBMn3K'):
-    print("\n\n non_kb_chat_process..")
-    
-    # Initialize conversation history for this session if it doesn't exist
-    if session_id not in conversation_histories:
-        print("\n\n\n session_id not in conversation_histories, instantiating new:", session_id)
-        conversation_histories[session_id] = {
-            "user_history": [],
-            "assistant_history": [],
-            "function_history": []
-        }
-
-    # Get the conversation history for this session
-    conversation_history = conversation_histories[session_id]
-    print("\n\n\n conversation history:", conversation_history)
-    # Add user message to conversation history
-    conversation_history['user_history'].append({"role": "user", "content": user_message})
-    
-    # Add a placeholder assistant message
-    conversation_history['assistant_history'].append({"role": "assistant", "content": "Processing your query..."})
-    
-    system_prompt = """
-    You are Kenneth, an excellent conversational AI agent specialised in UK Corporate Law. Your expertise lies in the Insolvency Act 1986, Insolvency Rules 2016, Companies Act 2006, Financial Markets & Services Act 2000, and other relevant primary legislation and statutory instruments. 
-
-    You must use British English spelling. I.e words like analyse, must be spelled with an s, not a z.
-
-    Queries are routed by an agent who classifies the query into either legal, or general. You are dealing with the general chit chat. 
-
-    Be polite and professional in your responses. 
-
-    Users may be curious about how you work. Explain that you have legislative data embedded into your knowledge base and you can search it based on their query. 
-
-    Keep your responses short and concise, and continue to steer the converation back to what you specialise in, Corporate Law.
-
-    Where the user asks a legal question, you will first begin with <thinking> tags to understand the context of the question, and to review the retrieved results. Your thoughts must always be grounded to the documents retrieved. This will include legislation, and items saved to the knowledge base by the user.  
-    
-    """
-
-    response = await llm_response(system_prompt, user_message, conversation_history)
-    
-    # Replace the placeholder with the actual response
-    conversation_history['assistant_history'][-1] = {"role": "assistant", "content": response}
-    
-    return response
 
 def extract_thinking(response):
     pattern = r'<thinking>(.*?)</thinking>'

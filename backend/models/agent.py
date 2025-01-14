@@ -38,6 +38,7 @@ class AgentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
 # Database Model (if using SQLAlchemy)
 class AgentDB(Base):
     __tablename__ = "agents"

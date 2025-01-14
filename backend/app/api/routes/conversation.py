@@ -14,6 +14,7 @@ from services.cache import get_agent_metadata
 from services.chat.chat import llm_response
 from services.db.supabase_services import supabase_client
 from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat
+from services.conversation import transcript_summary
 
 supabase = supabase_client()
 
@@ -93,35 +94,6 @@ async def create_embeddings(request: Request):
     
     print(f"Received data: {data}")
 
-async def transcript_summary(transcript: List[Dict[str, str]], job_id: str):
-    print("\n\n transcript_summary func called\n\n")
-    system_prompt = f"""
-    you are an ai agent designed to summarise transcript of phone conversations between an AI agent and a caller. 
-
-    You will be as concise as possible, and only respond with the outcome of the conversation and facts related to the caller's responses.
-    Do not assume anything, not even the currency of any amounts or monies mentioned. If transcript is empty, return "No conversation was held"
-
-    Your output will be in bullet points, with no prefix like "the calller is" or "the caller asks"
-    """
-    transcript_str = str(transcript)
-    try:
-        summary = await llm_response(user_prompt=transcript_str, system_prompt=system_prompt)
-        logger.info(f"Transcript summary generated successfully")
-
-        try:
-            supabase.table("conversation_logs").update({
-                "summary": summary
-            }).eq("job_id", job_id).execute()
-
-            logger.info(f"Summary inserted into summary table for job_id: {job_id}")
-        except Exception as e:
-            logger.error(f"Error inserting summary to Supabase: {str(e)}")
-
-        return summary
-    except Exception as e:
-        logger.error(f"Error generating transcript summary: {str(e)}")
-        return None
-
 @router.api_route("/chat_message", methods=["POST", "GET"])
 async def chat_message(request: Request):
     print("\n\n chat_message endpoint reached\n\n")
@@ -167,7 +139,6 @@ async def chat_message(request: Request):
         except Exception as e:
             logger.error(f"Error in GET /chat_message: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 
 @router.post("/trigger_show_chat_input")
