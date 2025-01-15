@@ -21,13 +21,8 @@ from livekit.agents import (
 from livekit.plugins import silero
 from livekit.rtc import RemoteParticipant
 
-# Import with proper error handling
-try:
-    from backend.mute_track import CallTransferHandler
-except ImportError:
-    # Log error or provide fallback
-    CallTransferHandler = None
 
+from mute_track import CallTransferHandler
 from services.cache import get_agent_metadata
 from services.nylas_service import send_email
 from services.voice.livekit_helper import detect_call_type_and_get_agent_id
@@ -131,7 +126,7 @@ async def entrypoint(ctx: JobContext) -> None:
             return
 
         @agent.on("function_calls_finished")
-        async def on_function_calls_finished(
+        def on_function_calls_finished(
             called_functions: List[agents.llm.CalledFunction]
         ) -> None:
             """Handle completion of assistant's function calls."""
@@ -153,6 +148,14 @@ async def entrypoint(ctx: JobContext) -> None:
                             participant_prospects[first_participant.sid]
                         )
                     )
+
+                elif function_name == "search_products_and_services":
+                    logger.info("search_products_and_services called")
+
+                elif function_name == "transfer_call":
+                    logger.info("[on_function_calls_finished] transfer_call called")
+                    asyncio.create_task(handle_transfer())
+
 
         async def handle_transfer() -> None:
             if first_participant is None:
