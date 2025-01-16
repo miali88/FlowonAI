@@ -20,6 +20,7 @@ from livekit.agents import (
 )
 from livekit.plugins import silero
 from livekit.rtc import RemoteParticipant
+from livekit.agents.voice_assistant import VoiceAssistant
 
 
 from mute_track import CallTransferHandler
@@ -49,7 +50,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-
 
 class CallDuration:
     def __init__(self, duration: timedelta) -> None:
@@ -84,8 +84,9 @@ async def entrypoint(ctx: JobContext) -> None:
         f"connecting to room: {room_name}"
     )
 
+    # Connect to the room BEFORE creating the agent
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
-
+    
     call_start_time = datetime.now()
     participant_prospects: Dict[str, str] = {}
     last_audio_time = time.time()
@@ -93,6 +94,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
     try:
         agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
+        # Create agent after connection is established
         agent, opening_line = await create_voice_assistant(agent_id, ctx, call_type)
         agent.start(room)
 
@@ -241,7 +243,7 @@ async def entrypoint(ctx: JobContext) -> None:
             logger.info(f"Room {room_name} connected")
 
         async def handle_chat_input_response(
-            agent: Any,
+            agent: VoiceAssistant,
             room_name: str,
             job_id: str,
             participant_identity: str,
@@ -269,7 +271,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 logger.error(f"Error in handle_chat_input_response: {str(e)}")
 
         async def store_conversation_history(
-            agent: agents.VoiceAgent,
+            agent: VoiceAssistant,
             room_name: str,
             job_id: str,
             participant_identity: str,

@@ -154,7 +154,6 @@ class ChatInitializer:
                 description="The user's point or query to perform RAG search on"
             )
         ],
-        response_id: str
     ) -> AsyncGenerator[str, None]:
         """
         Perform RAG search on each user point or query.
@@ -162,7 +161,6 @@ class ChatInitializer:
         
         Args:
             question: The user's query to search for
-            response_id: Unique identifier for this response
         """
         try:
             print(f"\n\nquestion_and_answer func triggered with question: {question}")
@@ -219,35 +217,11 @@ class ChatInitializer:
                 user_id=user_id
             )
 
-            # For the agent metadata access
-            company_name = "Company"
-            show_sources = True
-            if self.agent_metadata is None:
-                company_name = "Company"
-                show_sources = True
-            else:
-                company_name = self.agent_metadata.get('company_name', 'Company')
-                show_sources = self.agent_metadata.get('showSourcesInChat', True)
-
-            # Rest of the code using company_name and show_sources
-            rag_prompt = f"""
-            # User's query
-            ## User Query: {question}
-            # Retrieved context
-            ## {company_name} Information: {results}
-            """
-
-            if not show_sources:
-                rag_prompt += """
-                ## Instructions
-                - Respond as a representative of the company
-                - Show interest in the user's business
-                - Use markdown for formatting
-                """
-
             # Store RAG results immediately in chat history
             print("\n=== Storing RAG Results in question_and_answer ===")
-            print(f"Response ID: {response_id}")
+
+            response_id = str(uuid4())
+            print(f"response_id in question_and_answer : {response_id}")
             # print(f"RAG Results: {results_with_urls}")
 
             # Get the chat history for this room
@@ -264,10 +238,10 @@ class ChatInitializer:
             yield "[RAG_RESULTS]: "
             yield json.dumps({"response_id": response_id})
 
-            # Get company name with a default value
-            company_name = self.agent_metadata.get('company_name', 'Company') if self.agent_metadata else 'Company'
-            
-            # TODO: each agent has a different rag_prompt.
+            company_name = self.agent_metadata.get('company_name', 'Company')
+            show_sources = self.agent_metadata.get('showSourcesInChat', False)
+
+            # Rest of the code using company_name and show_sources
             rag_prompt = f"""
             # User's query
             ## User Query: {question}
@@ -276,7 +250,7 @@ class ChatInitializer:
             """
 
             # Add instructions only if showSourcesInChat is False
-            if self.agent_metadata is not self.agent_metadata.get('showSourcesInChat', True):
+            if not show_sources:
                 rag_prompt += """
                 ## Instructions
                 - Respond as a representative of {self.agent_metadata['company_name']},
@@ -309,7 +283,6 @@ class ChatInitializer:
             # Now we can safely use the components
             response_stream = self.llm_instance.chat(
                 chat_ctx=chat_ctx,
-                fnc_ctx=self.fnc_ctx
             )
 
             # Then yield the actual response chunks
