@@ -122,7 +122,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 logger.info(f"Found available participant: {first_participant.identity}")
         else:
             logger.info("No available participants found.")
-            await ctx.shutdown(reason="No available participants")
+            ctx.shutdown(reason="No available participants")
             return
 
         @agent.on("function_calls_finished")
@@ -148,14 +148,9 @@ async def entrypoint(ctx: JobContext) -> None:
                             participant_prospects[first_participant.sid]
                         )
                     )
-
-                elif function_name == "search_products_and_services":
-                    logger.info("search_products_and_services called")
-
                 elif function_name == "transfer_call":
                     logger.info("[on_function_calls_finished] transfer_call called")
                     asyncio.create_task(handle_transfer())
-
 
         async def handle_transfer() -> None:
             if first_participant is None:
@@ -238,20 +233,20 @@ async def entrypoint(ctx: JobContext) -> None:
                 )
 
         @ctx.room.on("disconnected")
-        def on_disconnected(exception: Exception):
+        def on_disconnected(exception: Exception) -> None:
             logger.info(f"Room {room_name} disconnected. Reason: {str(exception)}")
 
         @ctx.room.on("connected")
-        def on_connected():
+        def on_connected() -> None:
             logger.info(f"Room {room_name} connected")
 
         async def handle_chat_input_response(
-            agent,
+            agent: Any,
             room_name: str,
             job_id: str,
             participant_identity: str,
             prospect_status: str
-        ):
+        ) -> None:
             try:
                 chat_message = await trigger_show_chat_input(
                     room_name,
@@ -274,13 +269,13 @@ async def entrypoint(ctx: JobContext) -> None:
                 logger.error(f"Error in handle_chat_input_response: {str(e)}")
 
         async def store_conversation_history(
-            agent,
+            agent: agents.VoiceAgent,
             room_name: str,
             job_id: str,
             participant_identity: str,
             prospect_status: str,
             call_duration: CallDuration
-        ):
+        ) -> None:
             nonlocal conversation_stored
             if conversation_stored:
                 logger.info("Conversation already stored, skipping...")
@@ -350,7 +345,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
             conversation_stored = True
 
-        async def check_silence_timeout():
+        async def check_silence_timeout() -> None:
             while True:
                 await asyncio.sleep(1)
                 current_time = time.time()
@@ -361,6 +356,12 @@ async def entrypoint(ctx: JobContext) -> None:
                         call_start_time,
                         datetime.now()
                     )
+                    
+                    if first_participant is None:
+                        logger.error("First participant is None during silence timeout")
+                        ctx.shutdown(reason="First participant not found during silence timeout")
+                        break
+                        
                     await store_conversation_history(
                         agent,
                         room_name,
@@ -369,7 +370,8 @@ async def entrypoint(ctx: JobContext) -> None:
                         participant_prospects[first_participant.sid],
                         call_duration
                     )
-                    await ctx.shutdown(
+                    
+                    ctx.shutdown(
                         reason=f"Silence timeout reached after {call_duration}"
                     )
                     break

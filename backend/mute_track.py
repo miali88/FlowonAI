@@ -1,12 +1,13 @@
 from __future__ import annotations
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 from livekit import rtc
 from livekit.api import (
     MuteRoomTrackRequest,
     UpdateParticipantRequest,
     ParticipantPermission,
+    LiveKitAPI,
 )
 
 from services.voice.livekit_services import create_livekit_api
@@ -20,16 +21,17 @@ class CallTransferHandler:
         self._room = room
         # Store subscription states for held participants
         self._held_participants: Dict[str, dict] = {}
-        self._lk_api = None  # Initialize _lk_api as None
+        self._lk_api: Optional[LiveKitAPI] = None
         logger.debug("Initialized CallTransferHandler")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'CallTransferHandler':
         self._lk_api = await create_livekit_api()
         logger.debug("Initialized LiveKit API")
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self._lk_api.aclose()
+    async def __aexit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[object]) -> None:
+        if self._lk_api:
+            await self._lk_api.aclose()
 
     async def place_participant_on_hold(self, participant_identity: str) -> None:
         """Places a participant on hold by muting tracks but preserving them.
@@ -63,6 +65,9 @@ class CallTransferHandler:
             # Mute the track instead of removing permissions
             if publication.kind == rtc.TrackKind.KIND_AUDIO:
                 logger.debug(f"Muting track {publication.sid} for held participant")
+                if self._lk_api is None:
+                    raise RuntimeError("LiveKit API not initialized")
+                    
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
                         room=self._room.name,
@@ -81,6 +86,9 @@ class CallTransferHandler:
         logger.debug(
             f"Updating permissions for held participant {participant_identity}"
         )
+        if self._lk_api is None:
+            raise RuntimeError("LiveKit API not initialized")
+            
         await self._lk_api.room.update_participant(
             UpdateParticipantRequest(
                 room=self._room.name,
@@ -170,7 +178,7 @@ class CallTransferHandler:
             return
 
         await self._restore_participant_tracks(participant, held_states)
-        await self.subscribe_participant_to_agent(participant_identity)
+        await self._subscribe_participant_to_agent(participant_identity)
 
         del self._held_participants[participant_identity]
         logger.info(f"=== Completed restore process for {participant_identity} ===")
@@ -182,7 +190,10 @@ class CallTransferHandler:
     ) -> None:
         """Restores audio connections between two participants."""
         # Unmute source participant's tracks
+            
         for pub in source_participant.track_publications.values():
+            if self._lk_api is None:
+                raise RuntimeError("LiveKit API not initialized")
             if pub.kind == rtc.TrackKind.KIND_AUDIO:
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
@@ -196,8 +207,20 @@ class CallTransferHandler:
 
         # Enable target participant's audio
         for pub in target_participant.track_publications.values():
+            if self._lk_api is None:
+                raise RuntimeError("LiveKit API not initialized")
             if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                pub.set_subscribed(True)
+                if self._lk_api is None:
+                    raise RuntimeError("LiveKit API not initialized")
+                    
+                # Update subscription through the API instead of using set_subscribed
+                await self._lk_api.room.update_subscription(
+                    room=self._room.name,
+                    identity=target_participant.identity,
+                    track_sids=[pub.sid],
+                    subscribe=True
+                )
+                
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
                         room=self._room.name,
@@ -207,3 +230,38 @@ class CallTransferHandler:
                     )
                 )
                 logger.info("✓ Successfully enabled target audio")
+
+    async def _restore_participant_tracks(self, participant: rtc.Participant, held_states: dict) -> None:
+        """Restores tracks for a participant based on their held states."""
+        if self._lk_api is None:
+            raise RuntimeError("LiveKit API not initialized")
+        
+        for track_sid, state in held_states.items():
+            publication = participant.track_publications.get(track_sid)
+            if publication and publication.kind == rtc.TrackKind.KIND_AUDIO:
+                if not state['was_muted']:
+                    await self._lk_api.room.mute_published_track(
+                        MuteRoomTrackRequest(
+                            room=self._room.name,
+                            identity=participant.identity,
+                            track_sid=track_sid,
+                            muted=False
+                        )
+                    )
+
+    async def _subscribe_participant_to_agent(self, participant_identity: str) -> None:
+        """Subscribes a participant to the agent's audio."""
+        if self._lk_api is None:
+            raise RuntimeError("LiveKit API not initialized")
+            
+        await self._lk_api.room.update_participant(
+            UpdateParticipantRequest(
+                room=self._room.name,
+                identity=participant_identity,
+                permission=ParticipantPermission(
+                    can_subscribe=True,
+                    can_publish=True,
+                    can_publish_data=False,
+                ),
+            )
+        )

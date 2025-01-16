@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Annotated, AsyncGenerator, Any
+from typing import Dict, Annotated, AsyncGenerator, Any, TypedDict, Union, Set, Literal
 from dataclasses import dataclass, field
 from typing import List, Optional
 from pathlib import Path
@@ -148,69 +148,102 @@ class ChatInitializer:
         auto_retry=True
     )
     async def _question_and_answer(
-        self, question: Annotated[
+        self, 
+        question: Annotated[
             str, llm.TypeInfo(
                 description="The user's point or query to perform RAG search on"
             )
-        ]
+        ],
+        response_id: str
     ) -> AsyncGenerator[str, None]:
         """
         Perform RAG search on each user point or query.
         Returns relevant information found in the knowledge base.
+        
+        Args:
+            question: The user's query to search for
+            response_id: Unique identifier for this response
         """
         try:
             print(f"\n\nquestion_and_answer func triggered with question: {question}")
             agent_metadata: Dict = await get_agent_metadata(self.agent_id)
-            user_id: str = agent_metadata['userId']
-            data_source: str = agent_metadata.get('dataSource', '{}')
-            # Default to empty JSON if not found
-            print("data_source from get_agent_metadata:", data_source)
-            response_id = str(uuid4())
+            if not agent_metadata:
+                raise ValueError("Failed to get agent metadata")
+                
+            user_id: str = agent_metadata['userId']  
+            data_source_str: str = agent_metadata.get('dataSource', '{}')
+            
+            # First handle the data source parsing
+            data_source_dict: Dict[str, Any] = {}
+            if isinstance(data_source_str, str):
+                try:
+                    data_source_dict = json.loads(data_source_str)
+                except json.JSONDecodeError:
+                    logger.warning("Invalid JSON in data_source, using empty dict")
 
-            print(f"response_id in question_and_answer : {response_id}")
-
-            # Handle empty or invalid data_source
-            if not data_source or data_source.strip() == '':
-                data_source = '{}'  # Default empty JSON object
-
-            try:
-                data_source: Dict = json.loads(data_source)
-            except json.JSONDecodeError:
-                logger.warning("Invalid JSON in data_source, using empty dict instead")
-                data_source = {}
-
-            # Check if data_source is "all" or has specific sources
-            if isinstance(data_source, str) and data_source == "all":
-                data_source = {"web": ["all"], "text_files": ["all"]}
+            # Now handle the "all" case and data source processing
+            if isinstance(data_source_dict, dict):
+                if data_source_dict == "all":
+                    search_params = {"web": ["all"], "text_files": ["all"]}
+                else:
+                    web_urls = []
+                    text_files = []
+                    
+                    # Safely process items if they're in a list
+                    items = data_source_dict if isinstance(data_source_dict, list) else []
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                            
+                        data_type = item.get('data_type')
+                        if data_type == 'web':
+                            title = str(item.get('title', '')).rstrip('/')
+                            if title:
+                                web_urls.append(title)
+                        elif data_type:  # Only add if data_type exists and isn't web
+                            item_id = str(item.get('id', ''))
+                            if item_id:
+                                text_files.append(item_id)
+                    
+                    search_params = {
+                        "web": web_urls,
+                        "text_files": text_files
+                    }
             else:
-                data_source = {
-                    "web": [
-                        item['title'].rstrip('/')
-                        for item
-                        in data_source
-                        if item['data_type'] == 'web'
-                    ],
-                    "text_files": [
-                        item['id'] for item in data_source
-                        if item['data_type'] != 'web' and item['data_type']
-                    ],
-                }
+                search_params = {"web": [], "text_files": []}
 
-            results: list[dict] = await similarity_search(
+            # Use the properly structured search params
+            results = await similarity_search(
                 question,
-                data_source=data_source,
+                data_source=search_params,
                 user_id=user_id
             )
-            # Extract source of data from the list of results
-            rag_results = []
-            for result in results:
-                result_dict = dict(result)
-                if 'url' in result:
-                    result_dict['source_url'] = result['url']
-                else:
-                    result_dict['source_file'] = result['title']
-                print(f"result_dict: {result_dict}")
-                rag_results.append(result_dict)
+
+            # For the agent metadata access
+            company_name = "Company"
+            show_sources = True
+            if self.agent_metadata is None:
+                company_name = "Company"
+                show_sources = True
+            else:
+                company_name = self.agent_metadata.get('company_name', 'Company')
+                show_sources = self.agent_metadata.get('showSourcesInChat', True)
+
+            # Rest of the code using company_name and show_sources
+            rag_prompt = f"""
+            # User's query
+            ## User Query: {question}
+            # Retrieved context
+            ## {company_name} Information: {results}
+            """
+
+            if not show_sources:
+                rag_prompt += """
+                ## Instructions
+                - Respond as a representative of the company
+                - Show interest in the user's business
+                - Use markdown for formatting
+                """
 
             # Store RAG results immediately in chat history
             print("\n=== Storing RAG Results in question_and_answer ===")
@@ -218,31 +251,32 @@ class ChatInitializer:
             # print(f"RAG Results: {results_with_urls}")
 
             # Get the chat history for this room
-            if self.agent_id in chat_histories and self.room_name in chat_histories[
-                self.agent_id
-            ]:
-                chat_history = chat_histories[self.agent_id][self.room_name]
-                if rag_results:
-                    chat_history.add_rag_results(response_id, rag_results)
-                else:
-                    chat_history.add_rag_results(response_id, rag_results)
-                # print(f"Stored RAG results. Current metadata:
-                # {chat_history.response_metadata}")
+            chat_history = None
+            if self.agent_id in chat_histories:
+                agent_histories = chat_histories[self.agent_id]
+                if self.room_name in agent_histories:
+                    chat_history = agent_histories[self.room_name]
+            
+            if chat_history is not None and results:
+                chat_history.add_rag_results(response_id, results)
 
             # Yield the RAG results marker for downstream processing
             yield "[RAG_RESULTS]: "
             yield json.dumps({"response_id": response_id})
 
+            # Get company name with a default value
+            company_name = self.agent_metadata.get('company_name', 'Company') if self.agent_metadata else 'Company'
+            
             # TODO: each agent has a different rag_prompt.
             rag_prompt = f"""
             # User's query
             ## User Query: {question}
             # Retrieved context
-            ## {self.agent_metadata['company_name']} Information: {results}
+            ## {company_name} Information: {results}
             """
 
             # Add instructions only if showSourcesInChat is False
-            if not self.agent_metadata.get('showSourcesInChat', True):
+            if self.agent_metadata is not self.agent_metadata.get('showSourcesInChat', True):
                 rag_prompt += """
                 ## Instructions
                 - Respond as a representative of {self.agent_metadata['company_name']},
@@ -272,7 +306,11 @@ class ChatInitializer:
                 print(f"Content: {msg.content}")
                 print("---")
 
-            response_stream = self.llm_instance.chat(chat_ctx=chat_ctx)
+            # Now we can safely use the components
+            response_stream = self.llm_instance.chat(
+                chat_ctx=chat_ctx,
+                fnc_ctx=self.fnc_ctx
+            )
 
             # Then yield the actual response chunks
             async for chunk in response_stream:
@@ -311,15 +349,18 @@ class ChatInitializer:
         try:
             print("\n\nfetch calendar func triggered")
 
-            agent_metadata: Dict = await get_agent_metadata(self.agent_id)
-            logger.info(f"Retrieved agent metadata: {bool(agent_metadata)}")
+            agent_metadata_result = await get_agent_metadata(self.agent_id)
+            logger.info(f"Retrieved agent metadata: {bool(agent_metadata_result)}")
 
-            if not agent_metadata:
+            if not agent_metadata_result:
                 logger.error("Agent metadata is None or empty")
                 return (
                     "I apologize, but I couldn't access the agent information. "
                     "Please try again later."
                 )
+                
+            # Now we know agent_metadata_result is not None
+            agent_metadata: Dict[str, Any] = agent_metadata_result
             user_id: str = agent_metadata['userId']
             logger.info(f"User ID: {user_id}")
 
@@ -375,7 +416,6 @@ class ChatInitializer:
         await trigger_show_chat_input(self.room_name, self.room_name, self.room_name)
 
 
-
 @dataclass
 class ResponseMetadata:
     response_id: str
@@ -391,10 +431,18 @@ class ChatHistory:
     response_metadata: Dict[str, ResponseMetadata] = field(default_factory=dict)
 
     def add_message(
-        self, role: str, content: str, name: str = None, response_id: str = None
-    ):
+        self,
+        role: str,
+        content: str,
+        name: Optional[str] = None,
+        response_id: Optional[str] = None
+    ) -> None:
+        # Validate role before creating message
+        if role not in ('system', 'user', 'assistant', 'tool'):
+            raise ValueError(f"Invalid role: {role}")
+            
         message = ChatMessage(
-            role=role,
+            role=role,  # Now guaranteed to be a valid role
             content=content,
             name=name
         )
@@ -403,12 +451,12 @@ class ChatHistory:
             self.chat_ctx.messages.append(message)
 
         # Store metadata if this is an assistant message
-        if role == "assistant" and response_id:
+        if role == "assistant" and response_id is not None:
             self.response_metadata[response_id] = ResponseMetadata(
                 response_id=response_id
             )
 
-    def add_rag_results(self, response_id: str, rag_results: List[dict]):
+    def add_rag_results(self, response_id: str, rag_results: List[dict]) -> None:
         """
         Add RAG results to the response metadata,
          creating the entry if it doesn't exist.
@@ -493,7 +541,11 @@ async def get_chat_rag_results(
     ]
 
 
-async def lk_chat_process(message: str, agent_id: str, room_name: str):
+async def lk_chat_process(
+    message: str,
+    agent_id: str,
+    room_name: str
+) -> AsyncGenerator[str, None]:
     print(
         f"lk_chat_process called with message: {message}, agent_id: {agent_id}, "
         f"room_name: {room_name}"
@@ -574,7 +626,7 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                                 tool_response += result_chunk
                                 yield result_chunk
                             chat_history.add_message(
-                                "function",
+                                "tool",
                                 tool_response,
                                 name="tool_response"
                             )
@@ -632,10 +684,13 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
                 "timestamp": datetime.now().isoformat()
                 # Add timestamp for each message
             })
-
-        # Get agent metadata for user_id
-        agent_metadata = await get_agent_metadata(agent_id)
-        user_id = agent_metadata['userId']
+        agent_metadata_result = await get_agent_metadata(agent_id)
+        if not agent_metadata_result:
+            raise ValueError("Failed to get agent metadata")
+            
+        # Now we know agent_metadata_result is not None
+        agent_metadata: Dict[str, Any] = agent_metadata_result
+        user_id: str = agent_metadata['userId']
 
         # Prepare data for Supabase
         conversation_data = {
