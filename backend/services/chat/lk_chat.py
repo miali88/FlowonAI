@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Annotated, AsyncGenerator, Any, TypedDict, Union, Set, Literal
+from typing import Dict, Annotated, AsyncGenerator, Any, TypedDict, Union, Set, Literal, Optional, Tuple
 from dataclasses import dataclass, field
 from typing import List, Optional
 from pathlib import Path
@@ -25,8 +25,8 @@ class ChatScenario:
     name: str
     description: str
     messages: List[dict]
-    expected_function_calls: List[str] = None
-    actual_function_calls: List[str] = None
+    expected_function_calls: List[str] = field(default_factory=list)
+    actual_function_calls: List[str] = field(default_factory=list)
 
 
 class ChatTester:
@@ -71,34 +71,26 @@ class ChatInitializer:
     def __init__(self, agent_id: str, room_name: str):
         self.agent_id = agent_id
         self.room_name = room_name
-        self.llm_instance = None
-        self.chat_ctx = None
-        self.fnc_ctx = None
-        self.agent_metadata = None
+        self.llm_instance: Optional[openai.LLM] = None
+        self.chat_ctx: Optional[llm.ChatContext] = None
+        self.fnc_ctx: Optional[llm.FunctionContext] = None
+        self.agent_metadata: Optional[Dict[str, Any]] = None
 
-    async def initialize(self):
+    async def initialize(self) -> Tuple[openai.LLM, llm.ChatContext, llm.FunctionContext]:
         chat_histories[self.agent_id][self.room_name] = ChatHistory()
-
         self.llm_instance = openai.LLM(model="gpt-4o")
-
-        # Fetch and validate agent configuration
         await self._setup_agent_metadata()
-
-        # Initialize contexts
         await self._setup_contexts()
-
-        # Register functions
         self._register_functions()
-
         return self.llm_instance, self.chat_ctx, self.fnc_ctx
 
-    async def _setup_agent_metadata(self):
+    async def _setup_agent_metadata(self) -> None:
         self.agent_metadata = await get_agent_metadata(self.agent_id)
         if not self.agent_metadata:
             raise ValueError(f"Agent {self.agent_id} not found")
         print(f"agent_metadata: {self.agent_metadata['agentName']}")
 
-    async def _setup_contexts(self):
+    async def _setup_contexts(self) -> None:
         self.chat_ctx = llm.ChatContext()
         self.fnc_ctx = llm.FunctionContext()
 
@@ -120,7 +112,7 @@ class ChatInitializer:
         else:
             print(f"Opening line is empty for agent {self.agent_id}")
 
-    def _register_functions(self):
+    def _register_functions(self) -> None:
         # Register base Q&A function
         self.fnc_ctx._register_ai_function(self._question_and_answer)
         print("Registered Q&A function")
