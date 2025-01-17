@@ -30,6 +30,10 @@
 
 .messageAssistantBubbleContainer {
   align-self: flex-start;
+  position: relative;
+  padding-right: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .messageUserBubbleContainer {
@@ -51,6 +55,9 @@
   padding: 8px 16px;
   width: 100%;
   box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .messageBubble > div {
@@ -119,6 +126,7 @@
   word-break: break-word;
   margin-right: 80px;
   padding: 24px 32px !important;
+  width: fit-content;
 }
 
 .inputContainer {
@@ -141,12 +149,12 @@
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .chatInput:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px rgba(var(--primary-color), 0.1);
 }
 
 .sendButton {
@@ -165,7 +173,12 @@
 }
 
 .sendButton:hover {
-  background-color: #0056b3;
+  opacity: 0.8;
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .suggestedQuestionsContainer {
@@ -611,14 +624,16 @@
 
 .showSourcesButton {
   cursor: pointer;
-  background: #f3f4f6;
+  background: #f3f4f6 !important;
   border: none;
   color: #1a1a1a;
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-radius: 16px;
+  font-size: 14px !important;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 .sourceFileWrapper {
@@ -632,4 +647,157 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+}
+
+.topBar {
+  background: #000000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  color: #ffffff;
+  font-size: 18px !important;
+  font-weight: 500;
+  width: 100%;
+  height: 50px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add mobile responsiveness for the top bar */
+@media screen and (max-width: 768px) {
+  .topBar {
+    padding: 12px 16px;
+    font-size: 14px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}
+
+.agentLogoContainer {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agentLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Update existing topBar styles */
+.topBar {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 50px;
+  font-size: 18px !important;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add mobile responsiveness for the logo */
+@media screen and (max-width: 768px) {
+  .agentLogoContainer {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+}
+
+.messageBubbleActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.messageAssistantBubbleContainer:hover .messageBubbleActions {
+  opacity: 1;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  border-radius: 16px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  color: #6b7280;
+}
+
+.actionButton:hover {
+  transform: scale(1.1);
+  color: #374151;
+}
+
+.actionButton.liked svg,
+.actionButton.disliked svg {
+  fill: black;
+  stroke: black;
+}
+
+/* Mobile responsive styles */
+@media screen and (max-width: 768px) {
+  .messageBubbleActions {
+    right: -50px;
+    transform: scale(0.8) translateY(-60%);
+  }
+
+  .messageAssistantBubbleContainer {
+    padding-right: 50px;
+  }
+
+  .actionButton {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.messageActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media screen and (max-width: 768px) {
+  .messageActionsRow {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .actionButton {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.showSourcesButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.sourceIcon {
+  width: 16px;
+  height: 16px;
 }
