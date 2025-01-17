@@ -34,6 +34,7 @@ import {
   VOICE_OPTIONS,
   AGENT_PURPOSE_OPTIONS,
 } from "./agentSettings";
+import Ui from "./Ui";
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -205,6 +206,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       return;
     }
 
+    // Find the voice provider from VOICE_OPTIONS
     const voiceOption =
       selectedAgent.language && selectedAgent.voice
         ? VOICE_OPTIONS[selectedAgent.language]?.find(
@@ -420,8 +422,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   }, [selectedAgent]);
 
   return (
-    <div className="flex gap-4">
-      <div className="w-2/3">
+    <div className="flex gap-6">
+      <div className={`${activeTab === "ui" ? "w-full" : "w-2/3"}`}>
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -434,6 +436,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             <TabsTrigger value="edit">Tune</TabsTrigger>
             <TabsTrigger value="actions">Actions</TabsTrigger>
             <TabsTrigger value="deploy">Deploy</TabsTrigger>
+            <TabsTrigger value="ui">UI</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           <TabsContent value="edit">
@@ -591,6 +594,12 @@ const Workspace: React.FC<WorkspaceProps> = ({
               userInfo={userId as any}
             />
           </TabsContent>
+          <TabsContent value="ui">
+            <Ui
+              selectedAgent={selectedAgent}
+              setSelectedAgent={setSelectedAgent}
+            />
+          </TabsContent>
           <TabsContent value="actions">
             <Card>
               <CardHeader>
@@ -674,9 +683,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
         </Tabs>
       </div>
 
-      <div className="w-1/3">
-        <Playground selectedAgent={selectedAgent as any} />
-      </div>
+      {activeTab !== "ui" && (
+        <div className="w-1/3">
+          <Playground selectedAgent={selectedAgent as any} />
+        </div>
+      )}
     </div>
   );
 };
