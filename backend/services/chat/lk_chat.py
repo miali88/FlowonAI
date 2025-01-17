@@ -113,12 +113,18 @@ class ChatInitializer:
             print(f"Opening line is empty for agent {self.agent_id}")
 
     def _register_functions(self) -> None:
+        if not self.fnc_ctx:
+            raise ValueError("Function context not initialized")
+            
         # Register base Q&A function
         self.fnc_ctx._register_ai_function(self._question_and_answer)
         print("Registered Q&A function")
         logger.info("Registered Q&A function")
 
         # Register optional functions based on features
+        if not self.agent_metadata:
+            raise ValueError("Agent metadata not initialized")
+            
         features = self.agent_metadata.get('features', []) or []
 
         if 'lead_gen' in features:
@@ -156,7 +162,7 @@ class ChatInitializer:
         """
         try:
             print(f"\n\nquestion_and_answer func triggered with question: {question}")
-            agent_metadata: Dict = await get_agent_metadata(self.agent_id)
+            agent_metadata = await get_agent_metadata(self.agent_id)
             if not agent_metadata:
                 raise ValueError("Failed to get agent metadata")
                 
@@ -230,8 +236,8 @@ class ChatInitializer:
             yield "[RAG_RESULTS]: "
             yield json.dumps({"response_id": response_id})
 
-            company_name = self.agent_metadata.get('company_name', 'Company')
-            show_sources = self.agent_metadata.get('showSourcesInChat', False)
+            company_name = self.agent_metadata.get('company_name', 'Company') if self.agent_metadata else 'Company'
+            show_sources = self.agent_metadata.get('showSourcesInChat', False) if self.agent_metadata else False
 
             # Rest of the code using company_name and show_sources
             rag_prompt = f"""
@@ -272,7 +278,9 @@ class ChatInitializer:
                 print(f"Content: {msg.content}")
                 print("---")
 
-            # Now we can safely use the components
+            if not self.llm_instance:
+                raise ValueError("LLM instance not initialized")
+
             response_stream = self.llm_instance.chat(
                 chat_ctx=chat_ctx,
             )

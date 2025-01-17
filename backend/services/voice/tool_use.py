@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, List
+from typing import Annotated, Dict, List, Optional, Any
 import aiohttp
 import os
 import logging
@@ -7,6 +7,7 @@ import json
 from dotenv import load_dotenv
 
 from livekit.agents import llm
+from livekit.agents.job import JobContext
 
 from services.chat.chat import similarity_search
 from services.cache import get_agent_metadata, calendar_cache
@@ -49,42 +50,46 @@ async def question_and_answer(
     try:
         # Get the room_name from the current AgentFunctions instance
         room_name = AgentFunctions.current_room_name
+        if room_name is None:
+            logger.error("Room name is not set")
+            return "Error: Room name is not available"
 
         logger.info(f"Processing Q&A for question: {question}")
         print(f"Processing Q&A for question: {question}")
 
         agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        agent_metadata: Dict = await get_agent_metadata(agent_id)
+        agent_metadata = await get_agent_metadata(agent_id)
+        if agent_metadata is None:
+            logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+            return "Error: Could not retrieve agent metadata"
 
         user_id: str = agent_metadata['userId']
-        data_source: str = agent_metadata.get('dataSource', None)
+        data_source = agent_metadata.get('dataSource', None)
 
-        if data_source != "all":
-            data_source: Dict = json.loads(data_source)
-            data_source: Dict = {
-                "web": [
-                    item['title'] for item
-                    in data_source
-                    if item['data_type'] == 'web'
-                ],
-                "text_files": [
-                    item['id'] for item
-                    in data_source
-                    if item['data_type'] != 'web'
-                ]
-            }
-            results = await similarity_search(
-                question,
-                data_source=data_source,
-                user_id=user_id
-            )
-        else:
-            data_source = {"web": ["all"], "text_files": ["all"]}
-            results = await similarity_search(
-                question,
-                data_source=data_source,
-                user_id=user_id
-            )
+        # Ensure data_source is a dictionary before passing to similarity_search
+        if isinstance(data_source, str):
+            if data_source == "all":
+                data_source = {"web": ["all"], "text_files": ["all"]}
+            else:
+                data_source = json.loads(data_source)
+                data_source = {
+                    "web": [
+                        item['title'] for item
+                        in data_source
+                        if item['data_type'] == 'web'
+                    ],
+                    "text_files": [
+                        item['id'] for item
+                        in data_source
+                        if item['data_type'] != 'web'
+                    ]
+                }
+        
+        results = await similarity_search(
+            question,
+            data_source=data_source,
+            user_id=user_id
+        )
 
         return f"Found matching products/services: {results}"
 
@@ -156,10 +161,15 @@ async def fetch_calendar(
     try:
         # Get the room_name from the current AgentFunctions instance
         room_name = AgentFunctions.current_room_name
-        agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-        agent_metadata: Dict = await get_agent_metadata(agent_id)
-
-        user_id: str = agent_metadata['userId']
+        if room_name is None:
+            logger.error("Room name is not set")
+            return "Error: Room name is not available"
+        agent_id = room_name.split('_')[1]
+        agent_metadata = await get_agent_metadata(agent_id)
+        if agent_metadata is None:
+            logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+            return "Error: Could not retrieve agent metadata"
+        user_id = agent_metadata['userId']
 
         free_slots = calendar_cache[user_id]
 
@@ -200,8 +210,14 @@ async def book_appointment(
     logger.info(f"Booking appointment with details: {appointment_details}")
     # Get the room_name from the current AgentFunctions instance
     room_name = AgentFunctions.current_room_name
+    if room_name is None:
+        logger.error("Room name is not set")
+        return "Error: Room name is not available"
     agent_id = room_name.split('_')[1]  # Extract agent_id from room name
-    agent_metadata: Dict = await get_agent_metadata(agent_id)
+    agent_metadata = await get_agent_metadata(agent_id)
+    if agent_metadata is None:
+        logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
+        return "Error: Could not retrieve agent metadata"
 
     user_id: str = agent_metadata['userId']
 
@@ -261,9 +277,12 @@ async def transfer_call(
     from services.initiate_outbound import create_sip_participant
 
     room_name = AgentFunctions.current_room_name
+    if room_name is None:
+        logger.error("Room name is not set")
+        return "Error: Room name is not available"
     agent_id = await detect_call_type_and_get_agent_id(room_name)
 
-    agent_metadata: Dict = await get_agent_metadata(agent_id)
+    agent_metadata = await get_agent_metadata(agent_id[0] if isinstance(agent_id, tuple) else agent_id)
 
     if not agent_metadata:
         logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
@@ -294,7 +313,7 @@ class AgentFunctions(llm.FunctionContext):
     current_room_name = None
     current_job_ctx = None
 
-    def __init__(self, job_ctx):
+    def __init__(self, job_ctx: JobContext) -> None:
         super().__init__()
         self.job_ctx = job_ctx
         self.room_name = job_ctx.room.name
@@ -303,17 +322,17 @@ class AgentFunctions(llm.FunctionContext):
         # Initialize functions immediately in constructor
         asyncio.create_task(self.initialize_functions())
 
-    async def initialize_functions(self):
+    async def initialize_functions(self) -> None:
         print("Initializing functions for agent")
-        features = {}
-        agent_id = None
+        features: Dict = {}
+        agent_id: Optional[str] = None
 
         try:
             # Get agent ID and metadata
             agent_id, call_type = await detect_call_type_and_get_agent_id(
                 self.room_name
             )
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
+            agent_metadata = await get_agent_metadata(agent_id)
 
             if agent_metadata:
                 features = agent_metadata.get('features', {})
@@ -328,7 +347,7 @@ class AgentFunctions(llm.FunctionContext):
         except Exception as e:
             logger.error(f"Error in initialize_functions: {str(e)}", exc_info=True)
 
-    async def _register_functions(self, features: Dict):
+    async def _register_functions(self, features: Dict) -> None:
         """Helper method to register all functions"""
         # Always register Q&A function
         self._register_ai_function(question_and_answer)
@@ -353,7 +372,7 @@ async def trigger_show_chat_input(
     room_name: str,
     job_id: str,
     participant_identity: str
-):
+) -> Optional[Dict]:
     logger.info(
         f"Triggering chat input for room={room_name}, "
         f"job_id={job_id}"
@@ -420,7 +439,7 @@ async def trigger_show_chat_input(
             raise
 
 
-async def send_lead_notification(chat_message: dict):
+async def send_lead_notification(chat_message: dict) -> None:
     """ nylas email send here """
     pass
 

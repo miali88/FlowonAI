@@ -5,7 +5,7 @@ import logging
 import re
 from asyncio import Lock
 from dotenv import load_dotenv
-from typing import Union, AsyncIterable
+from typing import Union, AsyncIterable, AsyncGenerator, Optional, Dict, Any, Tuple
 
 from fastapi import HTTPException, BackgroundTasks
 from livekit import api
@@ -34,7 +34,7 @@ room_locks = {}
 logger = logging.getLogger(__name__)
 
 
-async def create_livekit_api():
+async def create_livekit_api() -> LiveKitAPI:
     return LiveKitAPI(
         url=os.getenv("LIVEKIT_URL"),
         api_key=os.getenv("LIVEKIT_API_KEY"),
@@ -50,7 +50,7 @@ async def token_gen(
     user_id: str,
     background_tasks: BackgroundTasks,
     medium: str = "voice"
-):
+) -> Tuple[str, str, str]:
     logger.info(
         f"Token generation requested for agent_id={agent_id}, user_id={user_id}"
     )
@@ -93,7 +93,7 @@ async def token_gen(
         return token.to_jwt(), livekit_server_url, room_name
 
 
-async def check_and_create_room(room_name: str, token: str, agent_id: str):
+async def check_and_create_room(room_name: str, token: str, agent_id: str) -> None:
     logger.info(f"Checking room existence: {room_name}")
     try:
         livekit_api = await create_livekit_api()
@@ -118,13 +118,13 @@ async def check_and_create_room(room_name: str, token: str, agent_id: str):
         await livekit_api.aclose()
 
 
-async def check_room_exists(livekit_api, room_name: str) -> bool:
+async def check_room_exists(livekit_api: LiveKitAPI, room_name: str) -> bool:
     list_request = ListRoomsRequest()
     rooms_response = await livekit_api.room.list_rooms(list_request)
     return any(room.name == room_name for room in rooms_response.rooms)
 
 
-async def print_room_details(livekit_api, room_name: str, agent_id: str):
+async def print_room_details(livekit_api: LiveKitAPI, room_name: str, agent_id: str) -> None:
     list_request = ListRoomsRequest()
     rooms_response = await livekit_api.room.list_rooms(list_request)
     logger.info("Room exists. All rooms:")
@@ -153,7 +153,7 @@ async def print_room_details(livekit_api, room_name: str, agent_id: str):
         raise
 
 
-async def create_room(room_name: str, access_token: str, agent_id: str):
+async def create_room(room_name: str, access_token: str, agent_id: str) -> None:
     try:
         logger.info(f"Starting create_agent_request for room: {room_name}")
         livekit_api = await create_livekit_api()
@@ -177,7 +177,7 @@ async def create_room(room_name: str, access_token: str, agent_id: str):
 """ AGENT FUNCTIONS """
 
 
-async def start_agent_request(access_token: str, agent_id: str, room_name: str):
+async def start_agent_request(access_token: str, agent_id: str, room_name: str) -> None:
     logger.info(f"Starting agent request for room: {room_name}")
     livekit_api = await create_livekit_api()
     try:
@@ -197,7 +197,7 @@ async def start_agent_request(access_token: str, agent_id: str, room_name: str):
         logger.info("LiveKit API connection closed")
 
 
-async def maintain_agent_session(room_name: str, agent_id: str):
+async def maintain_agent_session(room_name: str, agent_id: str) -> None:
     logger.info(f"Maintaining agent session for room: {room_name}")
     try:
         # Add session management logic here
@@ -227,9 +227,9 @@ lang_options = {
 
 async def create_voice_assistant(
     agent_id: str,
-    job_ctx: JobContext = None,
+    job_ctx: Optional[JobContext] = None,
     call_type: str = "web"
-):
+) -> Tuple[VoiceAssistant, str]:
     logger.info(f"Creating voice assistant for agent_id: {agent_id}")
     try:
         agent = await get_agent(agent_id)
@@ -281,7 +281,7 @@ async def create_voice_assistant(
         else:
             tts_instance = cartesia.TTS(
                 language=lang_options[agent['language']]['cartesia'],
-                model=lang_options[agent['language']]['cartesia_model'],
+                model=lang_options[agent['language']]['cartesia_model'], # type: ignore
                 voice=agent['voice']
             )
 
@@ -295,7 +295,7 @@ async def create_voice_assistant(
             vad=silero.VAD.load(),
             stt=deepgram.STT(
                 model="nova-2-general",
-                language=lang_options[agent['language']]['deepgram']
+                language=lang_options[agent['language']]['deepgram'] # type: ignore
             ),
             llm=llm_instance,
             tts=tts_instance,
@@ -320,7 +320,7 @@ async def create_voice_assistant(
 
 
 def remove_special_characters(
-    agent,
+    agent: VoiceAssistant,
     text: Union[str, AsyncIterable[str]]
 ) -> Union[str, AsyncIterable[str]]:
     url_pattern = re.compile(r'https?://\S+|www\.\S+')
@@ -336,7 +336,7 @@ def remove_special_characters(
     if isinstance(text, str):
         return clean_text(text)
     elif isinstance(text, AsyncIterable):
-        async def clean_async_iterable():
+        async def clean_async_iterable() -> AsyncGenerator[str, None]:
             async for part in text:
                 yield clean_text(part)
         return clean_async_iterable()
@@ -344,7 +344,7 @@ def remove_special_characters(
         raise ValueError("Unsupported text type")
 
 
-async def get_agent(agent_id):
+async def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
     response = (
         supabase.table('agents')
         .select('*')

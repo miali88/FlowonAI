@@ -67,6 +67,8 @@ class CallTransferHandler:
             # Mute the track instead of removing permissions
             if publication.kind == rtc.TrackKind.KIND_AUDIO:
                 logger.debug(f"Muting track {publication.sid} for held participant")
+                if not self._lk_api:
+                    raise RuntimeError("LiveKit API not initialized")
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
                         room=self._room.name,
@@ -85,7 +87,9 @@ class CallTransferHandler:
         logger.debug(
             f"Updating permissions for held participant {participant_identity}"
         )
-
+        if not self._lk_api:
+            raise RuntimeError("LiveKit API not initialized")
+            
         await self._lk_api.room.update_participant(
             UpdateParticipantRequest(
                 room=self._room.name,
@@ -189,6 +193,8 @@ class CallTransferHandler:
         # Unmute source participant's tracks
         for pub in source_participant.track_publications.values():
             if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                if not self._lk_api:
+                    raise RuntimeError("LiveKit API not initialized")
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
                         room=self._room.name,
@@ -203,13 +209,14 @@ class CallTransferHandler:
         for pub in target_participant.track_publications.values():
             if pub.kind == rtc.TrackKind.KIND_AUDIO:
                 # Update subscription through the API instead of using set_subscribed
+                if not self._lk_api:
+                    raise RuntimeError("LiveKit API not initialized")
                 await self._lk_api.room.update_subscription(
                     room=self._room.name,
                     identity=target_participant.identity,
                     track_sids=[pub.sid],
                     subscribe=True
                 )
-                
                 await self._lk_api.room.mute_published_track(
                     MuteRoomTrackRequest(
                         room=self._room.name,
