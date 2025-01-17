@@ -214,10 +214,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
           )
         : null;
 
+    const currentFeatures = agentFeaturesRef.current?.getCurrentState() || {};
+
+    console.log("Current Features:", currentFeatures);
+
     const agentToSave = {
       ...selectedAgent,
       voiceProvider: voiceOption?.voiceProvider || null,
-      features: selectedAgent.features,
+      features: currentFeatures, // Already cleaned in getCurrentState
       knowledgeBaseIds: selectedAgent.dataSource?.includes("all")
         ? undefined
         : selectedAgent.knowledgeBaseIds,
@@ -352,18 +356,26 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     setSelectedAgent((prev: Agent | null) => {
       if (!prev) return null;
-      const updatedAgent: AgentWithFeatures = {
-        ...prev,
-        features: {
-          ...prev.features,
-          prospects: {
-            enabled: true,
-            ...prev.features?.prospects,
-            [field]: value,
-          },
+
+      const updatedFeatures = {
+        ...prev.features,
+        [field]: {
+          enabled: Boolean(value),
         },
       };
-      return updatedAgent as Agent;
+
+      // If it's notifyOnInterest, also update lead_gen
+      if (field === "notifyOnInterest") {
+        updatedFeatures.lead_gen = {
+          ...prev.features?.lead_gen,
+          enabled: Boolean(value),
+        };
+      }
+
+      return {
+        ...prev,
+        features: updatedFeatures,
+      } as Agent;
     });
   };
 
@@ -386,6 +398,28 @@ const Workspace: React.FC<WorkspaceProps> = ({
       };
     });
   };
+
+  const cleanFeatures = (features: any) => {
+    if (!features) return {};
+
+    // Create a new object without prospects and prospecting
+    const { prospects, calendar, prospecting, ...cleanedFeatures } = features;
+
+    return cleanedFeatures;
+  };
+
+  useEffect(() => {
+    if (selectedAgent?.features) {
+      // Initialize settings based on backend data
+      setProspectSettings({
+        notifyOnInterest:
+          selectedAgent.features.notifyOnInterest?.enabled || false,
+        email: selectedAgent.features.lead_gen?.email || "",
+        sms: selectedAgent.features.lead_gen?.sms || "",
+        whatsapp: selectedAgent.features.lead_gen?.whatsapp || "",
+      });
+    }
+  }, [selectedAgent]);
 
   return (
     <div className="flex gap-6">
@@ -574,16 +608,16 @@ const Workspace: React.FC<WorkspaceProps> = ({
               <CardContent>
                 <AgentFeatures
                   ref={agentFeaturesRef}
-                  selectedAgent={selectedAgent as unknown as SelectedAgent}
+                  selectedAgent={{
+                    ...(selectedAgent as unknown as SelectedAgent),
+                    features: cleanFeatures(selectedAgent?.features),
+                  }}
                   setSelectedAgent={(agent: SelectedAgent) => {
                     setSelectedAgent((prev) => {
                       if (!prev) return null;
                       return {
                         ...prev,
-                        features: {
-                          ...prev.features,
-                          ...agent.features,
-                        },
+                        features: cleanFeatures(agent.features),
                       } as Agent;
                     });
                   }}

@@ -1,4 +1,9 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,7 +80,8 @@ const AGENT_FEATURES = {
         notifyOnInterest: {
           id: "notifyOnInterest",
           label: "Notify on Interest",
-          description: "Your registered email will be used to notify of new leads",
+          description:
+            "Your registered email will be used to notify of new leads",
         } as SubFeature,
         configureFields: {
           id: "configureFields",
@@ -89,23 +95,18 @@ const AGENT_FEATURES = {
               phone: false,
               company: false,
               jobTitle: false,
-              custom: []
-            }
-          }
-        } as SubFeature
-      }
+              custom: [],
+            },
+          },
+        } as SubFeature,
+      },
     },
     appointmentBooking: {
       id: "appointmentBooking",
       label: "Appointment Booking",
-      description: "Create an agent that manages your calendar and books appointments",
-      subFeatures: {
-        calendar: {
-          id: "calendar",
-          label: "Calendar Management",
-          description: "Manage and schedule appointments"
-        }
-      }
+      description:
+        "Create an agent that manages your calendar and books appointments",
+      subFeatures: {},
     },
     callTransfer: {
       id: "callTransfer",
@@ -115,26 +116,27 @@ const AGENT_FEATURES = {
         transferToNumber: {
           id: "transferToNumber",
           label: "Transfer to Number",
-          description: "Specify the number to which calls should be transferred, please include the country code",
+          description:
+            "Specify the number to which calls should be transferred, please include the country code",
           hasConfiguration: true,
           defaultConfig: {
             fields: {
               number: "",
-              custom: []
-            }
-          }
-        }
-      }
-    }
-  }
+              custom: [],
+            },
+          },
+        },
+      },
+    },
+  },
 };
 
 // Add feature mapping constant
 const FEATURE_ID_MAP = {
-  'prospecting': 'lead_gen',
-  'appointmentBooking': 'app_booking',
-  'callTransfer': 'call_transfer'
-};
+  prospecting: "lead_gen",
+  appointmentBooking: "app_booking",
+  callTransfer: "call_transfer",
+} as const;
 
 // Add LocalFeatures interface
 interface LocalFeatures {
@@ -154,54 +156,48 @@ export const AgentFeatures = forwardRef<
   AgentFeaturesProps
 >(({ selectedAgent, setSelectedAgent }, ref) => {
   const [localFeatures, setLocalFeatures] = useState<LocalFeatures>({
-    callTransfer: {
-      enabled: false,
-      number: '',
-    },
-    appointmentBooking: {
-      enabled: false,
-    },
-    form: {
-      enabled: false,
-      fields: [],
-    },
-    prospects: {
+    lead_gen: {
       enabled: false,
       notifyOnInterest: false,
-      email: '',
-      sms: '',
-      whatsapp: '',
-    }
+    },
+    app_booking: {
+      enabled: false,
+    },
+    call_transfer: {
+      enabled: false,
+      number: "",
+    },
   });
 
   const [isConfigureDialogOpen, setIsConfigureDialogOpen] = useState(false);
   const [currentFeature, setCurrentFeature] = useState<string | null>(null);
-  const [openItem, setOpenItem] = useState<string>('');
+  const [openItem, setOpenItem] = useState<string>("");
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<FormFields | null>(null);
   const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
 
   const handleFeatureToggle = (featureId: string) => {
-    setLocalFeatures(prev => ({
+    const backendId =
+      FEATURE_ID_MAP[featureId as keyof typeof FEATURE_ID_MAP] || featureId;
+
+    setLocalFeatures((prev) => ({
       ...prev,
-      [featureId]: {
-        ...prev[featureId],
-        enabled: !prev[featureId]?.enabled || false
-      }
+      [backendId]: {
+        ...prev[backendId],
+        enabled: !prev[backendId]?.enabled,
+      },
     }));
 
     if (setSelectedAgent && selectedAgent) {
-      const updatedFeatures = {
-        ...selectedAgent.features,
-        [featureId]: {
-          ...selectedAgent.features?.[featureId],
-          enabled: !localFeatures[featureId]?.enabled || false,
-          number: localFeatures[featureId]?.number
-        }
-      };
       setSelectedAgent({
         ...selectedAgent,
-        features: updatedFeatures
+        features: {
+          ...selectedAgent.features,
+          [backendId]: {
+            ...selectedAgent.features[backendId],
+            enabled: !selectedAgent.features[backendId]?.enabled,
+          },
+        },
       });
     }
   };
@@ -209,8 +205,6 @@ export const AgentFeatures = forwardRef<
   // Add this function to check if a feature has configuration options
   const hasConfigurationContent = (featureId: string): boolean => {
     switch (featureId) {
-      case "prospecting":
-        return true; // If prospecting has configuration options
       case "appointmentBooking":
         return true; // If appointment booking has configuration options
       case "callTransfer":
@@ -234,8 +228,8 @@ export const AgentFeatures = forwardRef<
       ...config,
       fields: {
         ...config.fields,
-        custom: config.fields.custom || []
-      }
+        custom: config.fields.custom || [],
+      },
     });
     setConfigDialogOpen(true);
   };
@@ -243,14 +237,14 @@ export const AgentFeatures = forwardRef<
   // Update dialog close handler to save changes only on confirmation
   const handleConfigDialogClose = (save: boolean) => {
     if (save && currentConfig) {
-      console.log('Saving configuration:', currentConfig);
+      console.log("Saving configuration:", currentConfig);
       setTempConfig(currentConfig);
-      
+
       // Log the selected fields
       const selectedFields = Object.entries(currentConfig.fields)
-        .filter(([key, value]) => key !== 'custom' && value === true)
+        .filter(([key, value]) => key !== "custom" && value === true)
         .map(([key]) => key);
-      console.log('Selected fields:', selectedFields);
+      console.log("Selected fields:", selectedFields);
     }
     setConfigDialogOpen(false);
     setCurrentConfig(null);
@@ -259,43 +253,53 @@ export const AgentFeatures = forwardRef<
   // Expose the current state to parent
   useImperativeHandle(ref, () => ({
     getCurrentState: () => {
-      // Only include enabled features with their configurations
-      const enabledFeatures = Object.entries(localFeatures).reduce((acc, [key, value]) => {
-        if (value.enabled) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {} as any);
-
-      return enabledFeatures;
-    }
+      return {
+        app_booking: {
+          enabled: localFeatures.app_booking.enabled,
+        },
+        call_transfer: {
+          enabled: localFeatures.call_transfer.enabled,
+          number: localFeatures.call_transfer.number,
+        },
+        lead_gen: {
+          enabled: localFeatures.lead_gen.enabled,
+          notifyOnInterest: localFeatures.lead_gen.notifyOnInterest,
+        },
+      };
+    },
   }));
 
-  // Add effect to sync with parent
+  // Update useEffect to sync with selectedAgent.features
   useEffect(() => {
-    if (selectedAgent?.features?.callTransfer) {
-      setLocalFeatures(prev => ({
-        ...prev,
-        callTransfer: {
-          ...prev.callTransfer,
-          number: selectedAgent.features.callTransfer.number || '',
-          enabled: selectedAgent.features.callTransfer.enabled || false
-        }
-      }));
+    if (selectedAgent?.features) {
+      setLocalFeatures({
+        lead_gen: {
+          enabled: selectedAgent.features.lead_gen?.enabled || false,
+          notifyOnInterest:
+            selectedAgent.features.lead_gen?.notifyOnInterest || false,
+        },
+        app_booking: {
+          enabled: selectedAgent.features.app_booking?.enabled || false,
+        },
+        call_transfer: {
+          enabled: selectedAgent.features.call_transfer?.enabled || false,
+          number: selectedAgent.features.call_transfer?.number || "",
+        },
+      });
     }
-  }, [selectedAgent?.features?.callTransfer]);
+  }, [selectedAgent?.features]);
 
   // Update the number input handler
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newNumber = e.target.value;
-    
-    setLocalFeatures(prev => ({
+
+    setLocalFeatures((prev) => ({
       ...prev,
-      callTransfer: {
-        ...prev.callTransfer,
+      call_transfer: {
+        ...prev.call_transfer,
         enabled: true,
-        number: newNumber
-      }
+        number: newNumber,
+      },
     }));
 
     if (setSelectedAgent && selectedAgent) {
@@ -303,12 +307,12 @@ export const AgentFeatures = forwardRef<
         ...selectedAgent,
         features: {
           ...selectedAgent.features,
-          callTransfer: {
-            ...selectedAgent.features?.callTransfer,
+          call_transfer: {
+            ...selectedAgent.features?.call_transfer,
             enabled: true,
-            number: newNumber
-          }
-        }
+            number: newNumber,
+          },
+        },
       });
     }
   };
@@ -334,55 +338,74 @@ export const AgentFeatures = forwardRef<
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
-                  id={purpose.id}
-                  checked={localFeatures[purpose.id]?.enabled || false}
+                  id={FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]}
+                  checked={
+                    localFeatures[
+                      FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]
+                    ]?.enabled || false
+                  }
                   onCheckedChange={() => handleFeatureToggle(purpose.id)}
                 />
-                <AccordionTrigger className="h-4 w-4 p-0" />
+                {Object.keys(purpose.subFeatures).length > 0 &&
+                  purpose.id !== "appointmentBooking" && (
+                    <AccordionTrigger className="h-4 w-4 p-0" />
+                  )}
               </div>
             </div>
 
             <AccordionContent className="px-4 pb-4">
               <div className="space-y-4">
-                {purpose.subFeatures && Object.values(purpose.subFeatures).map((subFeature: SubFeature) => (
-                  <div key={subFeature.id} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <Label htmlFor={subFeature.id} className="text-sm">
-                        {subFeature.label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {subFeature.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {purpose.id === 'callTransfer' ? (
-                        <Input
-                          type="tel"
-                          placeholder="+1234567890"
-                          className="w-48"
-                          value={localFeatures.callTransfer.number}
-                          onChange={handleNumberChange}
-                        />
-                      ) : (subFeature as SubFeature).hasConfiguration ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
-                          onClick={() => handleConfigureInformationCollection(subFeature)}
-                        >
-                          Configure
-                        </Button>
-                      ) : (
-                        <Switch
-                          id={subFeature.id}
-                          checked={localFeatures[subFeature.id]?.enabled || false}
-                          onCheckedChange={() => handleFeatureToggle(subFeature.id)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                ))}
+                {purpose.subFeatures &&
+                  Object.values(purpose.subFeatures).map(
+                    (subFeature: SubFeature) => (
+                      <div
+                        key={subFeature.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex-1">
+                          <Label htmlFor={subFeature.id} className="text-sm">
+                            {subFeature.label}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {subFeature.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {purpose.id === "callTransfer" ? (
+                            <Input
+                              type="tel"
+                              placeholder="+1234567890"
+                              className="w-48"
+                              value={localFeatures.call_transfer.number}
+                              onChange={handleNumberChange}
+                            />
+                          ) : (subFeature as SubFeature).hasConfiguration ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
+                              onClick={() =>
+                                handleConfigureInformationCollection(subFeature)
+                              }
+                            >
+                              Configure
+                            </Button>
+                          ) : (
+                            <Switch
+                              id={subFeature.id}
+                              checked={
+                                localFeatures[subFeature.id]?.enabled || false
+                              }
+                              onCheckedChange={() =>
+                                handleFeatureToggle(subFeature.id)
+                              }
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )
+                  )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -391,8 +414,8 @@ export const AgentFeatures = forwardRef<
 
       {/* Configuration Dialog */}
       {isConfigureDialogOpen && currentFeature && (
-        <Dialog 
-          open={isConfigureDialogOpen} 
+        <Dialog
+          open={isConfigureDialogOpen}
           onOpenChange={(open) => {
             setIsConfigureDialogOpen(open);
             if (!open) {
@@ -418,7 +441,10 @@ export const AgentFeatures = forwardRef<
       )}
 
       {/* Add the configuration dialog */}
-      <Dialog open={configDialogOpen} onOpenChange={() => handleConfigDialogClose(false)}>
+      <Dialog
+        open={configDialogOpen}
+        onOpenChange={() => handleConfigDialogClose(false)}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Configure Information Collection</DialogTitle>
@@ -436,10 +462,17 @@ export const AgentFeatures = forwardRef<
                       id="name"
                       checked={currentConfig.fields.name}
                       onCheckedChange={(checked) => {
-                        setCurrentConfig(prev => prev ? {
-                          ...prev,
-                          fields: { ...prev.fields, name: checked as boolean }
-                        } : null);
+                        setCurrentConfig((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                fields: {
+                                  ...prev.fields,
+                                  name: checked as boolean,
+                                },
+                              }
+                            : null
+                        );
                       }}
                     />
                     <Label htmlFor="name">Name</Label>
@@ -450,10 +483,17 @@ export const AgentFeatures = forwardRef<
                       id="email"
                       checked={currentConfig.fields.email}
                       onCheckedChange={(checked) => {
-                        setCurrentConfig(prev => prev ? {
-                          ...prev,
-                          fields: { ...prev.fields, email: checked as boolean }
-                        } : null);
+                        setCurrentConfig((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                fields: {
+                                  ...prev.fields,
+                                  email: checked as boolean,
+                                },
+                              }
+                            : null
+                        );
                       }}
                     />
                     <Label htmlFor="email">Email</Label>
@@ -464,10 +504,17 @@ export const AgentFeatures = forwardRef<
                       id="phone"
                       checked={currentConfig.fields.phone}
                       onCheckedChange={(checked) => {
-                        setCurrentConfig(prev => prev ? {
-                          ...prev,
-                          fields: { ...prev.fields, phone: checked as boolean }
-                        } : null);
+                        setCurrentConfig((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                fields: {
+                                  ...prev.fields,
+                                  phone: checked as boolean,
+                                },
+                              }
+                            : null
+                        );
                       }}
                     />
                     <Label htmlFor="phone">Phone Number</Label>
@@ -478,10 +525,17 @@ export const AgentFeatures = forwardRef<
                       id="company"
                       checked={currentConfig.fields.company}
                       onCheckedChange={(checked) => {
-                        setCurrentConfig(prev => prev ? {
-                          ...prev,
-                          fields: { ...prev.fields, company: checked as boolean }
-                        } : null);
+                        setCurrentConfig((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                fields: {
+                                  ...prev.fields,
+                                  company: checked as boolean,
+                                },
+                              }
+                            : null
+                        );
                       }}
                     />
                     <Label htmlFor="company">Company</Label>
@@ -492,10 +546,17 @@ export const AgentFeatures = forwardRef<
                       id="jobTitle"
                       checked={currentConfig.fields.jobTitle}
                       onCheckedChange={(checked) => {
-                        setCurrentConfig(prev => prev ? {
-                          ...prev,
-                          fields: { ...prev.fields, jobTitle: checked as boolean }
-                        } : null);
+                        setCurrentConfig((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                fields: {
+                                  ...prev.fields,
+                                  jobTitle: checked as boolean,
+                                },
+                              }
+                            : null
+                        );
                       }}
                     />
                     <Label htmlFor="jobTitle">Job Title</Label>
@@ -506,27 +567,49 @@ export const AgentFeatures = forwardRef<
                     <Label>Custom Fields</Label>
                     <div className="space-y-2">
                       {currentConfig.fields.custom.map((field, index) => (
-                        <div key={index} className="flex items-center space-x-2">
+                        <div
+                          key={index}
+                          className="flex items-center space-x-2"
+                        >
                           <Input
                             value={field}
                             onChange={(e) => {
-                              const newCustom = [...currentConfig.fields.custom];
+                              const newCustom = [
+                                ...currentConfig.fields.custom,
+                              ];
                               newCustom[index] = e.target.value;
-                              setCurrentConfig(prev => prev ? {
-                                ...prev,
-                                fields: { ...prev.fields, custom: newCustom }
-                              } : null);
+                              setCurrentConfig((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      fields: {
+                                        ...prev.fields,
+                                        custom: newCustom,
+                                      },
+                                    }
+                                  : null
+                              );
                             }}
                           />
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const newCustom = currentConfig.fields.custom.filter((_, i) => i !== index);
-                              setCurrentConfig(prev => prev ? {
-                                ...prev,
-                                fields: { ...prev.fields, custom: newCustom }
-                              } : null);
+                              const newCustom =
+                                currentConfig.fields.custom.filter(
+                                  (_, i) => i !== index
+                                );
+                              setCurrentConfig((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      fields: {
+                                        ...prev.fields,
+                                        custom: newCustom,
+                                      },
+                                    }
+                                  : null
+                              );
                             }}
                           >
                             Remove
@@ -537,13 +620,17 @@ export const AgentFeatures = forwardRef<
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setCurrentConfig(prev => prev ? {
-                            ...prev,
-                            fields: {
-                              ...prev.fields,
-                              custom: [...prev.fields.custom, '']
-                            }
-                          } : null);
+                          setCurrentConfig((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  fields: {
+                                    ...prev.fields,
+                                    custom: [...prev.fields.custom, ""],
+                                  },
+                                }
+                              : null
+                          );
                         }}
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -557,9 +644,9 @@ export const AgentFeatures = forwardRef<
           </div>
 
           <DialogFooter>
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={() => handleConfigDialogClose(false)}
             >
               Cancel
