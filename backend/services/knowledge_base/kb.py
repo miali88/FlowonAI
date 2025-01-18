@@ -2,7 +2,7 @@ import logging
 from dotenv import load_dotenv
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from supabase import create_client, Client
 from openai import AsyncOpenAI
 from app.core.config import settings
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-async def get_kb_items(current_user):
+async def get_kb_items(current_user: str) -> Tuple[List[Dict], int]:
     kb_tables = ["user_web_data", "user_text_files"]
     logger.info(f"Fetching items for user: {current_user}")
     all_items = []
@@ -68,7 +68,7 @@ async def get_kb_items(current_user):
     return all_items, total_tokens
 
 
-async def get_kb_headers(current_user):
+async def get_kb_headers(current_user: str) -> Tuple[List[Dict], int]:
     kb_tables = ["user_web_data_headers", "user_text_files_headers"]
     logger.info(f"Fetching items for user: {current_user}")
     all_items = []

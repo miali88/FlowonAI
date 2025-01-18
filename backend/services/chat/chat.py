@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Optional, Any, Tuple
 import random
 import re
 import json
@@ -22,10 +22,10 @@ load_dotenv()
 openai = OpenAI()
 anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-conversation_histories = {}
+conversation_histories: Dict[str, Any] = {}
 
 
-async def get_embedding(text):
+async def get_embedding(text: str) -> Any:
     # if table == "user_text_files":
     #     """ OPENAI EMBEDDINGS """
     #     response = openai.embeddings.create(
@@ -68,7 +68,7 @@ async def get_embedding(text):
         raise
 
 
-async def rerank_documents(user_query: str, top_n: int, docs: List):
+async def rerank_documents(user_query: str, top_n: int, docs: List) -> List[str]:
     print("func rerank_documents..")
     url = 'https://api.jina.ai/v1/rerank'
     headers = {
@@ -99,8 +99,8 @@ async def rerank_documents(user_query: str, top_n: int, docs: List):
         raise
 
 
-async def llm_response(system_prompt, user_prompt, conversation_history=None,
-                       model="claude", token_size=1000, max_retries=5):
+async def llm_response(system_prompt: str, user_prompt: str, conversation_history: Optional[Dict[str, Any]],
+                       model: str = "claude", token_size: int = 1000, max_retries: int = 5) -> Optional[str]:
     messages = []
 
     if conversation_history:
@@ -172,20 +172,25 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                     raise e
             else:
                 raise e
+    return None
 
 tables = ["user_web_data", "user_text_files"]
 
 
-async def similarity_search(query: str, data_source: Dict = None,
+async def similarity_search(query: str, data_source: Optional[Dict],
                             table_names: List[str] = tables,
                             search_type: str = "Quick Search",
                             similarity_threshold: float = 0.20,
                             embedding_column: str = "jina_embedding",
                             max_results: int = 15,
-                            user_id: str = None):
+                            user_id: Optional[str] = None) -> List[str]:
     print("\n\nsimilarity_search...")
     print("\n\n data_source in similarity_search:", data_source)
     all_results = []
+
+    # Add null check for data_source
+    if data_source is None:
+        raise ValueError("data_source cannot be None")
 
     # Set search parameters based on search type
     if search_type == "Deep Search":
@@ -195,7 +200,7 @@ async def similarity_search(query: str, data_source: Dict = None,
         similarity_threshold = 0.20
         max_results = 7
 
-    async def fetch_table_data(table, query_embedding):
+    async def fetch_table_data(table: str, query_embedding: List[float]) -> Any:
         try:
             if table == "user_web_data":
                 return supabase.rpc(
@@ -205,7 +210,7 @@ async def similarity_search(query: str, data_source: Dict = None,
                         'embedding_column': embedding_column,
                         'similarity_threshold': similarity_threshold,
                         'max_results': max_results,
-                        'root_url_filter': data_source['web'],
+                        'root_url_filter': data_source.get('web'),
                         'user_id_filter': user_id
                     }
                 ).execute()
@@ -230,7 +235,7 @@ async def similarity_search(query: str, data_source: Dict = None,
                         'embedding_column': embedding_column,
                         'similarity_threshold': similarity_threshold,
                         'max_results': max_results,
-                        'parent_id_filter': data_source['text_files'],
+                        'parent_id_filter': data_source.get('text_files'),
                         'filter_user_id': user_id
                     }
                 ).execute()
@@ -254,7 +259,7 @@ async def similarity_search(query: str, data_source: Dict = None,
     return all_results
 
 
-async def rag_response(user_query: str, user_search_type: str, user_id: str):
+async def rag_response(user_query: str, user_search_type: str, user_id: List[str]) -> Tuple[List[str], List[Tuple[str, str]]] :
     print("\nfunc rag_response..")
     table_names = ["user_web_data"]
 
@@ -298,7 +303,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: str):
 
     if docs and user_search_type == "Deep Search":
         """ filtered docs via agents """
-        filtered_docs = await filter_relevant_docs(user_query, docs)
+        filtered_docs = await filter_relevant_docs(user_query, docs) # type: ignore
 
         # Filter kb_titles based on filtered_docs, only for user's knowledge base items
         filtered_kb_titles = [
@@ -343,7 +348,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: str):
         raise ValueError("No relevant documents found for the given query.")
 
 
-def extract_thinking(response):
+def extract_thinking(response: str) -> List[str]:
     pattern = r'<thinking>(.*?)</thinking>'
     matches = re.findall(pattern, response, re.DOTALL)
     return ['<thinking>' + match + '</thinking>' for match in matches]

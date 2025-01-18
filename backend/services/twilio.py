@@ -6,8 +6,11 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from services.db.supabase_services import supabase_client
 from app.core.config import settings
-from twilio.rest import Client
+from twilio.rest import Client # type: ignore
+from twilio.base.exceptions import TwilioRestException
 from twilio.twiml.voice_response import VoiceResponse, Dial
+from services.cache import in_memory_cache
+from services import retellai
 
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 logger = logging.getLogger(__name__)
@@ -43,7 +46,7 @@ def get_available_numbers(client: Client, country_code: str) -> Dict[str, List[s
     return available_numbers
 
 
-async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
+async def fetch_twilio_numbers(user_id: str) -> Any:
     numbers = supabase_client().table('twilio_numbers').select('*').eq(
         'owner_user_id',
         user_id

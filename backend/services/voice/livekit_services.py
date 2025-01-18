@@ -259,7 +259,8 @@ async def create_voice_assistant(
 
         logger.info("Creating voice assistant with configuration")
         fnc_ctx = None
-
+        if not job_ctx:
+            raise ValueError("Job context is required")
         if call_type != "textbot":
             fnc_ctx = AgentFunctions(job_ctx)
             await fnc_ctx.initialize_functions()

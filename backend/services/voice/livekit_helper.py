@@ -1,6 +1,7 @@
 from services.cache import get_all_agents
 import os
 import logging
+from typing import Optional, Any, List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -9,16 +10,17 @@ DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE AS
 """
 
 
-async def get_agent_id_from_call_data(room_name: str):
+async def get_agent_id_from_call_data(room_name: str) -> Optional[str]:
     import json
     agents = await get_all_agents()
 
     print("Current working directory:", os.getcwd())
 
-    def get_agent_id_by_phone(data, phone_number):
+    def get_agent_id_by_phone(data: List[Dict[str, Any]], phone_number: str) -> Optional[str]:
         for agent in data:
             if agent.get('assigned_telephone') == phone_number:
-                return agent.get('id')
+                agent_id = agent.get('id')
+                return str(agent_id) if agent_id is not None else None
         return None
 
     try:
@@ -57,6 +59,9 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
     if room_name.startswith("call-"):
         print("entrypoint - telephone call detected")
         agent_id = await get_agent_id_from_call_data(room_name)
+        if not agent_id:
+            logger.error(f"Could not find agent_id for room: {room_name}")
+            return "Error: Could not find agent configuration", "error"
         return agent_id, "telephone"
 
     elif room_name.startswith("outbound_"):

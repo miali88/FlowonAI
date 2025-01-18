@@ -81,5 +81,7 @@ class Settings(BaseSettings):
     DAILY_SAMPLE_ROOM_URL: str = ""
     DAILY_API_KEY: str = ""
 
+    AGENT_SECOND: str = "AGENT_SECOND"
+
 
 settings = Settings()

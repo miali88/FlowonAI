@@ -1,8 +1,8 @@
 # flake8: noqa: E501
 import os
-from typing import Dict
+from typing import Dict, Any, List
 from dotenv import load_dotenv
-from nylas import Client
+from nylas import Client # type: ignore
 from services.db.supabase_services import supabase_client
 from services.cache import get_all_agents
 import ast
@@ -20,7 +20,7 @@ nylas = Client(
 )
 
 
-async def get_agent_user_cache():
+async def get_agent_user_cache() -> dict[str, Any]:
     agents = await get_all_agents()
     # Convert list of agents to a dictionary mapping agent_id to user_id
     agent_user_cache = {agent['id']: agent['userId'] for agent in agents}
@@ -54,7 +54,7 @@ async def get_agent_user_cache():
     return expanded_agent_user_cache
 
 
-async def send_email(participant_identity, conversation_history, agent_id):
+async def send_email(participant_identity: str, conversation_history: List[Dict[str, Any]], agent_id: str) -> Any:
     try:
         # Get the agent-user cache first
         agent_user_cache = await get_agent_user_cache()
@@ -70,7 +70,7 @@ async def send_email(participant_identity, conversation_history, agent_id):
                     message["user_message"].split("user input data:")[1].strip()
                 )
                 # Use ast.literal_eval instead of eval for safety
-                user_data: Dict = ast.literal_eval(data_str)
+                user_data = ast.literal_eval(data_str)
 
                 print("\n\n\n\n +_+_+_ nylas convo extracted user_data:", user_data)
                 print("Email Address:", user_data.get("Email Address"))

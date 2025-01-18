@@ -5,6 +5,7 @@ import logging
 from fastapi import HTTPException
 from supabase import create_client, Client
 from app.core.config import settings
+from typing import Any, Dict
 
 load_dotenv()
 
@@ -192,7 +193,7 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
 """
 
 
-async def create_agent(data):
+async def create_agent(data: Dict) -> Any:
     print(f"data: {data}")
 
     if data.get('dataSource') == 'tagged' and 'tag' in data:
@@ -210,12 +211,12 @@ async def create_agent(data):
     return new_agent
 
 
-async def get_agents(user_id: str):
+async def get_agents(user_id: str) -> Any:
     agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
     return agents
 
 
-async def delete_agent(agent_id: int, user_id: str):
+async def delete_agent(agent_id: int, user_id: str) -> Any:
     try:
         response = supabase.table('agents').delete().eq('id', agent_id).execute()
         return response
@@ -224,7 +225,7 @@ async def delete_agent(agent_id: int, user_id: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-async def update_agent(agent_id: int, data: dict):
+async def update_agent(agent_id: int, data: dict) -> Any:
     try:
         if 'tag' in data:
             data['dataSource'] = data['tag']
@@ -237,6 +238,6 @@ async def update_agent(agent_id: int, data: dict):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-async def get_agent_content(agent_id: str):
+async def get_agent_content(agent_id: str) -> Any:
     content = supabase.table('agents').select('*').eq('id', agent_id).execute()
     return content

@@ -2,6 +2,7 @@ from fastapi import Request, HTTPException, APIRouter
 
 import logging
 import traceback
+from typing import Any
 from services.db.supabase_services import supabase_client
 
 supabase = supabase_client()
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/")
-async def update_settings(request: Request):
+async def update_settings(request: Request) -> dict[str, str]:
     print('\n\n /settings')
     try:
         data = await request.json()
@@ -46,7 +47,7 @@ async def update_settings(request: Request):
 
 
 @router.get("/")
-async def get_settings(request: Request):
+async def get_settings(request: Request) -> dict[str, Any]:
     print('\n\n /settings')
     try:
         # Get user_id from query parameters

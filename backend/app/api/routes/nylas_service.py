@@ -2,7 +2,7 @@
 import logging
 from fastapi import HTTPException, APIRouter, Request
 from supabase import create_client, Client
-from nylas import Client as NylasClient
+from nylas import Client as NylasClient # type: ignore
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 
 from app.core.config import settings
@@ -29,13 +29,13 @@ nylas = NylasClient(
 
 
 @router.api_route("/webhook", methods=["POST", "GET"])
-async def webhook(request: Request):
+async def webhook(request: Request) -> JSONResponse:
     print("\n\n nylas/webhook \n\n")
     return JSONResponse(content={"message": "Hello, World!"}, status_code=200)
 
 
 @router.get("/auth")
-async def nylas_auth():
+async def nylas_auth() -> RedirectResponse:
     print("\n\n nylas_auth \n\n")
     """Start OAuth2 flow for Nylas"""
     auth_url = nylas.auth.url_for_oauth2({
@@ -46,7 +46,7 @@ async def nylas_auth():
 
 
 @router.get("/oauth/exchange")
-async def oauth_exchange(code: str):
+async def oauth_exchange(code: str) -> HTMLResponse:
     """Handle OAuth2 callback from Nylas"""
     if not code:
         raise HTTPException(

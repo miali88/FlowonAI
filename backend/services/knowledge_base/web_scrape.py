@@ -7,8 +7,8 @@ import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
 import os
-
-from firecrawl import FirecrawlApp
+from typing import Optional, Dict, List, Any
+from firecrawl import FirecrawlApp # type: ignore
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -25,14 +25,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def count_tokens(text, model="gpt-4o"):
+async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     print("hello, count_tokens")
     encoder = encoding_for_model(model)
     tokens = encoder.encode(text)
     return len(tokens)
 
 
-async def get_embedding(text):
+async def get_embedding(text: str) -> Any:
     print("hello, get_embedding")
     """ JINA EMBEDDINGS """
     url = 'https://api.jina.ai/v1/embeddings'
@@ -56,7 +56,7 @@ async def get_embedding(text):
             return await response.json()
 
 
-async def sliding_window_chunking(text, max_window_size=900, overlap=200):
+async def sliding_window_chunking(text: str, max_window_size: int = 900, overlap: int = 200) -> List[str]:
     print("hello, sliding_window_chunking")
     encoder = encoding_for_model("gpt-4o")
     tokens = encoder.encode(text)
@@ -72,25 +72,31 @@ async def sliding_window_chunking(text, max_window_size=900, overlap=200):
 
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+if not SUPABASE_URL:
+    raise ValueError("SUPABASE_URL is not set in the environment variables")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+if not SUPABASE_SERVICE_ROLE_KEY:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in the environment variables")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
+if not SUPABASE_ANON_KEY:
+    raise ValueError("SUPABASE_KEY is not set in the environment variables")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 
-async def insert_to_db(data):
+async def insert_to_db(data: Dict) -> None:
     print("hello, insert_to_db")
     headers_data = {
         k: v for k, v in data.items()
         if k not in ["jina_embedding", "content"]
     }
 
-    async def insert_data():
+    async def insert_data() -> Any:
         return await asyncio.to_thread(
             lambda: supabase.table('user_web_data').insert(data).execute()
         )
 
-    async def insert_headers():
+    async def insert_headers() -> Any:
         return await asyncio.to_thread(
             lambda: (
                 supabase.table('user_web_data_headers')
@@ -108,12 +114,12 @@ MAX_PAGES = 3000
 
 
 class RateLimiter:
-    def __init__(self, calls_per_minute, name=""):
+    def __init__(self, calls_per_minute: int, name: str = "") -> None:
         self.calls_per_minute = calls_per_minute
-        self.calls = []
+        self.calls: List[datetime] = []
         self.name = name
 
-    async def acquire(self):
+    async def acquire(self) -> None:
         now = datetime.now()
 
         # Clean up old calls
@@ -160,7 +166,7 @@ crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=4, max=20)
 )
-async def scrape_with_retry(url, params):
+async def scrape_with_retry(url: str, params: Dict) -> Dict:
     await scrape_limiter.acquire()
     try:
         return await asyncio.to_thread(
@@ -174,7 +180,7 @@ async def scrape_with_retry(url, params):
         raise
 
 
-async def process_single_url(site: str, user_id: str, root_url: str):
+async def process_single_url(site: str, user_id: Optional[str], root_url: str) -> Optional[List[Dict]]:
     print("\nhello, process_single_url")
 
     if "screen" in site:
@@ -187,11 +193,11 @@ async def process_single_url(site: str, user_id: str, root_url: str):
             {'formats': ['markdown'], 'waitFor': 2000}
         )
 
-        content = [
+        content_list = [
             item for item in response['markdown'].split('\n\n')
             if not item.startswith('[![]')
         ]
-        content = "\n\n".join(content)
+        content = "\n\n".join(content_list)
 
         try:
             header = (
@@ -205,7 +211,7 @@ async def process_single_url(site: str, user_id: str, root_url: str):
         chunks = await sliding_window_chunking(content)
         results = []
 
-        async def process_chunk(chunk):
+        async def process_chunk(chunk: str) -> Dict:
             sb_insert = {
                 "url": site,
                 "header": header,
@@ -234,7 +240,7 @@ async def process_single_url(site: str, user_id: str, root_url: str):
         return None
 
 
-async def scrape_url(urls: List[str], user_id: str = None):
+async def scrape_url(urls: List[str], user_id: Optional[str]) -> List[Dict]:
     print("hello, scrape_url")
     print(f"Starting scrape process for user {user_id} at {datetime.now()}")
 
@@ -253,7 +259,7 @@ async def scrape_url(urls: List[str], user_id: str = None):
     return flat_results
 
 
-async def map_url(url) -> List[str]:
+async def map_url(url: str) -> List[str]:
     print("hello, map_url")
     logger.info(f"Starting URL mapping for: {url}")
 
