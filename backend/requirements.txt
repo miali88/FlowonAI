@@ -254,3 +254,4 @@ websockets==13.1
 wrapt==1.16.0
 yarl==1.13.1
 zipp==3.21.0
+types-requests>=2.31.0.20240311

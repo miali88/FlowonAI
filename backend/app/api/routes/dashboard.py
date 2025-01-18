@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union, Any
 from pydantic import BaseModel
 import json
 import logging
@@ -67,7 +67,7 @@ async def upload_file_handler(
     file: UploadFile = File(...),
     authorization: str = Header(...),
     x_user_id: str = Header(..., alias="X-User-ID")
-):
+) -> JSONResponse:
     try:
         logger.info(f"Received file: {file.filename}")
         logger.info(f"User ID from header: {x_user_id}")
@@ -75,7 +75,8 @@ async def upload_file_handler(
         # Validate the token
         if not authorization or not authorization.startswith('Bearer '):
             raise HTTPException(status_code=401, detail="Invalid or missing token")
-
+        content: str
+        file_extension: str
         content, file_extension = await file_processing.process_file(file)
         logger.info("Finished processing file")
 
@@ -120,7 +121,7 @@ async def upload_file_handler(
 
 
 @router.get("/knowledge_base")
-async def get_items_handler(current_user: str = Depends(get_current_user)):
+async def get_items_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
     try:
         items, total_tokens = await get_kb_items(current_user)
         logger.info(f"Total tokens: {total_tokens}")
@@ -131,7 +132,7 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
 
 
 @router.get("/knowledge_base_headers")
-async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
+async def get_items_headers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
     try:
         items, total_tokens = await get_kb_headers(current_user)
         logger.info(f"Total tokens: {total_tokens}")
@@ -145,7 +146,7 @@ async def get_items_headers_handler(current_user: str = Depends(get_current_user
 async def create_item_handler(
     request: Request,
     background_tasks: BackgroundTasks,
-):
+) -> JSONResponse:
     logger.debug("Received POST request to /knowledge_base")
     raw_body = await request.body()
     logger.debug(f"Raw request body: {raw_body.decode()}")
@@ -174,6 +175,7 @@ async def create_item_handler(
             new_item.data[0]['id'],
             new_item.data[0]['content'],
             new_item.data[0]['user_id'],
+            new_item.data[0]['title']
         )
 
         return JSONResponse(
@@ -196,7 +198,7 @@ async def delete_item_handler(
     item_id: int,
     request: Request,
     current_user: str = Depends(get_current_user)
-):
+) -> dict[str, str]:
     try:
         body = await request.json()
         data_type = body.get('data_type')
@@ -236,10 +238,10 @@ async def scrape_url_handler(
     request: Request,
     background_tasks: BackgroundTasks,
     current_user: str = Depends(get_current_user)
-):
+) -> dict[str, Union[str, int]]:
     try:
         request_data = await request.json()
-        request_data: List[str] = request_data.get('urls')
+        request_data = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
 
         background_tasks.add_task(scrape_url, urls, current_user)
@@ -253,7 +255,7 @@ async def scrape_url_handler(
 async def crawl_url_handler(
     request: ScrapeUrlRequest,
     current_user: str = Depends(get_current_user)
-):
+) -> List[str]:
     try:
         map_result: List[str] = await map_url(request.url)
         return map_result
@@ -265,7 +267,7 @@ async def crawl_url_handler(
 async def calculate_tokens_handler(
     request: Request,
     current_user: str = Depends(get_current_user)
-):
+) -> dict[str, int]:
     try:
         data = await request.json()
         content = data.get('content', '')
@@ -277,9 +279,11 @@ async def calculate_tokens_handler(
 
 
 @router.get("/users")
-async def user_info(current_user: str = Depends(get_current_user)):
+async def user_info(current_user: str = Depends(get_current_user)) -> dict[str, Any]:
     try:
         user_info = supabase.table('users').select('*').eq('id', current_user).execute()
+        if not user_info.data or not isinstance(user_info.data[0], dict):
+            raise ValueError("No valid user information found")
         return user_info.data[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error updating user: {str(e)}")

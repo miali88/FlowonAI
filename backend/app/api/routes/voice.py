@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 
 from fastapi import Request, APIRouter
@@ -16,12 +16,16 @@ jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 
 # Initialize Supabase client
 supabase_url = os.environ.get("SUPABASE_URL")
+if not supabase_url:
+    raise ValueError("SUPABASE_URL environment variable is not set")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+if not supabase_key:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is not set")
 supabase = create_client(supabase_url, supabase_key)
 
 
 @router.post("/wh")
-async def livekit_room_webhook(request: Request):
+async def livekit_room_webhook(request: Request) -> dict[str, str]:
     data = await request.json()
     print("call_data id in webhook:", id(call_data))
 
@@ -49,7 +53,7 @@ async def livekit_room_webhook(request: Request):
     return {"message": "Webhook received successfully"}
 
 
-def sip_call_extract(data) -> Dict[str, Any]:
+def sip_call_extract(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     kind = data.get('participant', {}).get('kind')
     if kind == 'SIP':
         result = {

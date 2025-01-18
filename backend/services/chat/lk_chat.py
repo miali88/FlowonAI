@@ -35,7 +35,7 @@ class ChatTester:
         self.scenarios_dir.mkdir(exist_ok=True)
         self.current_scenario = None
 
-    def save_scenario(self, scenario: ChatScenario):
+    def save_scenario(self, scenario: ChatScenario) -> None:
         scenario_dict = {
             "name": scenario.name,
             "description": scenario.description,
@@ -82,6 +82,12 @@ class ChatInitializer:
         await self._setup_agent_metadata()
         await self._setup_contexts()
         self._register_functions()
+        if not self.llm_instance:
+            raise ValueError("LLM instance not initialized")
+        if not self.chat_ctx:
+            raise ValueError("Chat context not initialized")
+        if not self.fnc_ctx:
+            raise ValueError("Function context not initialized")
         return self.llm_instance, self.chat_ctx, self.fnc_ctx
 
     async def _setup_agent_metadata(self) -> None:
@@ -93,7 +99,8 @@ class ChatInitializer:
     async def _setup_contexts(self) -> None:
         self.chat_ctx = llm.ChatContext()
         self.fnc_ctx = llm.FunctionContext()
-
+        if not self.agent_metadata:
+            raise ValueError("Agent metadata not initialized")
         # Setup system instructions
         if self.agent_metadata.get('instructions'):
             self.chat_ctx.append(
