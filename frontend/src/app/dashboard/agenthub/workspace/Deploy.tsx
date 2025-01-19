@@ -19,6 +19,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 
 // Define a type for telephony number details
@@ -60,6 +62,17 @@ interface AvailableNumber {
   friendlyName: string;
 }
 
+// Add interface for the new response format
+interface TwilioNumbers {
+  local?: string[];
+  toll_free?: string[];
+  mobile?: string[];
+}
+
+interface AvailableNumbersResponse {
+  numbers: TwilioNumbers;
+}
+
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -68,7 +81,7 @@ const Deploy: React.FC<DeployProps> = ({
 }) => {
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const [availableNumbers, setAvailableNumbers] = useState<string[]>([]);
+  const [availableNumbers, setAvailableNumbers] = useState<TwilioNumbers>({});
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>("");
   const [showPhoneFields, setShowPhoneFields] = useState(false);
@@ -109,12 +122,11 @@ const Deploy: React.FC<DeployProps> = ({
         throw new Error("Failed to fetch available numbers");
       }
 
-      const data = await response.json();
-      // The backend returns { numbers: { available: string[] } }
-      setAvailableNumbers(data.numbers.available || []);
+      const data: AvailableNumbersResponse = await response.json();
+      setAvailableNumbers(data.numbers);
     } catch (error) {
       console.error("Error fetching available numbers:", error);
-      setAvailableNumbers([]);
+      setAvailableNumbers({});
     } finally {
       setIsLoadingNumbers(false);
     }
@@ -126,7 +138,7 @@ const Deploy: React.FC<DeployProps> = ({
     if (value) {
       fetchAvailableNumbers(value);
     } else {
-      setAvailableNumbers([]);
+      setAvailableNumbers({});
     }
   };
 
@@ -158,22 +170,71 @@ const Deploy: React.FC<DeployProps> = ({
             <Label>Available Phone Numbers</Label>
             <Select
               disabled={isLoadingNumbers}
-              value={selectedPhoneNumber}
-              onValueChange={setSelectedPhoneNumber}
+              value={selectedAgent?.twilioConfig?.phoneNumbers?.[0]?.id || ""}
+              onValueChange={(value) => {
+                if (selectedAgent) {
+                  setSelectedAgent({
+                    ...selectedAgent,
+                    twilioConfig: {
+                      ...selectedAgent.twilioConfig,
+                      phoneNumbers: [
+                        {
+                          id: value,
+                          title: value,
+                          data_type: "phone_number",
+                        },
+                      ],
+                    },
+                  });
+                }
+              }}
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue
                   placeholder={
-                    isLoadingNumbers ? "Loading..." : "Select a number"
+                    isLoadingNumbers ? "Loading..." : "Select phone number"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {availableNumbers.map((number) => (
-                  <SelectItem key={number} value={number}>
-                    {number}
-                  </SelectItem>
-                ))}
+                {/* Local Numbers */}
+                {availableNumbers.local &&
+                  availableNumbers.local.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Local Numbers</SelectLabel>
+                      {availableNumbers.local.map((number) => (
+                        <SelectItem key={number} value={number}>
+                          {number}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+
+                {/* Toll Free Numbers */}
+                {availableNumbers.toll_free &&
+                  availableNumbers.toll_free.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Toll Free Numbers</SelectLabel>
+                      {availableNumbers.toll_free.map((number) => (
+                        <SelectItem key={number} value={number}>
+                          {number}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+
+                {/* Mobile Numbers */}
+                {availableNumbers.mobile &&
+                  availableNumbers.mobile.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Mobile Numbers</SelectLabel>
+                      {availableNumbers.mobile.map((number) => (
+                        <SelectItem key={number} value={number}>
+                          {number}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
               </SelectContent>
             </Select>
           </div>
