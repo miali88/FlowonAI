@@ -116,6 +116,8 @@ async def insert_to_db(data):
             asyncio.to_thread(lambda: supabase.table('user_web_data_headers').upsert(headers_data).execute())
         )
 
+    logger.info(f"Attempting to upsert data for URL: {data['url']}")
+
 # Rate limit constants
 SCRAPE_RATE_LIMIT = 20  # per minute
 CRAWL_RATE_LIMIT = 3    # per minute
