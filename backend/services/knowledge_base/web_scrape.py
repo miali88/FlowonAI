@@ -83,16 +83,38 @@ async def insert_to_db(data):
     headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
     
     async def insert_data():
-        return await asyncio.to_thread(
-            lambda: supabase.table('user_web_data').insert(data).execute()
-        )
-    
+        try:
+            return await asyncio.to_thread(
+                lambda: supabase.table('user_web_data')
+                    .insert(data)
+                    .execute()
+            )
+        except Exception as e:
+            logger.error(f"Error inserting data: {str(e)}")
+            logger.error(f"Data that caused conflict: {data['url']}")
+            raise
+
     async def insert_headers():
-        return await asyncio.to_thread(
-            lambda: supabase.table('user_web_data_headers').insert(headers_data).execute()
+        try:
+            return await asyncio.to_thread(
+                lambda: supabase.table('user_web_data_headers')
+                    .insert(headers_data)
+                    .execute()
+            )
+        except Exception as e:
+            logger.error(f"Error inserting headers: {str(e)}")
+            logger.error(f"Headers that caused conflict: {headers_data['url']}")
+            raise
+
+    try:
+        await asyncio.gather(insert_data(), insert_headers())
+    except Exception as e:
+        logger.error(f"Database insertion error: {str(e)}")
+        # Optionally, you could try to upsert instead:
+        await asyncio.gather(
+            asyncio.to_thread(lambda: supabase.table('user_web_data').upsert(data).execute()),
+            asyncio.to_thread(lambda: supabase.table('user_web_data_headers').upsert(headers_data).execute())
         )
-    
-    await asyncio.gather(insert_data(), insert_headers())
 
 # Rate limit constants
 SCRAPE_RATE_LIMIT = 20  # per minute
