@@ -55,6 +55,7 @@ interface DeployProps {
     telephony_numbers?: Record<string, TelephonyNumberDetails>;
     [key: string]: unknown;
   } | null;
+  userId: string;
 }
 
 interface AvailableNumber {
@@ -73,11 +74,23 @@ interface AvailableNumbersResponse {
   numbers: TwilioNumbers;
 }
 
+// Add interface for user numbers response
+interface UserNumber {
+  phone_number: string;
+  friendly_name?: string;
+  capabilities: {
+    voice?: boolean;
+    SMS?: boolean;
+    MMS?: boolean;
+  };
+}
+
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
   userInfo,
+  userId,
 }) => {
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
@@ -85,6 +98,8 @@ const Deploy: React.FC<DeployProps> = ({
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>("");
   const [showPhoneFields, setShowPhoneFields] = useState(false);
+  const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
+  const [isLoadingUserNumbers, setIsLoadingUserNumbers] = useState(false);
 
   useEffect(() => {
     const fetchCountryCodes = async () => {
@@ -146,13 +161,45 @@ const Deploy: React.FC<DeployProps> = ({
     console.log("Selected Agent:", selectedAgent);
   }, [selectedAgent]);
 
+  // Add effect to fetch user numbers on component mount
+  useEffect(() => {
+    const fetchUserNumbers = async () => {
+      setIsLoadingUserNumbers(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/user_numbers`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": userId,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user numbers");
+        }
+
+        const data = await response.json();
+        setUserNumbers(data.numbers || []);
+      } catch (error) {
+        console.error("Error fetching user numbers:", error);
+        setUserNumbers([]);
+      } finally {
+        setIsLoadingUserNumbers(false);
+      }
+    };
+
+    fetchUserNumbers();
+  }, [userId]);
+
   const renderPhoneNumberFields = () => {
     return (
-      <div className="space-y-4 max-w-sm">
-        <div className="mx-2">
+      <div className="space-y-4">
+        <div>
           <Label>Country Code</Label>
           <Select value={selectedCountry} onValueChange={handleCountryChange}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[200px] mx-2">
               <SelectValue placeholder="Select country code" />
             </SelectTrigger>
             <SelectContent>
@@ -166,7 +213,7 @@ const Deploy: React.FC<DeployProps> = ({
         </div>
 
         {selectedCountry && (
-          <div className="mx-2">
+          <div>
             <Label>Available Phone Numbers</Label>
             <Select
               disabled={isLoadingNumbers}
@@ -189,7 +236,7 @@ const Deploy: React.FC<DeployProps> = ({
                 }
               }}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] mx-2">
                 <SelectValue
                   placeholder={
                     isLoadingNumbers ? "Loading..." : "Select phone number"
@@ -197,7 +244,6 @@ const Deploy: React.FC<DeployProps> = ({
                 />
               </SelectTrigger>
               <SelectContent>
-                {/* Local Numbers */}
                 {availableNumbers.local &&
                   availableNumbers.local.length > 0 && (
                     <SelectGroup>
@@ -210,7 +256,6 @@ const Deploy: React.FC<DeployProps> = ({
                     </SelectGroup>
                   )}
 
-                {/* Toll Free Numbers */}
                 {availableNumbers.toll_free &&
                   availableNumbers.toll_free.length > 0 && (
                     <SelectGroup>
@@ -223,7 +268,6 @@ const Deploy: React.FC<DeployProps> = ({
                     </SelectGroup>
                   )}
 
-                {/* Mobile Numbers */}
                 {availableNumbers.mobile &&
                   availableNumbers.mobile.length > 0 && (
                     <SelectGroup>
@@ -306,7 +350,60 @@ frameborder="0"
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-4">{renderPhoneNumberFields()}</div>
+              <div className="flex">
+                {/* Left Section - Purchase Process */}
+                <div className="w-1/2">{renderPhoneNumberFields()}</div>
+
+                {/* Right Section - Existing Numbers */}
+                <div className="w-1/2">
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold mb-4">
+                      Existing Numbers
+                    </h3>
+                    {isLoadingUserNumbers ? (
+                      <div className="text-sm text-muted-foreground">
+                        Loading...
+                      </div>
+                    ) : userNumbers.length > 0 ? (
+                      <div className="space-y-2">
+                        {userNumbers.map((number) => (
+                          <div
+                            key={number.phone_number}
+                            className="flex items-center justify-between p-2 rounded-lg border"
+                          >
+                            <div>
+                              <p className="font-medium">
+                                {number.friendly_name || number.phone_number}
+                              </p>
+                              <div className="flex gap-2 mt-1">
+                                {number.capabilities.voice && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    Voice
+                                  </span>
+                                )}
+                                {number.capabilities.SMS && (
+                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                    SMS
+                                  </span>
+                                )}
+                                {number.capabilities.MMS && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                    MMS
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No phone numbers found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         );
