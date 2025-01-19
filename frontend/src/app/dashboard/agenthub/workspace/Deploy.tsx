@@ -1,13 +1,25 @@
-import React from 'react';
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import Image from 'next/image';
-import { Agent as BaseAgent } from '../AgentCards';
-import { MultiSelect } from './multiselect_deploy';
-import { useEffect, useState } from 'react';
-import MicIcon from './MicIcon';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import Image from "next/image";
+import { Agent as BaseAgent } from "../AgentCards";
+import { MultiSelect } from "./multiselect_deploy";
+import { useEffect, useState } from "react";
+import MicIcon from "./MicIcon";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define a type for telephony number details
 interface TelephonyNumberDetails {
@@ -43,63 +55,141 @@ interface DeployProps {
   } | null;
 }
 
+interface AvailableNumber {
+  phoneNumber: string;
+  friendlyName: string;
+}
+
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
   userInfo,
 }) => {
-  const [countryCodes, setCountryCodes] = useState<Record<string, string[]>>({});
+  const [countryCodes, setCountryCodes] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [availableNumbers, setAvailableNumbers] = useState<string[]>([]);
+  const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>("");
+  const [showPhoneFields, setShowPhoneFields] = useState(false);
 
   useEffect(() => {
     const fetchCountryCodes = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/country_codes`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/country_codes`
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch country codes');
+          throw new Error("Failed to fetch country codes");
         }
         const data = await response.json();
-        setCountryCodes(data);
+        setCountryCodes(Object.values(data).flat());
       } catch (error) {
-        console.error('Error fetching country codes:', error);
+        console.error("Error fetching country codes:", error);
       }
     };
 
     fetchCountryCodes();
   }, []);
 
+  const fetchAvailableNumbers = async (countryCode: string) => {
+    setIsLoadingNumbers(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/available_numbers/${countryCode}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch available numbers");
+      }
+
+      const data = await response.json();
+      // The backend returns { numbers: { available: string[] } }
+      setAvailableNumbers(data.numbers.available || []);
+    } catch (error) {
+      console.error("Error fetching available numbers:", error);
+      setAvailableNumbers([]);
+    } finally {
+      setIsLoadingNumbers(false);
+    }
+  };
+
+  // Update the country selection handler to fetch numbers
+  const handleCountryChange = (value: string) => {
+    setSelectedCountry(value);
+    if (value) {
+      fetchAvailableNumbers(value);
+    } else {
+      setAvailableNumbers([]);
+    }
+  };
+
   useEffect(() => {
-    console.log('Selected Agent:', selectedAgent);
+    console.log("Selected Agent:", selectedAgent);
   }, [selectedAgent]);
 
-  const renderPhoneNumbers = () => {
-    if (!userInfo) {
-      return <div className="text-sm text-muted-foreground">Loading user information...</div>;
-    }
-
-    const phoneNumberItems = Object.entries(userInfo.telephony_numbers || {}).map(([number]) => ({
-      id: number,
-      title: number,
-      data_type: 'phone_number'
-    }));
-
+  const renderPhoneNumberFields = () => {
     return (
-      <MultiSelect
-        items={phoneNumberItems}
-        selectedItems={selectedAgent?.twilioConfig?.phoneNumbers || []}
-        onChange={(items: MultiSelectItem[]) => {
-          if (selectedAgent) {
-            setSelectedAgent({
-              ...selectedAgent,
-              twilioConfig: {
-                ...selectedAgent?.twilioConfig,
-                phoneNumbers: items
-              }
-            });
+      <div className="space-y-4 max-w-sm">
+        <div className="mx-2">
+          <Label>Country Code</Label>
+          <Select value={selectedCountry} onValueChange={handleCountryChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select country code" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryCodes.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedCountry && (
+          <div className="mx-2">
+            <Label>Available Phone Numbers</Label>
+            <Select
+              disabled={isLoadingNumbers}
+              value={selectedPhoneNumber}
+              onValueChange={setSelectedPhoneNumber}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue
+                  placeholder={
+                    isLoadingNumbers ? "Loading..." : "Select a number"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {availableNumbers.map((number) => (
+                  <SelectItem key={number} value={number}>
+                    {number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <Button
+          className="w-[200px] mx-2"
+          onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}
+          disabled={
+            !selectedCountry ||
+            !selectedAgent?.twilioConfig?.phoneNumbers?.[0]?.id
           }
-        }}
-        countries={Object.values(countryCodes).flat()}
-      />
+        >
+          Purchase
+        </Button>
+      </div>
     );
   };
 
@@ -146,34 +236,16 @@ frameborder="0"
               <div className="flex items-center gap-2">
                 Telephony Integration
                 <div className="flex-grow" />
-                <Image 
-                  src="/twilio-icon.svg" 
-                  alt="Twilio" 
-                  width={28} 
+                <Image
+                  src="/twilio-icon.svg"
+                  alt="Twilio"
+                  width={28}
                   height={28}
                 />
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="twilioPhoneNumber">Assigned Number</Label>
-                  <div className="space-y-2">
-                    {renderPhoneNumbers()}
-                  </div>
-                </div>
-                <Button 
-                  className="mt-4"
-                  onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}
-                >
-                  Save Twilio Configuration
-                </Button>
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    After saving your Twilio configuration, your agent will be accessible via phone calls to your Twilio number.
-                  </p>
-                </div>
-              </div>
+              <div className="space-y-4">{renderPhoneNumberFields()}</div>
             </AccordionContent>
           </AccordionItem>
         );
@@ -183,7 +255,12 @@ frameborder="0"
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
                 Feedback Widget
-                <Image src="/icons/feedback.png" alt="Feedback" width={24} height={24} />
+                <Image
+                  src="/icons/feedback.png"
+                  alt="Feedback"
+                  width={24}
+                  height={24}
+                />
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -191,7 +268,8 @@ frameborder="0"
                 <div>
                   <Label className="text-sm font-medium">Script Embed</Label>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Add this script to your website to enable the feedback widget.
+                    Add this script to your website to enable the feedback
+                    widget.
                   </p>
                   <div className="relative">
                     <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
@@ -201,7 +279,9 @@ frameborder="0"
                       variant="secondary"
                       size="sm"
                       className="absolute top-2 right-2"
-                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                      onClick={() =>
+                        navigator.clipboard.writeText(textChatScriptCode)
+                      }
                     >
                       Copy
                     </Button>
@@ -270,7 +350,12 @@ frameborder="0"
             <AccordionTrigger className="text-lg font-semibold">
               <div className="flex items-center gap-2">
                 Text Chat Agent
-                <Image src="/icons/live-chat.png" alt="Chat" width={24} height={24} />
+                <Image
+                  src="/icons/live-chat.png"
+                  alt="Chat"
+                  width={24}
+                  height={24}
+                />
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -278,7 +363,8 @@ frameborder="0"
                 <div>
                   <Label className="text-sm font-medium">Script Embed</Label>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Add this script to your website to enable the text chat widget.
+                    Add this script to your website to enable the text chat
+                    widget.
                   </p>
                   <div className="relative">
                     <pre className="bg-secondary rounded-md p-4 overflow-x-auto">
@@ -288,7 +374,9 @@ frameborder="0"
                       variant="secondary"
                       size="sm"
                       className="absolute top-2 right-2"
-                      onClick={() => navigator.clipboard.writeText(textChatScriptCode)}
+                      onClick={() =>
+                        navigator.clipboard.writeText(textChatScriptCode)
+                      }
                     >
                       Copy
                     </Button>
@@ -299,7 +387,7 @@ frameborder="0"
           </AccordionItem>
         );
       default:
-      return null;
+        return null;
     }
   };
 
@@ -321,10 +409,10 @@ frameborder="0"
   return (
     <Card>
       <CardContent className="space-y-6">
-        <Accordion 
-          type="single" 
+        <Accordion
+          type="single"
           defaultValue={getDefaultAccordionValue(selectedAgent?.agentPurpose)}
-          collapsible={false} 
+          collapsible={false}
           className="w-full"
         >
           {renderDeploymentOptions()}
