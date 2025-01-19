@@ -20,6 +20,20 @@ class Event(BaseModel):
     args: Optional[Dict[str, Any]] = None
 
 
+
+async def create_outbound_call(to_number: str, from_number: str):
+    """
+    Initiate an outbound call using Twilio
+    """
+    # The url parameter should point to your webhook endpoint that will handle the call
+    call = client.calls.create(
+        to=to_number,
+        from_=from_number,
+        url='https://internally-wise-spaniel.eu.ngrok.io/api/v1/twilio/'  # Replace with your webhook URL
+    )
+    return call
+
+
 def get_country_codes() -> List[str]:
     countries = client.available_phone_numbers.list()
     return [country.country_code for country in countries]

@@ -4,10 +4,8 @@ from typing import Dict, List
 
 from services import twilio
 from app.api.deps import get_current_user
-from sqlalchemy.orm import Session
 
 router = APIRouter()
-
 
 """ TWILIO NUMBER FUNCTIONS FOR FRONTEND """
 @router.get("/country_codes", response_model=dict)
@@ -33,8 +31,17 @@ async def get_user_numbers_handler(current_user: str = Depends(get_current_user)
 
 """ TWILIO WEBHOOK FUNCTIONS """
 @router.post("/")
-async def twilio_status_update() -> JSONResponse:
-    return JSONResponse(content={"message": "Twilio status update received"})
+async def twilio_status_update() -> Response:
+    print("\n\nTwilio status update received")
+    # Create a simple TwiML response that answers the call and says something
+    twiml_response = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Say>Hello, thank you for calling!</Say>
+    </Response>
+    """
+    return Response(content=twiml_response, media_type="application/xml")
+
 
 @router.post('/add_to_conference')
 async def add_to_conference_route(request: Request) -> Response:
@@ -69,4 +76,21 @@ async def add_to_conference_route(request: Request) -> Response:
 #     except Exception as e:
 #         print(f"Error in /retell_handle : {e}")
 #         raise HTTPException(status_code=500, detail=str(e))
+        
+
+@router.post("/initiate_call")
+async def initiate_call(
+    to_number: str,
+    from_number: str,
+) -> JSONResponse:
+    """Initiate an outbound call using Twilio"""
+    try:
+        # Call should be handled by the twilio service
+        call = await twilio.create_outbound_call(
+            to_number=to_number,
+            from_number=from_number
+        )
+        return JSONResponse(content={"message": "Call initiated", "call_sid": call.sid})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
         
