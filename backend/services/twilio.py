@@ -8,9 +8,6 @@ from services.db.supabase_services import supabase_client
 from app.core.config import settings
 from twilio.rest import Client # type: ignore
 from twilio.base.exceptions import TwilioRestException
-from twilio.twiml.voice_response import VoiceResponse, Dial
-from services.cache import in_memory_cache
-from services import retellai
 
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 logger = logging.getLogger(__name__)
@@ -124,41 +121,3 @@ async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> Non
     except Exception as err:
         print(f"Error in agent_outbound: {err}")
 
-
-async def admin_to_conf(event: Event, request: Request) -> None:
-    twiml_url = "http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"
-    response = VoiceResponse()
-    dial = Dial()
-
-    dial.conference(
-        'NoMusicNoBeepRoom',
-        beep=False,
-        wait_url=twiml_url,
-        start_conference_on_enter=True,
-        end_conference_on_exit=True
-    )
-    response.append(dial)
-
-    client.calls(
-        in_memory_cache.get("AGENT_FIRST.twilio_callsid")
-    ).update(twiml=response)
-    client.calls(
-        in_memory_cache.get("AGENT_SECOND.twilio_callsid")
-    ).update(twiml=response)
-
-    print(response)
-
-
-async def handle_twilio_logic(
-    agent_id_path: str, data: Dict[str, Any]
-) -> Optional[str]:
-    """Handle Twilio-specific operations."""
-    try:
-        agent_type = retellai.get_agent_type(agent_id_path)
-        if 'CallSid' in data:
-            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
-            print(in_memory_cache.get_all())
-        return data.get('CallSid')
-    except Exception as e:
-        logging.error(f"Error in handle_twilio_logic: {str(e)}")
-        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")

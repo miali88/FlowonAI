@@ -282,7 +282,7 @@ async def transfer_call(
         return "Error: Room name is not available"
     agent_id = await detect_call_type_and_get_agent_id(room_name)
 
-    agent_metadata = await get_agent_metadata(agent_id[0] if isinstance(agent_id, tuple) else agent_id)
+    agent_metadata: Dict = await get_agent_metadata(agent_id)
 
     if not agent_metadata:
         logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")

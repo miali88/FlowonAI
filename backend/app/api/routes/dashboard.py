@@ -56,7 +56,6 @@ class KnowledgeBaseItemCreate(BaseModel):
     content: str
     user_id: str
 
-
 class ScrapeUrlRequest(BaseModel):
     url: str
 
@@ -75,6 +74,7 @@ async def upload_file_handler(
         # Validate the token
         if not authorization or not authorization.startswith('Bearer '):
             raise HTTPException(status_code=401, detail="Invalid or missing token")
+        
         content: str
         file_extension: str
         content, file_extension = await file_processing.process_file(file)
