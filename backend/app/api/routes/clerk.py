@@ -1,5 +1,7 @@
 from fastapi import Request, APIRouter, Header, HTTPException, Query
 from svix.webhooks import Webhook, WebhookVerificationError
+from datetime import datetime
+from services.db.supabase_services import supabase_client
 
 import os
 
@@ -8,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.post('/')
+@router.post('')
 async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
                              svix_timestamp: str = Header(None), svix_signature: str = Header(None)):
     print("\n\nclerk endpoint:\n\n")
@@ -36,7 +38,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
     request_data = await request.json()
     if event_type == "user.created":
         print("user created")
-        #await post_user(request_data)
+        await post_user(request_data)
         
     elif event_type == "session.created":
         print("session created")
@@ -46,39 +48,47 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
     return {"status": "success"}
 
 
-# async def post_user(payload):
-#     user_data = payload.get('data', {})
-#     user_id = user_data.get('id')
-#     first_name = user_data.get('first_name')
-#     last_name = user_data.get('last_name')
-#     email_addresses = user_data.get('email_addresses', [])
-#     primary_email_address_id = user_data.get('primary_email_address_id')
-
-#     print("\n\npost_user function called with user_id:", user_id)
+async def post_user(payload):
+    user_data = payload.get('data', {})
     
-#     try:
-#         # Find the primary email address
-#         primary_email = next((email['email_address'] for email in email_addresses if email['id'] == primary_email_address_id), None)
-
-#         # Convert timestamps from milliseconds to ISO format strings
-#         created_at = datetime.fromtimestamp(user_data.get('created_at') / 1000).isoformat() if user_data.get('created_at') else None
-#         last_sign_in_at = datetime.fromtimestamp(user_data.get('last_sign_in_at') / 1000).isoformat() if user_data.get('last_sign_in_at') else None
-#         updated_at = datetime.fromtimestamp(user_data.get('updated_at') / 1000).isoformat() if user_data.get('updated_at') else None
-
-#         data, count = supabase.table('users_data').insert({
-#             'user_id': user_id,
-#             'first_name': first_name,
-#             'last_name': last_name,
-#             'email': primary_email,
-#             'created_at': created_at,
-#             'last_sign_in_at': last_sign_in_at,
-#             'image_url': user_data.get('image_url'),
-#             'object': user_data.get('object'),
-#             'updated_at': updated_at
-#         }).execute()
+    # Extract all required fields
+    email_addresses = user_data.get('email_addresses', [])
+    primary_email_address_id = user_data.get('primary_email_address_id')
+    
+    try:
+        # Find the primary email address
+        primary_email = next((email['email_address'] for email in email_addresses if email['id'] == primary_email_address_id), None)
         
-#         print(f"User data saved successfully. Affected rows: {count}")
-#         return data
-#     except Exception as e:
-#         print(f"Error saving user data to database: {str(e)}")
-#         return None
+        # Generate a default username from email (you may want to implement a more sophisticated approach)
+        default_username = primary_email.split('@')[0] if primary_email else None
+        
+        # Convert timestamps from milliseconds to ISO format
+        created_at = datetime.fromtimestamp(user_data.get('created_at') / 1000).isoformat() if user_data.get('created_at') else None
+        updated_at = datetime.fromtimestamp(user_data.get('updated_at') / 1000).isoformat() if user_data.get('updated_at') else None
+        last_login = datetime.fromtimestamp(user_data.get('last_sign_in_at') / 1000).isoformat() if user_data.get('last_sign_in_at') else None
+
+        # Prepare user data matching the table schema
+        user_record = {
+            'id': user_data.get('id'),  # Using Clerk's user_id as primary key
+            'username': default_username,
+            'email': primary_email,
+            'phone_number': None,  # Can be updated if you want to use primary phone from Clerk
+            'password_hash': 'clerk_authenticated',  # Placeholder since Clerk handles auth
+            'created_at': created_at,
+            'updated_at': updated_at,
+            'last_login': last_login,
+            'is_active': True,
+            'role': 'user',
+            'notification_settings': {},  # Default empty JSON
+            'account_settings': {},  # Default empty JSON
+            'user_plan': 'free',  # Default value
+            'telephony_numbers': {}  # Default empty JSON
+        }
+
+        data, count = supabase_client().table('users').insert(user_record).execute()
+        
+        logger.info(f"User data saved successfully. Affected rows: {count}")
+        return data
+    except Exception as e:
+        logger.error(f"Error saving user data to database: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
