@@ -14,11 +14,15 @@ async def get_country_codes_handler() -> JSONResponse:
     twilio_countries = twilio.get_country_codes()
     return JSONResponse(content={"countries": twilio_countries})
 
-@router.get("/available_numbers/{country_code}", response_model=Dict[str, Dict[str, List[str]]])
+@router.get("/available_numbers/{country_code}")
 async def get_available_numbers_handler(country_code: str) -> JSONResponse:
     """Get list of available numbers for a given country code from Twilio"""
+    print(f"Getting available numbers for country code: {country_code}")
+
     available_numbers = twilio.get_available_numbers(country_code)
+
     return JSONResponse(content={"numbers": available_numbers})
+
 
 @router.get("/user_numbers")
 async def get_user_numbers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:

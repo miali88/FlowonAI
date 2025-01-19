@@ -38,7 +38,7 @@ def get_country_codes() -> List[str]:
     countries = client.available_phone_numbers.list()
     return [country.country_code for country in countries]
 
-def get_available_numbers(client: Client, country_code: str) -> Dict[str, List[str]]:
+def get_available_numbers(country_code: str) -> Dict[str, List[str]]:
     number_types = ['local', 'toll_free', 'mobile', 'national']
     available_numbers: Dict[str, List[str]] = {}
     
