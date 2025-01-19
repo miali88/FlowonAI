@@ -235,9 +235,12 @@ async def calculate_tokens_handler(request: Request, current_user: str = Depends
 async def user_info(current_user: str = Depends(get_current_user)):
     try:
         user_info = supabase.table('users').select('*').eq('id', current_user).execute()
+        if not user_info.data:
+            raise HTTPException(status_code=404, detail="User not found")
         return user_info.data[0]
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error updating user: {str(e)}")
+        logger.error(f"Error fetching user info: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error fetching user info: {str(e)}")
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""

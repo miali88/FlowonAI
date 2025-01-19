@@ -8,6 +8,7 @@ import openai
 from humanloop import Humanloop
 from dotenv import load_dotenv
 import os
+import httpx
 
 load_dotenv()
 
@@ -98,19 +99,25 @@ async def create_agents_from_urls(url: str) -> str:
         }
 
         # POST request
-        response = requests.post(
-            "https://flowon.ai/api/v1/livekit/new_agent",
-            json=payload,
-            headers={"x-user-id": "user_2mmXezcGmjZCf88gT2v2waCBsXv"}
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f"Failed to create agent: {response.text}")
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.post(
+                "https://flowon.ai/api/v1/livekit/new_agent",
+                json=payload,
+                headers={"x-user-id": "user_2mmXezcGmjZCf88gT2v2waCBsXv"},
+                timeout=30.0
+            )
+            
+            response.raise_for_status()
+            response_json = response.json()
+            agent_id = response_json['data'][0]['id']
+            return agent_id
 
-        response_json = response.json()
-        agent_id = response_json['data'][0]['id']
-        return agent_id
-
+    except httpx.TimeoutException:
+        print("Request timed out while trying to reach flowon.ai")
+        raise Exception("Request timed out - the server took too long to respond")
+    except httpx.RequestError as e:
+        print(f"Network error occurred: {str(e)}")
+        raise Exception(f"Network error: {str(e)}")
     except Exception as e:
         print(f"Error creating agent: {str(e)}")
         raise e
