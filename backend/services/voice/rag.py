@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 import asyncio
-from typing import List
+from typing import List, Tuple, Dict, Any, Optional
 import random
 import re
 import json
@@ -24,10 +24,10 @@ openai = OpenAI()
 anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 
-conversation_histories = {}
+conversation_histories: Dict[str, Any] = {}
 
 
-async def get_embedding(text):
+async def get_embedding(text: str) -> Any:
     """ OPENAI EMBEDDINGS """
     # response = openai.embeddings.create(
     #     input=text,
@@ -71,7 +71,7 @@ async def get_embedding(text):
         raise
 
 
-async def rerank_documents(user_query: str, top_n: int, docs: List):
+async def rerank_documents(user_query: str, top_n: int, docs: List) -> Any:
     JINA_API_KEY = os.getenv("JINA_API_KEY")
     print("func rerank_documents..")
     url = 'https://api.jina.ai/v1/rerank'
@@ -107,7 +107,7 @@ async def rerank_documents(user_query: str, top_n: int, docs: List):
 """ *_ AMEND SYS PROMPT """
 
 
-async def filter_relevant_docs(user_query: str, docs: List):
+async def filter_relevant_docs(user_query: str, docs: List) -> List[str]:
     print("\nfunc Filtering relevant documents...")
     sys_prompt_filtering_agents = """
     You are a legal assistant specialising in UK corporate and insolvency law.
@@ -139,7 +139,7 @@ async def filter_relevant_docs(user_query: str, docs: List):
      "uncertain" based on your analysis.
     """
 
-    async def evaluate_doc(doc, model):
+    async def evaluate_doc(doc: str, model: str) -> Tuple[str, str]:
         print(f"\nfunc evaluate_doc using {model}...")
         user_prompt = f"""
         # User query
@@ -154,6 +154,8 @@ async def filter_relevant_docs(user_query: str, docs: List):
             model=model,
             token_size=350
         )
+        if not response:
+            raise ValueError("No response from LLM evaluate_doc")
         print("\nDOC:", doc)
         print("\nresponse:", response)
         return response.strip().lower(), doc  # Return both the response and the doc
@@ -177,8 +179,8 @@ async def filter_relevant_docs(user_query: str, docs: List):
     return filtered_docs
 
 
-async def llm_response(system_prompt, user_prompt, conversation_history=None,
-                       model="claude", token_size=1000, max_retries=5):
+async def llm_response(system_prompt: str, user_prompt: str, conversation_history: Optional[Dict[str, Any]],
+                       model: str = "claude", token_size: int = 1000, max_retries: int = 5) -> Optional[str]:
     messages = []
 
     if conversation_history:
@@ -236,14 +238,15 @@ async def llm_response(system_prompt, user_prompt, conversation_history=None,
                     raise e
             else:
                 raise e
+    return None
 
 
-async def similarity_search(query: str, table_names: List[str] = None,
-                            user_id: str = None,
+async def similarity_search(query: str, table_names: Optional[List[str]],
+                            user_id: Optional[str],
                             search_type: str = "Quick Search",
                             similarity_threshold: float = 0.20,
                             embedding_column: str = "jina_embedding",
-                            max_results: int = 15):
+                            max_results: int = 15) -> Dict[str, Any]:
     print("\n\nsimilarity_search...")
     query_embedding = await get_embedding(query)
     results = {}
@@ -269,7 +272,7 @@ async def similarity_search(query: str, table_names: List[str] = None,
     return results
 
 
-async def rag_response(user_query: str, user_search_type: str, user_id: str):
+async def rag_response(user_query: str, user_search_type: str, user_id: str) -> Tuple[List[str], List[Tuple[str, str]]]:
     print("\nfunc rag_response..")
     table_names = ["user_web_data"]
 
@@ -360,11 +363,11 @@ async def rag_response(user_query: str, user_search_type: str, user_id: str):
 
 
 async def chat_process(
-    user_message,
-    session_id="dev",
-    user_id='user_2lKpUPRJD4g5IErIdhbO7rBMn3K',
-    user_search_type="Quick Search"
-):
+    user_message: str,
+    session_id: str,
+    user_id: str = 'user_2lKpUPRJD4g5IErIdhbO7rBMn3K',
+    user_search_type: str = "Quick Search"
+) -> Tuple[str, List[Tuple[str, str]]]:
     print("\nfunc chat_process...")
     try:
 
@@ -481,6 +484,8 @@ async def chat_process(
                 conversation_history=conversation_history,
                 token_size=token_size
             )
+            if not response:
+                raise ValueError("No response from LLM llm_response")
 
             # Replace the placeholder with the actual response
             conversation_history['assistant_history'][-1] = {
@@ -564,6 +569,8 @@ async def chat_process(
                 conversation_history,
                 token_size=token_size
             )
+            if not response:
+                raise ValueError("No response from LLM llm_response")
 
             # Replace the placeholder with the actual response
             conversation_history['assistant_history'][-1] = {
@@ -589,7 +596,8 @@ async def chat_process(
         - Maintains a friendly and supportive tone
         """
         response = await llm_response(ve_sys_prompt, user_message, conversation_history)
-
+        if not response:
+            raise ValueError("No response from LLM ve_sys_prompt")
         # Replace the placeholder with the actual response
         conversation_history['assistant_history'][-1] = {
             "role": "assistant",
@@ -600,8 +608,8 @@ async def chat_process(
 
 
 async def non_kb_chat_process(
-    user_message, session_id, user_id='user_2lKpUPRJD4g5IErIdhbO7rBMn3K'
-):
+    user_message: str, session_id: str, user_id: str = 'user_2lKpUPRJD4g5IErIdhbO7rBMn3K'
+) -> str:
     print("\n\n non_kb_chat_process..")
 
     # Initialize conversation history for this session if it doesn't exist
@@ -659,7 +667,8 @@ async def non_kb_chat_process(
     """
 
     response = await llm_response(system_prompt, user_message, conversation_history)
-
+    if not response:
+        raise ValueError("No response from LLM non_kb_chat_process")
     # Replace the placeholder with the actual response
     conversation_history['assistant_history'][-1] = {
         "role": "assistant",
@@ -669,7 +678,7 @@ async def non_kb_chat_process(
     return response
 
 
-def extract_thinking(response):
+def extract_thinking(response: str) -> List[str]:
     pattern = r'<thinking>(.*?)</thinking>'
     matches = re.findall(pattern, response, re.DOTALL)
     return ['<thinking>' + match + '</thinking>' for match in matches]

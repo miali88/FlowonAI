@@ -2,17 +2,20 @@ import logging
 from fastapi import UploadFile
 from PyPDF2 import PdfReader
 from docx import Document
-from openpyxl import load_workbook
+from openpyxl import load_workbook # type: ignore
 import io
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def process_file(file: UploadFile) -> str:
+async def process_file(file: UploadFile) -> Any:
     logger.info(f"Processing file: {file.filename}")
 
     content = ""
+    if not file.filename:
+        raise ValueError("File name is required")
     file_extension = file.filename.split('.')[-1].lower()
     logger.info(f"File extension: {file_extension}")
 

@@ -58,8 +58,9 @@ class Settings(BaseSettings):
 
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
-
-    BASE_URL: str = os.getenv("API_BASE_URL")
+    BASE_URL: str = os.getenv("API_BASE_URL", "")
+    if not BASE_URL:
+        raise ValueError("API_BASE_URL is not set")
     # BASE_URL: str = "http://localhost:8000"
 
     JINA_API_KEY: str = ""

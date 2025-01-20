@@ -15,7 +15,7 @@ composio_client = Composio()
 
 
 @router.get("/connections/{user_id}")
-async def connection_handler(user_id: str):
+async def connection_handler(user_id: str) -> JSONResponse:
     print(f"\n\ncomposio endpoint for user {user_id}\n\n")
     existing_entity = composio_client.get_entity(id=user_id)
     existing_connections = existing_entity.get_connections()
@@ -25,7 +25,7 @@ async def connection_handler(user_id: str):
 
 
 @router.get("/new_connection/{user_id}/{app_name}")
-async def new_connection_handler(user_id: str, app_name: str):
+async def new_connection_handler(user_id: str, app_name: str) -> JSONResponse:
     """
     Initiates a connection to the specified app for the given user.
     Returns the client_id and connected_account_id for the connection.
@@ -41,7 +41,7 @@ async def new_connection_handler(user_id: str, app_name: str):
     app, client_id and connected_account_id to supabase
     """
     parsed_url = urlparse(request.redirectUrl)
-    query_params = parse_qs(parsed_url.query)
+    query_params = parse_qs(str(parsed_url.query))
     client_id = query_params.get('client_id', [None])[0]
     connected_account_id = request.connectedAccountId
 

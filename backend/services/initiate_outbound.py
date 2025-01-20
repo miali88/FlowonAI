@@ -11,7 +11,7 @@ LIVEKIT_API_SECRET = os.getenv('LIVEKIT_API_SECRET')
 SIP_TRUNK_ID = "ST_q8fzfH63TurF"
 
 
-async def create_sip_participant(phone_number, room_name):
+async def create_sip_participant(phone_number: str, room_name: str) -> None:
     print("create_sip_participant method invoked")
     livekit_api = api.LiveKitAPI(
         LIVEKIT_URL,
@@ -31,7 +31,7 @@ async def create_sip_participant(phone_number, room_name):
     await livekit_api.aclose()
 
 
-async def initiate_outbound_call(phone_number: str, room_name: str):
+async def initiate_outbound_call(phone_number: str, room_name: str) -> None:
     # First create the SIP participant
     await create_sip_participant(phone_number, room_name)
 

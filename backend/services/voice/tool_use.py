@@ -201,7 +201,7 @@ async def book_appointment(
             )
         )
     ]
-) -> str:
+) -> Any:
     """
     Once user has confirmed appointment details, book an appointment on the
      user's calendar.
@@ -280,10 +280,15 @@ async def transfer_call(
     if room_name is None:
         logger.error("Room name is not set")
         return "Error: Room name is not available"
-    agent_id = await detect_call_type_and_get_agent_id(room_name)
 
-    agent_metadata: Dict = await get_agent_metadata(agent_id)
+    # Get agent_id as a string, not a tuple
+    agent_id = (await detect_call_type_and_get_agent_id(room_name))[0]
+    if not agent_id:
+        logger.error("Failed to detect call type and get agent_id")
+        return "Error: Could not detect call type and get agent_id"
 
+    # Add type checking for agent_metadata
+    agent_metadata = await get_agent_metadata(agent_id)
     if not agent_metadata:
         logger.error(f"Failed to get agent metadata for agent_id: {agent_id}")
         return "Error: Could not retrieve agent configuration"

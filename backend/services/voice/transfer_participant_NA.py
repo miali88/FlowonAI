@@ -7,7 +7,7 @@ async def transfer_participant(
     source_room_name: str,
     target_room_name: str,
     participant_identity: str,
-):
+) -> str:
     print(
         "will sleep for 10 secs since we're immediately calling this "
         "after call_transfer"
@@ -62,14 +62,17 @@ async def transfer_participant(
         connection_established = asyncio.Event()
 
         @target_room.on("participant_connected")
-        def on_participant_connected(participant: rtc.RemoteParticipant):
+        def on_participant_connected(participant: rtc.RemoteParticipant) -> None:
             if participant.identity == participant_identity:
                 connection_established.set()
 
         # Connect to target room
         print(f"Connecting to target room {target_room_name}")
+        livekit_url = os.getenv("LIVEKIT_URL")
+        if not livekit_url:
+            raise ValueError("LIVEKIT_URL is not set")
         await target_room.connect(
-            url=os.getenv("LIVEKIT_URL"),
+            url=livekit_url,
             token=new_token,
             options=rtc.RoomOptions(
                 auto_subscribe=True

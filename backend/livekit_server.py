@@ -155,8 +155,6 @@ async def entrypoint(ctx: JobContext) -> None:
                     asyncio.create_task(handle_transfer())
 
         async def handle_transfer() -> None:
-            if first_participant is None:
-                return
 
             async with CallTransferHandler(room) as transfer_handler:
                 await agent.say(
@@ -302,10 +300,8 @@ async def entrypoint(ctx: JobContext) -> None:
                 elif message.role == 'user':
                     message_dict['user_message'] = message.content
                 elif message.role == 'tool':
-                    message_dict['tool'] = {
-                        'name': message.name,
-                        'content': message.content
-                    }
+                    message_dict['tool_name'] = message.name
+                    message_dict['tool_content'] = message.content
 
                 if message_dict:
                     conversation_history.append(message_dict)

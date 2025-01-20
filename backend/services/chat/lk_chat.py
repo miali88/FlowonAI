@@ -177,27 +177,28 @@ class ChatInitializer:
             data_source_str: str = agent_metadata.get('dataSource', '{}')
             
             # First handle the data source parsing
-            data_source_dict: Dict[str, Any] = {}
+            data_source_raw: Union[Dict[str, Any], List[Dict[str, Any]], str] = {}
             if isinstance(data_source_str, str):
                 try:
-                    data_source_dict = json.loads(data_source_str)
+                    data_source_raw = json.loads(data_source_str)
                 except json.JSONDecodeError:
                     logger.warning("Invalid JSON in data_source, using empty dict")
 
             # Now handle the "all" case and data source processing
-            if isinstance(data_source_dict, dict):
-                if data_source_dict == "all":
-                    search_params = {"web": ["all"], "text_files": ["all"]}
-                else:
-                    web_urls = []
-                    text_files = []
-                    
-                    # Safely process items if they're in a list
-                    items = data_source_dict if isinstance(data_source_dict, list) else []
-                    for item in items:
-                        if not isinstance(item, dict):
-                            continue
-                            
+            if data_source_raw == "all":
+                search_params = {"web": ["all"], "text_files": ["all"]}
+            else:
+                web_urls: List[str] = []
+                text_files: List[str] = []
+                
+                # Process items if they're in a list
+                items: List[Dict[str, Any]] = (
+                    data_source_raw if isinstance(data_source_raw, list) 
+                    else []
+                )
+                
+                for item in items:
+                    if isinstance(item, dict):
                         data_type = item.get('data_type')
                         if data_type == 'web':
                             title = str(item.get('title', '')).rstrip('/')
@@ -207,13 +208,11 @@ class ChatInitializer:
                             item_id = str(item.get('id', ''))
                             if item_id:
                                 text_files.append(item_id)
-                    
-                    search_params = {
-                        "web": web_urls,
-                        "text_files": text_files
-                    }
-            else:
-                search_params = {"web": [], "text_files": []}
+                
+                search_params = {
+                    "web": web_urls,
+                    "text_files": text_files
+                }
 
             # Use the properly structured search params
             results = await similarity_search(
@@ -227,7 +226,6 @@ class ChatInitializer:
 
             response_id = str(uuid4())
             print(f"response_id in question_and_answer : {response_id}")
-            # print(f"RAG Results: {results_with_urls}")
 
             # Get the chat history for this room
             chat_history = None
@@ -237,7 +235,9 @@ class ChatInitializer:
                     chat_history = agent_histories[self.room_name]
             
             if chat_history is not None and results:
-                chat_history.add_rag_results(response_id, results)
+                # Convert results to list of dicts if they're strings
+                formatted_results = [{"content": r} for r in results] if isinstance(results[0], str) else results
+                chat_history.add_rag_results(response_id, formatted_results)
 
             # Yield the RAG results marker for downstream processing
             yield "[RAG_RESULTS]: "
@@ -412,7 +412,7 @@ class ChatHistory:
 
     def add_message(
         self,
-        role: str,
+        role: Any,
         content: str,
         name: Optional[str] = None,
         response_id: Optional[str] = None

@@ -1,6 +1,5 @@
 from fastapi import Request, APIRouter, Header, HTTPException
 from svix.webhooks import Webhook, WebhookVerificationError
-
 import os
 
 import logging
@@ -13,7 +12,7 @@ router = APIRouter()
 async def handle_clerk_event(
     request: Request, svix_id: str = Header(None),
     svix_timestamp: str = Header(None), svix_signature: str = Header(None)
-):
+) -> dict:
     print("\n\nclerk endpoint:\n\n")
 
     # Validate the webhook
@@ -24,6 +23,9 @@ async def handle_clerk_event(
         "svix-signature": svix_signature
     }
     secret = os.getenv("CLERK_SIGNING_SECRET")
+    if not secret:
+        raise HTTPException(status_code=500, detail="CLERK_SIGNING_SECRET not set")
+
     webhook = Webhook(secret)
 
     try:

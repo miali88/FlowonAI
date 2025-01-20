@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def get_current_user(x_user_id: str = Header(...)):
+async def get_current_user(x_user_id: str = Header(...)) -> str:
     logger.info("Authenticating user")
     logger.debug(f"x_user_id header: {x_user_id}")
 

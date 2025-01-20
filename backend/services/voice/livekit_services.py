@@ -144,7 +144,16 @@ async def print_room_details(livekit_api: LiveKitAPI, room_name: str, agent_id: 
     except api.twirp_client.TwirpError as e:
         if e.code == 'not_found' and 'room does not exist' in e.message:
             logger.warning(f"Room {room_name} not found when listing participants")
-            await create_room(room_name, None, agent_id)
+            token = (
+                api.AccessToken(os.getenv("LIVEKIT_API_KEY"), os.getenv("LIVEKIT_API_SECRET"))
+                .with_identity(f"agent_{agent_id}")
+                .with_name(f"agent_{agent_id}")
+                .with_grants(api.VideoGrants(
+                    room_join=True,
+                    room=room_name
+                ))
+            ).to_jwt()
+            await create_room(room_name, token, agent_id)
         else:
             logger.error(f"Unexpected TwirpError: {e}")
             raise

@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 import json
 
 from fastapi import Request, APIRouter
-from twilio.rest import Client
+from twilio.rest import Client # type: ignore
 from supabase import create_client
 
 from services.cache import call_data

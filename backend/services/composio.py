@@ -1,9 +1,9 @@
-from composio_openai import Action
+from composio_openai import Action # type: ignore
 from openai import OpenAI
-from typing import Dict
+from typing import Dict, Optional, List, Any
 from datetime import datetime, timedelta
 import logging
-import pytz
+import pytz # type: ignore
 from dotenv import load_dotenv
 from composio import ComposioToolSet, Composio
 
@@ -15,7 +15,7 @@ client = Composio()
 logger = logging.getLogger(__name__)
 
 
-async def get_calendar_slots(user_id: str, app: str) -> Dict:
+async def get_calendar_slots(user_id: str, app: str) -> Any:
     print("Getting calendar slots..")
     entity_id = user_id
     openai_client = OpenAI()
@@ -59,7 +59,7 @@ async def get_calendar_slots(user_id: str, app: str) -> Dict:
     return free_slots
 
 
-async def find_free_slots(calendar_data, num_slots=32, duration_minutes=30):
+async def find_free_slots(calendar_data: Any, num_slots: int = 32, duration_minutes: int = 30) -> Dict[str, Any]:
     busy_slots = calendar_data
 
     # Convert to datetime objects and sort
@@ -73,8 +73,8 @@ async def find_free_slots(calendar_data, num_slots=32, duration_minutes=30):
     # Round up to the next half hour
     current_time = current_time + timedelta(minutes=(30 - current_time.minute % 30))
 
-    free_slots = []
-    formatted_slots = {}  # New dictionary to store slots by date
+    free_slots: List[Dict[str, Any]] = []
+    formatted_slots: Dict[str, Any] = {}  # New dictionary to store slots by date
     # Look ahead for 5 business days
     days_to_check = 5
     current_day = current_time.date()
@@ -164,7 +164,7 @@ async def find_free_slots(calendar_data, num_slots=32, duration_minutes=30):
     return {"formatted": formatted_slots}
 
 
-async def book_appointment_composio(appointment_details: str, user_id: str) -> str:
+async def book_appointment_composio(appointment_details: str, user_id: str) -> Any:
     logger.info(f"Starting appointment booking for user_id: {user_id}")
     print("\n\n\n\n\nfunc book_appointment_composio: booking")
 
@@ -230,7 +230,7 @@ async def book_appointment_composio(appointment_details: str, user_id: str) -> s
         return "Appointment booking failed due to an unexpected error."
 
 
-async def get_notion_database(database_name: str) -> Dict:
+async def get_notion_database(database_name: str) -> Optional[Dict]:
     try:
         # Initialize clients
         openai_client = OpenAI()
