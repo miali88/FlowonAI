@@ -10,43 +10,6 @@ TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-async def create_outbound_call(to_number: str, from_number: str):
-    """
-    Initiate an outbound call using Twilio
-    """
-    # The url parameter should point to your webhook endpoint that will handle the call
-    call = client.calls.create(
-        to=to_number,
-        from_=from_number,
-        url='https://internally-wise-spaniel.eu.ngrok.io/api/v1/twilio/'  # Replace with your webhook URL
-    )
-    return call
-
-
-def get_country_codes() -> List[str]:
-    countries = client.available_phone_numbers.list()
-    return [country.country_code for country in countries]
-
-
-def get_available_numbers(country_code: str) -> Dict[str, List[str]]:
-    number_types = ['local', 'toll_free', 'mobile', 'national']
-    available_numbers: Dict[str, List[str]] = {}
-    
-    for number_type in number_types:
-        try:
-            # Try to list up to 5 numbers of each type
-            numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
-            numbers_list = [number.phone_number for number in numbers]
-            
-            # Only add to dictionary if numbers were found
-            if numbers_list:
-                available_numbers[number_type] = numbers_list
-                
-        except Exception as e:
-            continue
-            
-    return available_numbers
-
 
 def purchase_phone_number(phone_number: str) -> Dict[str, Any]:
     """
@@ -80,5 +43,5 @@ def purchase_phone_number(phone_number: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    print(get_country_codes())
-    print(get_available_numbers("GB"))
+    print(purchase_phone_number("+13614281772"))
+
