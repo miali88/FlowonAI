@@ -13,10 +13,10 @@ try:
     http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
     logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_static.public_url}")
     
-    """ dynamic domain"""   
-    port = 5180
-    http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
-    logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
+    # """ dynamic domain"""   
+    # port = 5180
+    # http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
+    # logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_dynamic.public_url}")
 
     # """ dynamic domain"""   
     # port = 5185

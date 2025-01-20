@@ -194,6 +194,7 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("/scrape_web")
 async def scrape_url_handler(
     request: Request, 

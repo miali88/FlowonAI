@@ -36,7 +36,6 @@ async def count_tokens(text, model="gpt-4o"):
 
 JINA_API_KEY = os.getenv('JINA_API_KEY')
 async def get_embedding(text):
-    print("hello, get_embedding")
     """ JINA EMBEDDINGS """
     url = 'https://api.jina.ai/v1/embeddings'
     headers = {
@@ -59,7 +58,6 @@ async def get_embedding(text):
             return await response.json()
 
 async def sliding_window_chunking(text, max_window_size=900, overlap=200):
-    print("hello, sliding_window_chunking")
     encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
     tokens = encoder.encode(text)
     chunks = []
@@ -79,7 +77,6 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 async def insert_to_db(data):
-    print("hello, insert_to_db")
     headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
     
     async def insert_data():
@@ -175,7 +172,7 @@ async def scrape_with_retry(url, params):
         raise
 
 async def process_single_url(site: str, user_id: str, root_url: str):
-    print("\nhello, process_single_url")
+    print("\nprocessing single url: ", site)
     
     if "screen" in site:
         logger.info(f"Skipping screen {site}")
@@ -228,9 +225,7 @@ async def process_single_url(site: str, user_id: str, root_url: str):
         return None
 
 async def scrape_url(urls: List[str], user_id: str = None):
-    print("hello, scrape_url")
-    print(f"Starting scrape process for user {user_id} at {datetime.now()}")
-    
+    print(f"\nurls to scrape at {datetime.now()} : ", urls)
     parsed_url = urlparse(urls[0])
     root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
     
@@ -243,10 +238,9 @@ async def scrape_url(urls: List[str], user_id: str = None):
             flat_results.extend(result)
     
     print("end, scrape_url")
-    return flat_results
+    return {"message": "Scraping completed"}
 
 async def map_url(url) -> List[str]:
-    print("hello, map_url")
     logger.info(f"Starting URL mapping for: {url}")
     
     try:
