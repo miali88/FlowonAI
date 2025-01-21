@@ -137,45 +137,6 @@ async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> Non
 
 
 
-# 2nd agent connects IC & admin
-async def admin_to_conf(event: Event, request: Request) -> None:
-    # Create the TwiML URL
-    twiml_url = f"http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient"   
-    response = VoiceResponse()
-    dial = Dial()
-
-    # Creating a conference room
-    dial.conference(
-        'NoMusicNoBeepRoom',
-        beep=False,
-        wait_url= twiml_url,
-        start_conference_on_enter=True,
-        end_conference_on_exit=True
-    )
-    response.append(dial)
-    
-    # Update the first call to join the conference
-    client.calls(in_memory_cache.get("AGENT_FIRST.twilio_callsid")).update(twiml=response)
-    # Update the second call to join the conference
-    client.calls(in_memory_cache.get("AGENT_SECOND.twilio_callsid")).update(twiml=response)
-
-    print(response)
-
-async def handle_twilio_logic(agent_id_path: str, data: Dict[str, Any]) -> Optional[str]:
-    """Handle Twilio-specific operations."""
-    try:
-        agent_type = retellai.get_agent_type(agent_id_path)
-        if 'CallSid' in data:
-            in_memory_cache.set(f"{agent_type}.twilio_callsid", data['CallSid'])
-            print(in_memory_cache.get_all())
-        return data.get('CallSid')
-    except Exception as e:
-        logging.error(f"Error in handle_twilio_logic: {str(e)}")
-        raise ValueError(f"Failed to handle Twilio logic: {str(e)}")
-
-
-
-
 
 
 
