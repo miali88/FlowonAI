@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import styles from './TextWidget.module.css';
-import LiveKitTextEntry from './LiveKitTextEntry';
+import { useState, useRef, useEffect, Suspense } from "react";
+import styles from "./TextWidget.module.css";
+import LiveKitTextEntry from "./LiveKitTextEntry";
 import { IoSend } from "react-icons/io5";
 
 interface Message {
@@ -21,36 +21,45 @@ interface ChatInterfaceProps {
   suggestedQuestions?: string[];
 }
 
-const TextWidget: React.FC<ChatInterfaceProps> = ({ 
-  agentId, 
+const TextWidget: React.FC<ChatInterfaceProps> = ({
+  agentId,
   apiBaseUrl,
   suggestedQuestions = [
     "What services do you offer?",
     "How can I get started?",
     "What are your working hours?",
-  ]
+  ],
 }) => {
-  console.log('Suggested questions:', suggestedQuestions);
+  console.log("Suggested questions:", suggestedQuestions);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
-  const [participantIdentity, setParticipantIdentity] = useState<string | null>(null);
+  const [participantIdentity, setParticipantIdentity] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop =
+        messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   // Add initial messages when component mounts
   useEffect(() => {
     setMessages([
-      { text: "👋 Hello! I'm Flowon's AI chatbot assistant, ask me anything about Flowon!", isBot: true },
-      { text: "Also, you can create a chatbot like me for your website! 👀", isBot: true }
+      {
+        text: "👋 Hello! I'm Flowon's AI chatbot assistant, ask me anything about Flowon!",
+        isBot: true,
+      },
+      {
+        text: "Also, you can create a chatbot like me for your website! 👀",
+        isBot: true,
+      },
     ]);
   }, []); // Empty dependency array means this runs once on mount
 
@@ -58,15 +67,17 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     const fetchFormFields = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/conversation/form_fields/${agentId}`);
+        const response = await fetch(
+          `${apiBaseUrl}/conversation/form_fields/${agentId}`
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch form fields');
+          throw new Error("Failed to fetch form fields");
         }
         const data = await response.json();
-        console.log('Retrieved form fields:', data);
+        console.log("Retrieved form fields:", data);
         setFormFields(data.fields || []);
       } catch (error) {
-        console.error('Error fetching form fields:', error);
+        console.error("Error fetching form fields:", error);
       }
     };
 
@@ -77,43 +88,43 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TextWidget: handleSendMessage called', {
+    console.log("TextWidget: handleSendMessage called", {
       inputText,
-      apiBaseUrl
+      apiBaseUrl,
     });
-    
+
     if (!inputText.trim() || !participantIdentity) return;
 
     const userMessage: Message = { text: inputText, isBot: false };
-    setMessages(prev => [...prev, userMessage]);
-    
+    setMessages((prev) => [...prev, userMessage]);
+
     const currentInput = inputText;
-    setInputText('');
+    setInputText("");
 
     try {
-      console.log('TextWidget: Sending message to:', `${apiBaseUrl}/chat`);
+      console.log("TextWidget: Sending message to:", `${apiBaseUrl}/chat`);
       const response = await fetch(`${apiBaseUrl}/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: currentInput,
           agent_id: agentId,
-          visitor_id: participantIdentity
+          visitor_id: participantIdentity,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        throw new Error("Failed to get response");
       }
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader available');
+      if (!reader) throw new Error("No reader available");
 
       // Add initial empty bot message
-      const botMessage: Message = { text: '', isBot: true };
-      setMessages(prev => [...prev, botMessage]);
+      const botMessage: Message = { text: "", isBot: true };
+      setMessages((prev) => [...prev, botMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -121,22 +132,22 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
         // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n');
-        
+        const lines = chunk.split("\n");
+
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             const content = line.slice(6).trim();
-            
+
             // Handle [DONE] case separately
-            if (content === '[DONE]') {
-              console.log('Stream completed');
+            if (content === "[DONE]") {
+              console.log("Stream completed");
               break;
             }
 
             try {
               const data = JSON.parse(content);
               if (data.response?.answer) {
-                setMessages(prev => {
+                setMessages((prev) => {
                   const newMessages = [...prev];
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.isBot) {
@@ -149,19 +160,19 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                 });
               }
             } catch (parseError) {
-              console.warn('Failed to parse chunk:', content, parseError);
+              console.warn("Failed to parse chunk:", content, parseError);
               continue;
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: Message = { 
-        text: "Sorry, there was an error processing your message.", 
-        isBot: true 
+      console.error("Error sending message:", error);
+      const errorMessage: Message = {
+        text: "Sorry, there was an error processing your message.",
+        isBot: true,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     }
   };
 
@@ -169,19 +180,22 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     setInputText(question);
   };
 
-  const handleRoomConnected = (newRoomName: string, newParticipantIdentity: string) => {
+  const handleRoomConnected = (
+    newRoomName: string,
+    newParticipantIdentity: string
+  ) => {
     setRoomName(newRoomName);
     setParticipantIdentity(newParticipantIdentity);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch(`${apiBaseUrl}/conversation/chat_message`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...formData,
@@ -192,48 +206,58 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit form');
+        throw new Error("Failed to submit form");
       }
 
       // Add success message to chat
-      setMessages(prev => [...prev, {
-        text: "Thank you for submitting the form!",
-        isBot: true
-      }]);
-      
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Thank you for submitting the form!",
+          isBot: true,
+        },
+      ]);
+
       // Clear form data and hide form
       setFormData({});
       setShowForm(false);
     } catch (error) {
-      console.error('Failed to submit form:', error);
-      setMessages(prev => [...prev, {
-        text: "Sorry, there was an error submitting the form. Please try again.",
-        isBot: true
-      }]);
+      console.error("Failed to submit form:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Sorry, there was an error submitting the form. Please try again.",
+          isBot: true,
+        },
+      ]);
     }
   };
 
   const handleInputChange = (fieldLabel: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [fieldLabel]: value
+      [fieldLabel]: value,
     }));
   };
 
   return (
-    <div style={{ 
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <LiveKitTextEntry 
-        agentId={agentId || ''} 
-        apiBaseUrl={apiBaseUrl || ''} 
-        onRoomConnected={handleRoomConnected}
-      />
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Suspense fallback={<div>Loading...</div>}>
+        <LiveKitTextEntry
+          agentId={agentId || ""}
+          apiBaseUrl={apiBaseUrl || ""}
+          onRoomConnected={handleRoomConnected}
+        />
+      </Suspense>
       <div className={styles.chatContainer}>
         <div className={styles.messageContainer} ref={messageContainerRef}>
           {messages.map((message, index) => (
@@ -247,7 +271,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
             </div>
           ))}
         </div>
-        
+
         {showForm && (
           <form onSubmit={handleFormSubmit} className={styles.formContainer}>
             {formFields.map((field, index) => (
@@ -256,8 +280,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                 <input
                   type={field.type}
                   id={field.label}
-                  value={formData[field.label] || ''}
-                  onChange={(e) => handleInputChange(field.label, e.target.value)}
+                  value={formData[field.label] || ""}
+                  onChange={(e) =>
+                    handleInputChange(field.label, e.target.value)
+                  }
                   required
                 />
               </div>
@@ -267,7 +293,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
             </button>
           </form>
         )}
-        
+
         <div className={styles.suggestedQuestionsContainer}>
           {suggestedQuestions.map((question, index) => (
             <div
@@ -279,7 +305,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
             </div>
           ))}
         </div>
-        
+
         <div className={styles.inputContainer}>
           <form onSubmit={handleSendMessage} className={styles.chatForm}>
             <input
@@ -300,4 +326,3 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 };
 
 export default TextWidget;
-
