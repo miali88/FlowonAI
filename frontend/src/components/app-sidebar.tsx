@@ -1,4 +1,13 @@
-import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, ChevronLeft, Phone } from "lucide-react";
+import {
+  Mic,
+  BookOpen,
+  MessageSquare,
+  Plug,
+  BarChart3,
+  Calendar,
+  ChevronLeft,
+  Phone,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -7,45 +16,55 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarHeader,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 interface AppSidebarProps {
-  activeItem: string;
-  setActiveItem: (item: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
-  onAgentHubClick?: () => void;
+  setIsProgressBarLoading: (value: boolean) => void;
 }
 
-export function AppSidebar({ 
-  activeItem, 
-  setActiveItem, 
-  isCollapsed, 
+export function AppSidebar({
+  isCollapsed,
   setIsCollapsed,
-  onAgentHubClick
+  setIsProgressBarLoading,
 }: AppSidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
   const items = [
-    { title: "Agent Hub", icon: Mic },
-    // { title: "Phone Numbers", icon: Phone },
-    { title: "Knowledge Base", icon: BookOpen },
-    { title: "Conversation Logs", icon: MessageSquare },
-    { title: "Integrations", icon: Plug },
-    { title: "Analytics", icon: BarChart3 },
-    { title: "Contact Founders", icon: Calendar },
+    { title: "Agent Hub", icon: Mic, href: "/dashboard/agenthub" },
+    {
+      title: "Knowledge Base",
+      icon: BookOpen,
+      href: "/dashboard/knowledgebase",
+    },
+    {
+      title: "Conversation Logs",
+      icon: MessageSquare,
+      href: "/dashboard/conversationlogs",
+    },
+    { title: "Integrations", icon: Plug, href: "/dashboard/integrations" },
+    { title: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
+    {
+      title: "Contact Founders",
+      icon: Calendar,
+      href: "/dashboard/contactfounders",
+    },
   ];
 
-  const handleItemClick = (title: string) => {
-    setActiveItem(title);
-    if (title === "Agent Hub" && onAgentHubClick) {
-      onAgentHubClick();
-    }
+  const handleNavigation = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsProgressBarLoading(true);
+    router.push(href);
   };
 
   return (
-    <Sidebar 
+    <Sidebar
       data-collapsed={isCollapsed}
       className={cn(
         "transition-all duration-300 ease-in-out",
@@ -54,11 +73,11 @@ export function AppSidebar({
     >
       <SidebarHeader className="px-4 py-2">
         <Link href="/" className="flex flex-row items-center gap-2">
-          <Image 
-            src="/flowon_partial.png" 
-            alt="Flowon Logo" 
-            width={24} 
-            height={24} 
+          <Image
+            src="/flowon_partial.png"
+            alt="Flowon Logo"
+            width={24}
+            height={24}
             className="invert"
           />
           {!isCollapsed && (
@@ -77,11 +96,11 @@ export function AppSidebar({
             "shadow-sm"
           )}
         >
-          <ChevronLeft 
+          <ChevronLeft
             className={cn(
               "h-4 w-4 transition-transform duration-200",
               isCollapsed && "rotate-180"
-            )} 
+            )}
           />
         </button>
       </div>
@@ -91,16 +110,22 @@ export function AppSidebar({
           <SidebarMenu>
             {items.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  onClick={() => handleItemClick(item.title)}
-                  className={cn(
-                    "w-full",
-                    activeItem === item.title && "bg-secondary text-secondary-foreground"
-                  )}
+                <a
+                  href={item.href}
+                  onClick={(e) => handleNavigation(item.href, e)}
+                  className="w-full"
                 >
-                  <item.icon className="h-4 w-4" />
-                  {!isCollapsed && <span>{item.title}</span>}
-                </SidebarMenuButton>
+                  <SidebarMenuButton
+                    className={cn(
+                      "w-full",
+                      pathname === item.href &&
+                        "bg-secondary text-secondary-foreground"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {!isCollapsed && <span>{item.title}</span>}
+                  </SidebarMenuButton>
+                </a>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
