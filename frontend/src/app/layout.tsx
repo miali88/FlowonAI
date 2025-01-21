@@ -1,12 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
-import { ThemeProvider } from 'next-themes';
 import { Metadata } from 'next';
 import Script from 'next/script';
-import { CSPostHogProvider } from './providers';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { Providers } from './providers';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -18,9 +14,6 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
-
-// Add this near your other const declarations, outside the RootLayout function
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export const metadata: Metadata = {
   title: 'Flowon AI - Experience AI Conversations That Feel Human',
@@ -59,19 +52,9 @@ export default function RootLayout({
         </Script>
       </head>
       <body suppressHydrationWarning>
-        <CSPostHogProvider>
-          <ClerkProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-            >
-              <Elements stripe={stripePromise}>
-                {children}
-              </Elements>
-            </ThemeProvider>
-          </ClerkProvider>
-        </CSPostHogProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

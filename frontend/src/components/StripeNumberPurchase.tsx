@@ -1,7 +1,26 @@
-import { loadStripe } from '@stripe/stripe-js';
+import { useUser } from '@clerk/nextjs';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
+async function getStripeCustomerId() {
+  const { user } = useUser();
+
+  const response = await fetch(`${api_base_url}/clerk/get-customer-id`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': user?.id || '',
+    },
+    credentials: 'include', // This ensures the auth cookie is sent
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get customer ID');
+  }
+
+  const data = await response.json();
+  return data.customerId;
+}
 
 async function createSubscriptionWithInlinePricing(
   customerId: string,
@@ -39,61 +58,33 @@ async function createSubscriptionWithInlinePricing(
   }
 }
 
-async function createCheckoutSession(
-  priceAmount: number,
-  currency: string = 'usd',
-  mode: 'payment' | 'subscription' = 'subscription'
-) {
-  try {
-    const response = await fetch(`${api_base_url}/stripe/create-checkout-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        priceAmount,
-        currency,
-        mode,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create checkout session');
-    }
-
-    const { url } = await response.json();
-    if (url) {
-      window.location.href = url;
-    } else {
-      throw new Error('No checkout URL received');
-    }
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    throw error;
-  }
-}
-
-// Example usage
-async function example() {
-  try {
-    const result = await createSubscriptionWithInlinePricing(
-      'cus_customer_id', // Replace with actual customer ID
-      29.99, // Price amount (will be converted to cents)
-      'usd',
-      'month'
-    );
-
-    console.log('Subscription created:', result);
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
 // Example usage component
 export default function StripeNumberPurchase({ amount }: { amount: number }) {
+  const { user } = useUser();
+
   const handlePurchase = async () => {
+    if (!user) {
+      console.error('User not logged in');
+      return;
+    }
+
     try {
-      await createCheckoutSession(amount);
+      // Get customer ID from backend
+      const customerId = await getStripeCustomerId();
+      
+      if (!customerId) {
+        throw new Error('Failed to get customer ID');
+      }
+
+      // Create subscription with inline pricing
+      const { subscriptionId, clientSecret } = await createSubscriptionWithInlinePricing(
+        customerId,
+        amount
+      );
+      
+      // You might want to do something with subscriptionId and clientSecret here
+      console.log('Subscription created:', subscriptionId);
+      
     } catch (error) {
       console.error('Purchase error:', error);
     }
@@ -105,7 +96,3 @@ export default function StripeNumberPurchase({ amount }: { amount: number }) {
     </button>
   );
 }
-
-
-
-
