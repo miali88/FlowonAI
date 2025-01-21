@@ -23,6 +23,7 @@ async def get_country_codes_handler() -> JSONResponse:
     twilio_countries = twilio.get_country_codes()
     return JSONResponse(content={"countries": twilio_countries})
 
+
 @router.get("/available_numbers/{country_code}", response_model = AvailableNumbersResponse)
 async def get_available_numbers_handler(country_code: str) -> AvailableNumbersResponse:
     """Get list of available numbers for a given country code from Twilio"""

@@ -59,5 +59,3 @@ async def get_user_metadata(clerk_user_id: str):
     except Exception as e:
         logger.error(f"Error fetching user metadata: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch user metadata: {str(e)}")
-
-
