@@ -1,5 +1,5 @@
 from datetime import datetime
-import requests, os, logging
+import requests, os, logging, asyncio
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
@@ -44,13 +44,13 @@ async def post_user(payload):
             
             # Update Clerk user metadata with Stripe customer ID
             clerk_api_key = os.getenv('CLERK_SECRET_KEY')
-            clerk_api_url = f"https://api.clerk.dev/v1/users/{clerk_user_id}/metadata"
+            clerk_api_url = f"https://api.clerk.com/v1/users/{clerk_user_id}/metadata"
             
             headers = {
                 "Authorization": f"Bearer {clerk_api_key}",
                 "Content-Type": "application/json"
             }
-            
+                
             metadata_payload = {
                 "private_metadata": {
                     "stripe_customer_id": stripe_customer.id
@@ -108,7 +108,7 @@ async def get_clerk_private_metadata(clerk_user_id: str):
     """Fetch private metadata for a Clerk user."""
     try:
         clerk_api_key = os.getenv('CLERK_SECRET_KEY')
-        clerk_api_url = f"https://api.clerk.dev/v1/users/{clerk_user_id}"
+        clerk_api_url = f"https://api.clerk.com/v1/users/{clerk_user_id}"
         
         headers = {
             "Authorization": f"Bearer {clerk_api_key}",
