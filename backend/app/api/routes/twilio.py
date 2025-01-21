@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Request, Response, HTTPException, Depends
 from fastapi.responses import Response, JSONResponse, HTMLResponse
 from typing import Dict, List
+from pydantic import BaseModel
 
 from services import twilio
 from app.api.deps import get_current_user
 
 router = APIRouter()
 
+class AvailableNumbersResponse(BaseModel):
+    numbers: Dict[str, List[str]]
+
+    
 """ TWILIO NUMBER FUNCTIONS FOR FRONTEND """
 @router.get("/country_codes", response_model=dict)
 async def get_country_codes_handler() -> JSONResponse:
@@ -14,14 +19,16 @@ async def get_country_codes_handler() -> JSONResponse:
     twilio_countries = twilio.get_country_codes()
     return JSONResponse(content={"countries": twilio_countries})
 
-@router.get("/available_numbers/{country_code}")
-async def get_available_numbers_handler(country_code: str) -> JSONResponse:
+@router.get("/available_numbers/{country_code}", response_model = AvailableNumbersResponse)
+async def get_available_numbers_handler(country_code: str) -> AvailableNumbersResponse:
     """Get list of available numbers for a given country code from Twilio"""
     print(f"Getting available numbers for country code: {country_code}")
 
     available_numbers = twilio.get_available_numbers(country_code)
-
-    return JSONResponse(content={"numbers": available_numbers})
+    if available_numbers:
+        return {"numbers": available_numbers}
+    else:
+        raise HTTPException(status_code=200, detail="No available numbers found")
 
 
 @router.get("/user_numbers")
@@ -31,6 +38,7 @@ async def get_user_numbers_handler(current_user: str = Depends(get_current_user)
         raise HTTPException(status_code=401, detail="User not authenticated")
     numbers = await twilio.fetch_twilio_numbers(user_id=current_user)
     return JSONResponse(content={"numbers": numbers})
+
 
 
 """ TWILIO WEBHOOK FUNCTIONS """
