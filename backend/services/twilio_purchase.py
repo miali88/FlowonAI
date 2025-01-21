@@ -23,6 +23,9 @@ def purchase_phone_number(phone_number: str) -> Dict[str, Any]:
         
     Raises:
         Exception: If the purchase fails
+
+    Twilio docs:
+    https://help.twilio.com/articles/223182728-Using-the-REST-API-to-Search-for-and-Buy-Twilio-Phone-Numbers
     """
     try:
         purchased_number = client.incoming_phone_numbers.create(
