@@ -143,58 +143,45 @@ async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
 # 1st agent places IC on hold
 async def add_to_conference(request: Request) -> JSONResponse:
     try:
-        logger.info('Starting add_to_conference')
+        # Get basic call info from request
         form_data = await request.form()
-        logger.debug(f'Received form data: {form_data}')
-        
         call_sid = str(form_data['CallSid'])
         twilio_number = str(form_data['To'])
         from_number = str(form_data['From'])
-
-        logger.info(f'Processing call SID: {call_sid}')
-
-        # Check call status before proceeding
-        call = client.calls(call_sid).fetch()
-        logger.debug(f'Current call status: {call.status}')
         
-        if call.status not in ['in-progress', 'ringing']:
-            logger.error(f'Call is in invalid state: {call.status}')
-            raise HTTPException(status_code=400, detail=f'Call is in invalid state: {call.status}')
-
-        # Create a unique conference name using the call_sid
+        # Create conference name
         conference_name = f"conf_{call_sid}"
 
-        # Move the initial caller to the conference
+        # Create TwiML to move caller to conference immediately
         response = VoiceResponse()
         dial = Dial()
         dial.conference(
             conference_name,
-            startConferenceOnEnter=True,  # Changed to True
+            startConferenceOnEnter=True,
             endConferenceOnExit=False,
             waitUrl='http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical'
         )
         response.append(dial)
 
-        # Update the call with the new TwiML
+        # Update the call with the TwiML
         client.calls(call_sid).update(twiml=str(response))
-        logger.info('Successfully moved caller to conference')
+        logger.info(f'Moved caller {call_sid} to conference {conference_name}')
 
-        # Bridge the conference to LiveKit
-        logger.debug('Initiating LiveKit bridge')
-        await bridge_conference_to_livekit(
-            conference_name=conference_name,  # Changed from conference_sid
+        # After moving caller, initiate LiveKit bridge asynchronously
+        asyncio.create_task(bridge_conference_to_livekit(
+            conference_name=conference_name,
             from_number=from_number,
             sip_trunk_number=twilio_number,
             sip_host=livekit_sip_host
-        )
-        logger.info('Successfully bridged conference to LiveKit')
+        ))
         
-        return JSONResponse(content={'message': 'Call moved to conference and agent added'})
+        return JSONResponse(content={'message': 'Caller moved to conference'})
+        
     except TwilioRestException as e:
-        logger.error(f"Twilio error in add_to_conference: {e.code} - {e.msg}", exc_info=True)
+        logger.error(f"Twilio error: {e.code} - {e.msg}", exc_info=True)
         raise HTTPException(status_code=e.code, detail=e.msg)
     except Exception as e:
-        logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
+        logger.error(f"Error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
