@@ -50,6 +50,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
 @router.get('/get-customer-id')
 async def get_user_metadata(clerk_user_id: str):
     """Endpoint to fetch a user's Clerk private metadata."""
+    print("get_user_metadata")
     try:
         metadata = await get_clerk_private_metadata(clerk_user_id)
         customer_id = metadata['stripe_customer_id']

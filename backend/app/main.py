@@ -18,6 +18,9 @@ import logging
 
 load_dotenv()
 
+# Add this near the top with other environment variables
+DEV_MODE = os.getenv('DEV_MODE', 'false').lower() == 'true'
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -97,6 +100,10 @@ async def startup_event():
     logger.debug("Starting up FastAPI server...")
     global livekit_process
     
+    if DEV_MODE:
+        logger.debug("Running in dev mode - skipping LiveKit server startup")
+        return
+        
     try:
         logger.debug("Attempting to start LiveKit server...")
         time.sleep(1)
