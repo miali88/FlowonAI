@@ -8,8 +8,12 @@ from app.api.deps import get_current_user
 
 router = APIRouter()
 
+class NumberGroup(BaseModel):
+    monthly_cost: float | None
+    numbers: List[str]
+
 class AvailableNumbersResponse(BaseModel):
-    numbers: Dict[str, List[str]]
+    numbers: Dict[str, NumberGroup]
 
     
 """ TWILIO NUMBER FUNCTIONS FOR FRONTEND """
@@ -19,16 +23,15 @@ async def get_country_codes_handler() -> JSONResponse:
     twilio_countries = twilio.get_country_codes()
     return JSONResponse(content={"countries": twilio_countries})
 
+
 @router.get("/available_numbers/{country_code}", response_model = AvailableNumbersResponse)
 async def get_available_numbers_handler(country_code: str) -> AvailableNumbersResponse:
     """Get list of available numbers for a given country code from Twilio"""
     print(f"Getting available numbers for country code: {country_code}")
 
     available_numbers = twilio.get_available_numbers(country_code)
-    if available_numbers:
-        return {"numbers": available_numbers}
-    else:
-        raise HTTPException(status_code=200, detail="No available numbers found")
+    return {"numbers": available_numbers or {}}  # Return empty dict if no numbers found
+
 
 
 @router.get("/user_numbers")
