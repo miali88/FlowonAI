@@ -84,7 +84,6 @@ ipykernel==6.29.5
 ipython==8.27.0
 iterators==0.2.0
 jedi==0.19.1
-Jinja2>=3.1.5
 jiter==0.5.0
 jsonref==1.1.0
 jsonschema==4.23.0
@@ -225,6 +224,7 @@ thinc==8.2.5
 tiktoken==0.7.0
 tokenizers==0.19.1
 torch==2.2.1
+tornado==6.4.1
 tqdm==4.66.5
 traitlets==5.14.3
 transformers==4.44.2
