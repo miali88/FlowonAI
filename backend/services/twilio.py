@@ -18,7 +18,15 @@ from twilio.base.exceptions import TwilioRestException
 
 load_dotenv()
 
-client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+
+if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
+    raise ValueError("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set in the environment")
+
+client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+
+
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
 
 # Add this near the top of the file, after imports
@@ -235,7 +243,8 @@ async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> Non
         print('calling 2nd agent')
         client.calls.create(
             url=f"{settings.BASE_URL}/twilio/twilio-voice-webhook/{agent_id}",
-            to=to_number, from_=from_number
+            to=to_number, from_=from_number,
+            timeout=600
         )
         print(f"Call from: {from_number} to: {to_number}")
     except Exception as err:
@@ -243,25 +252,38 @@ async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> Non
 
 
 
-# def cleanup() -> None:
-#     print("\nCleaning up before exit...")
-#     ## Ensuring all prior calls are ended
-#     calls = client.calls.list(status='in-progress')
+def cleanup() -> None:
+    logger.info("Starting cleanup process...")
+    try:
+        # Verify credentials before making calls
+        if not client.auth:
+            raise ValueError("Twilio client not properly authenticated")
 
-#     print("Registering twilio URL:")
-#     print(register_url())
-#     # Print and end each ongoing call
-#     if calls:
-#         for call in calls:
-#             print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
-#             call = client.calls(call.sid).update(status='completed')
-#             print(f"Ended call SID: {call.sid}")
-#     else:
-#         print('No calls in progress')
+        # Get active calls with proper authentication
+        calls = client.calls.list(status='in-progress', limit=50)  # Added limit for safety
 
-# def generate_twiml() -> Response:
-    # response = VoiceResponse()
-    # dial = Dial()
-    # dial.conference('MyConferenceRoom')
-    # response.append(dial)
-    # return Response(content=str(response), media_type='text/xml')
+        if calls:
+            for call in calls:
+                try:
+                    logger.info(f"Ending call SID: {call.sid}, From: {call.from_formatted}, "
+                              f"To: {call.to}, Status: {call.status}")
+                    
+                    client.calls(call.sid).update(status='completed')
+                    logger.info(f"Successfully ended call SID: {call.sid}")
+                    
+                except TwilioRestException as call_error:
+                    logger.error(f"Failed to end call {call.sid}: {str(call_error)}")
+                    continue
+        else:
+            logger.info('No active calls found to clean up')
+            
+    except TwilioRestException as e:
+        logger.error(f"Twilio API error during cleanup: {e.code} - {e.msg}")
+        raise
+    except ValueError as e:
+        logger.error(f"Authentication error: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during cleanup: {str(e)}")
+        raise
+

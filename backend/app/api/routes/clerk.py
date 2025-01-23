@@ -16,7 +16,6 @@ router = APIRouter()
 
 # Set your Stripe secret key
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-print(stripe.api_key)
 
 @router.post('')
 async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
