@@ -109,8 +109,13 @@ interface AvailableNumbersResponse {
   };
 }
 
+// Update interface for the new response format
 interface UserNumbersResponse {
-  numbers: UserNumber[];
+  numbers: {
+    twilio: {
+      [key: string]: UserNumber;
+    };
+  };
 }
 
 const Deploy: React.FC<DeployProps> = ({
@@ -193,7 +198,7 @@ const Deploy: React.FC<DeployProps> = ({
     console.log("Selected Agent:", selectedAgent);
   }, [selectedAgent]);
 
-  // Add effect to fetch user numbers on component mount
+  // Update the useEffect for fetching user numbers
   useEffect(() => {
     const fetchUserNumbers = async () => {
       setIsLoadingUserNumbers(true);
@@ -213,7 +218,9 @@ const Deploy: React.FC<DeployProps> = ({
         }
 
         const data: UserNumbersResponse = await response.json();
-        setUserNumbers(data.numbers); // Now correctly typed as UserNumber[]
+        // Convert the object of numbers to an array
+        const numbersArray = Object.values(data.numbers.twilio);
+        setUserNumbers(numbersArray);
       } catch (error) {
         console.error("Error fetching user numbers:", error);
         setUserNumbers([]);
@@ -419,9 +426,7 @@ frameborder="0"
                             className="flex items-center justify-between p-2 rounded-lg border"
                           >
                             <div>
-                              <p className="font-medium">
-                                {number.friendly_name || number.phone_number}
-                              </p>
+                              <p className="font-medium">{number}</p>
                               <div className="flex gap-2 mt-1">
                                 {number.capabilities?.voice && (
                                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
