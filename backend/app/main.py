@@ -106,7 +106,6 @@ async def startup_event():
         
     try:
         logger.debug("Attempting to start LiveKit server...")
-        time.sleep(1)
         
         MAX_RETRIES = 3
         RETRY_DELAY = 2
@@ -114,55 +113,80 @@ async def startup_event():
         # Get the absolute path to the project root
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
         
-        # Get the current Python executable path (ensures using the same virtual environment)
+        # Get the current Python executable path
         python_executable = sys.executable
         
         # Set up the environment for the subprocess
         env = os.environ.copy()
         
-        # Ensure PYTHONPATH includes project root and site-packages
-        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
-        python_path = [
-            project_root,
-            site_packages,
-            env.get('PYTHONPATH', '')
-        ]
-        env['PYTHONPATH'] = os.pathsep.join(filter(None, python_path))
+        # Set event loop policy before starting the server
+        if platform.system() == "Windows":
+            import asyncio
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            env['PYTHONPATH'] = os.pathsep.join([
+                project_root,
+                os.path.dirname(python_executable),
+                env.get('PYTHONPATH', '')
+            ])
 
         for attempt in range(MAX_RETRIES):
             try:
+                # Simplified script execution
                 livekit_process = subprocess.Popen(
-                    [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
+                    [python_executable, 
+                     os.path.join(project_root, "backend", "livekit_server.py")],
                     env=env,
-                    cwd=project_root
+                    cwd=project_root,
+                    # Add these to prevent subprocess from inheriting console handling
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if platform.system() == "Windows" else 0
                 )
-                print(f"LiveKit server started with PYTHONPATH: {env['PYTHONPATH']}")
-                break
+                
+                logger.info(f"LiveKit server started with PID: {livekit_process.pid}")
+                # Wait a bit to ensure the process starts properly
+                time.sleep(2)
+                
+                # Check if process is still running
+                if livekit_process.poll() is None:
+                    logger.info("LiveKit server successfully started")
+                    break
+                else:
+                    raise subprocess.SubprocessError("LiveKit server failed to start")
+                    
             except subprocess.SubprocessError as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
+                logger.error(f"Attempt {attempt + 1} failed: {e}")
                 if attempt < MAX_RETRIES - 1:
-                    print(f"Retrying in {RETRY_DELAY} seconds...")
+                    logger.info(f"Retrying in {RETRY_DELAY} seconds...")
                     time.sleep(RETRY_DELAY)
                 else:
-                    print("Failed to start LiveKit server after maximum retries")
+                    logger.error("Failed to start LiveKit server after maximum retries")
                     raise
     except Exception as e:
-        print(f"Error in startup_event: {e}")
+        logger.error(f"Error in startup_event: {e}")
+        # Don't raise the exception, allow the FastAPI server to start anyway
+        pass
 
 @app.on_event("shutdown")
 async def shutdown_event():
-
     global livekit_process
     if livekit_process:
         try:
-            # Terminate the LiveKit server process
-            print("\n\nTerminating LiveKit server")
-            parent = psutil.Process(livekit_process.pid)
-            for child in parent.children(recursive=True):
-                child.terminate()
-            parent.terminate()
-            print("LiveKit server terminated")
-        except psutil.NoSuchProcess:
-            print("LiveKit server process not found")
+            logger.info("Shutting down LiveKit server...")
+            if platform.system() == "Windows":
+                # On Windows, we need to send Ctrl+C to the process group
+                import signal
+                livekit_process.send_signal(signal.CTRL_BREAK_EVENT)
+            else:
+                livekit_process.terminate()
+            
+            # Wait for the process to terminate
+            try:
+                livekit_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Force kill if graceful shutdown fails
+                livekit_process.kill()
+            
+            logger.info("LiveKit server terminated")
         except Exception as e:
-            print(f"Error terminating LiveKit server: {e}")
+            logger.error(f"Error terminating LiveKit server: {e}")
+        finally:
+            livekit_process = None

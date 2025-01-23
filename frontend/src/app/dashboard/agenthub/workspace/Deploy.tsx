@@ -22,6 +22,7 @@ import {
   SelectGroup,
   SelectLabel,
 } from "@/components/ui/select";
+import StripeNumberPurchase from "@/components/StripeNumberPurchase";
 
 // Define a type for telephony number details
 interface TelephonyNumberDetails {
@@ -65,9 +66,9 @@ interface AvailableNumber {
 
 // Add interface for the new response format
 interface TwilioNumbers {
-  local?: string[];
-  toll_free?: string[];
-  mobile?: string[];
+  local?: { monthly_cost: number; numbers: string[] };
+  toll_free?: { monthly_cost: number; numbers: string[] };
+  mobile?: { monthly_cost: number; numbers: string[] };
 }
 
 interface AvailableNumbersResponse {
@@ -82,6 +83,28 @@ interface UserNumber {
     voice?: boolean;
     SMS?: boolean;
     MMS?: boolean;
+  };
+}
+
+interface NumberCost {
+  monthly_cost: number;
+  numbers: string[];
+}
+
+interface AvailableNumbersResponse {
+  numbers: {
+    local?: {
+      monthly_cost: number;
+      numbers: string[];
+    };
+    toll_free?: {
+      monthly_cost: number;
+      numbers: string[];
+    };
+    mobile?: {
+      monthly_cost: number;
+      numbers: string[];
+    };
   };
 }
 
@@ -100,6 +123,7 @@ const Deploy: React.FC<DeployProps> = ({
   const [showPhoneFields, setShowPhoneFields] = useState(false);
   const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
   const [isLoadingUserNumbers, setIsLoadingUserNumbers] = useState(false);
+  const [selectedNumberCost, setSelectedNumberCost] = useState<number>(0);
 
   useEffect(() => {
     const fetchCountryCodes = async () => {
@@ -193,6 +217,25 @@ const Deploy: React.FC<DeployProps> = ({
     fetchUserNumbers();
   }, [userId]);
 
+  const handlePhoneNumberSelection = (value: string, cost: number) => {
+    if (selectedAgent) {
+      setSelectedAgent({
+        ...selectedAgent,
+        twilioConfig: {
+          ...selectedAgent.twilioConfig,
+          phoneNumbers: [
+            {
+              id: value,
+              title: value,
+              data_type: "phone_number",
+            },
+          ],
+        },
+      });
+      setSelectedNumberCost(cost);
+    }
+  };
+
   const renderPhoneNumberFields = () => {
     return (
       <div className="space-y-4">
@@ -219,21 +262,18 @@ const Deploy: React.FC<DeployProps> = ({
               disabled={isLoadingNumbers}
               value={selectedAgent?.twilioConfig?.phoneNumbers?.[0]?.id || ""}
               onValueChange={(value) => {
-                if (selectedAgent) {
-                  setSelectedAgent({
-                    ...selectedAgent,
-                    twilioConfig: {
-                      ...selectedAgent.twilioConfig,
-                      phoneNumbers: [
-                        {
-                          id: value,
-                          title: value,
-                          data_type: "phone_number",
-                        },
-                      ],
-                    },
-                  });
+                // Find the cost for the selected number
+                let cost = 0;
+                if (availableNumbers.local?.numbers.includes(value)) {
+                  cost = availableNumbers.local.monthly_cost;
+                } else if (
+                  availableNumbers.toll_free?.numbers.includes(value)
+                ) {
+                  cost = availableNumbers.toll_free.monthly_cost;
+                } else if (availableNumbers.mobile?.numbers.includes(value)) {
+                  cost = availableNumbers.mobile.monthly_cost;
                 }
+                handlePhoneNumberSelection(value, cost);
               }}
             >
               <SelectTrigger className="w-[200px] mx-2">
@@ -245,10 +285,10 @@ const Deploy: React.FC<DeployProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {availableNumbers.local &&
-                  availableNumbers.local.length > 0 && (
+                  availableNumbers.local.numbers.length > 0 && (
                     <SelectGroup>
                       <SelectLabel>Local Numbers</SelectLabel>
-                      {availableNumbers.local.map((number) => (
+                      {availableNumbers.local.numbers.map((number) => (
                         <SelectItem key={number} value={number}>
                           {number}
                         </SelectItem>
@@ -257,10 +297,10 @@ const Deploy: React.FC<DeployProps> = ({
                   )}
 
                 {availableNumbers.toll_free &&
-                  availableNumbers.toll_free.length > 0 && (
+                  availableNumbers.toll_free.numbers.length > 0 && (
                     <SelectGroup>
                       <SelectLabel>Toll Free Numbers</SelectLabel>
-                      {availableNumbers.toll_free.map((number) => (
+                      {availableNumbers.toll_free.numbers.map((number) => (
                         <SelectItem key={number} value={number}>
                           {number}
                         </SelectItem>
@@ -269,10 +309,10 @@ const Deploy: React.FC<DeployProps> = ({
                   )}
 
                 {availableNumbers.mobile &&
-                  availableNumbers.mobile.length > 0 && (
+                  availableNumbers.mobile.numbers.length > 0 && (
                     <SelectGroup>
                       <SelectLabel>Mobile Numbers</SelectLabel>
-                      {availableNumbers.mobile.map((number) => (
+                      {availableNumbers.mobile.numbers.map((number) => (
                         <SelectItem key={number} value={number}>
                           {number}
                         </SelectItem>
@@ -284,16 +324,13 @@ const Deploy: React.FC<DeployProps> = ({
           </div>
         )}
 
-        <Button
-          className="w-[200px] mx-2"
-          onClick={() => selectedAgent && handleSaveChanges(selectedAgent)}
+        <StripeNumberPurchase
+          amount={selectedNumberCost}
           disabled={
             !selectedCountry ||
             !selectedAgent?.twilioConfig?.phoneNumbers?.[0]?.id
           }
-        >
-          Purchase
-        </Button>
+        />
       </div>
     );
   };

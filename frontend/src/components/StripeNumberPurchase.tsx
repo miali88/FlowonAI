@@ -1,98 +1,102 @@
-import { useUser } from '@clerk/nextjs';
+import { useUser } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-async function getStripeCustomerId() {
-  const { user } = useUser();
-
-  const response = await fetch(`${api_base_url}/clerk/get-customer-id`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-ID': user?.id || '',
-    },
-    credentials: 'include', // This ensures the auth cookie is sent
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to get customer ID');
-  }
-
-  const data = await response.json();
-  return data.customerId;
+interface StripeNumberPurchaseProps {
+  amount: number;
+  disabled?: boolean;
 }
 
-async function createSubscriptionWithInlinePricing(
-  customerId: string,
-  priceAmount: number,
-  currency: string = 'usd',
-  interval: 'day' | 'week' | 'month' | 'year' = 'month'
-) {
-  try {
-    // Make API call to your FastAPI backend
-    const response = await fetch(`${api_base_url}/stripe/create-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        customerId,
-        priceAmount,
-        currency,
-        interval,
-      }),
-    });
+export default function StripeNumberPurchase({
+  amount,
+  disabled,
+}: StripeNumberPurchaseProps) {
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const getStripeCustomerId = async () => {
+    if (!user?.id) return null;
+
+    const response = await fetch(
+      `${api_base_url}/clerk/get-customer-id?clerk_user_id=${user.id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to create subscription');
+      const errorData = await response.json();
+      throw new Error(
+        `Failed to get customer ID: ${JSON.stringify(errorData)}`
+      );
     }
 
     const data = await response.json();
-    return {
-      subscriptionId: data.subscriptionId,
-      clientSecret: data.clientSecret,
-    };
-  } catch (error) {
-    console.error('Error creating subscription:', error);
-    throw error;
-  }
-}
-
-// Example usage component
-export default function StripeNumberPurchase({ amount }: { amount: number }) {
-  const { user } = useUser();
+    return data.customer_id;
+  };
 
   const handlePurchase = async () => {
     if (!user) {
-      console.error('User not logged in');
+      console.error("User not logged in");
       return;
     }
 
+    setIsLoading(true);
     try {
-      // Get customer ID from backend
       const customerId = await getStripeCustomerId();
-      
+
+      console.log("CUSTOMER ID", customerId);
       if (!customerId) {
-        throw new Error('Failed to get customer ID');
+        throw new Error("Failed to get customer ID");
       }
 
-      // Create subscription with inline pricing
-      const { subscriptionId, clientSecret } = await createSubscriptionWithInlinePricing(
-        customerId,
-        amount
+      const response = await fetch(
+        `${api_base_url}/stripe/create-payment-link`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            customer_id: customerId,
+            unit_amount: Math.round(amount * 100), // Round to ensure we send an integer
+          }),
+        }
       );
-      
-      // You might want to do something with subscriptionId and clientSecret here
-      console.log('Subscription created:', subscriptionId);
-      
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Failed to create payment link: ${JSON.stringify(errorData)}`
+        );
+      }
+
+      const { payment_link } = await response.json();
+      window.location.href = payment_link; // Redirect to Stripe payment page
     } catch (error) {
-      console.error('Purchase error:', error);
+      console.error("Purchase error:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <button onClick={handlePurchase}>
-      Purchase ${amount}
-    </button>
+    <Button
+      onClick={handlePurchase}
+      disabled={disabled || amount <= 0 || isLoading}
+      className="w-[200px] mx-2"
+    >
+      {isLoading ? "Processing..." : `Purchase $${amount}/month`}
+    </Button>
   );
 }
