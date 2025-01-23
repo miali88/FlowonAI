@@ -113,7 +113,7 @@ interface AvailableNumbersResponse {
 interface UserNumbersResponse {
   numbers: {
     twilio: {
-      [key: string]: UserNumber;
+      [key: string]: string;
     };
   };
 }
@@ -134,9 +134,23 @@ const Deploy: React.FC<DeployProps> = ({
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>("");
   const [showPhoneFields, setShowPhoneFields] = useState(false);
-  const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
+  const [userNumbers, setUserNumbers] = useState<string[]>([]);
   const [isLoadingUserNumbers, setIsLoadingUserNumbers] = useState(false);
   const [selectedNumberCost, setSelectedNumberCost] = useState<number>(0);
+  const [selectedExistingNumber, setSelectedExistingNumber] = useState<string>(
+    selectedAgent?.assigned_telephone || ""
+  );
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isAssignSuccess, setIsAssignSuccess] = useState(false);
+  const [initialNumber, setInitialNumber] = useState<string>(
+    selectedAgent?.assigned_telephone
+  );
+
+  console.log("Deploy - Full selectedAgent:", selectedAgent);
+  console.log(
+    "Deploy - assigned_telephone:",
+    selectedAgent?.assigned_telephone
+  );
 
   useEffect(() => {
     const fetchCountryCodes = async () => {
@@ -234,6 +248,14 @@ const Deploy: React.FC<DeployProps> = ({
     }
   }, [clerkUserId]);
 
+  // Update useEffect to handle changes to selectedAgent and set initial number
+  useEffect(() => {
+    if (selectedAgent?.assigned_telephone) {
+      setSelectedExistingNumber(selectedAgent.assigned_telephone);
+      setInitialNumber(selectedAgent.assigned_telephone);
+    }
+  }, [selectedAgent]);
+
   const handlePhoneNumberSelection = (value: string, cost: number) => {
     if (selectedAgent) {
       setSelectedAgent({
@@ -250,6 +272,50 @@ const Deploy: React.FC<DeployProps> = ({
         },
       });
       setSelectedNumberCost(cost);
+    }
+  };
+
+  const handleAssignNumber = async () => {
+    if (!selectedAgent?.id) return;
+
+    setIsAssigning(true);
+    setIsAssignSuccess(false);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/livekit/agents/${selectedAgent.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": selectedAgent?.userId || "",
+          },
+          body: JSON.stringify({
+            assigned_telephone: selectedExistingNumber,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to assign number");
+      }
+
+      // Update the local state after successful assignment
+      setSelectedAgent((prev) =>
+        prev
+          ? {
+              ...prev,
+              assigned_telephone: selectedExistingNumber,
+            }
+          : null
+      );
+
+      setIsAssignSuccess(true);
+      setInitialNumber(selectedExistingNumber);
+    } catch (error) {
+      console.error("Error assigning number:", error);
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -412,41 +478,34 @@ frameborder="0"
                 <div className="w-1/2">
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold mb-4">
-                      Existing Numbers
+                      Assign a Number
                     </h3>
                     {isLoadingUserNumbers ? (
                       <div className="text-sm text-muted-foreground">
                         Loading...
                       </div>
                     ) : userNumbers.length > 0 ? (
-                      <div className="space-y-2">
-                        {userNumbers.map((number) => (
-                          <div
-                            key={number.phone_number}
-                            className="flex items-center justify-between p-2 rounded-lg border"
-                          >
-                            <div>
-                              <p className="font-medium">{number}</p>
-                              <div className="flex gap-2 mt-1">
-                                {number.capabilities?.voice && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                    Voice
-                                  </span>
-                                )}
-                                {number.capabilities?.SMS && (
-                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                                    SMS
-                                  </span>
-                                )}
-                                {number.capabilities?.MMS && (
-                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                                    MMS
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="space-y-4 w-64">
+                        <Select
+                          value={selectedExistingNumber}
+                          onValueChange={(value) => {
+                            setSelectedExistingNumber(value);
+                            setIsAssignSuccess(false);
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a number to assign" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {userNumbers.map((number) => (
+                              <SelectItem key={number} value={number}>
+                                {number}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {renderAssignButton()}
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground">
@@ -614,6 +673,37 @@ frameborder="0"
       default:
         return undefined;
     }
+  };
+
+  const renderAssignButton = () => {
+    const isDisabled =
+      !selectedExistingNumber || selectedExistingNumber === initialNumber;
+
+    if (isAssigning) {
+      return (
+        <Button className="w-64" disabled>
+          Assigning...
+        </Button>
+      );
+    }
+
+    if (isAssignSuccess || selectedExistingNumber === initialNumber) {
+      return (
+        <Button className="w-64" variant="secondary" disabled>
+          ✓ Assigned
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        className="w-64"
+        disabled={isDisabled}
+        onClick={handleAssignNumber}
+      >
+        Assign Number
+      </Button>
+    );
   };
 
   return (

@@ -113,6 +113,7 @@ const AgentHub = () => {
 
   const handleAgentSelect = (agent: Agent) => {
     console.log("Selected Agent with features:", agent.features);
+    console.log(agent, "kikkkk");
     setSelectedAgent(agent);
   };
 
@@ -269,7 +270,11 @@ const AgentHub = () => {
         },
       });
       console.log("Fetched Agents Data:", response.data.data);
-      setAgents(response.data.data);
+      const agents = response.data.data.map((agent: any) => ({
+        ...agent,
+        assigned_telephone: agent.assigned_telephone || null,
+      }));
+      setAgents(agents);
     } catch (err) {
       setAgentsError("Failed to fetch agents");
       console.error("Error fetching agents:", err);

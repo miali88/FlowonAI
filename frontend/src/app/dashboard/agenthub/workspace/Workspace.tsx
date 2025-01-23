@@ -159,6 +159,7 @@ interface Agent {
       [key: string]: any;
     };
   };
+  assigned_telephone?: string;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -220,8 +221,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     const agentToSave = {
       ...selectedAgent,
+      assigned_telephone: selectedAgent.assigned_telephone,
       voiceProvider: voiceOption?.voiceProvider || null,
-      features: currentFeatures, // Already cleaned in getCurrentState
+      features: currentFeatures,
       knowledgeBaseIds: selectedAgent.dataSource?.includes("all")
         ? undefined
         : selectedAgent.knowledgeBaseIds,
