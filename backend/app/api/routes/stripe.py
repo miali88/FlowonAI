@@ -11,6 +11,7 @@ class PaymentLinkRequest(BaseModel):
     quantity: int = 1
     unit_amount: int 
     currency: Optional[str] = "usd"
+    customer_id: str
 
 @router.post("/create-payment-link")
 async def create_payment_link_handler(request: PaymentLinkRequest):

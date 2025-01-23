@@ -16,6 +16,7 @@ class PaymentLinkRequest(BaseModel):
     quantity: int = 1
     unit_amount: int 
     currency: Optional[str] = "usd"
+    customer_id: str
 
 async def create_payment_link(request: PaymentLinkRequest):
     try:
@@ -26,13 +27,16 @@ async def create_payment_link(request: PaymentLinkRequest):
             product=request.product_id,
         )
 
-        # Create a Payment Link
+        # Create a Payment Link with metadata
         payment_link = stripe.PaymentLink.create(
             line_items=[{
                 'price': price.id,
                 'quantity': request.quantity,
             }],
             after_completion={'type': 'redirect', 'redirect': {'url': os.getenv('FRONTEND_BASE_URL') + '/dashboard/agenthub'}},
+            metadata={
+                'customer_id': request.customer_id
+            } if request.customer_id else {}
         )
 
         return payment_link.url
