@@ -35,11 +35,13 @@ async def get_available_numbers_handler(country_code: str) -> AvailableNumbersRe
 
 
 @router.get("/user_numbers")
-async def get_user_numbers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
+async def get_user_numbers_handler(request: Request) -> JSONResponse:
     """Get list of Twilio numbers for the current user from database"""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-    numbers = await twilio.fetch_twilio_numbers(user_id=current_user)
+    user_id = request.headers.get("x-user-id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not provided in headers")
+    numbers: list = await twilio.fetch_twilio_numbers(user_id=user_id)
+    print(f"Numbers: {numbers}")
     return JSONResponse(content={"numbers": numbers})
 
 

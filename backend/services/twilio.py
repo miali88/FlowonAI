@@ -92,9 +92,14 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
             
     return available_numbers
 
-async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
-    numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
-    return numbers.data
+
+async def fetch_twilio_numbers(user_id: str) -> list:
+    # Select only the telephony_numbers column for the specific user
+    result = supabase_client().table('users').select('telephony_numbers').eq('id', user_id).execute()
+    if not result.data or not result.data[0].get('telephony_numbers'):
+        return []
+    return result.data[0]['telephony_numbers']
+
 
 # async def call_admin(call_sid: str) -> None:
 #     try:

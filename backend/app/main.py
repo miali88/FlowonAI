@@ -21,6 +21,9 @@ load_dotenv()
 # Add this near the top with other environment variables
 DEV_MODE = os.getenv('DEV_MODE', 'false').lower() == 'true'
 
+# Add this near the top with other global variables
+livekit_process = None
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -97,13 +100,13 @@ def kill_processes_on_port(port):
 
 @app.on_event("startup")
 async def startup_event():
-    logger.debug("Starting up FastAPI server...")
     global livekit_process
+    logger.debug("Starting up FastAPI server...")
     
     if DEV_MODE:
         logger.debug("Running in dev mode - skipping LiveKit server startup")
         return
-        
+    
     try:
         logger.debug("Attempting to start LiveKit server...")
         

@@ -23,6 +23,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select";
 import StripeNumberPurchase from "@/components/StripeNumberPurchase";
+import { useAuth } from "@clerk/nextjs";
 
 // Define a type for telephony number details
 interface TelephonyNumberDetails {
@@ -75,7 +76,7 @@ interface AvailableNumbersResponse {
   numbers: TwilioNumbers;
 }
 
-// Add interface for user numbers response
+// Update interface for user numbers response
 interface UserNumber {
   phone_number: string;
   friendly_name?: string;
@@ -108,13 +109,20 @@ interface AvailableNumbersResponse {
   };
 }
 
+interface UserNumbersResponse {
+  numbers: UserNumber[];
+}
+
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
   handleSaveChanges,
   userInfo,
-  userId,
+  userId: propUserId,
 }) => {
+  const { userId: clerkUserId } = useAuth();
+  console.log("Deploy Component - propUserId:", propUserId);
+  console.log("Deploy Component - clerkUserId:", clerkUserId);
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [availableNumbers, setAvailableNumbers] = useState<TwilioNumbers>({});
@@ -195,7 +203,7 @@ const Deploy: React.FC<DeployProps> = ({
           {
             headers: {
               "Content-Type": "application/json",
-              "x-user-id": userId,
+              "x-user-id": clerkUserId || "",
             },
           }
         );
@@ -204,8 +212,8 @@ const Deploy: React.FC<DeployProps> = ({
           throw new Error("Failed to fetch user numbers");
         }
 
-        const data = await response.json();
-        setUserNumbers(data.numbers || []);
+        const data: UserNumbersResponse = await response.json();
+        setUserNumbers(data.numbers); // Now correctly typed as UserNumber[]
       } catch (error) {
         console.error("Error fetching user numbers:", error);
         setUserNumbers([]);
@@ -214,8 +222,10 @@ const Deploy: React.FC<DeployProps> = ({
       }
     };
 
-    fetchUserNumbers();
-  }, [userId]);
+    if (clerkUserId) {
+      fetchUserNumbers();
+    }
+  }, [clerkUserId]);
 
   const handlePhoneNumberSelection = (value: string, cost: number) => {
     if (selectedAgent) {
@@ -413,17 +423,17 @@ frameborder="0"
                                 {number.friendly_name || number.phone_number}
                               </p>
                               <div className="flex gap-2 mt-1">
-                                {number.capabilities.voice && (
+                                {number.capabilities?.voice && (
                                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                     Voice
                                   </span>
                                 )}
-                                {number.capabilities.SMS && (
+                                {number.capabilities?.SMS && (
                                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                                     SMS
                                   </span>
                                 )}
-                                {number.capabilities.MMS && (
+                                {number.capabilities?.MMS && (
                                   <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
                                     MMS
                                   </span>
