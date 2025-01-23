@@ -7,9 +7,9 @@ from services.stripe_services import create_payment_link
 
 router = APIRouter()
 class PaymentLinkRequest(BaseModel):
-    product_id: str
-    quantity: int
-    unit_amount: int
+    product_id: str = "prod_RcfvpRgzSUvVXj"
+    quantity: int = 1
+    unit_amount: int 
     currency: Optional[str] = "usd"
 
 @router.post("/create-payment-link")

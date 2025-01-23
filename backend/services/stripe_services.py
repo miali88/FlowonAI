@@ -12,9 +12,9 @@ load_dotenv()
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class PaymentLinkRequest(BaseModel):
-    product_id: str
-    quantity: int
-    unit_amount: int
+    product_id: str = "prod_RcfvpRgzSUvVXj"
+    quantity: int = 1
+    unit_amount: int 
     currency: Optional[str] = "usd"
 
 async def create_payment_link(request: PaymentLinkRequest):
