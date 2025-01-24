@@ -75,7 +75,7 @@ function KnowledgeBaseContent() {
   
       try {
         const token = await getToken();
-        const response = await axios.get(`${API_BASE_URL}/dashboard/knowledge_base`, {
+        const response = await axios.get(`${API_BASE_URL}/knowledge_base/knowledge_base`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,
@@ -155,7 +155,7 @@ function KnowledgeBaseContent() {
         const formData = new FormData();
         formData.append('file', selectedFile);
   
-        const response = await axios.post(`${API_BASE_URL}/dashboard/upload_file`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/knowledge_base/upload_file`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -208,7 +208,7 @@ function KnowledgeBaseContent() {
       try {
         const token = await getToken();
         const itemToDelete = savedItems.find(item => item.id === itemId);
-        await axios.delete(`${API_BASE_URL}/dashboard/knowledge_base/${itemId}`, {
+        await axios.delete(`${API_BASE_URL}/knowledge_base/knowledge_base/${itemId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,

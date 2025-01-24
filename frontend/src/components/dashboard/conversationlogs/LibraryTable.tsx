@@ -244,7 +244,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
         console.log('Fetched conversations:', conversations);
 
         // Fetch agent data
-        const agentResponse = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+        const agentResponse = await axios.get(`${API_BASE_URL}/agent/agents`, {
           headers: {
             'x-user-id': user.id
           }

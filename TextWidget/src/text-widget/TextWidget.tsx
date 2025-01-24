@@ -104,7 +104,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       try {
         console.log("Fetching agent metadata for agentId:", agentId);
         const response = await fetch(
-          `${apiBaseUrl}/livekit/agent_content/${agentId}`
+          `${apiBaseUrl}/agent/agent_content/${agentId}`
         );
         if (!response.ok) {
           throw new Error(`Failed to fetch agent metadata: ${response.status}`);

@@ -51,7 +51,7 @@ const AgentHub = () => {
     
     setIsLoadingUserInfo(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
+      const response = await fetch(`${API_BASE_URL}/knowledge_base/users`, {
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,
@@ -103,7 +103,7 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
+      const response = await fetch(`${API_BASE_URL}/agent/agents/${selectedAgent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/livekit/agents/${selectedAgent.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/agents/${selectedAgent.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ const AgentHub = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/dashboard/knowledge_base_headers`, {
+      const response = await fetch(`${API_BASE_URL}/knowledge_base/knowledge_base_headers`, {
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,
@@ -210,7 +210,7 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agent/agents`, {
         headers: {
           'x-user-id': userId
         }
@@ -267,7 +267,7 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agent/agents`, {
         headers: {
           'x-user-id': userId
         }

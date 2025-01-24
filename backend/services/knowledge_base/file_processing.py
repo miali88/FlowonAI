@@ -1,6 +1,6 @@
 import logging
 from fastapi import UploadFile
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
 import io

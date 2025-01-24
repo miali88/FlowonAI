@@ -69,7 +69,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
 
       // Single API call with both chat_ui and agent_logo
       const response = await fetch(
-        `${API_BASE_URL}/livekit/agents/${agentId}`,
+        `${API_BASE_URL}/agent/agents/${agentId}`,
         {
           method: "PATCH",
           headers: {

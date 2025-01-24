@@ -224,7 +224,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
         delete dataToSend.tag;
       }
 
-      const response = await fetch(`${API_BASE_URL}/livekit/new_agent`, {
+      const response = await fetch(`${API_BASE_URL}/agent/new_agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
