@@ -48,14 +48,7 @@ async def get_user_numbers_handler(current_user: str = Depends(get_current_user)
 @router.post("/")
 async def twilio_status_update() -> Response:
     print("\n\nTwilio status update received")
-    # Create a simple TwiML response that answers the call and says something
-    twiml_response = """
-    <?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-        <Say>Hello, thank you for calling!</Say>
-    </Response>
-    """
-    return Response(content=twiml_response, media_type="application/xml")
+    return Response(status_code=200)
 
 
 @router.post('/add_to_conference')
