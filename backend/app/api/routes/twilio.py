@@ -42,9 +42,12 @@ async def get_user_numbers_handler(current_user: str = Depends(get_current_user)
 
 
 """ TWILIO WEBHOOK FUNCTIONS """
-@router.post("/")
-async def twilio_status_update() -> Response:
-    print("\n\nTwilio status update received")
+@router.api_route("/", methods=["GET", "POST"])
+async def twilio_status_update(request: Request) -> Response:
+    """Handle Twilio status callback webhooks"""
+    data = await request.form() if request.method == "POST" else request.query_params
+    print(f"\n\nTwilio status update received - Method: {request.method}")
+    print(f"Status data: {dict(data)}")
     return Response(status_code=200)
 
 

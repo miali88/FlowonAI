@@ -6,7 +6,7 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 
 from services.twilio.client import client as client
-from twilio.twiml.voice_response import VoiceResponse, Dial, Stream, Connect
+from twilio.twiml.voice_response import VoiceResponse, Dial
 from twilio.base.exceptions import TwilioRestException
 
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
