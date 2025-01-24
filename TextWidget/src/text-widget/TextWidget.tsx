@@ -463,7 +463,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     if (responseId) {
       try {
         const sourcesResponse = await fetch(
-          `${apiBaseUrl}/chat/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
+          `${apiBaseUrl}/conversation/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
         );
 
         if (!sourcesResponse.ok) {
