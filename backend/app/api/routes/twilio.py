@@ -48,16 +48,17 @@ async def get_user_numbers_handler(request: Request) -> JSONResponse:
 
 """ TWILIO WEBHOOK FUNCTIONS """
 @router.post("/")
-async def twilio_status_update() -> Response:
+async def twilio_status_update(request: Request) -> Response:
     print("\n\nTwilio status update received")
+    print(await request.json())
     # Create a simple TwiML response that answers the call and says something
-    twiml_response = """
-    <?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-        <Say>Hello, thank you for calling!</Say>
-    </Response>
-    """
-    return Response(content=twiml_response, media_type="application/xml")
+    # twiml_response = """
+    # <?xml version="1.0" encoding="UTF-8"?>
+    # <Response>
+    #     <Say>Hello, thank you for calling!</Say>
+    # </Response>
+    # """
+    return HTMLResponse(content="200")
 
 
 @router.post('/add_to_conference')

@@ -51,7 +51,28 @@ class SIPConfig:
     sip_host: str = livekit_sip_host  # Using the existing livekit_sip_host from env
     username: str = "flowon"
     password: str = "very_secret"
-    webhook_url: str = f"{os.getenv('DEV_SERVER')}/twilio/conference-events"
+    webhook_url: str = f"{os.getenv('TWILIO_WEBHOOK_URL')}/twilio/add_to_conference"
+
+    def __post_init__(self):
+        self._update_phone_number_webhook()
+
+    def _update_phone_number_webhook(self):
+        """Update the phone number's voice webhook URL"""
+        try:
+            # Find and update the phone number
+            numbers = client.incoming_phone_numbers.list(phone_number=self.sip_trunk_number)
+            if not numbers:
+                raise ValueError(f"Phone number {self.sip_trunk_number} not found in Twilio account")
+            
+            number = numbers[0]
+            number.update(
+                voice_url=self.webhook_url,
+                voice_method='POST'
+            )
+            logger.info(f"Updated webhook URL for {self.sip_trunk_number} to {self.webhook_url}")
+        except Exception as e:
+            logger.error(f"Failed to update phone number webhook: {str(e)}")
+            raise
 
 async def get_sip_config(twilio_number: str) -> SIPConfig:
     """
@@ -114,7 +135,6 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
             continue
             
     return available_numbers
-
 
 async def fetch_twilio_numbers(user_id: str) -> list:
     # Select only the telephony_numbers column for the specific user
@@ -180,8 +200,8 @@ async def add_to_conference(request: Request) -> JSONResponse:
         from_number = str(form_data['From'])
 
         logger.info(f'Processing call SID: {call_sid}') 
-        # Generate unique conference name using call parameters
-        conference_name = f"conf_{call_sid}_{int(time.time())}"
+        # Update conference name format to be more consistent
+        conference_name = f"conf_{call_sid}"
         
         # Get SIP configuration from request or database
         sip_config = await get_sip_config(twilio_number)  # You'll need to implement this
@@ -198,23 +218,27 @@ async def add_to_conference(request: Request) -> JSONResponse:
             logger.error(f'Call is in invalid state: {call.status}')
             raise HTTPException(status_code=400, detail=f'Call is in invalid state: {call.status}')
 
-        # Move the initial caller to the conference
-        logger.debug(f'Moving caller to conference: {conference_name}')
-        response = VoiceResponse()
-        dial = Dial()
-        dial.conference(
-            conference_name,
-            startConferenceOnEnter=False,
-            endConferenceOnExit=True,
-            waitUrl='http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical',
-            statusCallbackEvent=['start', 'end', 'join', 'leave'],
-            statusCallback=sip_config['webhook_url']  # Add webhook for conference events
+        # Update the call to join the conference
+        call = client.calls(call_sid).update(
+            twiml=f"""
+                <Response>
+                    <Dial>
+                        <Conference
+                            statusCallback="{sip_config.webhook_url}/conference-events"
+                            statusCallbackEvent="start end join leave"
+                            statusCallbackMethod="POST"
+                            waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
+                            startConferenceOnEnter="true"
+                            endConferenceOnExit="false">
+                            {conference_name}
+                        </Conference>
+                    </Dial>
+                </Response>
+            """
         )
-        response.append(dial)
-
-        client.calls(call_sid).update(twiml=str(response))
-        logger.info('Successfully moved caller to conference')
-
+        
+        logger.info(f"Successfully moved caller to conference {conference_name}")
+        
         # Bridge the conference to LiveKit with dynamic SIP config
         logger.debug('Initiating LiveKit bridge')
         await bridge_conference_to_livekit(
@@ -236,8 +260,6 @@ async def add_to_conference(request: Request) -> JSONResponse:
         logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
     
-
-
 async def bridge_conference_to_livekit(
     conference_name: str,
     conference_sid: str, 
