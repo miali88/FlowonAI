@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from services.twilio import cleanup
+from services.twilio.call_handle import cleanup
 load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
