@@ -14,6 +14,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
+from app.api.routes.agent import router as agent_router
 from app.core.config import settings
 from services.twilio.call_handle import cleanup
 load_dotenv()
@@ -67,6 +68,7 @@ if origins:
 #print("origins",[str(origins).strip(",") for origin in settings.BACKEND_CORS_ORIGINS])
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(agent_router, prefix="/api/v1/agent", tags=["agent"])
 
 # Define global variable
 livekit_process = None
