@@ -1,0 +1,3 @@
+[bandit]
+targets: ./app
+exclude: /tests

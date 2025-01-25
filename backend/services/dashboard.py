@@ -3,6 +3,7 @@ import logging
 from tiktoken import encoding_for_model
 import requests
 import json
+from typing import List, Tuple 
 
 import spacy
 from openai import AsyncOpenAI
@@ -20,17 +21,22 @@ logger.setLevel(logging.DEBUG)
 
 nlp = spacy.load("en_core_web_md")
 
-def clean_data(data):
+
+def clean_data(data: str) -> str:
     doc = nlp(data)
-    cleaned_text = ' '.join([token.text for token in doc if not token.is_space and not token.is_punct])
+    cleaned_text = ' '.join(
+        [token.text for token in doc if not token.is_space and not token.is_punct]
+    )
     return cleaned_text
 
-def count_tokens(text, model="gpt-4o"):
+
+def count_tokens(text: str, model: str = "gpt-4o") -> int:
     encoder = encoding_for_model(model)
     tokens = encoder.encode(text)
     return len(tokens)
 
-def sliding_window_chunking(text, max_window_size=600, overlap=200):
+
+def sliding_window_chunking(text: str, max_window_size: int = 600, overlap: int = 200) -> List[str]:
     encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
     tokens = encoder.encode(text)
     chunks = []
@@ -43,7 +49,10 @@ def sliding_window_chunking(text, max_window_size=600, overlap=200):
         start += max_window_size - overlap
     return chunks
 
-async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, token_count, title):
+
+async def insert_chunk(
+    parent_id: str, content: str, chunk_index: int, embedding: List[float], user_id: str, token_count: int, title: str
+) -> None:
     logger.info(f"Inserting chunk {chunk_index} for document {parent_id}")
     try:
         await asyncio.to_thread(
@@ -53,7 +62,7 @@ async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, toke
                 'chunk_index': chunk_index,
                 'jina_embedding': embedding,
                 'user_id': user_id,
-                'token_count' : token_count, 
+                'token_count' : token_count,
                 "title": title
             }).execute
         )
@@ -62,7 +71,8 @@ async def insert_chunk(parent_id, content, chunk_index, embedding, user_id, toke
         logger.error(f"Failed to insert chunk {chunk_index}: {str(e)}")
         raise
 
-async def get_embedding(text):
+
+async def get_embedding(text: str) -> Tuple[List[float], int]:
     logger.info("Requesting embedding from Jina AI")
     try:
         url = 'https://api.jina.ai/v1/embeddings'
@@ -78,8 +88,13 @@ async def get_embedding(text):
             "embedding_type": "float",
             "input": text
         }
-        response = requests.post(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()  # Raise exception for non-200 status codes
+        response = requests.post(
+            url, 
+            headers=headers, 
+            data=json.dumps(data),
+            timeout=30  # Add timeout to prevent potential DoS attacks
+        )
+        response.raise_for_status()
         logger.debug("Successfully received embedding from Jina AI")
 
         embedding = response.json()['data'][0]['embedding']
@@ -89,7 +104,8 @@ async def get_embedding(text):
         logger.error(f"Failed to get embedding from Jina AI: {str(e)}")
         raise
 
-async def process_item(item_id, content, user_id, title):
+
+async def process_item(item_id: str, content: str, user_id: str, title: str) -> int:
     logger.info(f"Processing item {item_id} for user {user_id}")
     chunks = sliding_window_chunking(content)
     logger.info(f"Created {len(chunks)} chunks for processing")
@@ -98,14 +114,23 @@ async def process_item(item_id, content, user_id, title):
         logger.debug(f"Processing chunk {index}/{len(chunks)}")
         try:
             embedding, token_count = await get_embedding(chunk)
-            await insert_chunk(item_id, chunk, index, embedding, user_id, token_count, title)
+            await insert_chunk(
+                item_id,
+                chunk,
+                index,
+                embedding,
+                user_id,
+                token_count,
+                title
+            )
             total_tokens += token_count
         except Exception as e:
             logger.error(f"Failed to process chunk {index}: {str(e)}")
             raise
     return total_tokens
 
-async def update_file_tokens(data_id, total_tokens, title):
+
+async def update_file_tokens(data_id: str, total_tokens: int, title: str) -> None:
     logger.info(f"Updating token count for file {title}")
     try:
         await asyncio.to_thread(
@@ -119,14 +144,20 @@ async def update_file_tokens(data_id, total_tokens, title):
         logger.error(f"Failed to update token count: {str(e)}")
         raise
 
-async def kb_item_to_chunks(data_id, data_content, user_id, title):
+
+async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title: str) -> None:
     logger.info(f"Starting knowledge base item processing for ID {data_id}")
     cleaned_text = clean_data(data_content)
     logger.debug(f"Cleaned text length: {len(cleaned_text)} characters")
-    
+
     if cleaned_text:
         try:
-            total_tokens = await process_item(item_id=data_id, content=cleaned_text, user_id=user_id, title=title)
+            total_tokens = await process_item(
+                item_id=data_id,
+                content=cleaned_text,
+                user_id=user_id,
+                title=title
+            )
             logger.info(f"Successfully processed knowledge base item {title}")
             await update_file_tokens(data_id, total_tokens, title)
 
@@ -135,4 +166,3 @@ async def kb_item_to_chunks(data_id, data_content, user_id, title):
             raise
     else:
         logger.warning(f"No valid text content for item {title}")
-

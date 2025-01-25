@@ -2,16 +2,20 @@ import logging
 from fastapi import UploadFile
 from pypdf import PdfReader
 from docx import Document
-from openpyxl import load_workbook
+from openpyxl import load_workbook # type: ignore
 import io
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def process_file(file: UploadFile) -> str:
+
+async def process_file(file: UploadFile) -> Any:
     logger.info(f"Processing file: {file.filename}")
-    
+
     content = ""
+    if not file.filename:
+        raise ValueError("File name is required")
     file_extension = file.filename.split('.')[-1].lower()
     logger.info(f"File extension: {file_extension}")
 
@@ -30,12 +34,13 @@ async def process_file(file: UploadFile) -> str:
             content = (await file.read()).decode('utf-8')
         else:
             raise ValueError(f"Unsupported file type: {file_extension}")
-        
+
         logger.info(f"File processed successfully. Content length: {len(content)}")
         return content, file_extension
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}")
         raise
+
 
 async def process_pdf(file: UploadFile) -> str:
     logger.info("Processing PDF file")
@@ -51,6 +56,7 @@ async def process_pdf(file: UploadFile) -> str:
 
     return content
 
+
 async def process_docx(file: UploadFile) -> str:
     logger.info("Processing DOCX file")
     docx_content = await file.read()
@@ -58,6 +64,7 @@ async def process_docx(file: UploadFile) -> str:
     content = "\n".join(paragraph.text for paragraph in doc.paragraphs)
     logger.info(f"DOCX processed. Number of paragraphs: {len(doc.paragraphs)}")
     return content
+
 
 async def process_excel(file: UploadFile) -> str:
     logger.info("Processing Excel file")

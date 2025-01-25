@@ -11,12 +11,14 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
+
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
         return [i.strip() for i in v.split(",")]
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -56,29 +58,31 @@ class Settings(BaseSettings):
 
     WEAVIATE_URL: str = ""
     WEAVIATE_API_KEY: str = ""
+    BASE_URL: str = os.getenv("API_BASE_URL", "")
+    if not BASE_URL:
+        raise ValueError("API_BASE_URL is not set")
+    # BASE_URL: str = "http://localhost:8000"
 
-    BASE_URL: str = os.getenv("API_BASE_URL")
-    #BASE_URL: str = "http://localhost:8000"
-
-   
     JINA_API_KEY: str = ""
-    
+
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
 
-        # LLM service
+    # LLM service
     OPENAI_API_KEY: str = ""
-    ANTHROPIC_API_KEY: str = "" 
+    ANTHROPIC_API_KEY: str = ""
 
     # TTS, STT
-    DEEPGRAM_API_KEY: str = ""  
+    DEEPGRAM_API_KEY: str = ""
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = ""
 
     # Daily
     DAILY_SAMPLE_ROOM_URL: str = ""
     DAILY_API_KEY: str = ""
+
+    AGENT_SECOND: str = "AGENT_SECOND"
 
 
 settings = Settings()

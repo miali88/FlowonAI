@@ -82,7 +82,7 @@ export default function PhoneNumbersPage() {
       if (!userId) return;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/agent/agents`, {
+        const response = await fetch(`${API_BASE_URL}/agent/`, {
           headers: {
             'x-user-id': userId
           }

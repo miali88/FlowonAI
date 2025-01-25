@@ -1,17 +1,11 @@
-import os, logging
-from typing import List, Dict, Any
-import subprocess
-import asyncio
+import os
+import logging
+from typing import List, Dict, Any, Optional
 import json
 
-from fastapi import Request, APIRouter, WebSocket
-from fastapi.responses import JSONResponse
-from twilio.rest import Client
-from twilio.twiml.voice_response import VoiceResponse
-from supabase import create_client, Client
-from services.chat.chat import llm_response
-
-from services.voice.rag import similarity_search
+from fastapi import Request, APIRouter
+from twilio.rest import Client # type: ignore
+from supabase import create_client
 
 from services.cache import call_data
 router = APIRouter()
@@ -22,15 +16,19 @@ jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 
 # Initialize Supabase client
 supabase_url = os.environ.get("SUPABASE_URL")
+if not supabase_url:
+    raise ValueError("SUPABASE_URL environment variable is not set")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase: Client = create_client(supabase_url, supabase_key)
+if not supabase_key:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is not set")
+supabase = create_client(supabase_url, supabase_key)
 
 
 @router.post("/wh")
-async def livekit_room_webhook(request: Request):
+async def livekit_room_webhook(request: Request) -> dict[str, str]:
     data = await request.json()
     print("call_data id in webhook:", id(call_data))
-    
+
     webhook_extract = sip_call_extract(data)
     if webhook_extract:
         call_data[webhook_extract['room_name']] = {
@@ -38,8 +36,11 @@ async def livekit_room_webhook(request: Request):
             'twilio_call_sid': webhook_extract['twilio_call_sid'],
             'twilio_account_sid': webhook_extract['twilio_account_sid']
         }
-        
-        print(" printing call_data[webhook_extract['room_name']]:", call_data[webhook_extract['room_name']])
+
+        print(
+            " printing call_data[webhook_extract['room_name']]:",
+            call_data[webhook_extract['room_name']]
+        )
         # Write call_data to JSON file
         try:
             with open('call_data.json', 'w') as f:
@@ -52,7 +53,7 @@ async def livekit_room_webhook(request: Request):
     return {"message": "Webhook received successfully"}
 
 
-def sip_call_extract(data) -> Dict[str, Any]:
+def sip_call_extract(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     kind = data.get('participant', {}).get('kind')
     if kind == 'SIP':
         result = {
@@ -64,7 +65,7 @@ def sip_call_extract(data) -> Dict[str, Any]:
             'state': data.get('participant', {}).get('state'),
             'event_id': data.get('id'),
         }
-        
+
         # Get nested Twilio attributes safely
         attributes = data.get('participant', {}).get('attributes', {})
         result.update({
@@ -74,5 +75,5 @@ def sip_call_extract(data) -> Dict[str, Any]:
         })
         return result
     else:
-        #logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
+        # logger.error(f"Received webhook data for non-SIP (twilio) call: {data}")
         return None
