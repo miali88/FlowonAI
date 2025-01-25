@@ -263,7 +263,7 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/agent/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           "x-user-id": userId,
         },
@@ -317,7 +317,7 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/agent/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           "x-user-id": userId,
         },

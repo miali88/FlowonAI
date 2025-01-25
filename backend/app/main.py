@@ -14,7 +14,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from app.api.routes.agent import router as agent_router
+from backend.app.api.routes.agents import router as agent_router
 from app.core.config import settings
 from services.twilio.call_handle import cleanup
 load_dotenv()
