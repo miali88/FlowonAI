@@ -57,13 +57,13 @@ class DataSource:
 async def init_new_chat(agent_id: str, room_name: str):
     chat_histories[agent_id][room_name] = ChatHistory()
 
-    # llm_instance = openai.LLM(
-    #     model="gpt-4o-",
-    # )
-
+    # Initialize the LLM instance first
     llm_instance = openai.LLM(
         model="gpt-4o",
     )
+
+    # Store the llm_instance in chat history immediately
+    chat_histories[agent_id][room_name].llm_instance = llm_instance
 
     # Fetch agent configuration
     agent_metadata = await get_agent_metadata(agent_id)
@@ -73,6 +73,7 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     # Create chat context with history
     chat_ctx = llm.ChatContext()
+    chat_histories[agent_id][room_name].chat_ctx = chat_ctx  # Store chat_ctx immediately
     
     # Ensure system instructions are not empty
     if agent_metadata.get('instructions'):

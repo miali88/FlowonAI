@@ -3,12 +3,11 @@ from pydantic import BaseModel
 import json, logging
 import tiktoken
 
-from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks, WebSocket
+from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
 from services.db.supabase_services import supabase_client
-from app.core.config import settings
 from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
@@ -102,7 +101,7 @@ async def upload_file_handler(
         logger.error(f"Error processing file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-@router.get("/knowledge_base")
+@router.get("/")
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
@@ -117,23 +116,7 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/knowledge_base_headers")
-async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
-    try:
-        items, total_tokens = await get_kb_headers(current_user)
-        # items = []
-        # total_tokens = 0
-        print("\n\ntotal_tokens:", total_tokens)
-        return JSONResponse(content={
-            "items": items,
-            "total_tokens": total_tokens
-        })
-    except Exception as e:
-        logger.error(f"Error fetching items: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.post("/knowledge_base")
+@router.post("/")
 async def create_item_handler(request: Request, 
                             background_tasks: BackgroundTasks,
                             ):
@@ -171,7 +154,7 @@ async def create_item_handler(request: Request,
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-@router.delete("/knowledge_base/{item_id}")
+@router.delete("/{item_id}")
 async def delete_item_handler(item_id: int, request: Request, current_user: str = Depends(get_current_user)):
     try:
         # Get the request body
@@ -194,6 +177,20 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/headers")
+async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
+    try:
+        items, total_tokens = await get_kb_headers(current_user)
+        # items = []
+        # total_tokens = 0
+        print("\n\ntotal_tokens:", total_tokens)
+        return JSONResponse(content={
+            "items": items,
+            "total_tokens": total_tokens
+        })
+    except Exception as e:
+        logger.error(f"Error fetching items: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/scrape_web")
 async def scrape_url_handler(

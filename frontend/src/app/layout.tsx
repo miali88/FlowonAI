@@ -1,10 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
-import { ThemeProvider } from 'next-themes';
 import { Metadata } from 'next';
 import Script from 'next/script';
-import { CSPostHogProvider } from './providers';
+import { Providers } from './providers';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -54,17 +52,9 @@ export default function RootLayout({
         </Script>
       </head>
       <body suppressHydrationWarning>
-        <CSPostHogProvider>
-          <ClerkProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-            >
-              {children}
-            </ThemeProvider>
-          </ClerkProvider>
-        </CSPostHogProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
