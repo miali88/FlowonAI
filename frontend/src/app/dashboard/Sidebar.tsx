@@ -1,24 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Mic, BookOpen, MessageSquare, Plug, BarChart3, Calendar, Menu, X, LucideIcon } from "lucide-react";
+import {
+  Mic,
+  BookOpen,
+  MessageSquare,
+  Plug,
+  BarChart3,
+  Calendar,
+  Menu,
+  X,
+  LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
-  activeItem: string;
-  setActiveItem: (value: string) => void;
+  setIsLoading: (value: boolean) => void;
 }
 
-function SidebarItem({ 
-  icon: Icon, 
-  label, 
-  isActive, 
-  onClick, 
-  isCollapsed 
+function SidebarItem({
+  icon: Icon,
+  label,
+  isActive,
+  onClick,
+  isCollapsed,
 }: {
   icon: LucideIcon;
   label: string;
@@ -49,26 +64,48 @@ function SidebarItem({
   );
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  isCollapsed, 
-  setIsCollapsed, 
-  activeItem, 
-  setActiveItem
+export const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed,
+  setIsCollapsed,
+  setIsLoading,
 }) => {
+  const router = useRouter();
+  const [activeItem, setActiveItem] = useState("");
+
   const sidebarItems = [
-    { icon: Mic, label: "Agent Hub" },
-    { icon: BookOpen, label: "Knowledge Base" },
-    { icon: MessageSquare, label: "Conversation Logs" },
-    { icon: Plug, label: "Integrations" },
-    { icon: BarChart3, label: "Analytics" },
-    { icon: Calendar, label: "Contact Founders" },
+    { icon: Mic, label: "Agent Hub", href: "/dashboard/agenthub" },
+    {
+      icon: BookOpen,
+      label: "Knowledge Base",
+      href: "/dashboard/knowledgebase",
+    },
+    {
+      icon: MessageSquare,
+      label: "Conversation Logs",
+      href: "/dashboard/conversationlogs",
+    },
+    { icon: Plug, label: "Integrations", href: "/dashboard/integrations" },
+    { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+    {
+      icon: Calendar,
+      label: "Contact Founders",
+      href: "/dashboard/contactfounders",
+    },
   ];
 
+  const handleItemClick = (label: string, href: string) => {
+    setActiveItem(label);
+    setIsLoading(true);
+    router.push(href);
+  };
+
   return (
-    <div className={cn(
-      "flex flex-col h-screen bg-transparent backdrop-blur-lg border-r border-white/10 transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64"
-    )}>
+    <div
+      className={cn(
+        "flex flex-col h-screen bg-transparent backdrop-blur-lg border-r border-white/10 transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64"
+      )}
+    >
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
           <span className="text-sm font-medium">Flowon AI (beta)</span>
@@ -90,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon={item.icon}
               label={item.label}
               isActive={activeItem === item.label}
-              onClick={() => setActiveItem(item.label)}
+              onClick={() => handleItemClick(item.label, item.href)}
               isCollapsed={isCollapsed}
             />
           ))}
@@ -98,5 +135,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </ScrollArea>
     </div>
   );
-}
-
+};
