@@ -2,16 +2,15 @@ import uvicorn
 from dotenv import load_dotenv
 import os
 import sys
-from app.core.config import settings
 
 if __name__ == "__main__":
     # Add the project root to Python path
     project_root = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(project_root)
-    
+
     # Load environment variables
     load_dotenv(os.path.join(project_root, '.env'))
-    
+
     # Start the server
     try:
         uvicorn.run("app.main:app", 

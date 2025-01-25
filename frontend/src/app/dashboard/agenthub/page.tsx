@@ -68,7 +68,7 @@ const AgentHub = () => {
 
     setIsLoadingUserInfo(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
+      const response = await fetch(`${API_BASE_URL}/knowledge_base/users`, {
         headers: {
           "Content-Type": "application/json",
           "x-user-id": userId,
@@ -139,7 +139,7 @@ const AgentHub = () => {
         : {};
 
       const response = await fetch(
-        `${API_BASE_URL}/livekit/agents/${selectedAgent.id}`,
+        `${API_BASE_URL}/agent/${selectedAgent.id}`,
         {
           method: "PATCH",
           headers: {
@@ -185,7 +185,7 @@ const AgentHub = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/livekit/agents/${selectedAgent.id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`,
         {
           method: "DELETE",
           headers: {
@@ -232,7 +232,7 @@ const AgentHub = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `${API_BASE_URL}/dashboard/knowledge_base_headers`,
+        `${API_BASE_URL}/knowledge_base/headers`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -264,7 +264,7 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           "x-user-id": userId,
         },
@@ -322,7 +322,7 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/livekit/agents`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           "x-user-id": userId,
         },

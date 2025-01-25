@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
 
   try {
     console.log(`API_BASE_URL: ${API_BASE_URL}`);
-    console.log(`Fetching from: ${API_BASE_URL}/livekit/agent_content/${agentId}`);
+    console.log(`Fetching from: ${API_BASE_URL}/agent/agent_content/${agentId}`);
     
-    const response = await fetch(`${API_BASE_URL}/livekit/agent_content/${agentId}`, {
+    const response = await fetch(`${API_BASE_URL}/agent/agent_content/${agentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

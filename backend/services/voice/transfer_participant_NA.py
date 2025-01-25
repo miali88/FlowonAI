@@ -2,16 +2,22 @@ import asyncio
 import os
 from livekit import api, rtc
 
+
 async def transfer_participant(
     source_room_name: str,
     target_room_name: str,
     participant_identity: str,
-):
-    print("will sleep for 10 secs since we're immediately calling this after call_transfer")
+) -> str:
+    print(
+        "will sleep for 10 secs since we're immediately calling this "
+        "after call_transfer"
+    )
     await asyncio.sleep(10)
-    
+
     try:
-        print(f"Starting transfer for participant {participant_identity} from {source_room_name} to {target_room_name}")
+        print(
+            f"Starting transfer for participant {participant_identity} "
+            f"from {source_room_name} to {target_room_name}")
         livekit_api = api.LiveKitAPI(
             url=os.getenv("LIVEKIT_URL"),
             api_key=os.getenv("LIVEKIT_API_KEY"),
@@ -23,7 +29,7 @@ async def transfer_participant(
         print(f"Checking if target room {target_room_name} exists...")
         list_request = api.ListRoomsRequest(names=[target_room_name])
         rooms_response = await livekit_api.room.list_rooms(list_request)
-        
+
         if not rooms_response.rooms:
             print(f"Target room {target_room_name} not found, creating new room...")
             create_request = api.CreateRoomRequest(
@@ -51,19 +57,22 @@ async def transfer_participant(
 
         # Create and connect to target room first
         target_room = rtc.Room()
-        
+
         # Set up connection handler
         connection_established = asyncio.Event()
-        
+
         @target_room.on("participant_connected")
-        def on_participant_connected(participant: rtc.RemoteParticipant):
+        def on_participant_connected(participant: rtc.RemoteParticipant) -> None:
             if participant.identity == participant_identity:
                 connection_established.set()
 
         # Connect to target room
         print(f"Connecting to target room {target_room_name}")
+        livekit_url = os.getenv("LIVEKIT_URL")
+        if not livekit_url:
+            raise ValueError("LIVEKIT_URL is not set")
         await target_room.connect(
-            url=os.getenv("LIVEKIT_URL"),
+            url=livekit_url,
             token=new_token,
             options=rtc.RoomOptions(
                 auto_subscribe=True
@@ -71,7 +80,10 @@ async def transfer_participant(
         )
 
         # Now remove from source room
-        print(f"Removing participant {participant_identity} from source room {source_room_name}")
+        print(
+            f"Removing participant {participant_identity} "
+            f"from source room {source_room_name}"
+        )
         await livekit_api.room.remove_participant(api.RoomParticipantIdentity(
             room=source_room_name,
             identity=participant_identity,
@@ -81,11 +93,16 @@ async def transfer_participant(
         # Wait for participant to connect to target room
         try:
             await asyncio.wait_for(connection_established.wait(), timeout=30.0)
-            print(f"Participant successfully connected to target room {target_room_name}")
+            print(
+                f"Participant successfully connected to "
+                f"target room {target_room_name}"
+            )
             return new_token
         except asyncio.TimeoutError:
             print("Timeout waiting for participant to connect to target room")
-            raise Exception("Transfer failed - participant did not connect to target room")
+            raise Exception(
+                "Transfer failed - participant did not connect to target room"
+            )
 
     except Exception as e:
         print(f"Error transferring participant: {str(e)}")
@@ -96,4 +113,3 @@ async def transfer_participant(
             print("LiveKit API connection closed")
         if 'target_room' in locals():
             await target_room.disconnect()
-

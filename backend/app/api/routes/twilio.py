@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Response, HTTPException, Depends
-from fastapi.responses import Response, JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse
 from typing import Dict, List
 from pydantic import BaseModel
 
@@ -32,7 +32,9 @@ async def get_available_numbers_handler(country_code: str) -> AvailableNumbersRe
     return {"numbers": available_numbers or {}}  # Return empty dict if no numbers found
 
 @router.get("/user_numbers")
-async def get_user_numbers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
+async def get_user_numbers_handler(
+    current_user: str = Depends(get_current_user)
+) -> JSONResponse:
     """Get list of Twilio numbers for the current user from database"""
     if not current_user:
         raise HTTPException(status_code=401, detail="User not authenticated")
@@ -49,6 +51,7 @@ async def twilio_status_update(request: Request) -> Response:
     print(f"\n\nTwilio status update received - Method: {request.method}")
     print(f"Status data: {dict(data)}")
     return Response(status_code=200)
+
 
 
 @router.post('/add_to_conference')

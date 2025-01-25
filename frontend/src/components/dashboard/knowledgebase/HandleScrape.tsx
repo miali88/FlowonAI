@@ -40,7 +40,7 @@ export const handleScrape = async ({
 
   try {
     const token = await getToken();
-    const response = await axios.post(`${API_BASE_URL}/dashboard/crawl_url`, 
+    const response = await axios.post(`${API_BASE_URL}/knowledge_base/crawl_url`, 
       { url: scrapeUrl },
       {
         headers: {
@@ -104,7 +104,7 @@ export const handleScrapeAll = async ({
     console.log('=== Starting handleScrapeAll ===');
     console.log('User ID:', user.id);
     console.log('Selected URLs:', selectedUrls);
-    console.log('API Endpoint:', `${API_BASE_URL}/dashboard/scrape_web`);
+    console.log('API Endpoint:', `${API_BASE_URL}/knowledge_base/scrape_web`);
 
     const token = await getToken();
     console.log('Token obtained successfully');
@@ -113,7 +113,7 @@ export const handleScrapeAll = async ({
     console.log('Request payload:', requestData);
 
     const response = await axios.post(
-      `${API_BASE_URL}/dashboard/scrape_web`,
+      `${API_BASE_URL}/knowledge_base/scrape_web`,
       requestData,
       {
         headers: {

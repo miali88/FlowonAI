@@ -3,11 +3,11 @@ module.exports = {
     {
       name: "frontend",
       script: "npm",
-      args: "run dev",
+      args: "run start",
       watch: false,
       cwd: "./frontend",  // Changed from "/frontend" to "./frontend"
       env: {
-        NODE_ENV: "development",
+        NODE_ENV: "production",
         PORT: 3000
       }
     },
