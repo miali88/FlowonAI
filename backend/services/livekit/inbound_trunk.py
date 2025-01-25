@@ -1,9 +1,12 @@
 import asyncio
-
+import os
+from dotenv import load_dotenv
 from livekit import api 
 from livekit.protocol.sip import CreateSIPInboundTrunkRequest, SIPInboundTrunkInfo
 
-async def main():
+load_dotenv()
+
+async def main(new_twilio_number: str):
     livekit_api = api.LiveKitAPI()
 
     trunk = SIPInboundTrunkInfo(
@@ -19,5 +22,6 @@ async def main():
     
     await livekit_api.aclose()
 
-
-asyncio.run(main())
+if __name__ == "__main__":
+    new_twilio_number = "+13614281772"
+    asyncio.run(main(new_twilio_number))

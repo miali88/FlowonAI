@@ -1,20 +1,18 @@
-import sentry_sdk
-from fastapi import FastAPI
-from fastapi.routing import APIRoute
-from starlette.middleware.cors import CORSMiddleware
-#from services.twilio import cleanup
-
 from app.api.main import api_router
 from app.core.config import settings
-from contextlib import asynccontextmanager
 import os 
 from dotenv import load_dotenv
 import subprocess
-import psutil
 import time
 import platform
 import sys
 import logging
+
+import sentry_sdk
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
+from starlette.middleware.cors import CORSMiddleware
+from services.twilio.helper import cleanup
 
 load_dotenv()
 
@@ -168,9 +166,14 @@ async def startup_event():
         # Don't raise the exception, allow the FastAPI server to start anyway
         pass
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
+
     global livekit_process
+    logger.info("Shutting down FastAPI server...")
+    logger.info("running twilio cleanup")
+    cleanup()
     if livekit_process:
         try:
             logger.info("Shutting down LiveKit server...")
