@@ -16,7 +16,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.api.routes.agent import router as agent_router
 from app.core.config import settings
-from services.twilio import cleanup
+from services.twilio.call_handle import cleanup
 load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
@@ -147,11 +147,7 @@ async def startup_event():
                 livekit_process = subprocess.Popen(
                     [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
                     env=env,
-                    cwd=project_root,
-                    # Add stdout and stderr capture
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    universal_newlines=True
+                    cwd=project_root
                 )
                 
                 # Wait a moment to check if process is still running
