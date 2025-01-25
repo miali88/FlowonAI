@@ -65,16 +65,19 @@ class CallDuration:
         }
 
 async def entrypoint(ctx: JobContext):
-    print("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
+    logger.info("=== Starting new LiveKit session ===")
+    logger.info(f"Job ID: {ctx.job.id}")
+    logger.info(f"Room Name: {ctx.room.name}")
+
     room_name = ctx.room.name
     room = ctx.room
-    print("room_name:", room_name)
 
-    print(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
+    logger.info(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
 
     # Add call start time tracking
     call_start_time = datetime.now()
+    logger.info(f"Call started at: {call_start_time}")
         
     # Add participant tracking dictionary and last_audio_time
     participant_prospects = {}
@@ -88,12 +91,17 @@ async def entrypoint(ctx: JobContext):
     try:
 
         """ call types: inbound tel, outbound tel, web """
-        agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
+        logger.info("Detecting call type and agent ID")
 
+        agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
+        logger.info(f"Call Type: {call_type}, Agent ID: {agent_id}")
+
+        logger.info("Creating voice assistant")
         agent, opening_line = await create_voice_assistant(agent_id, ctx, call_type)
         agent.start(room)
         
         if call_type != "textbot":
+            logger.info("Delivering opening line")
             await agent.say(opening_line, allow_interruptions=False)
 
         agent_metadata: Dict = await get_agent_metadata(agent_id)

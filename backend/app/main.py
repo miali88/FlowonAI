@@ -1,5 +1,5 @@
-from app.api.main import api_router
-from app.core.config import settings
+import sentry_sdk
+from contextlib import asynccontextmanager
 import os 
 from dotenv import load_dotenv
 import subprocess
@@ -8,12 +8,13 @@ import platform
 import sys
 import logging
 
-import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-from services.twilio.helper import cleanup
 
+from app.api.main import api_router
+from app.core.config import settings
+from services.twilio.call_handle import cleanup
 load_dotenv()
 
 # Add this near the top with other environment variables
@@ -42,12 +43,14 @@ sentry_sdk.init(
 )
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
-    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
+    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)  
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url=None if settings.ENVIRONMENT == "production" else f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",  # Disable docs in production
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
 )
 
 origins = ["flowon.ai",
@@ -56,7 +59,7 @@ origins = ["flowon.ai",
            "http://localhost:3000", 
            "https://localhost:3000", 
            ]
-
+    
 if origins:
     app.add_middleware(
         CORSMiddleware,
@@ -69,6 +72,9 @@ if origins:
 #print("origins",[str(origins).strip(",") for origin in settings.BACKEND_CORS_ORIGINS])
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Define global variable
+livekit_process = None
 
 def kill_processes_on_port(port):
     try:
@@ -108,50 +114,58 @@ async def startup_event():
     try:
         logger.debug("Attempting to start LiveKit server...")
         
+        # Kill any existing processes on LiveKit's port (8081)
+        kill_processes_on_port(8081)
+        time.sleep(2)  # Increased delay to ensure cleanup
+        
         MAX_RETRIES = 3
-        RETRY_DELAY = 2
+        RETRY_DELAY = 5  # Increased delay between retries
 
         # Get the absolute path to the project root
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-        
-        # Get the current Python executable path
         python_executable = sys.executable
-        
-        # Set up the environment for the subprocess
         env = os.environ.copy()
         
-        # Set event loop policy before starting the server
-        if platform.system() == "Windows":
-            import asyncio
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            env['PYTHONPATH'] = os.pathsep.join([
-                project_root,
-                os.path.dirname(python_executable),
-                env.get('PYTHONPATH', '')
-            ])
+        # Ensure PYTHONPATH includes project root and site-packages
+        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
+        python_path = [
+            project_root,
+            site_packages,
+            env.get('PYTHONPATH', '')
+        ]
+        env['PYTHONPATH'] = os.pathsep.join(filter(None, python_path))
+        
+        # Add DEBUG logging for LiveKit
+        env['LIVEKIT_LOG_LEVEL'] = 'DEBUG'
 
         for attempt in range(MAX_RETRIES):
             try:
-                # Simplified script execution
+                # Kill any existing LiveKit processes before starting new one
+                if livekit_process:
+                    try:
+                        parent = psutil.Process(livekit_process.pid)
+                        for child in parent.children(recursive=True):
+                            child.terminate()
+                        parent.terminate()
+                        time.sleep(1)  # Wait for termination
+                    except (psutil.NoSuchProcess, Exception) as e:
+                        logger.warning(f"Error cleaning up old LiveKit process: {e}")
+                
                 livekit_process = subprocess.Popen(
                     [python_executable, 
                      os.path.join(project_root, "backend", "livekit_server.py")],
                     env=env,
-                    cwd=project_root,
-                    # Add these to prevent subprocess from inheriting console handling
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if platform.system() == "Windows" else 0
+                    cwd=project_root
                 )
                 
-                logger.info(f"LiveKit server started with PID: {livekit_process.pid}")
-                # Wait a bit to ensure the process starts properly
-                time.sleep(2)
-                
-                # Check if process is still running
-                if livekit_process.poll() is None:
-                    logger.info("LiveKit server successfully started")
+                # Wait a moment to check if process is still running
+                time.sleep(3)
+                if livekit_process.poll() is None:  # None means process is still running
+                    logger.info("LiveKit server started successfully")
                     break
                 else:
-                    raise subprocess.SubprocessError("LiveKit server failed to start")
+                    output, error = livekit_process.communicate()
+                    logger.error(f"LiveKit server failed to start. Output: {output}, Error: {error}")
                     
             except subprocess.SubprocessError as e:
                 logger.error(f"Attempt {attempt + 1} failed: {e}")
@@ -163,16 +177,14 @@ async def startup_event():
                     raise
     except Exception as e:
         logger.error(f"Error in startup_event: {e}")
-        # Don't raise the exception, allow the FastAPI server to start anyway
-        pass
-
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_event():
-
     global livekit_process
-    logger.info("Shutting down FastAPI server...")
-    logger.info("running twilio cleanup")
+
+    logger.debug("Shutting down FastAPI server...")
+    print("twilio cleanup")
     cleanup()
     if livekit_process:
         try:

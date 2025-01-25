@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Set your Stripe secret key
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+
 @router.post('')
 async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
                              svix_timestamp: str = Header(None), svix_signature: str = Header(None)):

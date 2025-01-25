@@ -1,68 +1,33 @@
-from typing import Dict, Any, List
-from twilio.rest import Client
-import os 
-from dotenv import load_dotenv
-import math
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List
+from enum import Enum
+
+from services.twilio.client import client
 from services.db.supabase_services import supabase_client
 
-load_dotenv()
+class NumberType(str, Enum):
+    LOCAL = "local"
+    TOLL_FREE = "toll_free"
+    MOBILE = "mobile"
+    NATIONAL = "national"
 
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+class NumberGroup(BaseModel):
+    monthly_cost: float = Field(ge=0.0)  # ensure cost is non-negative
+    numbers: List[str] 
 
-client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-
-
-def purchase_phone_number(phone_number: str) -> Dict[str, Any]:
-    """
-    Purchase a specific phone number from Twilio
-    
-    Args:
-        phone_number (str): The phone number to purchase in E.164 format (e.g., '+1234567890')
-    
-    Returns:
-        Dict[str, Any]: Dictionary containing the purchased number details
-        
-    Raises:
-        Exception: If the purchase fails
-
-    Twilio docs:
-    https://help.twilio.com/articles/223182728-Using-the-REST-API-to-Search-for-and-Buy-Twilio-Phone-Numbers
-    """
-    try:
-        purchased_number = client.incoming_phone_numbers.create(
-            phone_number=phone_number
-        )
-        return {
-            'phone_number': purchased_number.phone_number,
-            'sid': purchased_number.sid,
-            'friendly_name': purchased_number.friendly_name,
-            'capabilities': {
-                'voice': purchased_number.capabilities.get('voice', False),
-                'sms': purchased_number.capabilities.get('sms', False),
-                'mms': purchased_number.capabilities.get('mms', False)
-            }
-        }
-    except Exception as e:
-        raise Exception(f"Failed to purchase number: {str(e)}")
+class PhoneNumberSchema(BaseModel):
+    local: NumberGroup | None = None
+    toll_free: NumberGroup | None = None
+    mobile: NumberGroup | None = None
+    national: NumberGroup | None = None
 
 
 def get_country_codes() -> List[str]:
-    """Get list of available country codes from Twilio"""
     countries = client.available_phone_numbers.list()
     return [country.country_code for country in countries]
 
-
 def get_available_numbers(country_code: str) -> Dict[str, Dict]:
-    """
-    Get available phone numbers and their pricing for a specific country code
-    
-    Args:
-        country_code (str): The country code to search numbers for (e.g., 'US')
-        
-    Returns:
-        Dict[str, Dict]: Dictionary containing available numbers and pricing by type
-    """
+    # Map our internal types to Twilio's pricing types
     number_type_mapping = {
         'local': 'local',
         'toll_free': 'toll free',
@@ -75,21 +40,25 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
     for number_type in number_types:
         try:
+            # Try to list up to 5 numbers of each type
             numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
             numbers_list = [number.phone_number for number in numbers]
 
             country_pricing = client.pricing.v1.phone_numbers.countries(country_code).fetch()
             country_pricing = country_pricing.phone_number_prices
 
+            # Calculate highest price for each number type
             for price_info in country_pricing:
                 base = math.ceil(float(price_info['base_price']))
                 current = math.ceil(float(price_info['current_price']))
                 pricing_type = price_info['number_type']
                 
+                # Match Twilio's pricing type to our internal type
                 for our_type, twilio_type in number_type_mapping.items():
                     if twilio_type == pricing_type:
                         monthly_cost[our_type] = round(max(base, current) * 1.2, 1)
 
+            # Only add to dictionary if numbers were found
             if numbers_list:
                 available_numbers[number_type] = {
                     "monthly_cost": monthly_cost.get(number_type),
@@ -101,33 +70,7 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
             
     return available_numbers
 
-
-async def fetch_twilio_numbers(user_id: str) -> list:
-    """
-    Fetch Twilio numbers associated with a specific user
-    
-    Args:
-        user_id (str): The user ID to fetch numbers for
-        
-    Returns:
-        list: List of phone numbers associated with the user
-    """
-    result = supabase_client().table('users').select('telephony_numbers').eq('id', user_id).execute()
-    if not result.data or not result.data[0].get('telephony_numbers'):
-        return []
-    return result.data[0]['telephony_numbers']
-
-
-def cleanup() -> None:
-    print("\nCleaning up before exit...")
-    ## Ensuring all prior calls are ended
-    calls = client.calls.list(status='in-progress')
-
-    if calls:
-        for call in calls:
-            print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
-            call = client.calls(call.sid).update(status='completed')
-            print(f"Ended call SID: {call.sid}")
-    else:
-        print('No calls in progress')
+async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
+    numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
+    return numbers.data
 
