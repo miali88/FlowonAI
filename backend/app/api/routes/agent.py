@@ -19,7 +19,7 @@ async def get_current_user(x_user_id: str = Header(...)):
     logger.info(f"User authenticated: {x_user_id}")
     return x_user_id
 
-@router.post("/new_agent")
+@router.post("/")
 async def new_agent_handler(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
@@ -32,7 +32,7 @@ async def new_agent_handler(request: Request, current_user: str = Depends(get_cu
         logger.error(f"Error creating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/agents")
+@router.get("/")
 async def get_agents_handler(current_user: str = Depends(get_current_user)):
     try:
         agents = await get_agents(current_user)
@@ -41,7 +41,7 @@ async def get_agents_handler(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching agents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.patch("/agents/{agent_id}")
+@router.patch("/{agent_id}")
 async def update_agent_handler(agent_id: str, request: Request):
     try:
         data = await request.json()
@@ -50,6 +50,15 @@ async def update_agent_handler(agent_id: str, request: Request):
         return updated_agent
     except Exception as e:
         logger.error(f"Error updating agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/{agent_id}")
+async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_current_user)):
+    try:
+        await delete_agent(agent_id, current_user)
+        return {"message": "Agent deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/agent_content/{agent_id}")
@@ -62,15 +71,6 @@ async def get_agent_content_handler(agent_id: str):
     except Exception as e:
         logger.error(f"Error fetching agent content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-@router.delete("/agents/{agent_id}")
-async def delete_agent_handler(agent_id: str, current_user: str = Depends(get_current_user)):
-    try:
-        await delete_agent(agent_id, current_user)
-        return {"message": "Agent deleted successfully"}
-    except Exception as e:
-        logger.error(f"Error deleting agent: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/auto_create_agent")
 async def auto_create_agent_handler(request: Request, current_user: str = Depends(get_current_user)):

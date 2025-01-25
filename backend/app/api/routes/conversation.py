@@ -208,7 +208,6 @@ async def form_fields(agent_id: str):
         logger.error(f"Error fetching form fields for agent_id {agent_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-
 @router.get("/get_sources")
 async def get_sources(request: Request):
     print("\n=== /get_sources endpoint ===")

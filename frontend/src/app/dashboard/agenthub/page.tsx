@@ -138,7 +138,7 @@ const AgentHub = () => {
         : {};
 
       const response = await fetch(
-        `${API_BASE_URL}/agent/agents/${selectedAgent.id}`,
+        `${API_BASE_URL}/agent/${selectedAgent.id}`,
         {
           method: "PATCH",
           headers: {
@@ -184,7 +184,7 @@ const AgentHub = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/agents/${selectedAgent.id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`,
         {
           method: "DELETE",
           headers: {
@@ -231,7 +231,7 @@ const AgentHub = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `${API_BASE_URL}/knowledge_base/knowledge_base_headers`,
+        `${API_BASE_URL}/knowledge_base/headers`,
         {
           headers: {
             "Content-Type": "application/json",

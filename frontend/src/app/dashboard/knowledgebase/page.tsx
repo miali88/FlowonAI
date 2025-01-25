@@ -75,7 +75,7 @@ function KnowledgeBaseContent() {
   
       try {
         const token = await getToken();
-        const response = await axios.get(`${API_BASE_URL}/knowledge_base/knowledge_base`, {
+        const response = await axios.get(`${API_BASE_URL}/knowledge_base/`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,
@@ -208,7 +208,7 @@ function KnowledgeBaseContent() {
       try {
         const token = await getToken();
         const itemToDelete = savedItems.find(item => item.id === itemId);
-        await axios.delete(`${API_BASE_URL}/knowledge_base/knowledge_base/${itemId}`, {
+        await axios.delete(`${API_BASE_URL}/knowledge_base/${itemId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-User-ID': user.id,
