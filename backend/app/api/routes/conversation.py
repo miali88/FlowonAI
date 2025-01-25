@@ -15,6 +15,7 @@ from services.chat.chat import llm_response
 from services.db.supabase_services import supabase_client
 from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat
 from services.conversation import transcript_summary
+from services.chat.lk_chat import get_chat_rag_results
 
 supabase = supabase_client()
 
