@@ -85,7 +85,8 @@ async def bridge_conference_to_livekit(conference_name: str, from_number: str, s
                 # Immediately try to create participant
                 participant = client.conferences(conference.sid).participants.create(
                     from_=sip_trunk_number,
-                    to=sip_address
+                    to=sip_address,
+                    time_limit=600,
                 )
                 logger.info(f"Successfully bridged conference to LiveKit at {sip_address}")
                 return participant

@@ -145,11 +145,7 @@ async def startup_event():
                 livekit_process = subprocess.Popen(
                     [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
                     env=env,
-                    cwd=project_root,
-                    # Add stdout and stderr capture
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    universal_newlines=True
+                    cwd=project_root
                 )
                 
                 # Wait a moment to check if process is still running
