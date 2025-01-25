@@ -17,6 +17,8 @@ from services.db.supabase_services import supabase_client
 from services.voice.tool_use import trigger_show_chat_input
 
 import logging
+import asyncio
+
 logger = logging.getLogger(__name__)
 
 
@@ -644,6 +646,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """
     Save the chat history to Supabase conversation_logs table when a chat session ends.
     """
+    print(f"save_chat_history_to_supabase called with agent_id: {agent_id}, room_name: {room_name}")
     try:
         if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
             logger.warning(
@@ -681,12 +684,12 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
             "room_name": room_name,
             "user_id": user_id,
             "agent_id": agent_id,
-            "lead": "unknown",  # Default value
-            "call_duration": 0,  # Default value
-            "call_type": "text-chat"  # Specify this is a chat conversation
+            "lead": "unknown",
+            "call_duration": 0,
+            "call_type": "text-chat"
         }
 
-        # Save to Supabase
+        # Save to Supabase and wait for completion
         print(f"Saving chat history to Supabase for room: {room_name}")
         print(f"Number of messages: {len(formatted_transcript)}")
         response = supabase.table("conversation_logs").insert(conversation_data).execute()

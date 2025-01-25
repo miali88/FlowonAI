@@ -38,8 +38,21 @@ for path in [project_root, backend_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
+from livekit import agents, rtc, api
+from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, WorkerOptions, WorkerType, cli
+from livekit.plugins import silero
+from livekit.agents.voice_assistant import VoiceAssistant
 
-# Configure logging
+from services.voice.livekit_services import create_voice_assistant
+from services.voice.tool_use import trigger_show_chat_input, transfer_call
+from services.nylas_service import send_email
+from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
+from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from services.helper import format_transcript_messages
+
+from backend.mute_track import CallTransferHandler
+
+# Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)
 logging.getLogger('openai').setLevel(logging.WARNING)
 logging.getLogger('hpack').setLevel(logging.WARNING)
@@ -73,32 +86,44 @@ class CallDuration:
             "formatted": str(self)
         }
 
+async def entrypoint(ctx: JobContext):
+    logger.info("=== Starting new LiveKit session ===")
+    logger.info(f"Job ID: {ctx.job.id}")
+    logger.info(f"Room Name: {ctx.room.name}")
 
-async def entrypoint(ctx: JobContext) -> None:
-    logger.info("\n\n\n\n___+_+_+_+_+livekit_server entrypoint called")
     room_name = ctx.room.name
     room = ctx.room
-    logger.info(f"room_name: {room_name}")
-    logger.info(
-        f"Entrypoint called with job_id: {ctx.job.id}, "
-        f"connecting to room: {room_name}"
-    )
 
-    # Connect to the room BEFORE creating the agent
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
-    
+    logger.info(f"Entrypoint called with job_id: {ctx.job.id}, connecting to room: {room_name}")
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY) 
+
+    # Add call start time tracking
     call_start_time = datetime.now()
-    participant_prospects: Dict[str, str] = {}
-    last_audio_time = time.time()
+    logger.info(f"Call started at: {call_start_time}")
+        
+    # Add participant tracking dictionary and last_audio_time
+    participant_prospects = {}
+    last_audio_time = time.time()  # Track when we last received any audio
+    last_participant_audio = time.time()  # Track participant's last audio
+    last_agent_audio = time.time()  # Track agent's last audio
+    SILENCE_TIMEOUT = 90  # Timeout in seconds
+
     conversation_stored = False
 
     try:
+
+        """ call types: inbound tel, outbound tel, web """
+        logger.info("Detecting call type and agent ID")
+
         agent_id, call_type = await detect_call_type_and_get_agent_id(room_name)
-        # Create agent after connection is established
+        logger.info(f"Call Type: {call_type}, Agent ID: {agent_id}")
+
+        logger.info("Creating voice assistant")
         agent, opening_line = await create_voice_assistant(agent_id, ctx, call_type)
         agent.start(room)
 
         if call_type != "textbot":
+            logger.info("Delivering opening line")
             await agent.say(opening_line, allow_interruptions=False)
 
         agent_metadata: Dict[str, Any] = await get_agent_metadata(agent_id) or {}
@@ -292,20 +317,10 @@ async def entrypoint(ctx: JobContext) -> None:
                     )
                 return
 
-            conversation_history = []
-            for message in agent.chat_ctx.messages:
-                message_dict = {}
-                if message.role == 'assistant':
-                    message_dict['assistant_message'] = message.content
-                elif message.role == 'user':
-                    message_dict['user_message'] = message.content
-                elif message.role == 'tool':
-                    message_dict['tool_name'] = message.name
-                    message_dict['tool_content'] = message.content
+            # Use the helper function to format the transcript
+            conversation_history = format_transcript_messages(agent.chat_ctx.messages)
 
-                if message_dict:
-                    conversation_history.append(message_dict)
-
+            print("\n\nconversation_history:", conversation_history)
             try:
                 import aiohttp
 
@@ -398,6 +413,10 @@ async def entrypoint(ctx: JobContext) -> None:
 
 def prewarm_fnc(proc: JobProcess) -> None:
     proc.userdata["vad"] = silero.VAD.load()
+
+# async def load_fnc(proc: JobProcess):
+#     print("load_fnc called")
+#     return True
 
 
 if __name__ == "__main__":

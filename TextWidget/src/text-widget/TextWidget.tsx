@@ -7,7 +7,7 @@ import { IoSend } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import Footer from "./Footer";
 import CalendlyWidget from "./CalendlyWidget";
-import { Components } from 'react-markdown'
+import { Components } from "react-markdown";
 
 import CloseIcon from "../assets/close-icon.svg";
 
@@ -79,6 +79,17 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   const [sources, setSources] = useState<Source[]>([]);
   const [agentName, setAgentName] = useState<string | null>(null);
   const [showSourcesInChat, setShowSourcesInChat] = useState<boolean>(false);
+  const [chatUi, setChatUi] = useState<{
+    primaryColor?: string;
+    secondaryColor?: string;
+  } | null>(null);
+  const [agentLogo, setAgentLogo] = useState<string | null>(null);
+  const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [dislikedMessages, setDislikedMessages] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -93,7 +104,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       try {
         console.log("Fetching agent metadata for agentId:", agentId);
         const response = await fetch(
-          `${apiBaseUrl}/livekit/agent_content/${agentId}`
+          `${apiBaseUrl}/agent/agent_content/${agentId}`
         );
         if (!response.ok) {
           throw new Error(`Failed to fetch agent metadata: ${response.status}`);
@@ -101,17 +112,21 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         const data = await response.json();
         console.log("Received agent metadata:", data);
 
-        if (!data.data || !data.data[0] || !data.data[0].openingLine) {
-          throw new Error("No opening line found in agent metadata");
+        if (!data.data || !data.data[0]) {
+          throw new Error("No agent metadata found");
         }
 
-        const openingLineFromData = data.data[0].openingLine;
-        const agentNameFromData = data.data[0].agentName;
-        const showSourcesFromData = data.data[0].showSourcesInChat || false;
-        
-        setOpeningLine(openingLineFromData);
-        setAgentName(agentNameFromData);
-        setShowSourcesInChat(showSourcesFromData);
+        const agentData = data.data[0];
+        setOpeningLine(agentData.openingLine);
+        setAgentName(agentData.agentName);
+        setShowSourcesInChat(agentData.showSourcesInChat || false);
+
+        // Set the new states
+        setChatUi({
+          primaryColor: agentData.chat_ui?.primaryColor || "#000000",
+          secondaryColor: agentData.chat_ui?.secondaryColor || "#FFFFFF",
+        });
+        setAgentLogo(agentData.agent_logo || null);
       } catch (error) {
         console.error("Error fetching agent metadata:", error);
       }
@@ -448,7 +463,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     if (responseId) {
       try {
         const sourcesResponse = await fetch(
-          `${apiBaseUrl}/chat/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
+          `${apiBaseUrl}/conversation/get_sources?agent_id=${agentId}&room_name=${roomName}&response_id=${responseId}`
         );
 
         if (!sourcesResponse.ok) {
@@ -470,12 +485,65 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   // Add this custom components configuration
   const markdownComponents: Components = {
     a: ({ node, ...props }) => (
-      <a 
-        {...props} 
-        target="_blank" 
-        rel="noopener noreferrer"
-      />
+      <a {...props} target="_blank" rel="noopener noreferrer" />
     ),
+  };
+
+  const handleFeedback = async (messageId: string, isLike: boolean) => {
+    try {
+      // First update the UI state
+      if (isLike) {
+        setLikedMessages((prev) => ({
+          ...prev,
+          [messageId]: !prev[messageId],
+        }));
+        setDislikedMessages((prev) => ({
+          ...prev,
+          [messageId]: false,
+        }));
+      } else {
+        setDislikedMessages((prev) => ({
+          ...prev,
+          [messageId]: !prev[messageId],
+        }));
+        setLikedMessages((prev) => ({
+          ...prev,
+          [messageId]: false,
+        }));
+      }
+
+      // Get the response ID for the message
+      const message = messages[parseInt(messageId)];
+      if (!message?.responseId) {
+        console.error("No response ID found for message");
+        return;
+      }
+
+      // Send feedback to backend
+      const response = await fetch(
+        `${apiBaseUrl}/feedback/response-feedback/${message.responseId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            thumbs_up: isLike,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send feedback");
+      }
+
+      const data = await response.json();
+      console.log("Feedback sent successfully:", data);
+    } catch (error) {
+      console.error("Error sending feedback:", error);
+      // Optionally revert the UI state if the request failed
+      // You could add error handling UI here
+    }
   };
 
   return (
@@ -501,10 +569,30 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
         onRoomConnected={handleRoomConnected}
       />
       <div className={styles.chatContainer}>
+        <div
+          className={styles.topBar}
+          style={{
+            backgroundColor: chatUi?.primaryColor || "#000000",
+            color: chatUi?.secondaryColor || "#FFFFFF",
+          }}
+        >
+          {agentLogo ? (
+            <div className={styles.agentLogoContainer}>
+              <img
+                src={agentLogo}
+                alt="Agent Logo"
+                className={styles.agentLogo}
+              />
+            </div>
+          ) : null}
+          <span>Chat with {agentName || "AI Assistant"}</span>
+        </div>
+
         <div className={styles.messageContainer} ref={messageContainerRef}>
           {messages.map((message, index) =>
             message.text ? (
               <div
+                key={index}
                 className={
                   message.isBot
                     ? styles.messageAssistantBubbleContainer
@@ -518,7 +606,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                 onMouseLeave={() => setHoveredMessageIndex(null)}
               >
                 <div
-                  key={index}
                   className={`${styles.messageBubble} ${
                     message.isBot ? styles.assistantMessage : styles.userMessage
                   }`}
@@ -558,36 +645,89 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                     )}
                 </div>
                 {message.isBot &&
-                  message.hasSource &&
-                  message.responseId &&
-                  showSourcesInChat &&
                   hoveredMessageIndex === message.responseId && (
-                    <button
-                      className={styles.showSourcesButton}
-                      onClick={() => {
-                        fetchSources(message.responseId as string);
-                        setCurrentOpeningResponseId(
-                          message.responseId as string
-                        );
-                      }}
-                    >
-                      <svg
-                        className={styles.sourceIcon}
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
+                    <div className={styles.messageBubbleActions}>
+                      {message.hasSource &&
+                        message.responseId &&
+                        showSourcesInChat &&
+                        hoveredMessageIndex === message.responseId && (
+                          <button
+                            className={styles.showSourcesButton}
+                            onClick={() => {
+                              fetchSources(message.responseId as string);
+                              setCurrentOpeningResponseId(
+                                message.responseId as string
+                              );
+                            }}
+                          >
+                            <svg
+                              className={styles.sourceIcon}
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                            >
+                              <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            View references
+                          </button>
+                        )}
+
+                      <button
+                        className={`${styles.actionButton} ${
+                          likedMessages[index] ? styles.liked : ""
+                        }`}
+                        onClick={() => handleFeedback(index.toString(), true)}
+                        aria-label="Like message"
                       >
-                        <path
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                        />
-                      </svg>
-                      View references
-                    </button>
+                        >
+                          <path
+                            d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                            fill={
+                              likedMessages[index] ? "currentColor" : "none"
+                            }
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className={`${styles.actionButton} ${
+                          dislikedMessages[index] ? styles.disliked : ""
+                        }`}
+                        onClick={() => handleFeedback(index.toString(), false)}
+                        aria-label="Dislike message"
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path
+                            d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
+                            fill={
+                              dislikedMessages[index] ? "currentColor" : "none"
+                            }
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   )}
               </div>
             ) : message.isBot ? (
@@ -702,8 +842,20 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               onChange={(e) => setInputText(e.target.value)}
               className={styles.chatInput}
               placeholder="Message..."
+              style={
+                {
+                  "--primary-color": chatUi?.primaryColor || "#000000",
+                } as React.CSSProperties
+              }
             />
-            <button type="submit" className={styles.sendButton}>
+            <button
+              type="submit"
+              className={styles.sendButton}
+              style={{
+                backgroundColor: chatUi?.primaryColor || "#000000",
+                color: chatUi?.secondaryColor || "#FFFFFF",
+              }}
+            >
               <IoSend size={20} />
             </button>
           </form>

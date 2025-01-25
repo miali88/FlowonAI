@@ -1,48 +1,37 @@
 from services.cache import get_all_agents
-import os
 import logging
-from typing import Optional, Any, List, Dict
+from services.db.supabase_services import supabase_client
 
 logger = logging.getLogger(__name__)
 
-"""
-DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE ASSISTANT
-"""
+""" DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE ASSISTANT """
 
 
-async def get_agent_id_from_call_data(room_name: str) -> Optional[str]:
-    import json
-    agents = await get_all_agents()
 
-    print("Current working directory:", os.getcwd())
+async def get_agent_id_from_call_data(room_name: str):    
+    try:
+        # Extract phone number from room name (format: call-_+13614281772_2p9dY5xViH9b)
+        phone_number = room_name.split('_')[1] if '_' in room_name else None
+        
+        if not phone_number:
+            logger.error(f"Could not extract phone number from room name: {room_name}")
+            return None
+            
+        # Query Supabase for the twilio number and get assigned_agent_id
+        supabase = supabase_client()
+        result = supabase.table('twilio_numbers').select('assigned_agent_id').eq('phone_number', phone_number).execute()
+        
+        if not result.data:
+            logger.error(f"No matching twilio number found in database: {phone_number}")
+            return None
+            
+        agent_id = result.data[0]['assigned_agent_id']
+        return agent_id
 
-    def get_agent_id_by_phone(data: List[Dict[str, Any]], phone_number: str) -> Optional[str]:
-        for agent in data:
-            if agent.get('assigned_telephone') == phone_number:
-                agent_id = agent.get('id')
-                return str(agent_id) if agent_id is not None else None
+    except Exception as e:
+        logger.error(f"Error getting twilio number from database: {str(e)}")
         return None
 
-    try:
-        with open('backend/call_data.json', 'r') as f:
-            call_data_from_file = json.load(f)
-        call_metadata = call_data_from_file.get(room_name, {})
-        twilio_number = call_metadata.get('twilio_phone_number')
-    except FileNotFoundError:
-        print("call_data.json not found")
-        twilio_number = None
-    except json.JSONDecodeError:
-        print("Error decoding call_data.json")
-        twilio_number = None
-    except Exception as e:
-        print(f"Error reading call_data.json: {str(e)}")
-        twilio_number = None
-
-    print(f"\nroom_name: {room_name}")
-    print(f"twilio_number from file: {twilio_number}")
-    agent_id = get_agent_id_by_phone(agents, twilio_number)
-    print(f"agent_id: {agent_id}")
-    return agent_id
 
 
 async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:

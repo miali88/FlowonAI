@@ -6,8 +6,8 @@ export default function ContactFounders() {
       <div className="space-y-4">
         <div className="p-4 border rounded-lg">
           <h2 className="font-semibold">Email</h2>
-          <a href="mailto:founders@yourcompany.com" className="text-blue-500 hover:underline">
-            founders@yourcompany.com
+          <a href="mailto:michael@flowon.ai" className="text-blue-500 hover:underline">
+            michael@flowon.ai
           </a>
         </div>
         {/* Add more contact methods as needed */}

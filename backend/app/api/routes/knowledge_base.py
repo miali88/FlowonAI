@@ -1,20 +1,11 @@
-from typing import Optional, List, Union, Any
+from typing import Optional, List
 from pydantic import BaseModel
-import json
-import logging
+import json, logging
 import tiktoken
 
-from fastapi import (
-    Request,
-    HTTPException,
-    Depends,
-    Header,
-    APIRouter,
-    BackgroundTasks,
-    File,
-    UploadFile
-)
+from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi import File, UploadFile
 
 from services.db.supabase_services import supabase_client
 from services.knowledge_base import file_processing
@@ -40,16 +31,14 @@ logger.addHandler(stream_handler)
 
 router = APIRouter()
 
-
 class KnowledgeBaseItem(BaseModel):
     id: int
     title: str
     content: Optional[str]
-    url: Optional[str] = None
+    url: Optional[str] = None      # Add 'url' if applicable
     token_count: Optional[int] = None
     user_id: str
     data_type: Optional[str] = None
-
 
 class KnowledgeBaseItemCreate(BaseModel):
     title: str
@@ -59,39 +48,36 @@ class KnowledgeBaseItemCreate(BaseModel):
 class ScrapeUrlRequest(BaseModel):
     url: str
 
-
 @router.post("/upload_file")
 async def upload_file_handler(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     authorization: str = Header(...),
     x_user_id: str = Header(..., alias="X-User-ID")
-) -> JSONResponse:
+):
     try:
         logger.info(f"Received file: {file.filename}")
         logger.info(f"User ID from header: {x_user_id}")
 
-        # Validate the token
+        # Validate the token (you may want to use your get_current_user function here)
         if not authorization or not authorization.startswith('Bearer '):
             raise HTTPException(status_code=401, detail="Invalid or missing token")
-        
-        content: str
-        file_extension: str
+
         content, file_extension = await file_processing.process_file(file)
         logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
         new_item = supabase.table('user_text_files').insert({
-            "title": file.filename,  # TODO: replace with user's entered title
+            "title": file.filename, # TODO: replace with user's entered title
             "heading": file.filename,
             "file_name": file.filename,
             "content": content,
-            "user_id": x_user_id,
+            "user_id": x_user_id,  # Use the user ID from the header
             "data_type": file_extension
         }).execute()
 
         # Also insert into headers table
-        supabase.table('user_text_files_headers').insert({
+        headers_item = supabase.table('user_text_files_headers').insert({
             "heading": file.filename,
             "file_name": file.filename,
             "user_id": x_user_id,
@@ -100,53 +86,40 @@ async def upload_file_handler(
         }).execute()
 
         # Schedule the kb_item_to_chunks function to run in the background
-        background_tasks.add_task(
-            kb_item_to_chunks,
-            new_item.data[0]['id'],
-            content,
-            new_item.data[0]['user_id'],
-            new_item.data[0]['title']
+        background_tasks.add_task(kb_item_to_chunks, 
+        new_item.data[0]['id'], 
+        content,
+        new_item.data[0]['user_id'],
+        new_item.data[0]['title']
         )
 
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": "File processed and added to knowledge base successfully",
-                "data": new_item.data[0]
-            }
-        )
+        return JSONResponse(status_code=200, content={
+            "message": "File processed and added to knowledge base successfully",
+            "data": new_item.data[0]
+        })
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-
-@router.get("/knowledge_base")
-async def get_items_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
+@router.get("/")
+async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
-        logger.info(f"Total tokens: {total_tokens}")
-        return JSONResponse(content={"items": items, "total_tokens": total_tokens})
+        # items = []
+        # total_tokens = 0
+        print("\n\ntotal_tokens:", total_tokens)
+        return JSONResponse(content={
+            "items": items,
+            "total_tokens": total_tokens
+        })
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
-@router.get("/knowledge_base_headers")
-async def get_items_headers_handler(current_user: str = Depends(get_current_user)) -> JSONResponse:
-    try:
-        items, total_tokens = await get_kb_headers(current_user)
-        logger.info(f"Total tokens: {total_tokens}")
-        return JSONResponse(content={"items": items, "total_tokens": total_tokens})
-    except Exception as e:
-        logger.error(f"Error fetching items: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.post("/knowledge_base")
-async def create_item_handler(
-    request: Request,
-    background_tasks: BackgroundTasks,
-) -> JSONResponse:
+@router.post("/")
+async def create_item_handler(request: Request, 
+                            background_tasks: BackgroundTasks,
+                            ):
     logger.debug("Received POST request to /knowledge_base")
     raw_body = await request.body()
     logger.debug(f"Raw request body: {raw_body.decode()}")
@@ -158,116 +131,95 @@ async def create_item_handler(
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
 
         # Determine which table to use based on data type
-        data_type = data.get('data_type', 'text')
-        logger.info(f"Data type: {data_type}")
+        data_type = data.get('data_type', 'text')  # Default to 'text' if not specified
+        print("\n\n\n data_type:", data_type)
         table_name = 'user_web_data' if data_type == 'web' else 'user_text_files'
-
+        
         # Insert the data into the appropriate Supabase table
         new_item = supabase.table(table_name).insert(data).execute()
-        logger.info(
-            f"New item created in {table_name}: "
-            f"{json.dumps(new_item.data[0], indent=2)}"
-        )
+        logger.info(f"New item created in {table_name}: {json.dumps(new_item.data[0], indent=2)}")
 
         # Schedule the kb_item_to_chunks function to run in the background
-        background_tasks.add_task(
-            kb_item_to_chunks,
-            new_item.data[0]['id'],
+        background_tasks.add_task(kb_item_to_chunks, 
+            new_item.data[0]['id'], 
             new_item.data[0]['content'],
             new_item.data[0]['user_id'],
-            new_item.data[0]['title']
         )
 
-        return JSONResponse(
-            status_code=200,
-            content={"message": "Item created successfully", "data": new_item.data[0]}
-        )
+        return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON: {str(e)}")
         return JSONResponse(status_code=400, content={"detail": "Invalid JSON data"})
     except Exception as e:
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content={"detail": "Internal server error"}
-        )
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-
-@router.delete("/knowledge_base/{item_id}")
-async def delete_item_handler(
-    item_id: int,
-    request: Request,
-    current_user: str = Depends(get_current_user)
-) -> dict[str, str]:
+@router.delete("/{item_id}")
+async def delete_item_handler(item_id: int, request: Request, current_user: str = Depends(get_current_user)):
     try:
+        # Get the request body
         body = await request.json()
         data_type = body.get('data_type')
         logger.info(f"Deleting item {item_id} with data_type: {data_type}")
 
         if data_type == 'web':
-            result = (
-                supabase.table('user_web_data')
-                .delete()
-                .eq('id', item_id)
-                .eq('user_id', current_user)
-                .execute()
-            )
+            # Delete from user_web_data if data_type is web
+            result = supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
         else:
-            result = (
-                supabase.table('user_text_files')
-                .delete()
-                .eq('id', item_id)
-                .eq('user_id', current_user)
-                .execute()
-            )
-
+            # Delete from user_text_files for all other data types
+            result = supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
+        
         if len(result.data) == 0:
-            raise HTTPException(
-                status_code=404,
-                detail="Item not found or not authorized to delete"
-            )
-
+            raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
+            
         return {"message": "Item deleted successfully"}
     except Exception as e:
         logger.error(f"Error deleting item: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/headers")
+async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
+    try:
+        items, total_tokens = await get_kb_headers(current_user)
+        # items = []
+        # total_tokens = 0
+        print("\n\ntotal_tokens:", total_tokens)
+        return JSONResponse(content={
+            "items": items,
+            "total_tokens": total_tokens
+        })
+    except Exception as e:
+        logger.error(f"Error fetching items: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/scrape_web")
 async def scrape_url_handler(
-    request: Request,
+    request: Request, 
     background_tasks: BackgroundTasks,
     current_user: str = Depends(get_current_user)
-) -> dict[str, Union[str, int]]:
+):
     try:
         request_data = await request.json()
-        request_data = request_data.get('urls')
+        request_data: List[str] = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
-
+        
+        # Schedule scraping to run in the background
         background_tasks.add_task(scrape_url, urls, current_user)
-
+        
         return {"message": "Scraping started in background", "urls": len(urls)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing URLs: {str(e)}")
 
-
 @router.post("/crawl_url")
-async def crawl_url_handler(
-    request: ScrapeUrlRequest,
-    current_user: str = Depends(get_current_user)
-) -> List[str]:
+async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
         map_result: List[str] = await map_url(request.url)
         return map_result
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error crawling URL: {str(e)}")
 
-
 @router.post("/calculate_tokens")
-async def calculate_tokens_handler(
-    request: Request,
-    current_user: str = Depends(get_current_user)
-) -> dict[str, int]:
+async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):
     try:
         data = await request.json()
         content = data.get('content', '')
@@ -277,17 +229,16 @@ async def calculate_tokens_handler(
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 @router.get("/users")
-async def user_info(current_user: str = Depends(get_current_user)) -> dict[str, Any]:
+async def user_info(current_user: str = Depends(get_current_user)):
     try:
         user_info = supabase.table('users').select('*').eq('id', current_user).execute()
-        if not user_info.data or not isinstance(user_info.data[0], dict):
-            raise ValueError("No valid user information found")
+        if not user_info.data:
+            raise HTTPException(status_code=404, detail="User not found")
         return user_info.data[0]
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error updating user: {str(e)}")
-
+        logger.error(f"Error fetching user info: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error fetching user info: {str(e)}")
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""

@@ -227,10 +227,15 @@ async def delete_agent(agent_id: int, user_id: str) -> Any:
 
 async def update_agent(agent_id: int, data: dict) -> Any:
     try:
-        if 'tag' in data:
-            data['dataSource'] = data['tag']
-            del data['tag']
-
+        # Create chat_ui field if the incoming data contains UI-related fields
+        if any(key in data for key in ['primaryColor', 'secondaryColor', 'logo']):
+            data = {
+                'chat_ui': {
+                    'primaryColor': data.get('primaryColor'),
+                    'secondaryColor': data.get('secondaryColor'),
+                }
+            }
+            
         response = supabase.table('agents').update(data).eq('id', agent_id).execute()
         return response
     except Exception as e:

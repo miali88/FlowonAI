@@ -104,6 +104,7 @@ async def llm_response(system_prompt: str, user_prompt: str, conversation_histor
     messages = []
 
     if conversation_history:
+        logger.debug(f"Processing conversation history with {len(conversation_history['user_history'])} messages")
         # Add the conversation history for this session
         for i, msg in enumerate(conversation_history['user_history']):
             messages.append({"role": "user", "content": msg['content']})
@@ -116,14 +117,18 @@ async def llm_response(system_prompt: str, user_prompt: str, conversation_histor
         # If the last message is from the user,
         # add a placeholder assistant message
         if messages and messages[-1]['role'] == 'user':
+            logger.debug("Adding placeholder assistant message")
             messages.append({"role": "assistant", "content": "Processing your query."})
 
     # Add the current user prompt
     messages.append({"role": "user", "content": user_prompt})
+    logger.debug(f"Final message count: {len(messages)}")
 
     # print("\n\n\n =-[=-[=-[=-[=-[ \n\n\n\nmessages:", messages)
     for attempt in range(max_retries):
         try:
+            logger.info(f"About to call {model} API with message length: {len(str(messages))}")
+            
             if model == "openai":
                 # Use asyncio.to_thread to run the synchronous OpenAI
                 # call in a separate thread
@@ -134,18 +139,23 @@ async def llm_response(system_prompt: str, user_prompt: str, conversation_histor
                     stream=False
                 )
                 response_content = response.choices[0].message.content
+                logger.info("Successfully received OpenAI response")
+                
             elif model == "claude":
                 try:
+                    logger.debug("Calling Claude API...")
                     response = await anthropic.messages.create(
                         model="claude-3-5-sonnet-20240620",
                         system=system_prompt,
                         messages=messages,
                         max_tokens=token_size
                     )
+                    logger.debug("Claude API call completed")
                     response_content = response.content[0].text
+                    logger.info("Successfully received Claude response")
+                    
                 except Exception as claude_error:
-                    # If Claude is overloaded, switch to OpenAI
-                    print("Claude API overloaded, switching to OpenAI...")
+                    logger.warning(f"Claude API error: {str(claude_error)}. Switching to OpenAI...")
                     response = await asyncio.to_thread(
                         openai.chat.completions.create,
                         model="gpt-4o",
@@ -155,20 +165,24 @@ async def llm_response(system_prompt: str, user_prompt: str, conversation_histor
                         stream=False
                     )
                     response_content = response.choices[0].message.content
+                    logger.info("Successfully received fallback OpenAI response")
             else:
                 raise ValueError(
                     "Invalid model specified. Choose 'openai' or 'claude'."
                 )
 
+            logger.debug(f"Response length: {len(response_content)} characters")
             return response_content
 
         except Exception as e:
             if hasattr(e, 'response') and e.response.status_code == 529:
                 if attempt < max_retries - 1:
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"API overloaded. Retrying in {wait_time:.2f} seconds...")
+                    logger.warning(f"API overloaded. Attempt {attempt + 1}/{max_retries}. "
+                                 f"Retrying in {wait_time:.2f} seconds...")
                     await asyncio.sleep(wait_time)
                 else:
+                    logger.error(f"Max retries ({max_retries}) reached. Final error: {str(e)}")
                     raise e
             else:
                 raise e

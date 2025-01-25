@@ -245,16 +245,12 @@ async def create_voice_assistant(
         if not agent:
             logger.error(f"Agent not found: {agent_id}")
             raise ValueError(f"Agent {agent_id} not found")
-
-        logger.debug(f"Full agent configuration: {agent}")
-
-        required_fields = [
-            'language',
-            'voice',
-            'instructions',
-            'openingLine',
-            'voiceProvider'
-        ]
+            
+        # Log full agent configuration for debugging
+        # logger.debug(f"Full agent configuration: {agent}")
+        
+        # Add validation for required agent fields with detailed logging
+        required_fields = ['language', 'voice', 'instructions', 'openingLine', 'voiceProvider']
         missing_fields = [field for field in required_fields if not agent.get(field)]
 
         if missing_fields:

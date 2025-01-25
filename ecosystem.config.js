@@ -5,7 +5,7 @@ module.exports = {
       script: "npm",
       args: "run dev",
       watch: false,
-      cwd: "/root/FlowonAI/frontend",  // Specify the absolute path to your frontend directory
+      cwd: "./frontend",  // Changed from "/frontend" to "./frontend"
       env: {
         NODE_ENV: "development",
         PORT: 3000
@@ -13,9 +13,9 @@ module.exports = {
     },
     {
       name: "backend",
-      script: "/root/FlowonAI/backend/venv/bin/python",
+      script: "./venv/bin/python",
       args: "run_fast.py",
-      cwd: "/root/FlowonAI/backend",
+      cwd: "./backend",
       env: {
         PYTHONUNBUFFERED: "1"
       }
@@ -25,7 +25,7 @@ module.exports = {
       script: "npm",
       args: "run dev",
       watch: false,
-      cwd: "/root/FlowonAI/ChatWidget",
+      cwd: "./ChatWidget",
       env: {
         NODE_ENV: "development",
         PORT: 5173 
@@ -36,7 +36,7 @@ module.exports = {
       script: "npm",
       args: "run dev",
       watch: false,
-      cwd: "/root/FlowonAI/Demo",
+      cwd: "./Demo",
       env: {
         NODE_ENV: "development",
         PORT: 5175
@@ -47,13 +47,22 @@ module.exports = {
       script: "npm",
       args: "run dev",
       watch: false,
-      cwd: "/root/FlowonAI/TextWidget",
+      cwd: "./TextWidget",
       env: {
         NODE_ENV: "development",
         PORT: 5180 
       }
-    }
-
-
+    },
+    {
+      name: "iframe",
+      script: "npm",
+      args: "run dev",
+      watch: false,
+      cwd: "./iframe",
+      env: {
+        NODE_ENV: "development",
+        PORT: 5185 
+      }
+    },
   ]
 }
