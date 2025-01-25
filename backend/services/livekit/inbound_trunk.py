@@ -9,8 +9,6 @@ async def main():
     trunk = SIPInboundTrunkInfo(
     name = "My Twilio trunk",
     numbers = ['+15105550100'],
-    auth_username = "<sip-inbound-username>",
-    auth_password = "<sip-inbound-password>"
     )
   
     request = CreateSIPInboundTrunkRequest(
