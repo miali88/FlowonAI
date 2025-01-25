@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from pathlib import Path
 from uuid import uuid4
-from datetime import datetime
 
 from livekit.agents import llm
 from livekit.plugins import openai
