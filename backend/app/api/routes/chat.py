@@ -63,13 +63,7 @@ async def chat_message(request: Request) -> StreamingResponse:
                             pass
 
                         # Yield the chunk with response_id and has_source flag
-                        yield f"data: {
-                            json.dumps({'response': {
-                                'answer': str(chunk),
-                                'response_id': response_id,
-                                'has_source': has_source
-                            }})
-                        }\n\n"
+                        yield f"data: {json.dumps({'response': {'answer': str(chunk), 'response_id': response_id, 'has_source': has_source}})}\n\n"
 
                 yield "data: [DONE]\n\n"
             except Exception as e:
