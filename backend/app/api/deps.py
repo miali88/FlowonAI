@@ -1,4 +1,4 @@
-from fastapi import Header
+from fastapi import Header, HTTPException
 import logging
 import jwt 
 import os 
@@ -23,26 +23,26 @@ async def get_current_user(x_user_id: str = Header(...)) -> str:
 
 
 
-""" clerk jwt, to replace existing get_current_user """
-async def get_current_user(authorization: Optional[str] = Header(None)):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
+# """ clerk jwt, to replace existing get_current_user """
+# async def get_current_user(authorization: Optional[str] = Header(None)):
+#     if not authorization:
+#         raise HTTPException(status_code=401, detail="Authorization header missing")
     
-    try:
-        # Remove 'Bearer ' from the token
-        token = authorization.replace("Bearer ", "")
+#     try:
+#         # Remove 'Bearer ' from the token
+#         token = authorization.replace("Bearer ", "")
         
-        # Verify the JWT token using Clerk's public key
-        # You can get the public key from Clerk's dashboard
-        public_key = os.getenv("CLERK_JWT_PUBLIC_KEY")
-        decoded = jwt.decode(
-            token,
-            public_key,
-            algorithms=["RS256"],
-            audience=os.getenv("CLERK_JWT_AUDIENCE"),
-            issuer=os.getenv("CLERK_ISSUER")
-        )
+#         # Verify the JWT token using Clerk's public key
+#         # You can get the public key from Clerk's dashboard
+#         public_key = os.getenv("CLERK_JWT_PUBLIC_KEY")
+#         decoded = jwt.decode(
+#             token,
+#             public_key,
+#             algorithms=["RS256"],
+#             audience=os.getenv("CLERK_JWT_AUDIENCE"),
+#             issuer=os.getenv("CLERK_ISSUER")
+#         )
         
-        return decoded
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token") 
+#         return decoded
+#     except jwt.InvalidTokenError:
+#         raise HTTPException(status_code=401, detail="Invalid token") 

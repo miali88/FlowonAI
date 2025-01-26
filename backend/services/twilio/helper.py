@@ -1,9 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from enum import Enum
+import math
+import logging
 
 from services.twilio.client import client
 from services.db.supabase_services import supabase_client
+
+logger = logging.getLogger(__name__)
 
 class NumberType(str, Enum):
     LOCAL = "local"
@@ -23,10 +27,18 @@ class PhoneNumberSchema(BaseModel):
 
 
 def get_country_codes() -> List[str]:
-    countries = client.available_phone_numbers.list()
-    return [country.country_code for country in countries]
+    try:
+        logger.info("Fetching available country codes from Twilio")
+        countries = client.available_phone_numbers.list()
+        country_codes = [country.country_code for country in countries]
+        logger.debug(f"Retrieved {len(country_codes)} country codes")
+        return country_codes
+    except Exception as e:
+        logger.error(f"Error fetching country codes: {str(e)}")
+        raise
 
 def get_available_numbers(country_code: str) -> Dict[str, Dict]:
+    logger.info(f"Fetching available numbers for country code: {country_code}")
     # Map our internal types to Twilio's pricing types
     number_type_mapping = {
         'local': 'local',
@@ -40,10 +52,12 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
     for number_type in number_types:
         try:
+            logger.debug(f"Fetching {number_type} numbers for {country_code}")
             # Try to list up to 5 numbers of each type
             numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
             numbers_list = [number.phone_number for number in numbers]
 
+            logger.debug(f"Fetching pricing information for {country_code}")
             country_pricing = client.pricing.v1.phone_numbers.countries(country_code).fetch()
             country_pricing = country_pricing.phone_number_prices
 
@@ -64,13 +78,22 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
                     "monthly_cost": monthly_cost.get(number_type),
                     "numbers": numbers_list
                 }
+                logger.debug(f"Found {len(numbers_list)} {number_type} numbers")
                 
         except Exception as e:
+            logger.error(f"Error processing {number_type} numbers for {country_code}: {str(e)}")
             continue
             
+    logger.info(f"Completed fetching numbers for {country_code}")
     return available_numbers
 
 async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
-    numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
-    return numbers.data
+    try:
+        logger.info(f"Fetching Twilio numbers for user: {user_id}")
+        numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
+        logger.debug(f"Retrieved {len(numbers.data)} numbers for user {user_id}")
+        return numbers.data
+    except Exception as e:
+        logger.error(f"Error fetching Twilio numbers for user {user_id}: {str(e)}")
+        raise
 

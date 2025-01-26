@@ -13,11 +13,7 @@ api_router.include_router(knowledge_base.router, prefix="/knowledge_base", tags=
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 api_router.include_router(livekit.router, prefix="/livekit", tags=["livekit"])
-api_router.include_router(
-    conversation.router,
-    prefix="/conversation",
-    tags=["conversation"]
-)
+api_router.include_router(conversation.router, prefix="/conversation", tags=["conversation"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(nylas_service.router, prefix="/nylas", tags=["nylas"])
 api_router.include_router(composio.router, prefix="/composio", tags=["composio"])

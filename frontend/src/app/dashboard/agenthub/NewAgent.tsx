@@ -71,7 +71,7 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/agent/new_agent`, {
+      const response = await fetch(`${API_BASE_URL}/agent/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

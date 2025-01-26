@@ -115,6 +115,9 @@ const AgentHub = () => {
     console.log("Selected Agent with features:", agent.features);
     console.log(agent, "kikkkk");
     setSelectedAgent(agent);
+    
+    // Update URL without full page reload
+    window.history.pushState({}, '', `/dashboard/agenthub/${agent.id}`);
   };
 
   const handleSaveChanges = async () => {
@@ -308,6 +311,9 @@ const AgentHub = () => {
     setUrl(null);
     setIsConnecting(false);
     setLocalParticipant(null);
+    
+    // Update URL without full page reload
+    window.history.pushState({}, '', '/dashboard/agenthub');
   }, []);
 
   useEffect(() => {
@@ -336,6 +342,36 @@ const AgentHub = () => {
       setAgentsLoading(false);
     }
   }, [userId]);
+
+  // Add this useEffect to handle URL-based agent selection
+  useEffect(() => {
+    const handleUrlAgentSelection = async () => {
+      if (!userId || agentsLoading) return;
+      
+      // Get agentId from URL path
+      const pathParts = window.location.pathname.split('/');
+      const agentId = pathParts[pathParts.length - 1];
+      
+      if (agentId && agentId !== 'agenthub') {
+        const agent = agents.find(a => a.id === agentId);
+        if (agent) {
+          // Load agent features from localStorage if they exist
+          const storedFeatures = localStorage.getItem(`agent-features-${agent.id}`);
+          const features = storedFeatures ? JSON.parse(storedFeatures) : {};
+          
+          setSelectedAgent({
+            ...agent,
+            features: {
+              ...agent.features,
+              ...features,
+            },
+          });
+        }
+      }
+    };
+
+    handleUrlAgentSelection();
+  }, [userId, agents, agentsLoading]);
 
   return (
     <>
