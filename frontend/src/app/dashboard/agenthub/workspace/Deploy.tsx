@@ -78,13 +78,18 @@ interface AvailableNumbersResponse {
 
 // Update interface for user numbers response
 interface UserNumber {
+  created_at: string;
   phone_number: string;
-  friendly_name?: string;
-  capabilities: {
-    voice?: boolean;
-    SMS?: boolean;
-    MMS?: boolean;
-  };
+  owner_user_id: string;
+  area_code: string | null;
+  account_sid: string;
+  number_sid: string;
+  assigned_agent_id: string | null;
+  assigned_agent_name: string | null;
+}
+
+interface UserNumbersResponse {
+  numbers: UserNumber[];
 }
 
 interface NumberCost {
@@ -109,15 +114,6 @@ interface AvailableNumbersResponse {
   };
 }
 
-// Update interface for the new response format
-interface UserNumbersResponse {
-  numbers: {
-    twilio: {
-      [key: string]: string;
-    };
-  };
-}
-
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -134,7 +130,7 @@ const Deploy: React.FC<DeployProps> = ({
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>("");
   const [showPhoneFields, setShowPhoneFields] = useState(false);
-  const [userNumbers, setUserNumbers] = useState<string[]>([]);
+  const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
   const [isLoadingUserNumbers, setIsLoadingUserNumbers] = useState(false);
   const [selectedNumberCost, setSelectedNumberCost] = useState<number>(0);
   const [selectedExistingNumber, setSelectedExistingNumber] = useState<string>(
@@ -232,9 +228,8 @@ const Deploy: React.FC<DeployProps> = ({
         }
 
         const data: UserNumbersResponse = await response.json();
-        // Convert the object of numbers to an array
-        const numbersArray = Object.values(data.numbers.twilio);
-        setUserNumbers(numbersArray);
+        // Store the full number objects instead of just the phone numbers
+        setUserNumbers(data.numbers);
       } catch (error) {
         console.error("Error fetching user numbers:", error);
         setUserNumbers([]);
@@ -494,17 +489,30 @@ frameborder="0"
                           }}
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a number to assign" />
+                            <SelectValue placeholder="Select a number" />
                           </SelectTrigger>
                           <SelectContent>
                             {userNumbers.map((number) => (
-                              <SelectItem key={number} value={number}>
-                                {number}
+                              <SelectItem
+                                key={number.phone_number}
+                                value={number.phone_number}
+                                disabled={!!number.assigned_agent_id}
+                                className={
+                                  number.assigned_agent_id
+                                    ? "text-muted-foreground"
+                                    : ""
+                                }
+                              >
+                                {number.phone_number}
+                                {number.assigned_agent_id && (
+                                  <span className="mx-3">
+                                    Assigned to {number.assigned_agent_name}
+                                  </span>
+                                )}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-
                         {renderAssignButton()}
                       </div>
                     ) : (
