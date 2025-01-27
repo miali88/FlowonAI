@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Agent } from "./Workspace"; // Add this import
 
 interface AgentFeature {
   id: string;
@@ -31,8 +32,7 @@ interface AgentFeature {
   [key: string]: any;
 }
 
-interface SelectedAgent {
-  id: string;
+interface SelectedAgent extends Agent {
   features: {
     [key: string]: {
       enabled: boolean;
@@ -657,6 +657,8 @@ export const AgentFeatures = forwardRef<
     </div>
   );
 });
+
+AgentFeatures.displayName = "AgentFeatures";
 
 // Also remove any references in the helper functions
 function getFeatureDescription(featureId: string | null): string {

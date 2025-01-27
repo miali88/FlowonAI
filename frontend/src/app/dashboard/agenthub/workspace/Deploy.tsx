@@ -25,6 +25,7 @@ import {
 import StripeNumberPurchase from "@/components/StripeNumberPurchase";
 import { useAuth } from "@clerk/nextjs";
 
+import { Agent as SelectedAgent } from "./Workspace";
 // Define a type for telephony number details
 interface TelephonyNumberDetails {
   friendly_name?: string;
@@ -50,19 +51,9 @@ interface Agent extends BaseAgent {
 }
 
 interface DeployProps {
-  selectedAgent: Agent | null;
-  setSelectedAgent: React.Dispatch<React.SetStateAction<Agent | null>>;
-  handleSaveChanges: (agent: Agent) => Promise<void>;
-  userInfo: {
-    telephony_numbers?: Record<string, TelephonyNumberDetails>;
-    [key: string]: unknown;
-  } | null;
-  userId: string;
-}
-
-interface AvailableNumber {
-  phoneNumber: string;
-  friendlyName: string;
+  selectedAgent: SelectedAgent | null;
+  setSelectedAgent: React.Dispatch<React.SetStateAction<SelectedAgent | null>>;
+  userId?: string;
 }
 
 // Add interface for the new response format
@@ -92,11 +83,6 @@ interface UserNumbersResponse {
   numbers: UserNumber[];
 }
 
-interface NumberCost {
-  monthly_cost: number;
-  numbers: string[];
-}
-
 interface AvailableNumbersResponse {
   numbers: {
     local?: {
@@ -117,8 +103,6 @@ interface AvailableNumbersResponse {
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
-  handleSaveChanges,
-  userInfo,
   userId: propUserId,
 }) => {
   const { userId: clerkUserId } = useAuth();

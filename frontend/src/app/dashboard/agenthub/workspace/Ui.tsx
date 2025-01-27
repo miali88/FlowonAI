@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Agent } from "../AgentCards";
+import { Agent } from "./workspace";
 
 interface UiProps {
   selectedAgent: Agent;
@@ -68,23 +68,20 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
       }
 
       // Single API call with both chat_ui and agent_logo
-      const response = await fetch(
-        `${API_BASE_URL}/agent/${agentId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "x-user-id": selectedAgent.userId,
+      const response = await fetch(`${API_BASE_URL}/agent/${agentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": selectedAgent.userId,
+        },
+        body: JSON.stringify({
+          chat_ui: {
+            primaryColor: primaryColor,
+            secondaryColor: secondaryColor,
           },
-          body: JSON.stringify({
-            chat_ui: {
-              primaryColor: primaryColor,
-              secondaryColor: secondaryColor,
-            },
-            agent_logo: agentLogo,
-          }),
-        }
-      );
+          agent_logo: agentLogo,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to save settings: ${response.status}`);
