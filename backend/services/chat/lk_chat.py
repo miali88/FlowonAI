@@ -11,13 +11,13 @@ from livekit.agents import llm
 from livekit.plugins import openai, anthropic
 from livekit.agents.llm.chat_context import ChatMessage
 
-from services.cache import get_agent_metadata
-from services.chat.chat import similarity_search
-from services.voice.tool_use import trigger_show_chat_input
-from services.composio import get_calendar_slots
-from services.db.supabase_services import supabase_client
-from services.helper import format_transcript_messages
-from services.conversation import transcript_summary
+from ..cache import get_agent_metadata
+from .chat import similarity_search
+from ..voice.tool_use import trigger_show_chat_input
+from ..composio import get_calendar_slots
+from ..db.supabase_services import supabase_client
+from ..helper import format_transcript_messages
+from ..conversation import transcript_summary
 
 import logging
 import asyncio

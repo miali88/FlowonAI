@@ -10,7 +10,7 @@ import re
 import json
 from requests.exceptions import Timeout, RequestException
 
-from services.db.supabase_services import supabase_client
+from ..db.supabase_services import supabase_client
 from openai import OpenAI
 from anthropic import AsyncAnthropic
 

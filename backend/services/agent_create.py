@@ -1,14 +1,15 @@
 import uuid
 import requests
 from urllib.parse import urlparse
-from services.knowledge_base.web_scrape import map_url, scrape_url
-from services.chat.chat import llm_response
+from .knowledge_base.web_scrape import map_url, scrape_url
+from .chat.chat import llm_response
 from typing import List, Dict
 import openai
 from humanloop import Humanloop
 from dotenv import load_dotenv
 import os
 import httpx
+from .db.supabase_services import supabase_client
 
 load_dotenv()
 

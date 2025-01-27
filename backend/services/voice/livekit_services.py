@@ -21,7 +21,7 @@ from livekit.plugins import cartesia, deepgram, openai, silero, elevenlabs
 from supabase import create_client, Client
 
 from app.core.config import settings
-from services.voice.tool_use import AgentFunctions
+from .tool_use import AgentFunctions
 
 load_dotenv()
 

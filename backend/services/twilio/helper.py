@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
-from services.twilio.client import client
-from services.db.supabase_services import supabase_client
+from .client import client
+from ..db.supabase_services import supabase_client
 
 class NumberType(str, Enum):
     LOCAL = "local"

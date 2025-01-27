@@ -1,7 +1,7 @@
 from typing import Dict, Optional, List
-from services.db.supabase_services import supabase_client
+from .db.supabase_services import supabase_client
 
-from services.composio import get_calendar_slots
+from .composio import get_calendar_slots
 
 supabase = supabase_client()
 

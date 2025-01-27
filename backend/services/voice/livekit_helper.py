@@ -1,6 +1,6 @@
 from services.cache import get_all_agents
 import logging
-from services.db.supabase_services import supabase_client
+from ..db.supabase_services import supabase_client
 
 logger = logging.getLogger(__name__)
 

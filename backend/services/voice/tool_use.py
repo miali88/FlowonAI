@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 from livekit.agents import llm
 from livekit.agents.job import JobContext
 
-from services.chat.chat import similarity_search
-from services.cache import get_agent_metadata, calendar_cache
-from services.composio import book_appointment_composio
-from services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from ..chat.chat import similarity_search
+from ..cache import get_agent_metadata, calendar_cache
+from ..composio import book_appointment_composio
+from .livekit_helper import detect_call_type_and_get_agent_id
 
 # Update logger configuration
 logging.basicConfig(level=logging.INFO)

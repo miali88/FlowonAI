@@ -1,7 +1,7 @@
 from typing import List, Dict
 import logging
-from services.chat.chat import llm_response
-from services.db.supabase_services import supabase_client
+from .chat.chat import llm_response
+from .db.supabase_services import supabase_client
 
 # Set up logging
 logger = logging.getLogger(__name__)
