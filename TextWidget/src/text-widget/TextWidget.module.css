@@ -71,7 +71,7 @@
 .messageBubble ol {
   margin: 8px 0;
   padding-left: 20px;
-  width: 100%;
+  max-width: 95%;
 }
 
 .messageBubble p {
