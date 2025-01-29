@@ -1,0 +1,36 @@
+components:
+  schemas:
+    BartyOauthApp:
+      type: object
+      required:
+        - name
+        - logo
+        - unique_key
+        - categories
+        - description
+        - auth_schemes
+      properties:
+        name:
+          type: string
+          description: Name of the OAuth application
+          maxLength: 255
+        logo:
+          type: string
+          description: URL or path to the application logo
+        unique_key:
+          type: string
+          description: Unique identifier for the application
+        categories:
+          type: array
+          items:
+            type: string
+          description: Categories this application belongs to
+        description:
+          type: string
+          description: Detailed description of the application
+        auth_schemes:
+          type: array
+          items:
+            type: string
+            enum: [oauth2, api_key, bearer]
+          description: Supported authentication schemes
