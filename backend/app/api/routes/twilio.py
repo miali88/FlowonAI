@@ -72,22 +72,22 @@ async def add_to_conference_route(request: Request) -> Response:
         logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.post("/initiate_call")
-async def initiate_call(
-    to_number: str,
-    from_number: str,
-) -> JSONResponse:
-    """Initiate an outbound call using Twilio"""
-    logger.info(f"Initiating outbound call from {from_number} to {to_number}")
-    try:
-        # Call should be handled by the twilio service
-        call = await call_handle.create_outbound_call(
-            to_number=to_number,
-            from_number=from_number
-        )
-        logger.info(f"Successfully initiated call with SID: {call.sid}")
-        return JSONResponse(content={"message": "Call initiated", "call_sid": call.sid})
-    except Exception as e:
-        logger.error(f"Failed to initiate call: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+# @router.post("/initiate_call")
+# async def initiate_call(
+#     to_number: str,
+#     from_number: str,
+# ) -> JSONResponse:
+#     """Initiate an outbound call using Twilio"""
+#     logger.info(f"Initiating outbound call from {from_number} to {to_number}")
+#     try:
+#         # Call should be handled by the twilio service
+#         call = await call_handle.create_outbound_call(
+#             to_number=to_number,
+#             from_number=from_number
+#         )
+#         logger.info(f"Successfully initiated call with SID: {call.sid}")
+#         return JSONResponse(content={"message": "Call initiated", "call_sid": call.sid})
+#     except Exception as e:
+#         logger.error(f"Failed to initiate call: {str(e)}", exc_info=True)
+#         raise HTTPException(status_code=500, detail=str(e))
         
