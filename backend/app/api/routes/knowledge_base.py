@@ -162,20 +162,34 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         data_type = body.get('data_type')
         logger.info(f"Deleting item {item_id} with data_type: {data_type}")
 
-        if data_type == 'web':
-            # Delete from user_web_data if data_type is web
-            result = supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
-        else:
-            # Delete from user_text_files for all other data types
-            result = supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
-        
-        if len(result.data) == 0:
-            raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
+        try:
+            if data_type == 'web':
+                # Delete from user_web_data if data_type is web
+                result = supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
+            else:
+                # Delete from user_text_files for all other data types
+                result = supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
             
-        return {"message": "Item deleted successfully"}
+            if len(result.data) == 0:
+                raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
+                
+            return {"message": "Item deleted successfully"}
+            
+        except HTTPException as he:
+            # Re-raise HTTP exceptions
+            raise he
+        except Exception as e:
+            # Log and raise database/other errors
+            logger.error(f"Database error while deleting item: {str(e)}")
+            raise HTTPException(status_code=500, detail="Database error while deleting item")
+            
+    except HTTPException as he:
+        # Re-raise HTTP exceptions
+        raise he
     except Exception as e:
-        logger.error(f"Error deleting item: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        # Log and raise request parsing errors
+        logger.error(f"Error parsing delete request: {str(e)}")
+        raise HTTPException(status_code=400, detail="Error parsing delete request")
 
 @router.get("/headers")
 async def get_items_headers_handler(current_user: str = Depends(get_current_user)):

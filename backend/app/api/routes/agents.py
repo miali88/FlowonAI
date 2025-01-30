@@ -88,6 +88,8 @@ async def auto_create_agent_handler(request: Request, current_user: str = Depend
             "message": "Agent creation started",
             "agent_id": agent_id
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in auto create agent: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

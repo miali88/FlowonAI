@@ -20,17 +20,18 @@ class ChatMessage(BaseModel):
 async def chat_message(request: Request) -> StreamingResponse:
     try:
         user_query = await request.json()
-        print("\n /chat endpoint, data:")
-        print(user_query)
+    except Exception as e:
+        logger.error(f"Error parsing request: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-        if not all(
-            key in user_query for key in ['message', 'agent_id', 'room_name']
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Missing required fields"
-            )
+    # Validate required fields before proceeding
+    if not all(key in user_query for key in ['message', 'agent_id', 'room_name']):
+        raise HTTPException(
+            status_code=400,
+            detail="Missing required fields"
+        )
 
+    try:
         async def event_generator() -> AsyncGenerator[str, None]:
             response_id = None
             has_source = False
