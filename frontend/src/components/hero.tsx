@@ -4,6 +4,7 @@ import { useState, memo } from "react";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ArrowRight } from "lucide-react";
 
 // Memoize the rotating words since they never change
 const ROTATING_WORDS = memo(() => (
@@ -31,7 +32,10 @@ const CallToActionButton = () => (
     target="_blank"
     rel="noopener noreferrer"
   >
-    <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base">Join the future of work</Button>
+    <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base group">
+      Book a free strategy call
+      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+    </Button>
   </Link>
 );
 
