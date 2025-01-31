@@ -1,9 +1,4 @@
 {
-    "call-_+447723180506__+447723180506_rfwmYq8dHWoo": {
-        "twilio_phone_number": "+447723180506",
-        "twilio_call_sid": "CA67345e49dbd2e1a421fcc16d4307dc9c",
-        "twilio_account_sid": "AC2e61d0942c25dd6db0c6c1049fe1d3b1"
-    },
     "call-_+447723180506__+447723180506_ifbYspAQzNaF": {
         "twilio_phone_number": "+447723180506",
         "twilio_call_sid": "CA1bc0e509c951108756e35aa0796a85b0",
