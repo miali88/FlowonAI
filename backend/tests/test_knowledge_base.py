@@ -129,17 +129,16 @@ async def test_delete_item_handler():
     mock_delete = Mock()
     mock_eq1 = Mock()
     mock_eq2 = Mock()
-    mock_execute = Mock(return_value=mock_result)
     
     # Set up the mock chain
     mock_supabase.table.return_value = mock_table
     mock_table.delete.return_value = mock_delete
     mock_delete.eq.return_value = mock_eq1
     mock_eq1.eq.return_value = mock_eq2
-    mock_eq2.execute = mock_execute
+    mock_eq2.execute.return_value = mock_result
     
     # Act
-    with patch('services.db.supabase_services.supabase_client', return_value=mock_supabase):
+    with patch('app.api.routes.knowledge_base.supabase', mock_supabase):
         result = await delete_item_handler(1, mock_req, "test_user_id")
     
     # Assert
@@ -148,7 +147,7 @@ async def test_delete_item_handler():
     mock_table.delete.assert_called_once()
     mock_delete.eq.assert_called_once_with('id', 1)
     mock_eq1.eq.assert_called_once_with('user_id', 'test_user_id')
-    mock_execute.assert_called_once()
+    mock_eq2.execute.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_get_items_headers_handler():
@@ -221,17 +220,16 @@ async def test_delete_item_handler_not_found():
     mock_delete = Mock()
     mock_eq1 = Mock()
     mock_eq2 = Mock()
-    mock_execute = Mock(return_value=mock_result)
     
     # Set up the mock chain
     mock_supabase.table.return_value = mock_table
     mock_table.delete.return_value = mock_delete
     mock_delete.eq.return_value = mock_eq1
     mock_eq1.eq.return_value = mock_eq2
-    mock_eq2.execute = mock_execute
+    mock_eq2.execute.return_value = mock_result
     
     # Act & Assert
-    with patch('services.db.supabase_services.supabase_client', return_value=mock_supabase):
+    with patch('app.api.routes.knowledge_base.supabase', mock_supabase):
         with pytest.raises(HTTPException) as exc_info:
             await delete_item_handler(1, mock_req, "test_user_id")
     
@@ -241,7 +239,7 @@ async def test_delete_item_handler_not_found():
     mock_table.delete.assert_called_once()
     mock_delete.eq.assert_called_once_with('id', 1)
     mock_eq1.eq.assert_called_once_with('user_id', 'test_user_id')
-    mock_execute.assert_called_once()
+    mock_eq2.execute.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_delete_item_handler_invalid_request():
