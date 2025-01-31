@@ -11,12 +11,8 @@ const ROTATING_WORDS = memo(() => (
   <FlipWords
     words={[
       "Know Your Business",
-      "Know Your Industry",
-      "Answer Questions",
-      "Automate Tasks",
-      "Drive Conversion",
-      "Handle Enquiries",
-      "Book Appointments",
+      "Automate Grunt Work",
+      "Help Scale Your Business",
     ]}
     className="inline-block"
     duration={2}

@@ -3,7 +3,10 @@ from fastapi import Request, HTTPException, APIRouter, Depends, Header
 from supabase import create_client, Client
 
 from app.core.config import settings
-from services.voice.agents import create_agent, get_agents, delete_agent, get_agent_content, update_agent
+from services.voice.agents import (
+    create_agent, get_agents, delete_agent, 
+    get_agent_content, update_agent, get_agent_completion
+)
 from services.agent_create import create_agents_from_urls
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
@@ -102,3 +105,20 @@ async def check_agent_status(request: Request, current_user: str = Depends(get_c
     except Exception as e:
         logger.error(f"Error checking agent status: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/completions")
+async def agent_completion_handler(request: Request, current_user: str = Depends(get_current_user)):
+    try:
+        data = await request.json()
+        prompt = data.get('prompt')
+        purpose = data.get('purpose')
+            
+        completion = await get_agent_completion(purpose, prompt)
+        return {
+            "status": "success",
+            "completion": completion
+        }
+    except Exception as e:
+        logger.error(f"Error getting agent completion: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
