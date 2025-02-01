@@ -46,4 +46,5 @@ openapi.json
 .env
 .next
 
+# Documentation
 cvl_docs/

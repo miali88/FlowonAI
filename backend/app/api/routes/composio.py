@@ -53,3 +53,6 @@ async def new_connection_handler(user_id: str, app_name: str) -> JSONResponse:
         },
         status_code=200
     )
+
+
+
