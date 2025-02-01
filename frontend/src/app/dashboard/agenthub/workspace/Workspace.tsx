@@ -23,6 +23,16 @@ import Deploy from "./Deploy";
 import Playground from "./Playground";
 import { VOICE_OPTIONS } from "./agentSettings";
 import Ui from "./Ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export interface Agent {
   id?: string;
@@ -161,6 +171,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   });
 
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+  const [promptInput, setPromptInput] = useState("");
 
   const playVoiceSample = (voiceFile: string) => {
     if (audioPlayer) {
@@ -195,7 +206,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       assigned_telephone: selectedAgent.assigned_telephone,
       voiceProvider: voiceOption?.voiceProvider || undefined,
       features: currentFeatures,
-      knowledgeBaseIds: selectedAgent.dataSource?.some(
+      knowledgeBaseIds: Array.isArray(selectedAgent.dataSource) && selectedAgent.dataSource.some(
         (item: { id: string }) => item.id === "all"
       )
         ? undefined
@@ -299,6 +310,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
     }
   }, [selectedAgent]);
 
+  const handleGeneratePrompt = () => {
+    // TODO: Add API call to generate prompt
+    if (selectedAgent && promptInput) {
+      handleInputChange("instructions", `I want an AI agent that ${promptInput}`);
+    }
+  };
+
   return (
     <div className="flex gap-6">
       <div className={`${activeTab === "ui" ? "w-full" : "w-2/3"}`}>
@@ -313,9 +331,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
           <TabsList className="mb-4 h-12">
             <TabsTrigger value="edit">Tune</TabsTrigger>
             <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="prompt">Prompt</TabsTrigger>
             <TabsTrigger value="deploy">Deploy</TabsTrigger>
             <TabsTrigger value="ui">UI</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           <TabsContent value="edit">
             <Card>
@@ -512,26 +530,87 @@ const Workspace: React.FC<WorkspaceProps> = ({
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="advanced">
+          <TabsContent value="prompt">
             <Card>
               <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
+                <CardTitle>Prompt Settings</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <Label
-                    htmlFor="instructions"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Instructions
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label
+                      htmlFor="instructions"
+                      className="block text-sm font-medium"
+                    >
+                      Instructions
+                    </Label>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="text-sm bg-white text-black"
+                        >
+                          ✨create one for me✨
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create Instructions</DialogTitle>
+                          <DialogDescription>
+                            Describe what you want your AI agent to do. For example: "an agent for my restaurant business that can take orders, provide menu items....."
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Textarea
+                            value={promptInput}
+                            onChange={(e) => setPromptInput(e.target.value)}
+                            placeholder="I want an agent that..."
+                            className="min-h-[100px]"
+                          />
+                          <Button 
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`${api_base_url}/agents/completion`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ prompt: promptInput }),
+                                });
+                                
+                                if (!response.ok) {
+                                  throw new Error('Failed to generate instructions');
+                                }
+                                
+                                const data = await response.json();
+                                setSelectedAgent((prev: SelectedAgent | null) => {
+                                  if (!prev) return null;
+                                  return { ...prev, instructions: data.instructions };
+                                });
+                                setPromptInput(''); // Clear the prompt input
+                              } catch (error) {
+                                console.error('Error generating instructions:', error);
+                                // You might want to show an error toast here
+                              }
+                            }}
+                          >
+                            Generate Instructions
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   <Textarea
                     id="instructions"
                     value={selectedAgent?.instructions || ""}
                     onChange={(e) =>
-                      handleInputChange("instructions", e.target.value)
+                      setSelectedAgent((prev: SelectedAgent | null) => {
+                        if (!prev) return null;
+                        return { ...prev, instructions: e.target.value };
+                      })
                     }
-                    className="min-h-[400px]"
+                    placeholder="Enter instructions for your agent..."
+                    className="min-h-[200px]"
                   />
                 </div>
                 <div className="flex space-x-2">
