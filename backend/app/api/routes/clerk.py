@@ -39,7 +39,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
 
     if event_type == "user.created":
         print("user created")
-        await post_user(request_data)
+        await post_user(event)
         
     elif event_type == "session.created":
         print("session created")
