@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import axios, { AxiosError } from "axios";
 
 interface HandleScrapeProps {
   scrapeUrl: string;
@@ -35,8 +34,6 @@ export const handleScrape = async ({
   // Basic URL validation
   const urlPattern =
     /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-  const urlPattern =
-    /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
   if (!urlPattern.test(scrapeUrl)) {
     setScrapeError("Please enter a valid URL");
     return;
@@ -46,18 +43,14 @@ export const handleScrape = async ({
     const token = await getToken();
     const response = await axios.post(
       `${API_BASE_URL}/knowledge_base/crawl_url`,
-    const response = await axios.post(
-      `${API_BASE_URL}/knowledge_base/crawl_url`,
       { url: scrapeUrl },
       {
         headers: {
           Authorization: `Bearer ${token}`,
           "X-User-ID": user.id,
-          "X-User-ID": user.id,
         },
       }
     );
-
 
     if (Array.isArray(response.data)) {
       setMappedUrls(response.data);
@@ -70,8 +63,6 @@ export const handleScrape = async ({
       if (!response.data.content) {
         throw new Error("No content received from the server");
       }
-      setNewItemContent((prevContent) => {
-        const separator = prevContent ? "\n\n" : "";
       setNewItemContent((prevContent) => {
         const separator = prevContent ? "\n\n" : "";
         return prevContent + separator + response.data.content;
@@ -89,12 +80,6 @@ export const handleScrape = async ({
 
     const errorMessage =
       (axiosError.response?.data as { detail?: string })?.detail ||
-      axiosError.message ||
-      "Failed to scrape URL";
-
-
-    const errorMessage =
-      axiosError.response?.data?.detail ||
       axiosError.message ||
       "Failed to scrape URL";
 
@@ -120,14 +105,7 @@ export const handleScrapeAll = async ({
 }: Omit<HandleScrapeProps, "mappedUrls" | "setMappedUrls"> & {
   selectedUrls: string[];
 }) => {
-}: Omit<HandleScrapeProps, "mappedUrls" | "setMappedUrls"> & {
-  selectedUrls: string[];
-}) => {
   try {
-    console.log("=== Starting handleScrapeAll ===");
-    console.log("User ID:", user.id);
-    console.log("Selected URLs:", selectedUrls);
-    console.log("API Endpoint:", `${API_BASE_URL}/knowledge_base/scrape_web`);
     console.log("=== Starting handleScrapeAll ===");
     console.log("User ID:", user.id);
     console.log("Selected URLs:", selectedUrls);
@@ -135,10 +113,8 @@ export const handleScrapeAll = async ({
 
     const token = await getToken();
     console.log("Token obtained successfully");
-    console.log("Token obtained successfully");
 
     const requestData = { urls: selectedUrls };
-    console.log("Request payload:", requestData);
     console.log("Request payload:", requestData);
 
     const response = await axios.post(
@@ -148,14 +124,10 @@ export const handleScrapeAll = async ({
         headers: {
           Authorization: `Bearer ${token}`,
           "X-User-ID": user.id,
-          "X-User-ID": user.id,
         },
       }
     );
 
-    console.log("Response received:", response);
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
     console.log("Response received:", response);
     console.log("Response status:", response.status);
     console.log("Response data:", response.data);
@@ -182,11 +154,8 @@ export const handleScrapeAll = async ({
 
     setNewItemContent((prevContent) => {
       const separator = prevContent ? "\n\n" : "";
-    setNewItemContent((prevContent) => {
-      const separator = prevContent ? "\n\n" : "";
       return prevContent + separator + content;
     });
-
 
     setShowScrapeInput(false);
     setScrapeUrl("");
@@ -204,7 +173,6 @@ export const handleScrapeAll = async ({
       console.error("Response headers:", axiosError.response.headers);
       console.error("Response data:", axiosError.response.data);
     }
-
 
     if (axiosError.request) {
       console.error("Request details:", axiosError.request);
