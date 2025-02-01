@@ -28,9 +28,15 @@ class AvailableNumbersResponse(BaseModel):
 async def get_country_codes_handler() -> JSONResponse:
     """Get list of available country codes from Twilio"""
     logger.info("Fetching available country codes from Twilio")
-    twilio_countries = helper.get_country_codes()
-    logger.debug(f"Retrieved {len(twilio_countries)} country codes")
-    return JSONResponse(content={"countries": twilio_countries})
+    try:
+        twilio_countries = helper.get_country_codes()
+        logger.debug(f"Retrieved {len(twilio_countries)} country codes")
+        return JSONResponse(content={"countries": twilio_countries})
+    except Exception as e:
+        logger.error(f"Error fetching country codes: {str(e)}")
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail="Country codes not found")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/available_numbers/{country_code}", response_model = AvailableNumbersResponse)
 async def get_available_numbers_handler(country_code: str) -> AvailableNumbersResponse:

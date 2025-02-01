@@ -142,7 +142,7 @@ const AgentHub = () => {
         : {};
 
       const response = await fetch(
-        `${API_BASE_URL}/agent/${selectedAgent.id}`,
+        `${API_BASE_URL}/agents/${selectedAgent.id}`,
         {
           method: "PATCH",
           headers: {
@@ -188,7 +188,7 @@ const AgentHub = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents/${selectedAgent.id}`,
         {
           method: "DELETE",
           headers: {

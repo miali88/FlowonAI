@@ -100,6 +100,12 @@ interface AvailableNumbersResponse {
   };
 }
 
+// Add new interface for country data
+interface CountryData {
+  code: string;
+  name: string;
+}
+
 const Deploy: React.FC<DeployProps> = ({
   selectedAgent,
   setSelectedAgent,
@@ -108,7 +114,7 @@ const Deploy: React.FC<DeployProps> = ({
   const { userId: clerkUserId } = useAuth();
   console.log("Deploy Component - propUserId:", propUserId);
   console.log("Deploy Component - clerkUserId:", clerkUserId);
-  const [countryCodes, setCountryCodes] = useState<string[]>([]);
+  const [countryCodes, setCountryCodes] = useState<CountryData[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [availableNumbers, setAvailableNumbers] = useState<TwilioNumbers>({});
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
@@ -142,10 +148,81 @@ const Deploy: React.FC<DeployProps> = ({
           throw new Error("Failed to fetch country codes");
         }
         const data = await response.json();
-        setCountryCodes(Object.values(data).flat());
+        console.log("Country codes data:", data);
+        
+        // Only include countries that have a mapping in countryNames
+        const formattedData = data.countries
+          .filter((code: string) => getCountryName(code) !== code) // Only keep codes that have a name mapping
+          .map((code: string) => ({
+            code,
+            name: getCountryName(code)
+          }));
+        setCountryCodes(formattedData);
       } catch (error) {
         console.error("Error fetching country codes:", error);
       }
+    };
+
+    // Helper function to get country names
+    const getCountryName = (code: string) => {
+      const countryNames: { [key: string]: string } = {
+        'JP': 'Japan',
+        'EE': 'Estonia',
+        'DK': 'Denmark',
+        'BG': 'Bulgaria',
+        'MY': 'Malaysia',
+        'CL': 'Chile',
+        'BR': 'Brazil',
+        'TH': 'Thailand',
+        'PT': 'Portugal',
+        'IT': 'Italy',
+        'RO': 'Romania',
+        'GB': 'United Kingdom',
+        'AR': 'Argentina',
+        'AT': 'Austria',
+        'BE': 'Belgium',
+        'BW': 'Botswana',
+        'CO': 'Colombia',
+        'US': 'United States',
+        'CA': 'Canada',
+        'AU': 'Australia',
+        'NZ': 'New Zealand',
+        'SG': 'Singapore',
+        'HK': 'Hong Kong',
+        'IN': 'India',
+        'ID': 'Indonesia',
+        'FI': 'Finland',
+        'NO': 'Norway',
+        'SE': 'Sweden',
+        'DE': 'Germany',
+        'ES': 'Spain',
+        'FR': 'France',
+        'NL': 'Netherlands',
+        'CH': 'Switzerland',
+        'ZA': 'South Africa',
+        'GD': 'Grenada',
+        'GR': 'Greece',
+        'GE': 'Georgia',
+        'HU': 'Hungary',
+        'IL': 'Israel',
+        'IS': 'Iceland',
+        'JO': 'Jordan',
+        'KZ': 'Kazakhstan',
+        'LI': 'Liechtenstein',
+        'LT': 'Lithuania',
+        'LV': 'Latvia',
+        'MC': 'Monaco',
+        'MD': 'Moldova',
+        'ME': 'Montenegro',
+        'MK': 'Macedonia',
+        'IE': 'Ireland',
+        'IM': 'Isle of Man',
+        'JE': 'Jersey',
+        'MX': 'Mexico',
+        'HR': 'Croatia',
+        // Add more country mappings as needed
+      };
+      return countryNames[code] || code;
     };
 
     fetchCountryCodes();
@@ -304,13 +381,29 @@ const Deploy: React.FC<DeployProps> = ({
         <div>
           <Label>Country Code</Label>
           <Select value={selectedCountry} onValueChange={handleCountryChange}>
-            <SelectTrigger className="w-[200px] mx-2">
+            <SelectTrigger className="w-[300px] mx-2">
               <SelectValue placeholder="Select country code" />
             </SelectTrigger>
             <SelectContent>
-              {countryCodes.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {code}
+              {countryCodes.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  <div className="flex items-center gap-2">
+                    {country.code && (
+                      <img
+                        src={`https://flagcdn.com/24x18/${country.code.toLowerCase().slice(0, 2)}.png`}
+                        alt={`${country.name} flag`}
+                        className="w-6 h-4 object-cover rounded-sm"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span>{country.name}</span>
+                    <span className="text-muted-foreground ml-1">
+                      ({country.code})
+                    </span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
