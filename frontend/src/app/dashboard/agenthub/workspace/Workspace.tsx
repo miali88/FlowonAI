@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+import { LANGUAGE_OPTIONS } from "./agentSettings";
+
+import { Play } from "lucide-react";
+
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -31,8 +35,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
+const api_base_url =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
 export interface Agent {
   id?: string;
@@ -172,6 +184,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
   const [promptInput, setPromptInput] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(
+    selectedAgent?.language || "en-GB"
+  );
+  const [selectedVoice, setSelectedVoice] = useState<string>(
+    selectedAgent?.voice || ""
+  );
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const playVoiceSample = (voiceFile: string) => {
     if (audioPlayer) {
@@ -206,11 +225,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
       assigned_telephone: selectedAgent.assigned_telephone,
       voiceProvider: voiceOption?.voiceProvider || undefined,
       features: currentFeatures,
-      knowledgeBaseIds: Array.isArray(selectedAgent.dataSource) && selectedAgent.dataSource.some(
-        (item: { id: string }) => item.id === "all"
-      )
-        ? undefined
-        : selectedAgent.knowledgeBaseIds,
+      knowledgeBaseIds:
+        Array.isArray(selectedAgent.dataSource) &&
+        selectedAgent.dataSource.some(
+          (item: { id: string }) => item.id === "all"
+        )
+          ? undefined
+          : selectedAgent.knowledgeBaseIds,
       showSourcesInChat: selectedAgent.showSourcesInChat,
     };
 
@@ -313,9 +334,18 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const handleGeneratePrompt = () => {
     // TODO: Add API call to generate prompt
     if (selectedAgent && promptInput) {
-      handleInputChange("instructions", `I want an AI agent that ${promptInput}`);
+      handleInputChange(
+        "instructions",
+        `I want an AI agent that ${promptInput}`
+      );
     }
   };
+
+  console.log(
+    Array.isArray(selectedAgent?.dataSource),
+    selectedAgent?.dataSource,
+    "HAHHA"
+  );
 
   return (
     <div className="flex gap-6">
@@ -371,19 +401,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       <MultiSelect
                         items={knowledgeBaseItems}
                         selectedItems={
-                          selectedAgent?.dataSource &&
-                          Array.isArray(selectedAgent.dataSource)
-                            ? selectedAgent.dataSource.map(
-                                (item: {
-                                  id: number | string;
-                                  title: string;
-                                  data_type: string;
-                                }) => ({
-                                  id: item.id.toString(),
-                                  title: item.title,
-                                  data_type: item.data_type,
-                                })
-                              )
+                          typeof selectedAgent?.dataSource === "string"
+                            ? JSON.parse(selectedAgent.dataSource)
+                            : Array.isArray(selectedAgent?.dataSource)
+                            ? selectedAgent.dataSource
                             : []
                         }
                         onChange={handleDataSourceChange}
@@ -426,59 +447,94 @@ const Workspace: React.FC<WorkspaceProps> = ({
                     />
                   </div>
 
-                  {/* Commenting out Language Selection
+                  {/* Language Selection */}
                   <div>
-                    <Label htmlFor="language" className="block text-sm font-medium mb-1">Language</Label>
-                    <Select 
-                      value={selectedAgent?.language || ''}
-                      onValueChange={(value: string) => handleLanguageChange(value)}
+                    <Label htmlFor="language-select">Language</Label>
+                    <Select
+                      value={selectedLanguage}
+                      onValueChange={(value) => {
+                        setSelectedLanguage(value);
+                        setSelectedVoice(""); // Reset voice when language changes
+                        handleInputChange("language", value);
+                      }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select language" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en-GB">English GB</SelectItem>
-                        <SelectItem value="en-US">English US</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
-                        <SelectItem value="ar">Arabic</SelectItem>
-                        <SelectItem value="nl">Dutch</SelectItem>
-                        <SelectItem value="zh">Chinese</SelectItem>
+                        {LANGUAGE_OPTIONS.map((language) => (
+                          <SelectItem key={language.id} value={language.id}>
+                            {language.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  */}
 
-                  {/* Commenting out Voice Selection
+                  {/* Voice Selection */}
                   <div>
-                    <Label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</Label>
-                    <div className="flex items-center space-x-2">
-                      <Select 
-                        value={selectedAgent?.voice}
-                        onValueChange={(value) => handleInputChange('voice', value)}
+                    <Label htmlFor="voice-select">Voice</Label>
+                    <div className="flex space-x-2">
+                      <Select
+                        value={selectedVoice}
+                        onValueChange={(value) => {
+                          setSelectedVoice(value);
+                          handleInputChange("voice", value);
+                        }}
                       >
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select voice" />
                         </SelectTrigger>
                         <SelectContent>
-                          {selectedAgent?.language && VOICE_OPTIONS[selectedAgent.language as keyof typeof VOICE_OPTIONS]?.map((voice) => (
-                            <SelectItem key={voice.id} value={voice.id}>{voice.name}</SelectItem>
+                          {VOICE_OPTIONS[
+                            selectedLanguage as keyof typeof VOICE_OPTIONS
+                          ]?.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id}>
+                              {voice.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const voiceFile = VOICE_OPTIONS[selectedAgent?.language as keyof typeof VOICE_OPTIONS]?.find(v => v.id === selectedAgent?.voice)?.file;
-                          if (voiceFile) playVoiceSample(voiceFile);
-                        }}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
+
+                      {selectedVoice && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={isPlaying}
+                          onClick={async () => {
+                            try {
+                              const selectedVoiceData = VOICE_OPTIONS[
+                                selectedLanguage as keyof typeof VOICE_OPTIONS
+                              ]?.find((v) => v.id === selectedVoice);
+                              if (selectedVoiceData) {
+                                setIsPlaying(true);
+                                const audio = new Audio();
+                                audio.addEventListener("ended", () =>
+                                  setIsPlaying(false)
+                                );
+                                audio.addEventListener("error", (e) => {
+                                  console.error("Error playing audio:", e);
+                                  setIsPlaying(false);
+                                });
+                                audio.src = selectedVoiceData.file;
+                                await audio.load();
+                                await audio.play();
+                              }
+                            } catch (error) {
+                              console.error("Error playing audio:", error);
+                              setIsPlaying(false);
+                            }
+                          }}
+                        >
+                          <Play
+                            className={`h-4 w-4 ${
+                              isPlaying ? "text-muted" : ""
+                            }`}
+                          />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  */}
 
                   {/* Add the Retrain Agent button at the bottom */}
                   <div className="pt-6">
@@ -546,8 +602,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
                     </Label>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="text-sm bg-white text-black"
                         >
                           ✨create one for me✨
@@ -557,7 +613,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
                         <DialogHeader>
                           <DialogTitle>Create Instructions</DialogTitle>
                           <DialogDescription>
-                            Describe what you want your AI agent to do. For example: "an agent for my restaurant business that can take orders, provide menu items....."
+                            Describe what you want your AI agent to do. For
+                            example: &ldquo;an agent for my restaurant business
+                            that can take orders, provide menu items...&rdquo;
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
@@ -567,29 +625,44 @@ const Workspace: React.FC<WorkspaceProps> = ({
                             placeholder="I want an agent that..."
                             className="min-h-[100px]"
                           />
-                          <Button 
+                          <Button
                             onClick={async () => {
                               try {
-                                const response = await fetch(`${api_base_url}/agents/completion`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({ prompt: promptInput }),
-                                });
-                                
+                                const response = await fetch(
+                                  `${api_base_url}/agents/completion`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      prompt: promptInput,
+                                    }),
+                                  }
+                                );
+
                                 if (!response.ok) {
-                                  throw new Error('Failed to generate instructions');
+                                  throw new Error(
+                                    "Failed to generate instructions"
+                                  );
                                 }
-                                
+
                                 const data = await response.json();
-                                setSelectedAgent((prev: SelectedAgent | null) => {
-                                  if (!prev) return null;
-                                  return { ...prev, instructions: data.instructions };
-                                });
-                                setPromptInput(''); // Clear the prompt input
+                                setSelectedAgent(
+                                  (prev: SelectedAgent | null) => {
+                                    if (!prev) return null;
+                                    return {
+                                      ...prev,
+                                      instructions: data.instructions,
+                                    };
+                                  }
+                                );
+                                setPromptInput(""); // Clear the prompt input
                               } catch (error) {
-                                console.error('Error generating instructions:', error);
+                                console.error(
+                                  "Error generating instructions:",
+                                  error
+                                );
                                 // You might want to show an error toast here
                               }
                             }}

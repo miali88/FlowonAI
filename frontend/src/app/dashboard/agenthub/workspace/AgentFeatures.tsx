@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus, Play } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -25,6 +25,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Agent } from "./Workspace"; // Add this import
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from "./agentSettings";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AgentFeature {
   id: string;
@@ -37,6 +45,8 @@ interface SelectedAgent extends Agent {
     [key: string]: {
       enabled: boolean;
       number?: string;
+      language?: string;
+      voice?: string;
       [key: string]: any;
     };
   };
@@ -318,99 +328,108 @@ export const AgentFeatures = forwardRef<
   };
 
   return (
-    <div className="space-y-2">
-      {Object.values(AGENT_FEATURES.purposes).map((purpose) => (
-        <Accordion
-          key={purpose.id}
-          type="single"
-          collapsible
-          value={openItem}
-          onValueChange={setOpenItem}
-          className="w-full"
-        >
-          <AccordionItem value={purpose.id} className="border rounded-lg">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex-1">
-                <h4 className="text-sm font-medium">{purpose.label}</h4>
-                <p className="text-xs text-muted-foreground">
-                  {purpose.description}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]}
-                  checked={
-                    localFeatures[
+    <div className="space-y-6">
+      {/* Existing features content */}
+      <div className="space-y-2">
+        {Object.values(AGENT_FEATURES.purposes).map((purpose) => (
+          <Accordion
+            key={purpose.id}
+            type="single"
+            collapsible
+            value={openItem}
+            onValueChange={setOpenItem}
+            className="w-full"
+          >
+            <AccordionItem value={purpose.id} className="border rounded-lg">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium">{purpose.label}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {purpose.description}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id={
                       FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]
-                    ]?.enabled || false
-                  }
-                  onCheckedChange={() => handleFeatureToggle(purpose.id)}
-                />
-                {Object.keys(purpose.subFeatures).length > 0 &&
-                  purpose.id !== "appointmentBooking" && (
-                    <AccordionTrigger className="h-4 w-4 p-0" />
-                  )}
+                    }
+                    checked={
+                      localFeatures[
+                        FEATURE_ID_MAP[
+                          purpose.id as keyof typeof FEATURE_ID_MAP
+                        ]
+                      ]?.enabled || false
+                    }
+                    onCheckedChange={() => handleFeatureToggle(purpose.id)}
+                  />
+                  {Object.keys(purpose.subFeatures).length > 0 &&
+                    purpose.id !== "appointmentBooking" && (
+                      <AccordionTrigger className="h-4 w-4 p-0" />
+                    )}
+                </div>
               </div>
-            </div>
 
-            <AccordionContent className="px-4 pb-4">
-              <div className="space-y-4">
-                {purpose.subFeatures &&
-                  Object.values(purpose.subFeatures).map(
-                    (subFeature: SubFeature) => (
-                      <div
-                        key={subFeature.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex-1">
-                          <Label htmlFor={subFeature.id} className="text-sm">
-                            {subFeature.label}
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            {subFeature.description}
-                          </p>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-4">
+                  {purpose.subFeatures &&
+                    Object.values(purpose.subFeatures).map(
+                      (subFeature: SubFeature) => (
+                        <div
+                          key={subFeature.id}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex-1">
+                            <Label htmlFor={subFeature.id} className="text-sm">
+                              {subFeature.label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {subFeature.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {purpose.id === "callTransfer" ? (
+                              <Input
+                                type="tel"
+                                placeholder="+1234567890"
+                                className="w-48"
+                                value={localFeatures.call_transfer.number}
+                                onChange={handleNumberChange}
+                              />
+                            ) : (subFeature as SubFeature).hasConfiguration ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
+                                onClick={() =>
+                                  handleConfigureInformationCollection(
+                                    subFeature
+                                  )
+                                }
+                              >
+                                Configure
+                              </Button>
+                            ) : (
+                              <Switch
+                                id={subFeature.id}
+                                checked={
+                                  localFeatures[subFeature.id]?.enabled || false
+                                }
+                                onCheckedChange={() =>
+                                  handleFeatureToggle(subFeature.id)
+                                }
+                              />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          {purpose.id === "callTransfer" ? (
-                            <Input
-                              type="tel"
-                              placeholder="+1234567890"
-                              className="w-48"
-                              value={localFeatures.call_transfer.number}
-                              onChange={handleNumberChange}
-                            />
-                          ) : (subFeature as SubFeature).hasConfiguration ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
-                              onClick={() =>
-                                handleConfigureInformationCollection(subFeature)
-                              }
-                            >
-                              Configure
-                            </Button>
-                          ) : (
-                            <Switch
-                              id={subFeature.id}
-                              checked={
-                                localFeatures[subFeature.id]?.enabled || false
-                              }
-                              onCheckedChange={() =>
-                                handleFeatureToggle(subFeature.id)
-                              }
-                            />
-                          )}
-                        </div>
-                      </div>
-                    )
-                  )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      ))}
+                      )
+                    )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ))}
+      </div>
 
       {/* Configuration Dialog */}
       {isConfigureDialogOpen && currentFeature && (
