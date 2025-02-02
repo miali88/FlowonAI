@@ -1,4 +1,24 @@
-// Language Options
+// Agent Purpose Options
+export const AGENT_PURPOSE_OPTIONS = [
+  { id: "telephone-agent", title: "Telephone Agent" },
+  { id: "voice-web-agent", title: "Voice Web Agent" },
+  { id: "text-chatbot-agent", title: "Chatbot Agent" },
+];
+
+
+export const AGENT_ACTIONS = [
+  { id: "telephone-agent", actions: ["lead_gen", "appointment_booking", "call_transfer"]},
+  { id: "text-chatbot-agent", actions: ["lead_gen", "appointment_booking"]},
+];
+  
+
+export const AGENT_SETTINGS = [
+  { id: "telephone-agent", settings: ["agentName", "dataSource", "openingLine", "language", "voice"]},
+  { id: "text-chatbot-agent", settings: ["agentName", "dataSource", "showSourcesInChat", "openingLine"]},
+
+]
+
+
 export const LANGUAGE_OPTIONS = [
     { id: "en-GB", name: "English GB" },
     { id: "en-US", name: "English US" },
@@ -9,12 +29,6 @@ export const LANGUAGE_OPTIONS = [
     { id: "zh", name: "Mandarin" },
   ];
   
-  // Agent Purpose Options
-export const AGENT_PURPOSE_OPTIONS = [
-  { id: "telephone-agent", title: "Telephone Agent" },
-  { id: "voice-web-agent", title: "Voice Web Agent" },
-  { id: "text-chatbot-agent", title: "Chatbot Agent" },
-];
   
   // Voice Options
 export const VOICE_OPTIONS = {
@@ -51,16 +65,3 @@ export const VOICE_OPTIONS = {
       { id: "zh-voice1", name: "Mandarin Voice 1", file: "/voices/cartesia_mandarin1.wav", voiceProvider: "cartesia" }
     ],
   };
-
-export interface Agent {
-  id: string;
-  uiConfig?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    fontSize?: number;
-    borderRadius?: number;
-    chatboxHeight?: number;
-  };
-  // ... other agent properties ...
-}
-
