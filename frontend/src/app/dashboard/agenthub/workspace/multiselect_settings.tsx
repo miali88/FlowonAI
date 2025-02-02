@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 interface Item {
   id: string;
@@ -13,50 +13,78 @@ interface MultiSelectProps {
   onChange: (items: Item[]) => void;
 }
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, onChange }) => {
+export const MultiSelect: React.FC<MultiSelectProps> = ({
+  items,
+  selectedItems = [],
+  onChange,
+}) => {
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Debug logging
   useEffect(() => {
-    console.log('Current selectedItems:', selectedItems);
+    console.log("Current selectedItems:", selectedItems);
   }, [selectedItems]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const isItemSelected = (item: Item): boolean => {
-    return selectedItems?.some(selected => selected.id === item.id) || false;
+    return (
+      Array.isArray(selectedItems) &&
+      selectedItems.some((selected) => selected.id === item.id)
+    );
   };
 
   const toggleItem = (item: Item) => {
+    if (!Array.isArray(selectedItems)) {
+      onChange([item]);
+      return;
+    }
+
+    const currentSelected = [...selectedItems];
     let newSelectedItems: Item[];
 
     if (isItemSelected(item)) {
       // Remove item if already selected
-      newSelectedItems = selectedItems.filter(selected => selected.id !== item.id);
+      newSelectedItems = currentSelected.filter(
+        (selected) => selected.id !== item.id
+      );
     } else {
       // Add item if not selected
-      newSelectedItems = [...(selectedItems || []), item];
+      newSelectedItems = [...currentSelected, item];
     }
 
-    console.log('Toggling item:', item);
-    console.log('New selected items:', newSelectedItems);
     onChange(newSelectedItems);
   };
 
-  const filteredItems = items.filter(item =>
+  const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getDisplayText = () => {
+    if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
+      return "Select items...";
+    }
+    try {
+      return selectedItems.map((item) => item.title).join(", ");
+    } catch (error) {
+      console.error("Error processing selectedItems:", error, selectedItems);
+      return "Select items...";
+    }
+  };
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -65,11 +93,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
         onClick={() => setOpen(!open)}
         className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
-        <span className="truncate text-sm">
-          {selectedItems?.length > 0
-            ? selectedItems.map(item => item.title).join(', ')
-            : "Select items..."}
-        </span>
+        <span className="truncate text-sm">{getDisplayText()}</span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
 
@@ -93,15 +117,21 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ items, selectedItems, 
                 onClick={() => toggleItem(item)}
                 className="flex items-center px-3 py-2 hover:bg-accent cursor-pointer"
               >
-                <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
-                  isItemSelected(item) ? 'bg-primary border-primary' : 'border-primary'
-                }`}>
+                <div
+                  className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
+                    isItemSelected(item)
+                      ? "bg-primary border-primary"
+                      : "border-primary"
+                  }`}
+                >
                   {isItemSelected(item) && (
                     <Check className="h-3 w-3 text-primary-foreground" />
                   )}
                 </div>
                 <span className="ml-2 text-sm">{item.title}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{item.data_type}</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {item.data_type}
+                </span>
               </div>
             ))}
           </div>
