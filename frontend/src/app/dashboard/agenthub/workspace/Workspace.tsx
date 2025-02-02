@@ -401,7 +401,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       <MultiSelect
                         items={knowledgeBaseItems}
                         selectedItems={
-                          typeof selectedAgent?.dataSource === "string"
+                          typeof selectedAgent?.dataSource === "string" &&
+                          selectedAgent.dataSource.trim().startsWith("[")
                             ? JSON.parse(selectedAgent.dataSource)
                             : Array.isArray(selectedAgent?.dataSource)
                             ? selectedAgent.dataSource
