@@ -7,15 +7,13 @@ import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
 import os
-from firecrawl import FirecrawlApp # type: ignore
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 load_dotenv()
-
-FIRECRAWL_API = os.getenv("FIRECRAWL_API_KEY")
-app = FirecrawlApp(api_key=FIRECRAWL_API)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -182,12 +180,17 @@ crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=4, max=20)
 )
-async def scrape_with_retry(url: str, params: Dict[str, Any]) -> Dict[str, Any]:
+async def scrape_with_retry(url: str) -> Dict[str, Any]:
     await scrape_limiter.acquire()
     try:
-        return await asyncio.to_thread(
-            lambda: app.scrape_url(url=url, params=params)
+        # Initialize crawler inside the function
+        run_cfg = CrawlerRunConfig(
+            markdown_generator=True  # Enable markdown generation
         )
+        async with AsyncWebCrawler() as crawler:
+            map_result: List[str] = await crawler.arun(url=url, config=run_cfg)
+        
+        return await map_result
     except RequestException as e:
         logger.error(f"HTTP error while scraping {url}: {str(e)}")
         raise
@@ -208,8 +211,7 @@ async def process_single_url(
 
     try:
         response = await scrape_with_retry(
-            site,
-            {'formats': ['markdown'], 'waitFor': 2000}
+            site
         )
 
         content_list = [
@@ -281,14 +283,44 @@ async def map_url(url: str) -> List[str]:
     logger.info(f"Starting URL mapping for: {url}")
 
     try:
-        await crawl_limiter.acquire()
-        map_result: List[str] = await asyncio.to_thread(
-            lambda: app.map_url(url, params={'includeSubdomains': True})
+        # Configure the crawler with specific options
+        run_cfg = CrawlerRunConfig(
+            markdown_generator=True
         )
-        # Enforce maximum pages limit
-        map_result = map_result[:MAX_PAGES]
-        logger.info(f"Successfully mapped URL. Found {len(map_result)} URLs")
-        return map_result
+        browser_config=BrowserConfig(
+            browser_type="chromium",
+            headless= True,  # Run in headless mode
+            extra_args=["--disable-gpu"]  # Additional Playwright args
+        )
+        # Configure the dispatcher with rate limiting
+        dispatcher = SemaphoreDispatcher(
+            max_session_permit=MAX_PAGES
+        )
+        
+        logger.info("Initializing crawler...")
+        
+        async with AsyncWebCrawler(
+            config=browser_config  # This will ensure browser is installed
+        ) as crawler:
+            logger.info("Crawler started successfully")
+            
+            # Run the crawler with configuration
+            response = await crawler.arun(
+                url=url,
+                config=run_cfg,
+                dispatcher=dispatcher
+            )
+            
+            if response.success:
+                logger.info(f"Successfully mapped URL. Found {len(response.url)} URLs")
+                return response.url
+            else:
+                logger.error(f"Failed to map URL {url}: {response.error_message}")
+                return []
+                
     except Exception as e:
         logger.error(f"Error mapping URL {url}: {str(e)}")
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to map URL: {str(e)}"
+        )

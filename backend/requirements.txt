@@ -58,7 +58,7 @@ faiss-cpu==1.9.0
 fake-http-header==0.3.5
 fastapi==0.115.8
 filelock==3.16.1
-firecrawl==1.2.4
+crawl4ai==0.4.248
 flake8==7.1.1
 flatbuffers==24.3.25
 frozenlist==1.4.1
@@ -77,7 +77,7 @@ h2==4.1.0
 hpack==4.0.0
 httpcore==1.0.5
 httptools==0.6.1
-httpx==0.27.2
+httpx>=0.27.2,<0.28.0
 httpx-sse==0.4.0
 huggingface-hub==0.25.1
 humanfriendly==10.0
@@ -176,7 +176,7 @@ premailer==3.10.0
 preshed==3.0.9
 prompt_toolkit==3.0.48
 protobuf==5.28.2
-psutil==5.9.8
+psutil>=6.1.1
 psycopg==3.1.13
 psycopg-binary==3.1.13
 ptyprocess==0.7.0
@@ -213,9 +213,9 @@ rank-bm25==0.2.2
 RapidFuzz==3.10.0
 referencing==0.35.1
 regex==2024.9.11
-requests==2.32.3
+requests>=2.31.0,<3.0.0
 requests-toolbelt==1.0.0
-rich==13.8.1
+rich>=13.9.4
 rpds-py==0.21.0
 rsa==4.9
 safetensors==0.4.5
@@ -273,13 +273,13 @@ watchfiles==0.24.0
 wcwidth==0.2.13
 weasel==0.3.4
 websocket-client==1.8.0
-websockets==13.1
+websockets>=12.0,<14.0
 wrapt==1.16.0
 xxhash==3.5.0
 yarl==1.13.1
 zipp==3.21.0
-stripe==11.5.0
 pytest==8.3.4
 pytest-asyncio==0.25.3
 iniconfig==2.0.0
-pluggy==1.5.0
+fake-useragent>=2.0.3
+pyOpenSSL>=24.3.0
