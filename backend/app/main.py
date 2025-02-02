@@ -14,7 +14,6 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from backend.app.api.routes.agents import router as agent_router
 from app.core.config import settings
 from services.twilio.call_handle import cleanup
 load_dotenv()
@@ -22,24 +21,18 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Use full paths for executables
-NETSTAT_PATH: str = "C:\\Windows\\System32\\netstat.exe" if platform.system() == "Windows" else "/usr/bin/netstat"
-TASKKILL_PATH: str = "C:\\Windows\\System32\\taskkill.exe" if platform.system() == "Windows" else "/bin/kill"  # Provide default for non-Windows
-LSOF_PATH: str = "/usr/bin/lsof" if platform.system() != "Windows" else "/bin/lsof"  # Provide default path
-
-livekit_process = None  # Global variable to store LiveKit server process
-
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
-
 sentry_sdk.init(
-    dsn=(
-        "https://e0f7361d6f043e1f2d7a42549e152498@"
-        "o4508208175906816.ingest.us.sentry.io/4508208188882944"
-    ),
+    dsn="https://e0f7361d6f043e1f2d7a42549e152498@o4508208175906816.ingest.us.sentry.io/4508208188882944",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
     traces_sample_rate=1.0,
     _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
         "continuous_profiling_auto_start": True,
     },
 )
@@ -71,8 +64,9 @@ if origins:
         allow_headers=["*"],
     )
 
+#print("origins",[str(origins).strip(",") for origin in settings.BACKEND_CORS_ORIGINS])
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
-app.include_router(agent_router, prefix="/api/v1/agent", tags=["agent"])
 
 # Define global variable
 livekit_process = None
@@ -80,59 +74,34 @@ livekit_process = None
 def kill_processes_on_port(port):
     try:
         if platform.system() == "Windows":
-            netstat = subprocess.run(
-                [NETSTAT_PATH, "-ano"],
-                capture_output=True,
-                text=True,
-                shell=False
-            )
-            for line in netstat.stdout.splitlines():
-                if f":{port}" in line:
-                    try:
-                        pid = line.strip().split()[-1]
-                        if pid.isdigit():
-                            subprocess.run(
-                                [TASKKILL_PATH, "/F", "/PID", pid],
-                                shell=False
-                            )
-                    except (IndexError, ValueError):
-                        continue
-        else:
+            subprocess.run(['taskkill', '/F', '/PID', '$(netstat -ano | findstr :%d | awk \'{print $5}\')' % port], shell=True)
+        else:  # Unix-like systems (Linux, macOS)
+            # Get the current process ID
             current_pid = os.getpid()
-            try:
-                if not os.path.isfile(LSOF_PATH):
-                    raise FileNotFoundError("lsof command not found")
-                    
-                result = subprocess.run(
-                    [LSOF_PATH, "-ti", f":{port}"],
-                    capture_output=True,
-                    text=True,
-                    shell=False
-                )
-                if result.stdout:
-                    pids = result.stdout.strip().split('\n')
-                    for pid_str in pids:
-                        try:
-                            pid = int(pid_str)
-                            if pid != current_pid:
-                                os.kill(pid, 9)
-                                logger.info(f"Killed process {pid} on port {port}")
-                        except (ValueError, ProcessLookupError) as e:
-                            logger.error(f"Error processing PID {pid_str}: {e}")
-            except FileNotFoundError:
-                logger.error("lsof command not found")
-
-        logger.info(f"Finished checking processes on port {port}")
+            
+            # Get all processes on the port
+            result = subprocess.run(f"lsof -ti:{port}", shell=True, capture_output=True, text=True)
+            if result.stdout:
+                pids = result.stdout.strip().split('\n')
+                for pid in pids:
+                    try:
+                        pid = int(pid)
+                        # Don't kill our own process
+                        if pid != current_pid:
+                            os.kill(pid, 9)
+                            print(f"Killed process {pid} on port {port}")
+                    except (ValueError, ProcessLookupError) as e:
+                        print(f"Error processing PID {pid}: {e}")
+            
+        print(f"Finished checking processes on port {port}")
     except Exception as e:
-        logger.error(f"Error in kill_processes_on_port: {e}")
-
+        print(f"Error in kill_processes_on_port: {e}")
 
 @app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize FastAPI server and start LiveKit server."""
+async def startup_event():
     logger.debug("Starting up FastAPI server...")
     global livekit_process
-
+    
     try:
         logger.debug("Attempting to start LiveKit server...")
         
@@ -147,17 +116,9 @@ async def startup_event() -> None:
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
         python_executable = sys.executable
         env = os.environ.copy()
-
-        # Validate paths before execution
-        livekit_script = os.path.join(project_root, 'backend', 'livekit_server.py')
-        if not os.path.isfile(livekit_script):
-            raise FileNotFoundError(f"LiveKit server script not found at {livekit_script}")
-
-        site_packages = os.path.join(
-            os.path.dirname(python_executable),
-            'Lib',
-            'site-packages'
-        )
+        
+        # Ensure PYTHONPATH includes project root and site-packages
+        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
         python_path = [
             project_root,
             site_packages,
@@ -182,14 +143,9 @@ async def startup_event() -> None:
                         logger.warning(f"Error cleaning up old LiveKit process: {e}")
                 
                 livekit_process = subprocess.Popen(
-                    [
-                        python_executable,
-                        livekit_script,
-                        'start'
-                    ],
+                    [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
                     env=env,
-                    cwd=project_root,
-                    shell=False  # Explicitly set shell=False
+                    cwd=project_root
                 )
                 
                 # Wait a moment to check if process is still running
@@ -222,13 +178,14 @@ async def shutdown_event():
     cleanup()
     if livekit_process:
         try:
-            logger.info("Terminating LiveKit server")
+            # Terminate the LiveKit server process
+            print("\n\nTerminating LiveKit server")
             parent = psutil.Process(livekit_process.pid)
             for child in parent.children(recursive=True):
                 child.terminate()
             parent.terminate()
-            logger.info("LiveKit server terminated")
+            print("LiveKit server terminated")
         except psutil.NoSuchProcess:
-            logger.error("LiveKit server process not found")
+            print("LiveKit server process not found")
         except Exception as e:
-            logger.error(f"Error terminating LiveKit server: {e}")
+            print(f"Error terminating LiveKit server: {e}")

@@ -45,3 +45,6 @@ openapi.json
 *.sw?
 .env
 .next
+
+# Documentation
+cvl_docs/

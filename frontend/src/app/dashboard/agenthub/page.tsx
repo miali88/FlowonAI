@@ -113,7 +113,11 @@ const AgentHub = () => {
 
   const handleAgentSelect = (agent: Agent) => {
     console.log("Selected Agent with features:", agent.features);
+    console.log(agent, "kikkkk");
     setSelectedAgent(agent);
+
+    // Update URL without full page reload
+    window.history.pushState({}, "", `/dashboard/agenthub/${agent.id}`);
   };
 
   const handleSaveChanges = async () => {
@@ -138,7 +142,7 @@ const AgentHub = () => {
         : {};
 
       const response = await fetch(
-        `${API_BASE_URL}/agent/${selectedAgent.id}`,
+        `${API_BASE_URL}/agents/${selectedAgent.id}`,
         {
           method: "PATCH",
           headers: {
@@ -184,7 +188,7 @@ const AgentHub = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents/${selectedAgent.id}`,
         {
           method: "DELETE",
           headers: {
@@ -230,15 +234,12 @@ const AgentHub = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `${API_BASE_URL}/knowledge_base/headers`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "x-user-id": userId,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/knowledge_base/headers`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -269,7 +270,11 @@ const AgentHub = () => {
         },
       });
       console.log("Fetched Agents Data:", response.data.data);
-      setAgents(response.data.data);
+      const agents = response.data.data.map((agent: any) => ({
+        ...agent,
+        assigned_telephone: agent.assigned_telephone || null,
+      }));
+      setAgents(agents);
     } catch (err) {
       setAgentsError("Failed to fetch agents");
       console.error("Error fetching agents:", err);
@@ -303,6 +308,9 @@ const AgentHub = () => {
     setUrl(null);
     setIsConnecting(false);
     setLocalParticipant(null);
+
+    // Update URL without full page reload
+    window.history.pushState({}, "", "/dashboard/agenthub");
   }, []);
 
   useEffect(() => {
@@ -331,6 +339,38 @@ const AgentHub = () => {
       setAgentsLoading(false);
     }
   }, [userId]);
+
+  // Add this useEffect to handle URL-based agent selection
+  useEffect(() => {
+    const handleUrlAgentSelection = async () => {
+      if (!userId || agentsLoading) return;
+
+      // Get agentId from URL path
+      const pathParts = window.location.pathname.split("/");
+      const agentId = pathParts[pathParts.length - 1];
+
+      if (agentId && agentId !== "agenthub") {
+        const agent = agents.find((a) => a.id === agentId);
+        if (agent) {
+          // Load agent features from localStorage if they exist
+          const storedFeatures = localStorage.getItem(
+            `agent-features-${agent.id}`
+          );
+          const features = storedFeatures ? JSON.parse(storedFeatures) : {};
+
+          setSelectedAgent({
+            ...agent,
+            features: {
+              ...agent.features,
+              ...features,
+            },
+          });
+        }
+      }
+    };
+
+    handleUrlAgentSelection();
+  }, [userId, agents, agentsLoading]);
 
   return (
     <>

@@ -7,6 +7,7 @@ from supabase import create_client, Client
 from app.core.config import settings
 from typing import Any, Dict
 
+
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -246,3 +247,31 @@ async def update_agent(agent_id: int, data: dict) -> Any:
 async def get_agent_content(agent_id: str) -> Any:
     content = supabase.table('agents').select('*').eq('id', agent_id).execute()
     return content
+
+
+async def get_agent_completion(agent_id: str, prompt: str) -> str:
+    try:
+        # First, get the agent's content/context
+        agent_content = await get_agent_content(agent_id)
+        
+        # Here you would typically:
+        # 1. Format the prompt with the agent's content
+        # 2. Call your LLM service
+        # 3. Process and return the response
+        
+        # This is a placeholder - implement your actual LLM call here
+        formatted_prompt = f"""Context: {agent_content}
+        
+User Question: {prompt}
+
+Please provide a response based on the context above."""
+        
+        # TODO: Replace with your actual LLM service call
+        # response = await llm_service.complete(formatted_prompt)
+        # return response.text
+        
+        return "Placeholder response - implement LLM service call"
+        
+    except Exception as e:
+        logger.error(f"Error in get_agent_completion: {str(e)}")
+        raise Exception(f"Failed to get completion: {str(e)}")

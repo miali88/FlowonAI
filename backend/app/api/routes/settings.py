@@ -27,6 +27,7 @@ async def update_settings(request: Request) -> dict[str, str]:
             update_data['account_settings'] = data['account']
 
         if not update_data:
+            logger.error("No valid settings provided")
             raise HTTPException(status_code=400, detail="No valid settings provided")
 
         # Update the user's settings in Supabase
@@ -38,9 +39,13 @@ async def update_settings(request: Request) -> dict[str, str]:
         )
 
         if not response.data:
+            logger.error("User not found")
             raise HTTPException(status_code=404, detail="User not found")
 
         return {"message": "Settings updated successfully"}
+    except HTTPException as he:
+        # Re-raise HTTP exceptions without wrapping them
+        raise he
     except Exception as e:
         logger.error(f"Error updating settings: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Failed to update settings")
@@ -59,8 +64,11 @@ async def get_settings(request: Request) -> dict[str, Any]:
             .eq('id', user_id)
             .execute()
         )
+        
         if not response.data:
+            logger.error("User not found")
             raise HTTPException(status_code=404, detail="User not found")
+            
         return {
             "settings": {
                 "notification_settings": response.data[0]['notification_settings'],
@@ -69,6 +77,9 @@ async def get_settings(request: Request) -> dict[str, Any]:
             }
         }
 
+    except HTTPException as he:
+        # Re-raise HTTP exceptions without wrapping them
+        raise he
     except Exception as e:
         logger.error(f"Error retrieving settings: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Failed to retrieve settings")

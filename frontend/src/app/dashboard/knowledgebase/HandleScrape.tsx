@@ -79,7 +79,7 @@ export const handleScrape = async ({
     console.error("Error scraping URL:", axiosError);
 
     const errorMessage =
-      axiosError.response?.data?.detail ||
+      (axiosError.response?.data as { detail?: string })?.detail ||
       axiosError.message ||
       "Failed to scrape URL";
 
@@ -179,7 +179,7 @@ export const handleScrapeAll = async ({
     }
 
     const errorMessage =
-      axiosError.response?.data?.detail ||
+      (axiosError.response?.data as { detail?: string })?.detail ||
       axiosError.message ||
       "Failed to scrape URLs";
 

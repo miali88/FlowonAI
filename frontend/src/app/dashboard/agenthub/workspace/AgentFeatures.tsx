@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus, Play } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -24,6 +24,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Agent } from "./Workspace"; // Add this import
+import { LANGUAGE_OPTIONS, VOICE_OPTIONS } from "./agentSettings";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AgentFeature {
   id: string;
@@ -31,12 +40,13 @@ interface AgentFeature {
   [key: string]: any;
 }
 
-interface SelectedAgent {
-  id: string;
+interface SelectedAgent extends Agent {
   features: {
     [key: string]: {
       enabled: boolean;
       number?: string;
+      language?: string;
+      voice?: string;
       [key: string]: any;
     };
   };
@@ -175,6 +185,13 @@ export const AgentFeatures = forwardRef<
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<FormFields | null>(null);
   const [tempConfig, setTempConfig] = useState<FormFields | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(
+    selectedAgent?.features?.language?.value || "en-GB"
+  );
+  const [selectedVoice, setSelectedVoice] = useState<string>(
+    selectedAgent?.features?.voice?.value || ""
+  );
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleFeatureToggle = (featureId: string) => {
     const backendId =
@@ -286,6 +303,8 @@ export const AgentFeatures = forwardRef<
           number: selectedAgent.features.call_transfer?.number || "",
         },
       });
+      setSelectedLanguage(selectedAgent.features.language?.value || "en-GB");
+      setSelectedVoice(selectedAgent.features.voice?.value || "");
     }
   }, [selectedAgent?.features]);
 
@@ -318,99 +337,224 @@ export const AgentFeatures = forwardRef<
   };
 
   return (
-    <div className="space-y-2">
-      {Object.values(AGENT_FEATURES.purposes).map((purpose) => (
-        <Accordion
-          key={purpose.id}
-          type="single"
-          collapsible
-          value={openItem}
-          onValueChange={setOpenItem}
-          className="w-full"
-        >
-          <AccordionItem value={purpose.id} className="border rounded-lg">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex-1">
-                <h4 className="text-sm font-medium">{purpose.label}</h4>
-                <p className="text-xs text-muted-foreground">
-                  {purpose.description}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]}
-                  checked={
-                    localFeatures[
+    <div className="space-y-6">
+      {/* Existing features content */}
+      <div className="space-y-2">
+        {Object.values(AGENT_FEATURES.purposes).map((purpose) => (
+          <Accordion
+            key={purpose.id}
+            type="single"
+            collapsible
+            value={openItem}
+            onValueChange={setOpenItem}
+            className="w-full"
+          >
+            <AccordionItem value={purpose.id} className="border rounded-lg">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium">{purpose.label}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {purpose.description}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id={
                       FEATURE_ID_MAP[purpose.id as keyof typeof FEATURE_ID_MAP]
-                    ]?.enabled || false
-                  }
-                  onCheckedChange={() => handleFeatureToggle(purpose.id)}
-                />
-                {Object.keys(purpose.subFeatures).length > 0 &&
-                  purpose.id !== "appointmentBooking" && (
-                    <AccordionTrigger className="h-4 w-4 p-0" />
-                  )}
+                    }
+                    checked={
+                      localFeatures[
+                        FEATURE_ID_MAP[
+                          purpose.id as keyof typeof FEATURE_ID_MAP
+                        ]
+                      ]?.enabled || false
+                    }
+                    onCheckedChange={() => handleFeatureToggle(purpose.id)}
+                  />
+                  {Object.keys(purpose.subFeatures).length > 0 &&
+                    purpose.id !== "appointmentBooking" && (
+                      <AccordionTrigger className="h-4 w-4 p-0" />
+                    )}
+                </div>
               </div>
-            </div>
 
-            <AccordionContent className="px-4 pb-4">
-              <div className="space-y-4">
-                {purpose.subFeatures &&
-                  Object.values(purpose.subFeatures).map(
-                    (subFeature: SubFeature) => (
-                      <div
-                        key={subFeature.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex-1">
-                          <Label htmlFor={subFeature.id} className="text-sm">
-                            {subFeature.label}
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            {subFeature.description}
-                          </p>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-4">
+                  {purpose.subFeatures &&
+                    Object.values(purpose.subFeatures).map(
+                      (subFeature: SubFeature) => (
+                        <div
+                          key={subFeature.id}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex-1">
+                            <Label htmlFor={subFeature.id} className="text-sm">
+                              {subFeature.label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {subFeature.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {purpose.id === "callTransfer" ? (
+                              <Input
+                                type="tel"
+                                placeholder="+1234567890"
+                                className="w-48"
+                                value={localFeatures.call_transfer.number}
+                                onChange={handleNumberChange}
+                              />
+                            ) : (subFeature as SubFeature).hasConfiguration ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
+                                onClick={() =>
+                                  handleConfigureInformationCollection(
+                                    subFeature
+                                  )
+                                }
+                              >
+                                Configure
+                              </Button>
+                            ) : (
+                              <Switch
+                                id={subFeature.id}
+                                checked={
+                                  localFeatures[subFeature.id]?.enabled || false
+                                }
+                                onCheckedChange={() =>
+                                  handleFeatureToggle(subFeature.id)
+                                }
+                              />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          {purpose.id === "callTransfer" ? (
-                            <Input
-                              type="tel"
-                              placeholder="+1234567890"
-                              className="w-48"
-                              value={localFeatures.call_transfer.number}
-                              onChange={handleNumberChange}
-                            />
-                          ) : (subFeature as SubFeature).hasConfiguration ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-3 text-xs font-medium bg-background hover:bg-accent hover:text-accent-foreground"
-                              onClick={() =>
-                                handleConfigureInformationCollection(subFeature)
-                              }
-                            >
-                              Configure
-                            </Button>
-                          ) : (
-                            <Switch
-                              id={subFeature.id}
-                              checked={
-                                localFeatures[subFeature.id]?.enabled || false
-                              }
-                              onCheckedChange={() =>
-                                handleFeatureToggle(subFeature.id)
-                              }
-                            />
-                          )}
-                        </div>
-                      </div>
-                    )
-                  )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      ))}
+                      )
+                    )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ))}
+      </div>
+
+      {/* Language and Voice selectors moved below call transfer */}
+      <div className="mt-8 space-y-6 border-t pt-6">
+        <div className="space-y-2">
+          <Label htmlFor="language-select">Language</Label>
+          <Select
+            value={selectedLanguage}
+            onValueChange={(value) => {
+              setSelectedLanguage(value);
+              setSelectedVoice(""); // Reset voice when language changes
+
+              if (setSelectedAgent && selectedAgent) {
+                setSelectedAgent({
+                  ...selectedAgent,
+                  features: {
+                    ...selectedAgent.features,
+                    language: {
+                      ...selectedAgent.features.language,
+                      enabled: true,
+                      value: value,
+                    },
+                  },
+                });
+              }
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGE_OPTIONS.map((language) => (
+                <SelectItem key={language.id} value={language.id}>
+                  {language.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="voice-select">Voice</Label>
+          <div className="flex space-x-2">
+            <Select
+              value={selectedVoice}
+              onValueChange={(value) => {
+                setSelectedVoice(value);
+
+                if (setSelectedAgent && selectedAgent) {
+                  setSelectedAgent({
+                    ...selectedAgent,
+                    features: {
+                      ...selectedAgent.features,
+                      voice: {
+                        ...selectedAgent.features.voice,
+                        enabled: true,
+                        value: value,
+                      },
+                    },
+                  });
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select voice" />
+              </SelectTrigger>
+              <SelectContent>
+                {VOICE_OPTIONS[
+                  selectedLanguage as keyof typeof VOICE_OPTIONS
+                ]?.map((voice) => (
+                  <SelectItem key={voice.id} value={voice.id}>
+                    {voice.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {selectedVoice && (
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={isPlaying}
+                onClick={async () => {
+                  try {
+                    const selectedVoiceData = VOICE_OPTIONS[
+                      selectedLanguage as keyof typeof VOICE_OPTIONS
+                    ]?.find((v) => v.id === selectedVoice);
+                    if (selectedVoiceData) {
+                      setIsPlaying(true);
+                      const audio = new Audio();
+                      // Add event listeners before setting the source
+                      audio.addEventListener("ended", () =>
+                        setIsPlaying(false)
+                      );
+                      audio.addEventListener("error", (e) => {
+                        console.error("Error playing audio:", e);
+                        setIsPlaying(false);
+                      });
+                      // Remove the /public prefix - files in public are served from root
+                      audio.src = selectedVoiceData.file;
+                      console.log("Playing audio from:", audio.src);
+                      await audio.load();
+                      // Play the audio
+                      await audio.play();
+                    }
+                  } catch (error) {
+                    console.error("Error playing audio:", error);
+                    setIsPlaying(false);
+                  }
+                }}
+              >
+                <Play className={`h-4 w-4 ${isPlaying ? "text-muted" : ""}`} />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Configuration Dialog */}
       {isConfigureDialogOpen && currentFeature && (
@@ -657,6 +801,8 @@ export const AgentFeatures = forwardRef<
     </div>
   );
 });
+
+AgentFeatures.displayName = "AgentFeatures";
 
 // Also remove any references in the helper functions
 function getFeatureDescription(featureId: string | null): string {

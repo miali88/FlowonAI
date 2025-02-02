@@ -3,13 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -23,18 +17,48 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Agent } from "../AgentCards";
-import { Play } from "lucide-react";
 import { AgentFeatures } from "./AgentFeatures";
 import { MultiSelect } from "./multiselect_settings";
 import Deploy from "./Deploy";
 import Playground from "./Playground";
-import {
-  LANGUAGE_OPTIONS,
-  VOICE_OPTIONS,
-  AGENT_PURPOSE_OPTIONS,
-} from "./agentSettings";
+import { VOICE_OPTIONS } from "./agentSettings";
 import Ui from "./Ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const api_base_url =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+
+export interface Agent {
+  id?: string;
+  agentName: string;
+  openingLine?: string;
+  instructions?: string;
+  language?: string;
+  voice?: string;
+  voiceProvider?: string;
+  showSourcesInChat?: boolean;
+  dataSource?: Array<{
+    id: string;
+    title: string;
+    data_type: string;
+  }>;
+  knowledgeBaseIds?: string[];
+  features: {
+    [key: string]: {
+      [key: string]: any;
+      enabled: boolean;
+      number?: string;
+    };
+  };
+  assigned_telephone?: string;
+}
 
 interface WorkspaceProps {
   selectedAgent: Agent | null;
@@ -64,29 +88,10 @@ interface WorkspaceProps {
   };
 }
 
-type SupportedLanguages = "en-GB" | "en-US" | "fr" | "de" | "ar" | "nl" | "zh";
-
-interface VoiceOption {
-  id: string;
-  name: string;
-  file: string;
-  voiceProvider: string;
-}
-
-interface VoiceOptions {
-  "en-GB": VoiceOption[];
-  "en-US": VoiceOption[];
-  fr: VoiceOption[];
-  de: VoiceOption[];
-  ar: VoiceOption[];
-  nl: VoiceOption[];
-  zh: VoiceOption[];
-}
-
 interface FormField {
   type: string;
   label: string;
-  required: boolean;
+  required?: boolean;
   options?: string[];
 }
 
@@ -99,12 +104,12 @@ interface ProspectSettings {
 
 interface FeatureConfig {
   enabled: boolean;
-  [key: string]: string | number | boolean | FormField[];
+  [key: string]: string | number | boolean | FormField[] | undefined;
 }
 
 interface VoiceFeature extends FeatureConfig {
-  provider: string;
-  id: string;
+  provider?: string;
+  id?: string;
 }
 
 interface FormFeature extends FeatureConfig {
@@ -128,35 +133,12 @@ interface AgentWithFeatures extends Agent {
   features: Features;
 }
 
-interface SelectedAgent extends Omit<Agent, "features"> {
+interface SelectedAgent extends Agent {
   features: {
     [key: string]: {
       [key: string]: any;
       enabled: boolean;
       number?: string;
-    };
-  };
-}
-
-interface Agent {
-  id?: string;
-  agentName: string;
-  openingLine?: string;
-  instructions?: string;
-  language?: string;
-  voice?: string;
-  voiceProvider?: string;
-  showSourcesInChat?: boolean;
-  dataSource?: Array<{
-    id: string;
-    title: string;
-    data_type: string;
-  }>;
-  knowledgeBaseIds?: string[];
-  features?: {
-    [key: string]: {
-      enabled: boolean;
-      [key: string]: any;
     };
   };
 }
@@ -171,14 +153,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
   features,
 }) => {
   const [activeTab, setActiveTab] = useState("edit");
-  const [setIsConfigureDialogOpen] = useState(false);
-  const [currentFeature, setCurrentFeature] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [appointmentBookingConfig, setAppointmentBookingConfig] = useState({
     nylasApiKey: selectedAgent?.features?.appointmentBooking?.nylasApiKey || "",
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [formFields, setFormFields] = useState<FormField[]>(
     (selectedAgent?.features?.form?.fields || []) as FormField[]
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [prospectSettings, setProspectSettings] = useState<ProspectSettings>({
     notifyOnInterest: Boolean(
       selectedAgent?.features?.prospects?.notifyOnInterest
@@ -189,6 +172,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   });
 
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+  const [promptInput, setPromptInput] = useState("");
 
   const playVoiceSample = (voiceFile: string) => {
     if (audioPlayer) {
@@ -208,10 +192,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     // Find the voice provider from VOICE_OPTIONS
     const voiceOption =
-      selectedAgent.language && selectedAgent.voice
-        ? VOICE_OPTIONS[selectedAgent.language]?.find(
-            (v) => v.id === selectedAgent.voice
-          )
+      selectedAgent?.language && selectedAgent.voice
+        ? VOICE_OPTIONS[
+            selectedAgent.language as keyof typeof VOICE_OPTIONS
+          ]?.find((v) => v.id === selectedAgent.voice)
         : null;
 
     const currentFeatures = agentFeaturesRef.current?.getCurrentState() || {};
@@ -220,11 +204,16 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     const agentToSave = {
       ...selectedAgent,
-      voiceProvider: voiceOption?.voiceProvider || null,
-      features: currentFeatures, // Already cleaned in getCurrentState
-      knowledgeBaseIds: selectedAgent.dataSource?.includes("all")
-        ? undefined
-        : selectedAgent.knowledgeBaseIds,
+      assigned_telephone: selectedAgent.assigned_telephone,
+      voiceProvider: voiceOption?.voiceProvider || undefined,
+      features: currentFeatures,
+      knowledgeBaseIds:
+        Array.isArray(selectedAgent.dataSource) &&
+        selectedAgent.dataSource.some(
+          (item: { id: string }) => item.id === "all"
+        )
+          ? undefined
+          : selectedAgent.knowledgeBaseIds,
       showSourcesInChat: selectedAgent.showSourcesInChat,
     };
 
@@ -260,7 +249,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   ) => {
     if (!selectedAgent) return;
 
-    setSelectedAgent((prev) => {
+    setSelectedAgent((prev: Agent | null) => {
       if (!prev) return null;
       const updatedAgent: Agent = {
         ...prev,
@@ -278,7 +267,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     if (selectedAgent) {
       // Set the embedded chatbot config at workspace level
       window.embeddedChatbotConfig = {
-        agentId: selectedAgent.id,
+        agentId: selectedAgent.id || "", // Provide empty string as fallback
         domain: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
       };
     }
@@ -289,34 +278,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
     console.log("Workspace Features:", features);
   }, [features]);
 
-  const handleVoiceChange = (voiceId: string) => {
-    if (!selectedAgent?.language) return;
-
-    const language = selectedAgent.language as SupportedLanguages;
-    const voiceOption = (VOICE_OPTIONS as VoiceOptions)[language]?.find(
-      (v: VoiceOption) => v.id === voiceId
-    );
-
-    setSelectedAgent((prev: Agent | null) => {
-      if (!prev) return null;
-      const updatedAgent: AgentWithFeatures = {
-        ...prev,
-        voice: voiceId,
-        features: {
-          ...prev.features,
-          voice: {
-            enabled: true,
-            provider: voiceOption?.voiceProvider || "",
-            id: voiceId,
-          },
-        },
-      };
-      return updatedAgent as Agent;
-    });
-  };
-
   const handleInputChange = (field: keyof Agent, value: any) => {
-    setSelectedAgent((prev) => {
+    setSelectedAgent((prev: Agent | null) => {
       if (!prev) return null;
       const updatedAgent: Agent = {
         ...prev,
@@ -326,78 +289,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     });
   };
 
-  const handleFormFieldsChange = (fields: FormField[]) => {
-    setFormFields(fields);
-
-    setSelectedAgent((prev: Agent | null) => {
-      if (!prev) return null;
-      const updatedAgent: AgentWithFeatures = {
-        ...prev,
-        features: {
-          ...prev.features,
-          form: {
-            enabled: true,
-            fields,
-          },
-        },
-      };
-      return updatedAgent as Agent;
-    });
-  };
-
-  const handleProspectSettingsChange = (
-    field: keyof ProspectSettings,
-    value: string | boolean
-  ) => {
-    setProspectSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    setSelectedAgent((prev: Agent | null) => {
-      if (!prev) return null;
-
-      const updatedFeatures = {
-        ...prev.features,
-        [field]: {
-          enabled: Boolean(value),
-        },
-      };
-
-      // If it's notifyOnInterest, also update lead_gen
-      if (field === "notifyOnInterest") {
-        updatedFeatures.lead_gen = {
-          ...prev.features?.lead_gen,
-          enabled: Boolean(value),
-        };
-      }
-
-      return {
-        ...prev,
-        features: updatedFeatures,
-      } as Agent;
-    });
-  };
-
-  const isFormField = (value: any): value is FormField => {
-    return typeof value === "object" && "type" in value && "label" in value;
-  };
-
-  const isProspectSettings = (value: any): value is ProspectSettings => {
-    return typeof value === "object" && "notifyOnInterest" in value;
-  };
-
   const agentFeaturesRef = useRef<{ getCurrentState: () => any }>(null);
-
-  const handleLanguageChange = (value: string) => {
-    setSelectedAgent((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        language: value,
-      };
-    });
-  };
 
   const cleanFeatures = (features: any) => {
     if (!features) return {};
@@ -421,6 +313,16 @@ const Workspace: React.FC<WorkspaceProps> = ({
     }
   }, [selectedAgent]);
 
+  const handleGeneratePrompt = () => {
+    // TODO: Add API call to generate prompt
+    if (selectedAgent && promptInput) {
+      handleInputChange(
+        "instructions",
+        `I want an AI agent that ${promptInput}`
+      );
+    }
+  };
+
   return (
     <div className="flex gap-6">
       <div className={`${activeTab === "ui" ? "w-full" : "w-2/3"}`}>
@@ -435,9 +337,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
           <TabsList className="mb-4 h-12">
             <TabsTrigger value="edit">Tune</TabsTrigger>
             <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="prompt">Prompt</TabsTrigger>
             <TabsTrigger value="deploy">Deploy</TabsTrigger>
             <TabsTrigger value="ui">UI</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           <TabsContent value="edit">
             <Card>
@@ -477,11 +379,17 @@ const Workspace: React.FC<WorkspaceProps> = ({
                         selectedItems={
                           selectedAgent?.dataSource &&
                           Array.isArray(selectedAgent.dataSource)
-                            ? selectedAgent.dataSource.map((item) => ({
-                                id: item.id.toString(),
-                                title: item.title,
-                                data_type: item.data_type,
-                              }))
+                            ? selectedAgent.dataSource.map(
+                                (item: {
+                                  id: number | string;
+                                  title: string;
+                                  data_type: string;
+                                }) => ({
+                                  id: item.id.toString(),
+                                  title: item.title,
+                                  data_type: item.data_type,
+                                })
+                              )
                             : []
                         }
                         onChange={handleDataSourceChange}
@@ -588,15 +496,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
           </TabsContent>
           <TabsContent value="deploy">
             <Deploy
-              selectedAgent={selectedAgent as any}
-              setSelectedAgent={setSelectedAgent as any}
-              handleSaveChanges={handleSaveChanges as any}
-              userInfo={userId as any}
+              selectedAgent={selectedAgent}
+              setSelectedAgent={setSelectedAgent}
             />
           </TabsContent>
           <TabsContent value="ui">
             <Ui
-              selectedAgent={selectedAgent}
+              selectedAgent={selectedAgent as Agent}
               setSelectedAgent={setSelectedAgent}
             />
           </TabsContent>
@@ -608,12 +514,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
               <CardContent>
                 <AgentFeatures
                   ref={agentFeaturesRef}
-                  selectedAgent={{
-                    ...(selectedAgent as unknown as SelectedAgent),
-                    features: cleanFeatures(selectedAgent?.features),
-                  }}
+                  selectedAgent={
+                    {
+                      ...selectedAgent,
+                      features: cleanFeatures(selectedAgent?.features),
+                    } as SelectedAgent
+                  }
                   setSelectedAgent={(agent: SelectedAgent) => {
-                    setSelectedAgent((prev) => {
+                    setSelectedAgent((prev: SelectedAgent | null) => {
                       if (!prev) return null;
                       return {
                         ...prev,
@@ -621,7 +529,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
                       } as Agent;
                     });
                   }}
-                  onSave={handleSaveFeatures}
                 />
                 <div className="pt-6">
                   <Button onClick={handleSaveFeatures}>Retrain Agent</Button>
@@ -629,26 +536,104 @@ const Workspace: React.FC<WorkspaceProps> = ({
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="advanced">
+          <TabsContent value="prompt">
             <Card>
               <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
+                <CardTitle>Prompt Settings</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <Label
-                    htmlFor="instructions"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Instructions
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label
+                      htmlFor="instructions"
+                      className="block text-sm font-medium"
+                    >
+                      Instructions
+                    </Label>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="text-sm bg-white text-black"
+                        >
+                          ✨create one for me✨
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create Instructions</DialogTitle>
+                          <DialogDescription>
+                            Describe what you want your AI agent to do. For
+                            example: &ldquo;an agent for my restaurant business
+                            that can take orders, provide menu items...&rdquo;
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Textarea
+                            value={promptInput}
+                            onChange={(e) => setPromptInput(e.target.value)}
+                            placeholder="I want an agent that..."
+                            className="min-h-[100px]"
+                          />
+                          <Button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(
+                                  `${api_base_url}/agents/completion`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      prompt: promptInput,
+                                    }),
+                                  }
+                                );
+
+                                if (!response.ok) {
+                                  throw new Error(
+                                    "Failed to generate instructions"
+                                  );
+                                }
+
+                                const data = await response.json();
+                                setSelectedAgent(
+                                  (prev: SelectedAgent | null) => {
+                                    if (!prev) return null;
+                                    return {
+                                      ...prev,
+                                      instructions: data.instructions,
+                                    };
+                                  }
+                                );
+                                setPromptInput(""); // Clear the prompt input
+                              } catch (error) {
+                                console.error(
+                                  "Error generating instructions:",
+                                  error
+                                );
+                                // You might want to show an error toast here
+                              }
+                            }}
+                          >
+                            Generate Instructions
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   <Textarea
                     id="instructions"
                     value={selectedAgent?.instructions || ""}
                     onChange={(e) =>
-                      handleInputChange("instructions", e.target.value)
+                      setSelectedAgent((prev: SelectedAgent | null) => {
+                        if (!prev) return null;
+                        return { ...prev, instructions: e.target.value };
+                      })
                     }
-                    className="min-h-[400px]"
+                    placeholder="Enter instructions for your agent..."
+                    className="min-h-[200px]"
                   />
                 </div>
                 <div className="flex space-x-2">
