@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.routes import (twilio, knowledge_base, 
-                            chat, voice, livekit, 
+from app.api.routes import (twilio, knowledge_base, whatsapp,
+                            chat, voice, livekit, agents,
                             conversation, settings, nylas_service, 
-                            clerk, composio, feedback, stripe, agents)
+                            clerk, composio, feedback, stripe)
 
 api_router = APIRouter()
 
@@ -20,3 +20,4 @@ api_router.include_router(composio.router, prefix="/composio", tags=["composio"]
 api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 api_router.include_router(stripe.router, prefix="/stripe", tags=["stripe"]) 
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
+api_router.include_router(whatsapp.router, prefix="/whatsapp", tags=["whatsapp"])
