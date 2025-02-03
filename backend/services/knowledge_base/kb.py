@@ -86,8 +86,6 @@ async def get_kb_items(
     return all_items, total_tokens
 
 
-
-
 async def get_kb_headers(current_user: str) -> Tuple[List[Dict], int]:
     kb_tables = ["user_web_data_headers", "user_text_files_headers"]
     logger.info(f"Starting to fetch KB headers for user: {current_user}")
@@ -191,10 +189,6 @@ def group_by_root_url(items: List[Dict]) -> List[Dict]:
     # Group items and create consolidated records
     result = []
     for root_url, group in groupby(sorted_items, key=itemgetter('root_url')):
-        # Add debug print for getzep URLs
-        if 'getzep' in root_url.lower():
-            print(f"Found Zep documentation URL: { item.get('url', '') }")
-            
         id_item += 1
         group_list = list(group)
         logger.info(f"Processing group for root_url: {root_url} with {len(group_list)} items")
@@ -211,10 +205,10 @@ def group_by_root_url(items: List[Dict]) -> List[Dict]:
                 {
                     'url': item.get('url', ''),
                     'id': item['id'],
-                    'token_count': item.get('token_count', 0)
+                    'token_count': item.get('token_count', 0) or 0
                 } for item in group_list
             ],
-            'url_tokens': sum(item.get('token_count', 0) for item in group_list),
+            'url_tokens': sum(item.get('token_count', 0) or 0 for item in group_list),
             'created_at': next(iter(group_list)).get('created_at', ''),
             'data_type': 'web',
             'user_id': group_list[0].get('user_id')

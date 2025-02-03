@@ -72,6 +72,75 @@ async def test_get_items_handler():
     assert "total_tokens" in content
 
 @pytest.mark.asyncio
+async def test_get_items_handler_with_none_tokens():
+    # Arrange
+    mock_items = [
+        {
+            "id": 1,
+            "title": "Test Item",
+            "token_count": None  # Simulate missing token count
+        }
+    ]
+    mock_total_tokens = 0
+    
+    # Act
+    with patch('app.api.routes.knowledge_base.get_kb_items', AsyncMock(return_value=(mock_items, mock_total_tokens))):
+        result = await get_items_handler("test_user_id")
+    
+    # Assert
+    assert isinstance(result, JSONResponse)
+    content = result.body.decode()
+    assert "items" in content
+    assert "total_tokens" in content
+
+@pytest.mark.asyncio
+async def test_group_by_root_url_with_none_tokens():
+    # Arrange
+    items = [
+        {
+            "id": "1",
+            "root_url": "https://example.com",
+            "url": "https://example.com/page1",
+            "token_count": None,  # Simulate missing token count
+            "user_id": "test_user",
+            "created_at": "2024-01-01"
+        },
+        {
+            "id": "2",
+            "root_url": "https://example.com",
+            "url": "https://example.com/page2",
+            "token_count": 100,
+            "user_id": "test_user",
+            "created_at": "2024-01-01"
+        }
+    ]
+    
+    # Act
+    with patch('app.api.routes.knowledge_base.group_by_root_url') as mock_group:
+        mock_group.return_value = [
+            {
+                "id": 1,
+                "title": "https://example.com",
+                "root_url": "https://example.com",
+                "content": [
+                    {"url": "https://example.com/page1", "id": "1", "token_count": 0},
+                    {"url": "https://example.com/page2", "id": "2", "token_count": 100}
+                ],
+                "url_tokens": 100,
+                "created_at": "2024-01-01",
+                "data_type": "web",
+                "user_id": "test_user"
+            }
+        ]
+        result = await get_items_handler("test_user_id")
+    
+    # Assert
+    assert isinstance(result, JSONResponse)
+    content = result.body.decode()
+    assert "items" in content
+    assert "total_tokens" in content
+
+@pytest.mark.asyncio
 async def test_create_item_handler():
     # Arrange
     mock_req = Mock()

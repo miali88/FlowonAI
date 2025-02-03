@@ -10,7 +10,6 @@ from app.api.routes.twilio import (
     get_user_numbers_handler,
     twilio_status_update,
     add_to_conference_route,
-    initiate_call
 )
 
 pytestmark = pytest.mark.asyncio
@@ -22,7 +21,7 @@ async def test_get_country_codes_handler():
     
     # Act
     with patch('services.twilio.helper.get_country_codes', return_value=mock_countries):
-        response = await get_country_codes_handler()
+        response = await get_country_codes_handler() 
     
     # Assert
     assert response.body.decode() == '{"countries":{"US":"United States","BR":"Brazil"}}'

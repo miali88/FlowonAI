@@ -4,6 +4,7 @@ import logging
 from fastapi import Request, APIRouter, Header, HTTPException
 from svix.webhooks import Webhook, WebhookVerificationError
 from services.clerk import post_user, get_clerk_private_metadata
+from services.db.supabase_services import supabase_client
 
 logger = logging.getLogger(__name__)
 
