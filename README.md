@@ -17,7 +17,6 @@
 - ⚛️ React & Next.js
 - 🎨 Tailwind CSS
 - 💅 Styled-components
-- 🎭 Three.js (3D Visualization)
 - 🔄 LiveKit Components
 
 ### 🤖 AI Tools
@@ -93,7 +92,6 @@ Our modular widget system consists of:
 - 💬 **ChatWidget**: Real-time conversational interface
   - LiveKit integration
   - Styled-components theming
-  - 3D avatar support
 
 - 📝 **TextWidget**: Text-based interaction
   - Markdown support
