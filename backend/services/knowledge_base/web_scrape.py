@@ -83,43 +83,56 @@ if not SUPABASE_ANON_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 async def insert_to_db(data: Dict[str, Any]) -> None:
-    headers_data = {k: v for k, v in data.items() if k not in ["jina_embedding", "content"]}
-    
-    async def insert_data():
-        try:
-            return await asyncio.to_thread(
-                lambda: supabase.table('user_web_data')
-                    .insert(data)
-                    .execute()
-            )
-        except Exception as e:
-            logger.error(f"Error inserting data: {str(e)}")
-            logger.error(f"Data that caused conflict: {data['url']}")
-            raise
-
-    async def insert_headers():
-        try:
-            return await asyncio.to_thread(
-                lambda: supabase.table('user_web_data_headers')
-                    .insert(headers_data)
-                    .execute()
-            )
-        except Exception as e:
-            logger.error(f"Error inserting headers: {str(e)}")
-            logger.error(f"Headers that caused conflict: {headers_data['url']}")
-            raise
-
     try:
-        await asyncio.gather(insert_data(), insert_headers())
+        # Extract headers data
+        headers_data = {
+            "url": data["url"],
+            "header": data["header"],
+            "user_id": data["user_id"],
+            "root_url": data["root_url"]
+        }
+        
+        # Prepare main data
+        main_data = {
+            "url": data["url"],
+            "header": data["header"],
+            "content": data["content"],
+            "token_count": data["token_count"],
+            "jina_embedding": data["jina_embedding"],
+            "user_id": data["user_id"],
+            "root_url": data["root_url"]
+        }
+
+        # Insert into user_web_data
+        web_data_result = await asyncio.to_thread(
+            lambda: supabase.table('user_web_data')
+                .insert(main_data)
+                .execute()
+        )
+        
+        if not web_data_result.data:
+            raise Exception("Failed to insert into user_web_data")
+            
+        logger.info(f"Successfully inserted data into user_web_data for URL: {main_data['url']}")
+
+        # Insert into user_web_data_headers
+        headers_result = await asyncio.to_thread(
+            lambda: supabase.table('user_web_data_headers')
+                .insert(headers_data)
+                .execute()
+        )
+        
+        if not headers_result.data:
+            raise Exception("Failed to insert into user_web_data_headers")
+            
+        logger.info(f"Successfully inserted data into user_web_data_headers for URL: {headers_data['url']}")
+
     except Exception as e:
         logger.error(f"Database insertion error: {str(e)}")
-        # Optionally, you could try to upsert instead:
-        await asyncio.gather(
-            asyncio.to_thread(lambda: supabase.table('user_web_data').upsert(data).execute()),
-            asyncio.to_thread(lambda: supabase.table('user_web_data_headers').upsert(headers_data).execute())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to insert data: {str(e)}"
         )
-
-    logger.info(f"Attempting to upsert data for URL: {data['url']}")
 
 
 # Rate limit constants
@@ -189,14 +202,22 @@ async def scrape_with_retry(url: str) -> Dict[str, Any]:
         )
         browser_config=BrowserConfig(
             browser_type="chromium",
-            headless= True,  # Run in headless mode
-            extra_args=["--disable-gpu"]  # Additional Playwright args
+            headless=True,
+            extra_args=["--disable-gpu"]
         )
         async with AsyncWebCrawler(config=browser_config) as crawler:
-            map_result = await crawler.arun(url=url, config=run_cfg)
-            logger.info(f"Scraping done: {map_result.cleaned_html}")
-        
-        return await map_result.cleaned_html
+            result = await crawler.arun(url=url, config=run_cfg)
+            
+            # Convert CrawlResult to dictionary with expected structure
+            return {
+                'content': result.markdown if isinstance(result.markdown, str) 
+                    else result.markdown.text if result.markdown 
+                    else result.cleaned_html,
+                'metadata': result.metadata or {},
+                'success': result.success,
+                'error_message': result.error_message
+            }
+            
     except RequestException as e:
         logger.error(f"HTTP error while scraping {url}: {str(e)}")
         raise
@@ -221,16 +242,16 @@ async def process_single_url(
         )
 
         content_list = [
-            item for item in response['markdown'].split('\n\n')
+            item for item in response['content'].split('\n\n')
             if not item.startswith('[![]')
         ]
         content = "\n\n".join(content_list)
 
         try:
-            header = (
-                "## Title: " + response['metadata']['title'] +
-                " ## Description: " + response['metadata']['description']
-            )
+            title = response['metadata'].get('title', 'No Title Available')
+            description = response['metadata'].get('description', 'No Description Available')
+
+            header = f"## Title: {title} ## Description: {description}"
         except KeyError:
             print(f"KeyError occurred for site {site}: Missing description")
             header = "## Title: " + response['metadata']['title']
@@ -248,6 +269,7 @@ async def process_single_url(
                 "user_id": user_id,
                 "root_url": root_url
             }
+            logger.info(f"sb_insert url: {sb_insert['url']}")
 
             chunk_text = header + chunk
             jina_response = await get_embedding(chunk_text)
@@ -295,8 +317,8 @@ async def map_url(url: str) -> List[str]:
         )
         browser_config=BrowserConfig(
             browser_type="chromium",
-            headless= True,  # Run in headless mode
-            extra_args=["--disable-gpu"]  # Additional Playwright args
+            headless=True,
+            extra_args=["--disable-gpu"]
         )
         # Configure the dispatcher with rate limiting
         dispatcher = SemaphoreDispatcher(
@@ -306,22 +328,28 @@ async def map_url(url: str) -> List[str]:
         logger.info("Initializing crawler...")
         
         async with AsyncWebCrawler(
-            config=browser_config  # This will ensure browser is installed
+            config=browser_config
         ) as crawler:
             logger.info("Crawler started successfully")
             
-            # Run the crawler with configuration
-            response = await crawler.arun(
+            result = await crawler.arun(
                 url=url,
                 config=run_cfg,
                 dispatcher=dispatcher
             )
             
-            if response.success:
-                logger.info(f"Successfully mapped URL. Found {len(response.url)} URLs")
-                return response.url
+            if result.success:
+                # Extract URLs from the links dictionary
+                all_urls = []
+                if result.links:
+                    for link_type, links in result.links.items():
+                        extracted_urls = [link['href'] for link in links if 'href' in link]
+                        all_urls.extend(extracted_urls) 
+                
+                logger.info(f"Successfully mapped URL. Found {len(all_urls)} URLs")
+                return all_urls
             else:
-                logger.error(f"Failed to map URL {url}: {response.error_message}")
+                logger.error(f"Failed to map URL {url}: {result.error_message}")
                 return []
                 
     except Exception as e:
