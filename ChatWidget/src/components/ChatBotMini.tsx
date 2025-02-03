@@ -152,7 +152,7 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
     } else {
       setIsConnecting(true);
       try {
-        const response = await fetch(`${apiUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
+        const response = await fetch(`${apiUrl}/chatwidget/livekit/token?agent_id=${agentId}&user_id=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -161,13 +161,12 @@ const ChatBotMini: React.FC<ChatBotMiniProps> = ({
         
         // Add response logging
         const responseText = await response.text();
-        console.log('Raw response:', responseText);
+        console.log('Token response:', responseText);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch token: ${response.status} ${response.statusText}`);
         }
         
-        // Try parsing the response text
         let data;
         try {
           data = JSON.parse(responseText);
