@@ -1,43 +1,56 @@
-# Flowon AI
-##### Streamlining the information flow of your business
+# 🌊 Flowon AI
+##### 🔄 Streamlining the information flow of your business
 
-## Codebase Overview
-### Tech Stack
-- Python, FastAPI (backend)
-- Typescript, Next.js, React, Tailwind CSS (frontend)
-- Supabase (for database)
-- Pinecone for vector database
-- Redis for in-memory 
-- Livekit for realtime conversational agent pipeline
-- Clerk for user management
-- Composio for LLM integration with 3rd party apps
-- Twilio for telephony integration
+## 🏗️ Codebase Overview
+### 🛠️ Tech Stack
+#### Backend
+- 🐍 Python with FastAPI
+- 🗄️ Supabase (Database)
+- 📊 Pinecone (Vector Database)
+- ⚡ Redis (In-memory Cache)
+- 🎥 LiveKit (Real-time Communication)
+- 🔐 Clerk (Authentication)
+- 🔌 Composio (LLM Integration)
+- 📞 Twilio (Telephony)
 
+#### Frontend
+- ⚛️ React & Next.js
+- 🎨 Tailwind CSS
+- 💅 Styled-components
+- 🎭 Three.js (3D Visualization)
+- 🔄 LiveKit Components
 
-### AI Tools
-- Cursor for IDE, Model Sonnet 3.5
-- CodeViz for architecture visualisation
-- Warp for terminal
-- LLM Models: Openai, Anthropic, Meta. Awaiting cerebras and groq api for fast inference. 
+### 🤖 AI Tools
+- 📝 Cursor (IDE) with Claude 3.5 Sonnet
+- 📊 CodeViz (Architecture Visualization)
+- 💻 Warp (Terminal)
+- 🧠 LLM Models:
+  - OpenAI
+  - Anthropic
+  - Meta
+  - Coming soon: Cerebras & Groq
 
-### Infra & CI/CD
-- DigitalOcean for hosting
-- Cloudflare for DNS and CDN
-- nginx for reverse proxy
-- Sentry for error monitoring
-- flake8 for linting, mypy for type checking, bandit for security checks
-- PostHog for analytics
-- Greptile web/app & API for Codebase chat, PR review
-- CodeRabbit for PR review
-  
+### ⚙️ Infrastructure & CI/CD
+- 🌊 DigitalOcean (Hosting)
+- ☁️ Cloudflare (DNS/CDN)
+- 🔄 nginx (Reverse Proxy)
+- 🚨 Sentry (Error Monitoring)
+- 🧹 Code Quality:
+  - flake8 (Linting)
+  - mypy (Type Checking)
+  - bandit (Security)
+- 📊 PostHog (Analytics)
+- 🤖 AI-Powered Code Review:
+  - Greptile
+  - CodeRabbit
 
-## Getting Started
+## 🚀 Getting Started
 
-### Backend
-1. Set up Python virtual environment:   
+### Backend Setup
+1. Create Python virtual environment:
 ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 ```
 
 2. Install dependencies:
@@ -45,32 +58,59 @@
 pip install -r requirements.txt
 ```
 
-4. Run the development server:   
+3. Configure environment variables:
 ```bash
-   python run_fast.py
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-### Frontend
-1. Install Node.js dependencies:  
+4. Start development server:
 ```bash
-   npm install
+python run_fast.py
 ```
 
-2. Start development server:   
+### Frontend Setup
+1. Install dependencies:
 ```bash
-   npm run dev
+npm install
 ```
 
-3. For production build:   
+2. Start development server:
 ```bash
-   npm run build
-   npm start
+npm run dev
 ```
-   
-### Widget UI
-The widget system consists of several interconnected components:
 
-- **ChatWidget**: Real-time chat interface component
-- **TextWidget**: Text-based interaction component
-- **iframe**: Embedding framework for widget integration
-- **Clients**: Client-side implementations and examples
+3. Production build:
+```bash
+npm run build
+npm start
+```
+
+## 🔌 Widget System
+Our modular widget system consists of:
+
+### Components
+- 💬 **ChatWidget**: Real-time conversational interface
+  - LiveKit integration
+  - Styled-components theming
+  - 3D avatar support
+
+- 📝 **TextWidget**: Text-based interaction
+  - Markdown support
+  - Custom styling
+  - Responsive design
+
+- 🖼️ **iframe Integration**
+  - Secure embedding
+  - Cross-origin communication
+  - Responsive sizing
+
+### Development
+Each widget can be developed independently:
+```bash
+# ChatWidget
+cd ChatWidget && npm run dev
+
+# TextWidget
+cd TextWidget && npm run dev
+```
