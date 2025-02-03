@@ -521,7 +521,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
 
       // Send feedback to backend
       const response = await fetch(
-        `${apiBaseUrl}/feedback/response-feedback/${message.responseId}`,
+        `${apiBaseUrl}/feedback/${message.responseId}`,
         {
           method: "POST",
           headers: {
@@ -529,6 +529,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
           },
           body: JSON.stringify({
             thumbs_up: isLike,
+            room_id: roomName,
           }),
         }
       );

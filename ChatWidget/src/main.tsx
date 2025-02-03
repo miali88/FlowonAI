@@ -304,10 +304,20 @@ const ShadowContainer: React.FC<{
 
         const eventBridge = {
           dispatchHostEvent: <T extends object>(eventName: string, detail: T) => {
+            const sanitizedDetail = JSON.parse(JSON.stringify(detail, (key, value) => {
+              // Strip React internal properties and DOM elements
+              if (key.startsWith('__reactInternalInstance$') || 
+                  key.startsWith('__reactContainer$') ||
+                  value instanceof HTMLElement) {
+                return undefined;
+              }
+              return value;
+            }));
+            
             const event = new CustomEvent(eventName, {
               bubbles: true,
               composed: true,
-              detail
+              detail: sanitizedDetail
             });
             hostRef.current?.dispatchEvent(event);
           },

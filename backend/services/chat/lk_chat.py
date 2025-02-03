@@ -459,26 +459,33 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         async for chunk in response_stream:
             chunk_count += 1
             try:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
+                # Add defensive checks
+                if not hasattr(chunk, 'choices') or not chunk.choices:
+                    logger.warning(f"Received chunk without choices: {chunk}")
+                    continue
+                    
+                choice = chunk.choices[0]
+                if not hasattr(choice, 'delta'):
+                    logger.warning(f"Choice missing delta attribute: {choice}")
+                    continue
+
+                if hasattr(choice.delta, 'content') and choice.delta.content:
+                    content = choice.delta.content
                     if content:
                         current_assistant_message += content
                         yield content
 
-                elif chunk.choices[0].delta.tool_calls:
-                    for tool_call in chunk.choices[0].delta.tool_calls:
+                elif hasattr(choice.delta, 'tool_calls') and choice.delta.tool_calls:
+                    for tool_call in choice.delta.tool_calls:
                         called_function = tool_call.execute()
                         result = await called_function.task
                         
                         if isinstance(result, str):
                             if result.startswith("[RAG_RESULTS]:"):
-                                # RAG results are now stored in question_and_answer
-                                # Just skip the RAG marker here
                                 continue
                             
                             yield result
                             chat_history.add_message("function", result, name="tool_response")
-
                         else:
                             tool_response = ""
                             async for result_chunk in result:
@@ -488,6 +495,7 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
 
             except Exception as chunk_error:
                 logger.error(f"Error processing chunk #{chunk_count}: {str(chunk_error)}", exc_info=True)
+                logger.error(f"Problematic chunk: {chunk}")  # Add this for debugging
                 yield f"[Error processing chunk: {str(chunk_error)}]"
 
         # Save the final message
