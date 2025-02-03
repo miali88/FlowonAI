@@ -8,6 +8,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
 import os
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -181,16 +182,21 @@ crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
     wait=wait_exponential(multiplier=1, min=4, max=20)
 )
 async def scrape_with_retry(url: str) -> Dict[str, Any]:
-    await scrape_limiter.acquire()
+    logger.info(f"Scraping URL: {url}")
     try:
-        # Initialize crawler inside the function
         run_cfg = CrawlerRunConfig(
-            markdown_generator=True  # Enable markdown generation
+            markdown_generator=DefaultMarkdownGenerator()  # Enable markdown generation
         )
-        async with AsyncWebCrawler() as crawler:
-            map_result: List[str] = await crawler.arun(url=url, config=run_cfg)
+        browser_config=BrowserConfig(
+            browser_type="chromium",
+            headless= True,  # Run in headless mode
+            extra_args=["--disable-gpu"]  # Additional Playwright args
+        )
+        async with AsyncWebCrawler(config=browser_config) as crawler:
+            map_result = await crawler.arun(url=url, config=run_cfg)
+            logger.info(f"Scraping done: {map_result.cleaned_html}")
         
-        return await map_result
+        return await map_result.cleaned_html
     except RequestException as e:
         logger.error(f"HTTP error while scraping {url}: {str(e)}")
         raise
@@ -285,7 +291,7 @@ async def map_url(url: str) -> List[str]:
     try:
         # Configure the crawler with specific options
         run_cfg = CrawlerRunConfig(
-            markdown_generator=True
+            markdown_generator=DefaultMarkdownGenerator()
         )
         browser_config=BrowserConfig(
             browser_type="chromium",
