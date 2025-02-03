@@ -258,11 +258,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     }
   }, [selectedAgent]);
 
-  // Add a useEffect to log the knowledge base items when they change
-  useEffect(() => {
-    console.log("Knowledge Base Items:", knowledgeBaseItems);
-  }, [knowledgeBaseItems]);
-
   const handleDataSourceChange = (
     items: Array<{ id: string; title: string; data_type: string }>
   ) => {

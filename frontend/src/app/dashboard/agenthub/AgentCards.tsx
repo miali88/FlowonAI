@@ -210,9 +210,11 @@ export function AgentCards({
                   {formatPurpose(agent.agentPurpose)}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-auto">
-                  <Badge variant="secondary" className="text-sm py-1 px-3">
-                    {formatVoice(agent.voice)}
-                  </Badge>
+                  {agent.agentPurpose !== "text-chatbot-agent" && (
+                    <Badge variant="secondary" className="text-sm py-1 px-3">
+                      {formatVoice(agent.voice)}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className="text-sm py-1 px-3">
                     {formatDataSource(agent.dataSource)}
                   </Badge>
