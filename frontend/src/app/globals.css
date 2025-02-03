@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  html, body {
+  html,
+  body {
     padding: 0;
     margin: 0;
     width: 100%;
@@ -11,8 +12,8 @@
   }
 
   :root {
-    --background: 0 0% 0%;      /* Black background */
-    --foreground: 0 0% 88%;     /* Light gray text */
+    --background: 0 0% 0%; /* Black background */
+    --foreground: 0 0% 88%; /* Light gray text */
 
     --card: 0 0% 0%;
     --card-foreground: 0 0% 88%;
@@ -29,8 +30,8 @@
     --muted: 0 0% 24%;
     --muted-foreground: 0 0% 62%;
 
-    --accent: 30 100% 74%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 40% 90%; /* Light grayish-blue for light mode */
+    --accent-foreground: 210 40% 20%;
 
     --destructive: 349 52% 61%;
     --destructive-foreground: 0 0% 100%;
@@ -39,26 +40,28 @@
     --input: 0 0% 18%;
     --ring: 27 100% 70%;
 
-    --sidebar-background: 0 0% 4%;          /* Very dark gray (almost black) */
-    --sidebar-foreground: 0 0% 88%;         /* Keeping the same light gray text */
-    --sidebar-primary: 0 0% 8%;             /* Slightly lighter than background */
+    --sidebar-background: 0 0% 4%; /* Very dark gray (almost black) */
+    --sidebar-foreground: 0 0% 88%; /* Keeping the same light gray text */
+    --sidebar-primary: 0 0% 8%; /* Slightly lighter than background */
     --sidebar-primary-foreground: 0 0% 88%;
-    --sidebar-accent: 0 0% 12%;             /* Keeping the same accent */
+    --sidebar-accent: 0 0% 12%; /* Keeping the same accent */
     --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 0 0% 16%;             /* Keeping the same border */
-    --sidebar-ring: 0 0% 24%;               /* Keeping the same ring */
+    --sidebar-border: 0 0% 16%; /* Keeping the same border */
+    --sidebar-ring: 0 0% 24%; /* Keeping the same ring */
 
     --radius: 0.5rem;
   }
   .dark {
-    --sidebar-background: 0 0% 4%;          /* Very dark gray (almost black) */
-    --sidebar-foreground: 0 0% 88%;         /* Light gray text */
-    --sidebar-primary: 0 0% 8%;             /* Slightly lighter than background */
+    --sidebar-background: 0 0% 4%; /* Very dark gray (almost black) */
+    --sidebar-foreground: 0 0% 88%; /* Light gray text */
+    --sidebar-primary: 0 0% 8%; /* Slightly lighter than background */
     --sidebar-primary-foreground: 0 0% 88%;
-    --sidebar-accent: 0 0% 12%;             /* Keeping the same accent */
+    --sidebar-accent: 0 0% 12%; /* Keeping the same accent */
     --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 0 0% 16%;             /* Keeping the same border */
-    --sidebar-ring: 0 0% 24%;               /* Keeping the same ring */
+    --sidebar-border: 0 0% 16%; /* Keeping the same border */
+    --sidebar-ring: 0 0% 24%; /* Keeping the same ring */
+    --accent: 210 40% 20%; /* Dark grayish-blue for dark mode */
+    --accent-foreground: 210 40% 90%;
   }
 }
 
@@ -74,11 +77,11 @@
 @layer utilities {
   /* Animation utilities */
   @keyframes fade-in {
-    0% { 
+    0% {
       opacity: 0;
       transform: translateY(10px);
     }
-    100% { 
+    100% {
       opacity: 1;
       transform: translateY(0);
     }
@@ -96,27 +99,53 @@
   }
 
   @keyframes image-glow {
-    0% { opacity: 0; }
-    50% { opacity: 0.5; }
-    100% { opacity: 0; }
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 0;
+    }
   }
 
   /* Add these new pulse animations */
   @keyframes pulse-blue {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
-    50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    }
   }
   @keyframes pulse-purple {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.5); }
-    50% { box-shadow: 0 0 0 8px rgba(147, 51, 234, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(147, 51, 234, 0);
+    }
   }
   @keyframes pulse-cyan {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5); }
-    50% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+    }
   }
   @keyframes pulse-green {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-    50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
   }
 
   .animate-fade-in {
@@ -239,7 +268,8 @@ html {
 
 /* Better mobile tap targets */
 @media (max-width: 640px) {
-  button, a {
+  button,
+  a {
     min-height: 44px;
     min-width: 44px;
   }

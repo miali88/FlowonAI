@@ -91,7 +91,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-slate-600 focus:outline-none"
+        className="w-full px-3 py-2 text-left bg-background border rounded-md flex items-center justify-between hover:bg-accent focus:outline-none"
       >
         <span className="truncate text-sm">{getDisplayText()}</span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
@@ -115,7 +115,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
               <div
                 key={item.id}
                 onClick={() => toggleItem(item)}
-                className="flex items-center px-3 py-2 hover:bg-slate-600 cursor-pointer"
+                className="flex items-center px-3 py-2 hover:bg-accent cursor-pointer"
               >
                 <div
                   className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
