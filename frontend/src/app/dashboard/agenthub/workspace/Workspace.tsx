@@ -69,6 +69,7 @@ export interface Agent {
     };
   };
   assigned_telephone?: string;
+  agentPurpose?: string;
 }
 
 interface WorkspaceProps {
@@ -341,12 +342,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     }
   };
 
-  console.log(
-    Array.isArray(selectedAgent?.dataSource),
-    selectedAgent?.dataSource,
-    "HAHHA"
-  );
-
   return (
     <div className="flex gap-6">
       <div className={`${activeTab === "ui" ? "w-full" : "w-2/3"}`}>
@@ -449,93 +444,108 @@ const Workspace: React.FC<WorkspaceProps> = ({
                   </div>
 
                   {/* Language Selection */}
-                  <div>
-                    <Label htmlFor="language-select">Language</Label>
-                    <Select
-                      value={selectedLanguage}
-                      onValueChange={(value) => {
-                        setSelectedLanguage(value);
-                        setSelectedVoice(""); // Reset voice when language changes
-                        handleInputChange("language", value);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LANGUAGE_OPTIONS.map((language) => (
-                          <SelectItem key={language.id} value={language.id}>
-                            {language.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {selectedAgent?.agentPurpose &&
+                    (selectedAgent.agentPurpose === "telephone-agent" ||
+                      selectedAgent.agentPurpose === "voice-web-agent") && (
+                      <>
+                        <div>
+                          <Label htmlFor="language-select">Language</Label>
+                          <Select
+                            value={selectedLanguage}
+                            onValueChange={(value) => {
+                              setSelectedLanguage(value);
+                              setSelectedVoice(""); // Reset voice when language changes
+                              handleInputChange("language", value);
+                            }}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {LANGUAGE_OPTIONS.map((language) => (
+                                <SelectItem
+                                  key={language.id}
+                                  value={language.id}
+                                >
+                                  {language.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                  {/* Voice Selection */}
-                  <div>
-                    <Label htmlFor="voice-select">Voice</Label>
-                    <div className="flex space-x-2">
-                      <Select
-                        value={selectedVoice}
-                        onValueChange={(value) => {
-                          setSelectedVoice(value);
-                          handleInputChange("voice", value);
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select voice" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VOICE_OPTIONS[
-                            selectedLanguage as keyof typeof VOICE_OPTIONS
-                          ]?.map((voice) => (
-                            <SelectItem key={voice.id} value={voice.id}>
-                              {voice.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        {/* Voice Selection */}
+                        <div>
+                          <Label htmlFor="voice-select">Voice</Label>
+                          <div className="flex space-x-2">
+                            <Select
+                              value={selectedVoice}
+                              onValueChange={(value) => {
+                                setSelectedVoice(value);
+                                handleInputChange("voice", value);
+                              }}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select voice" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {VOICE_OPTIONS[
+                                  selectedLanguage as keyof typeof VOICE_OPTIONS
+                                ]?.map((voice) => (
+                                  <SelectItem key={voice.id} value={voice.id}>
+                                    {voice.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
 
-                      {selectedVoice && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={isPlaying}
-                          onClick={async () => {
-                            try {
-                              const selectedVoiceData = VOICE_OPTIONS[
-                                selectedLanguage as keyof typeof VOICE_OPTIONS
-                              ]?.find((v) => v.id === selectedVoice);
-                              if (selectedVoiceData) {
-                                setIsPlaying(true);
-                                const audio = new Audio();
-                                audio.addEventListener("ended", () =>
-                                  setIsPlaying(false)
-                                );
-                                audio.addEventListener("error", (e) => {
-                                  console.error("Error playing audio:", e);
-                                  setIsPlaying(false);
-                                });
-                                audio.src = selectedVoiceData.file;
-                                await audio.load();
-                                await audio.play();
-                              }
-                            } catch (error) {
-                              console.error("Error playing audio:", error);
-                              setIsPlaying(false);
-                            }
-                          }}
-                        >
-                          <Play
-                            className={`h-4 w-4 ${
-                              isPlaying ? "text-muted" : ""
-                            }`}
-                          />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                            {selectedVoice && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                disabled={isPlaying}
+                                onClick={async () => {
+                                  try {
+                                    const selectedVoiceData = VOICE_OPTIONS[
+                                      selectedLanguage as keyof typeof VOICE_OPTIONS
+                                    ]?.find((v) => v.id === selectedVoice);
+                                    if (selectedVoiceData) {
+                                      setIsPlaying(true);
+                                      const audio = new Audio();
+                                      audio.addEventListener("ended", () =>
+                                        setIsPlaying(false)
+                                      );
+                                      audio.addEventListener("error", (e) => {
+                                        console.error(
+                                          "Error playing audio:",
+                                          e
+                                        );
+                                        setIsPlaying(false);
+                                      });
+                                      audio.src = selectedVoiceData.file;
+                                      await audio.load();
+                                      await audio.play();
+                                    }
+                                  } catch (error) {
+                                    console.error(
+                                      "Error playing audio:",
+                                      error
+                                    );
+                                    setIsPlaying(false);
+                                  }
+                                }}
+                              >
+                                <Play
+                                  className={`h-4 w-4 ${
+                                    isPlaying ? "text-muted" : ""
+                                  }`}
+                                />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                   {/* Add the Retrain Agent button at the bottom */}
                   <div className="pt-6">
