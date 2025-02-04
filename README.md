@@ -68,6 +68,11 @@ cp .env.example .env
 python run_fast.py
 ```
 
+5. Run all the tests:
+```bash
+pytest tests/ -v
+```
+
 ### Frontend Setup
 1. Install dependencies:
 ```bash
