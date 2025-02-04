@@ -18,7 +18,7 @@ const Playground: React.FC<PlaygroundProps> = ({
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Playground</CardTitle>
-        Toggle functionality commented out
+        {/* Toggle functionality commented out
         <div className="flex items-center gap-2">
           <span>{useTextWidget ? 'Text Mode' : 'Voice Mode'}</span>
           <Switch
@@ -26,7 +26,8 @@ const Playground: React.FC<PlaygroundProps> = ({
             onCheckedChange={setUseTextWidget}
           />
         </div>
-       
+      
+        */}
       </CardHeader>
       <CardContent className="flex-1 h-[calc(100vh-12rem)] relative">
         {selectedAgent ? (

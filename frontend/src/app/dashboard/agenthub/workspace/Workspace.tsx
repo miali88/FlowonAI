@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { LANGUAGE_OPTIONS } from "./agentSettings";
 
-import { Play } from "lucide-react";
+import { Play, Maximize2, ZoomIn, ZoomOut, Download } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -42,6 +42,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import mermaid from "mermaid";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const api_base_url =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
@@ -193,6 +200,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
   );
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const [diagramZoom, setDiagramZoom] = useState(1);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
   const playVoiceSample = (voiceFile: string) => {
     if (audioPlayer) {
       audioPlayer.pause();
@@ -336,6 +346,96 @@ const Workspace: React.FC<WorkspaceProps> = ({
       );
     }
   };
+
+  // Add new helper function to generate Mermaid diagram
+  const generateMermaidDiagram = (agent: Agent | null) => {
+    if (!agent) return '';
+    
+    let diagram = `            
+        flowchart TD
+            %% Style definitions
+            classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px,color:#000
+            classDef decision fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+            classDef action fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+            classDef escalation fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+            
+            A[Incoming Call] --> B{Determine Caller Type}
+            
+            B -->|Potential Buyer| C{Buyer Query Type}
+            B -->|Property Seller| D{Seller Query Type}
+            
+            C -->|Property Info| E[Access Property Database]
+            C -->|Schedule Viewing| F[Check Booking Calendar]
+            C -->|Financing| G[Provide Financing Info]
+            
+            E --> H{Detailed Property Questions?}
+            H -->|Yes| I[Escalate to Agent]
+            H -->|No| J[Provide Property Details]
+            
+            F --> K[Show Available Slots]
+            K --> L[Schedule Viewing]
+            L --> M[Update Calendar]
+            
+            D -->|Market Info| N[Provide Market Analysis]
+            D -->|Pricing| O[Property Valuation Info]
+            
+            N --> P{Complex Analysis Required?}
+            O --> P
+            P -->|Yes| Q[Escalate to Agent]
+            P -->|No| R[Provide Market Data]
+            
+            G --> S{Complex Financing Query?}
+            S -->|Yes| T[Escalate to Agent]
+            S -->|No| U[Provide Basic Finance Info]
+
+            %% Apply styles to nodes
+            class B,C,D,H,P,S decision
+            class E,F,G,J,K,L,M,N,O,R,U action
+            class I,Q,T escalation
+            class A default
+        `;
+
+    // Add data sources
+    if (agent.dataSource && agent.dataSource.length > 0) {
+      diagram += '\n    Knowledge --> Sources[Data Sources]';
+      agent.dataSource.forEach((source, index) => {
+        diagram += `\n    Sources --> DS${index}[${source.title}]`;
+      });
+    }
+
+
+    return diagram;
+  };
+
+  // Update useEffect for Mermaid initialization
+  useEffect(() => {
+    const initMermaid = async () => {
+      try {
+        await mermaid.initialize({
+          startOnLoad: true,
+          theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+          securityLevel: 'loose',
+          flowchart: {
+            curve: 'basis',
+            padding: 20
+          }
+        });
+
+        // Force re-render of diagram
+        const element = document.querySelector('.mermaid');
+        if (element) {
+          const diagram = generateMermaidDiagram(selectedAgent);
+          mermaid.render('mermaid-svg', diagram).then(({ svg }) => {
+            element.innerHTML = svg;
+          });
+        }
+      } catch (error) {
+        console.error('Failed to initialize Mermaid:', error);
+      }
+    };
+
+    initMermaid();
+  }, [selectedAgent]); // Re-run when agent changes
 
   return (
     <div className="flex gap-6">
@@ -720,6 +820,102 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 </div>
               </CardContent>
             </Card>
+            <Accordion type="single" collapsible className="mt-4">
+              <AccordionItem value="agent-flow">
+                <AccordionTrigger className="px-6 py-4 bg-card rounded-t-lg">
+                  <div className="flex items-center justify-between w-full">
+                    <h3 className="text-lg font-semibold">Agent Flow Diagram</h3>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          setDiagramZoom((prev) => Math.min(prev + 0.1, 2));
+                        }}
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          setDiagramZoom((prev) => Math.max(prev - 0.1, 0.5));
+                        }}
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          const element = document.getElementById('mermaid-diagram');
+                          if (element) {
+                            if (!document.fullscreenElement) {
+                              element.requestFullscreen().catch(err => {
+                                console.error('Error attempting to enable fullscreen:', err);
+                              });
+                            } else {
+                              document.exitFullscreen();
+                            }
+                          }
+                        }}
+                        title="Toggle Fullscreen"
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          const svg = document.querySelector('#mermaid-diagram svg');
+                          if (svg) {
+                            try {
+                              const svgData = new XMLSerializer().serializeToString(svg);
+                              const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `${selectedAgent?.agentName || 'agent'}-flow-diagram.svg`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
+                            } catch (error) {
+                              console.error('Error downloading diagram:', error);
+                            }
+                          }
+                        }}
+                        title="Download Diagram"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 py-4 bg-card rounded-b-lg">
+                  <div 
+                    id="mermaid-diagram"
+                    style={{ 
+                      transform: `scale(${diagramZoom})`,
+                      transformOrigin: 'top left',
+                      transition: 'transform 0.2s',
+                      overflow: 'auto',
+                      padding: '1rem'
+                    }}
+                  >
+                    <div className="mermaid">
+                      {generateMermaidDiagram(selectedAgent)}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
         </Tabs>
       </div>
