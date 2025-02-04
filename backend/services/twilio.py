@@ -7,6 +7,7 @@ import os
 import time
 from dotenv import load_dotenv
 from dataclasses import dataclass
+import asyncio
 
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -178,19 +179,15 @@ async def add_to_conference(request: Request) -> JSONResponse:
         call_sid = str(form_data['CallSid'])
         twilio_number = str(form_data['To'])
         from_number = str(form_data['From'])
-
         logger.info(f'Processing call SID: {call_sid}') 
-        # Generate unique conference name using call parameters
-        conference_name = f"conf_{call_sid}_{int(time.time())}"
         
-        # Get SIP configuration from request or database
-        sip_config = await get_sip_config(twilio_number)  # You'll need to implement this
+        conference_name = f"conf_{call_sid}_{int(time.time())}"
+        sip_config = await get_sip_config(twilio_number)
         
         if not sip_config:
             logger.error(f'No SIP configuration found for number: {twilio_number}')
             raise HTTPException(status_code=400, detail='Invalid SIP configuration')
 
-        # Check call status before proceeding
         call = client.calls(call_sid).fetch()
         logger.debug(f'Current call status: {call.status}')
         
@@ -198,7 +195,6 @@ async def add_to_conference(request: Request) -> JSONResponse:
             logger.error(f'Call is in invalid state: {call.status}')
             raise HTTPException(status_code=400, detail=f'Call is in invalid state: {call.status}')
 
-        # Move the initial caller to the conference
         logger.debug(f'Moving caller to conference: {conference_name}')
         response = VoiceResponse()
         dial = Dial()
@@ -208,22 +204,49 @@ async def add_to_conference(request: Request) -> JSONResponse:
             endConferenceOnExit=True,
             waitUrl='http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical',
             statusCallbackEvent=['start', 'end', 'join', 'leave'],
-            statusCallback=sip_config['webhook_url']  # Add webhook for conference events
+            statusCallback=sip_config.webhook_url
         )
         response.append(dial)
-
         client.calls(call_sid).update(twiml=str(response))
         logger.info('Successfully moved caller to conference')
 
-        # Bridge the conference to LiveKit with dynamic SIP config
-        logger.debug('Initiating LiveKit bridge')
-        await bridge_conference_to_livekit(
-            conference_name=conference_name,
-            conference_sid=call_sid,
-            from_number=from_number,
-            sip_config=sip_config
-        )
-        logger.info('Successfully bridged conference to LiveKit')
+        # Improved polling logic: wait until the conference has at least one participant
+        max_retries = 8
+        retry_delay = 2  # seconds
+        conference_sid = None
+        for attempt in range(max_retries):
+            logger.info(f"Attempting to find conference (attempt {attempt + 1}/{max_retries})")
+            await asyncio.sleep(retry_delay)
+            
+            conferences = client.conferences.list(
+                friendly_name=conference_name,
+                status='in-progress'
+            )
+            if conferences:
+                conference = conferences[0]
+                participant_list = client.conferences(conference.sid).participants.list()
+                if participant_list and len(participant_list) > 0:
+                    conference_sid = conference.sid
+                    logger.info(f"Conference {conference_name} is ready with {len(participant_list)} participant(s)")
+                    break
+                else:
+                    logger.warning("Conference exists but no participants found yet")
+            else:
+                logger.warning(f"Conference not found on attempt {attempt + 1}")
+            if attempt == max_retries - 1:
+                logger.error("Max retries reached waiting for conference to be ready")
+                raise HTTPException(status_code=500, detail="Conference setup timeout")
+
+        if conference_sid:
+            await bridge_conference_to_livekit(
+                conference_name=conference_name,
+                conference_sid=conference_sid,
+                from_number=from_number,
+                sip_config=sip_config
+            )
+        else:
+            logger.error(f"Conference {conference_name} not found after all retries")
+            raise HTTPException(status_code=500, detail="Conference not found")
         
         return JSONResponse(content={
             'message': 'Call moved to conference and agent added',
