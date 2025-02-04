@@ -805,3 +805,15 @@
   width: 16px;
   height: 16px;
 }
+
+.mermaid {
+  overflow: auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
