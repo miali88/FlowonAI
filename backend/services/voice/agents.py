@@ -244,14 +244,9 @@ async def update_agent(agent_id: int, data: dict) -> Any:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-async def get_agent_content(purpose: str) -> Any:
-    if purpose == 'onboarding':
-        return sys_prompt_onboarding
-    elif purpose == 'general':
-        return sys_prompt_scaffold
-    else:
-        raise HTTPException(status_code=400, detail="Invalid purpose")
-
+async def get_agent_content(agent_id: str) -> Any:
+    content = supabase.table('agents').select('*').eq('id', agent_id).execute()
+    return content
 
 async def get_agent_completion(purpose: str, prompt: str) -> str:
     try:

@@ -7,14 +7,13 @@ from fastapi import Request, HTTPException, Depends, Header, APIRouter, Backgrou
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
 from services.knowledge_base.web_scrape import map_url, scrape_url
 from app.api.deps import get_current_user
 
-supabase = supabase_client()
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +55,8 @@ async def upload_file_handler(
     x_user_id: str = Header(..., alias="X-User-ID")
 ):
     try:
+        supabase = await get_supabase()
+
         logger.info(f"Received file: {file.filename}")
         logger.info(f"User ID from header: {x_user_id}")
 
@@ -67,7 +68,7 @@ async def upload_file_handler(
         logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
-        new_item = supabase.table('user_text_files').insert({
+        new_item = await supabase.table('user_text_files').insert({
             "title": file.filename, # TODO: replace with user's entered title
             "heading": file.filename,
             "file_name": file.filename,
@@ -77,7 +78,7 @@ async def upload_file_handler(
         }).execute()
 
         # Also insert into headers table
-        headers_item = supabase.table('user_text_files_headers').insert({
+        headers_item = await supabase.table('user_text_files_headers').insert({
             "heading": file.filename,
             "file_name": file.filename,
             "user_id": x_user_id,
@@ -127,6 +128,8 @@ async def create_item_handler(request: Request,
     logger.debug(f"Request headers: {json.dumps(headers, indent=2)}")
 
     try:
+        supabase = await get_supabase()
+
         data = await request.json()
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
 
@@ -136,7 +139,7 @@ async def create_item_handler(request: Request,
         table_name = 'user_web_data' if data_type == 'web' else 'user_text_files'
         
         # Insert the data into the appropriate Supabase table
-        new_item = supabase.table(table_name).insert(data).execute()
+        new_item = await supabase.table(table_name).insert(data).execute()
         logger.info(f"New item created in {table_name}: {json.dumps(new_item.data[0], indent=2)}")
 
         # Schedule the kb_item_to_chunks function to run in the background
@@ -157,6 +160,8 @@ async def create_item_handler(request: Request,
 @router.delete("/{item_id}")
 async def delete_item_handler(item_id: int, request: Request, current_user: str = Depends(get_current_user)):
     try:
+        supabase = await get_supabase()
+
         # Get the request body
         body = await request.json()
         data_type = body.get('data_type')
@@ -165,10 +170,10 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         try:
             if data_type == 'web':
                 # Delete from user_web_data if data_type is web
-                result = supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
+                result = await supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
             else:
                 # Delete from user_text_files for all other data types
-                result = supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
+                result = await supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
             
             if len(result.data) == 0:
                 raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
@@ -246,7 +251,9 @@ async def calculate_tokens_handler(request: Request, current_user: str = Depends
 @router.get("/users")
 async def user_info(current_user: str = Depends(get_current_user)):
     try:
-        user_info = supabase.table('users').select('*').eq('id', current_user).execute()
+        supabase = await get_supabase()
+
+        user_info = await supabase.table('users').select('*').eq('id', current_user).execute()
         if not user_info.data:
             raise HTTPException(status_code=404, detail="User not found")
         return user_info.data[0]

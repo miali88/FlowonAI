@@ -1,8 +1,7 @@
 import pytest
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from unittest.mock import Mock, patch, AsyncMock
 import json
-from datetime import datetime
 import stripe
 from svix.webhooks import WebhookVerificationError
 
@@ -121,7 +120,7 @@ async def test_post_user_success():
 
     # Act
     with patch('stripe.Customer.create', return_value=mock_stripe_customer), \
-         patch('app.api.routes.clerk.supabase_client') as mock_supabase:
+         patch('app.api.routes.clerk.supabase') as mock_supabase:
         
         mock_supabase.return_value.table.return_value.insert.return_value.execute.return_value = (
             {"data": "success"}, 1
@@ -171,7 +170,7 @@ async def test_post_user_database_error():
 
     # Act & Assert
     with patch('stripe.Customer.create', return_value=mock_stripe_customer), \
-         patch('app.api.routes.clerk.supabase_client') as mock_supabase:
+         patch('app.api.routes.clerk.supabase') as mock_supabase:
         
         mock_supabase.return_value.table.return_value.insert.return_value.execute.side_effect = Exception("Database error")
         

@@ -1,5 +1,4 @@
 import sentry_sdk
-from contextlib import asynccontextmanager
 import os 
 from dotenv import load_dotenv
 import subprocess
@@ -14,8 +13,10 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
+from services.db.supabase_services import SupabaseConnection, supabase
+
 from app.core.config import settings
-from services.twilio.call_handle import cleanup
+
 load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
@@ -101,7 +102,10 @@ def kill_processes_on_port(port):
 async def startup_event():
     logger.debug("Starting up FastAPI server...")
     global livekit_process
-    
+    global supabase
+    logger.info("Initializing Supabase client...")
+    supabase = await SupabaseConnection.get_client()
+
     try:
         logger.debug("Attempting to start LiveKit server...")
         
@@ -171,8 +175,10 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    from services.twilio.call_handle import cleanup
     global livekit_process
 
+    await SupabaseConnection.close()
     logger.debug("Shutting down FastAPI server...")
     print("twilio cleanup")
     cleanup()

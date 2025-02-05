@@ -42,7 +42,7 @@ async def test_upload_file_handler():
     
     # Act
     with patch('services.knowledge_base.file_processing.process_file', AsyncMock(return_value=mock_processed_content)), \
-         patch('services.db.supabase_services.supabase_client', return_value=mock_supabase):
+         patch('services.db.supabase_services.supabase', return_value=mock_supabase):
         result = await upload_file_handler(
             mock_background_tasks,
             mock_file,
@@ -172,7 +172,7 @@ async def test_create_item_handler():
     mock_insert.execute.return_value = mock_new_item
     
     # Act
-    with patch('services.db.supabase_services.supabase_client', return_value=mock_supabase):
+    with patch('services.db.supabase_services.supabase', return_value=mock_supabase):
         result = await create_item_handler(mock_req, mock_background_tasks)
     
     # Assert

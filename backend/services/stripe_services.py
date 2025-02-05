@@ -1,11 +1,10 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException
 from pydantic import BaseModel
 import stripe
 from typing import Optional
 import os 
 from dotenv import load_dotenv
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 import logging
 
 load_dotenv()
@@ -67,7 +66,8 @@ async def update_user_features(
         
         # First get the clerk_user_id from customer_id
         logger.debug(f"Fetching clerk_user_id for customer_id: {customer_id}")
-        response = await supabase_client.table('users').select('clerk_user_id').eq('stripe_customer_id', customer_id).execute()
+        supabase = await get_supabase()
+        response = await supabase.table('users').select('clerk_user_id').eq('stripe_customer_id', customer_id).execute()
         
         if not response.data or len(response.data) == 0:
             logger.error(f"No user found for customer_id: {customer_id}")
@@ -96,7 +96,7 @@ async def update_user_features(
         logger.debug(f"Applying feature updates: {update_config['updates']} for table: {update_config['table']}")
         
         # Update the appropriate features table
-        response = await supabase_client.table(update_config["table"]).upsert({
+        response = await supabase.table(update_config["table"]).upsert({
             "clerk_user_id": clerk_user_id,
             **update_config["updates"]
         }).execute()

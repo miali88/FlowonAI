@@ -1,11 +1,11 @@
 from datetime import datetime
-import requests, os, logging, asyncio
+import requests, os, logging
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
 import stripe 
 
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 
 load_dotenv()
 
@@ -23,6 +23,8 @@ async def post_user(payload):
     clerk_user_id = user_data.get('id')  # Get Clerk user ID
     
     try:
+        supabase = await get_supabase()
+
         # Find the primary email address
         primary_email = next((email['email_address'] for email in email_addresses if email['id'] == primary_email_address_id), None)
         
@@ -96,7 +98,7 @@ async def post_user(payload):
             'stripe_customer_id': stripe_customer.id  # Add Stripe customer ID to user record
         }
 
-        data, count = supabase_client().table('users').insert(user_record).execute()
+        data, count = await supabase.table('users').insert(user_record).execute()
         
         logger.info(f"User data saved successfully. Affected rows: {count}")
         return data

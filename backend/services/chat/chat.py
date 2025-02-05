@@ -10,11 +10,9 @@ import re
 import json
 from requests.exceptions import Timeout, RequestException
 
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from openai import OpenAI
 from anthropic import AsyncAnthropic
-
-supabase = supabase_client()
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -23,7 +21,6 @@ openai = OpenAI()
 anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 conversation_histories: Dict[str, Any] = {}
-
 
 async def get_embedding(text: str) -> Any:
     # if table == "user_text_files":
@@ -202,6 +199,8 @@ async def similarity_search(query: str, data_source: Optional[Dict],
     print("\n\n data_source in similarity_search:", data_source)
     all_results = []
 
+    supabase = await get_supabase()
+
     # Add null check for data_source
     if data_source is None:
         raise ValueError("data_source cannot be None")
@@ -217,7 +216,7 @@ async def similarity_search(query: str, data_source: Optional[Dict],
     async def fetch_table_data(table: str, query_embedding: List[float]) -> Any:
         try:
             if table == "user_web_data":
-                return supabase.rpc(
+                return await supabase.rpc(
                     "user_web_data",
                     {
                         'query_embedding': query_embedding,
@@ -230,7 +229,7 @@ async def similarity_search(query: str, data_source: Optional[Dict],
                 ).execute()
 
             # elif table == "corporate_law":
-            #     return supabase.rpc(
+            #     return await supabase.rpc(
             #         "search_corporate_law",
             #         {
             #             'query_embedding': query_embedding,
@@ -242,7 +241,7 @@ async def similarity_search(query: str, data_source: Optional[Dict],
             #     ).execute()
 
             elif table == "user_text_files":
-                return supabase.rpc(
+                return await supabase.rpc(
                     "search_chunks",
                     {
                         'query_embedding': query_embedding,
@@ -277,6 +276,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: List[str
     print("\nfunc rag_response..")
     table_names = ["user_web_data"]
 
+    supabase = await get_supabase()
     results = await similarity_search(
         user_query,
         table_names,
@@ -326,7 +326,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: List[str
         ]
 
         # Fetch all knowledge base items for the user
-        response = supabase.table('knowledge_base') \
+        response = await supabase.table('knowledge_base') \
             .select('title,file_url') \
             .eq('user_id', user_id) \
             .execute()
@@ -348,7 +348,7 @@ async def rag_response(user_query: str, user_search_type: str, user_id: List[str
         filtered_kb_titles = list(dict.fromkeys(kb_titles))
 
         # Fetch all knowledge base items for the user
-        response = supabase.table('knowledge_base') \
+        response = await supabase.table('knowledge_base') \
             .select('title,file_url') \
             .eq('user_id', user_id) \
             .execute()

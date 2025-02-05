@@ -1,14 +1,9 @@
 from typing import Dict, Optional, List
-from services.db.supabase_services import supabase_client
-
+from services.db.supabase_services import get_supabase
 from services.composio import get_calendar_slots
-
-supabase = supabase_client()
-
 
 """ CALENDAR CACHE """
 calendar_cache: Dict[str, dict] = {}
-
 
 async def initialize_calendar_cache(user_id: str, app: str) -> Dict:
     """Initialize the calendar cache"""
@@ -35,14 +30,18 @@ agent_metadata_cache: List[Dict[str, dict]] = []
 
 
 async def get_all_agents() -> list:
-    response = supabase.table("agents").select("*").execute()
+    supabase = await get_supabase()
+
+    response = await supabase.table("agents").select("*").execute()
     agent_metadata_cache.extend(response.data)
     return agent_metadata_cache
 
 
 async def get_agent_metadata(agent_id: str) -> Optional[dict]:
+    supabase = await get_supabase()
+
     """Get agent metadata from cache"""
-    response = supabase.table("agents").select("*").execute()
+    response = await supabase.table("agents").select("*").execute()
     agents_dict = {agent['id']: agent for agent in response.data}
     agent = agents_dict.get(agent_id)
     if agent is not None:
