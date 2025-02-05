@@ -12,11 +12,12 @@ import asyncio
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from services.livekit.inbound_trunk import main
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial
 from twilio.base.exceptions import TwilioRestException
+
 
 load_dotenv()
 
@@ -118,8 +119,10 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
 
 async def fetch_twilio_numbers(user_id: str) -> list:
+    supabase = await get_supabase()
+
     # Select only the telephony_numbers column for the specific user
-    result = supabase_client().table('users').select('telephony_numbers').eq('id', user_id).execute()
+    result = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
     if not result.data or not result.data[0].get('telephony_numbers'):
         return []
     return result.data[0]['telephony_numbers']
@@ -320,9 +323,6 @@ def cleanup() -> None:
     print("\nCleaning up before exit...")
     ## Ensuring all prior calls are ended
     calls = client.calls.list(status='in-progress')
-
-    print("Registering twilio URL:")
-    print(register_url())
     # Print and end each ongoing call
     if calls:
         for call in calls:

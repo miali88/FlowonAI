@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Agent } from "./workspace";
+import Image from "next/image";
 
 interface UiProps {
   selectedAgent: Agent;
@@ -68,7 +69,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
       }
 
       // Single API call with both chat_ui and agent_logo
-      const response = await fetch(`${API_BASE_URL}/agent/${agentId}`, {
+      const response = await fetch(`${API_BASE_URL}/agents/${agentId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -110,97 +111,143 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
 
   return (
     <div className="flex gap-6">
-      <Card className="w-1/2">
-        <CardHeader>
-          <CardTitle>UI Customization</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Primary Color */}
-          <div>
-            <Label htmlFor="primaryColor">Primary Color</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="primaryColor"
-                type="color"
-                value={primaryColor}
-                onChange={(e) => handleUiChange("primaryColor", e.target.value)}
-                className="w-[100px]"
-              />
-              <Input
-                type="text"
-                value={primaryColor}
-                onChange={(e) => handleUiChange("primaryColor", e.target.value)}
-                className="w-[120px] font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Secondary Color */}
-          <div>
-            <Label htmlFor="secondaryColor">Secondary Color</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="secondaryColor"
-                type="color"
-                value={secondaryColor}
-                onChange={(e) =>
-                  handleUiChange("secondaryColor", e.target.value)
-                }
-                className="w-[100px]"
-              />
-              <Input
-                type="text"
-                value={secondaryColor}
-                onChange={(e) =>
-                  handleUiChange("secondaryColor", e.target.value)
-                }
-                className="w-[120px] font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Avatar Upload */}
-
-          {/* Logo Upload */}
-          <div>
-            <Label htmlFor="logo">Logo Image</Label>
-            <Input
-              id="logo"
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  try {
-                    const base64String = await convertFileToBase64(file);
-                    handleUiChange("logo", base64String);
-                  } catch (error) {
-                    console.error("Error converting file to base64:", error);
-                    setSaveError("Failed to process logo image");
+      <div className="flex flex-col gap-8 w-2/3">
+        <Card>
+          <CardHeader>
+            <CardTitle>UI Customization</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Primary Color */}
+            <div>
+              <Label htmlFor="primaryColor">Primary Color</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="primaryColor"
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) =>
+                    handleUiChange("primaryColor", e.target.value)
                   }
-                }
-              }}
-              className="mt-2 w-[250px]"
-            />
-          </div>
+                  className="w-[100px]"
+                />
+                <Input
+                  type="text"
+                  value={primaryColor}
+                  onChange={(e) =>
+                    handleUiChange("primaryColor", e.target.value)
+                  }
+                  className="w-[120px] font-mono"
+                />
+              </div>
+            </div>
 
-          {/* Save Button */}
-          <div className="pt-4 flex flex-col gap-2">
-            <button
-              className="py-2 px-4 bg-primary text-black rounded-md hover:bg-primary/90 transition-colors w-[250px] disabled:opacity-50"
-              onClick={handleSaveSettings}
-              disabled={isSaving}
-            >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
-          </div>
-        </CardContent>
-      </Card>
+            {/* Secondary Color */}
+            <div>
+              <Label htmlFor="secondaryColor">Secondary Color</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="secondaryColor"
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) =>
+                    handleUiChange("secondaryColor", e.target.value)
+                  }
+                  className="w-[100px]"
+                />
+                <Input
+                  type="text"
+                  value={secondaryColor}
+                  onChange={(e) =>
+                    handleUiChange("secondaryColor", e.target.value)
+                  }
+                  className="w-[120px] font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Avatar Upload */}
+
+            {/* Logo Upload */}
+            <div>
+              <Label htmlFor="logo">Logo Image</Label>
+              <Input
+                id="logo"
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const base64String = await convertFileToBase64(file);
+                      handleUiChange("logo", base64String);
+                    } catch (error) {
+                      console.error("Error converting file to base64:", error);
+                      setSaveError("Failed to process logo image");
+                    }
+                  }
+                }}
+                className="mt-2 w-[250px]"
+              />
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-4 flex flex-col gap-2">
+              <button
+                className="py-2 px-4 bg-primary text-black rounded-md hover:bg-primary/90 transition-colors w-[250px] disabled:opacity-50"
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+              {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="w-1/4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Logo Preview</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center">
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: primaryColor,
+                }}
+              >
+                {agentLogo ? (
+                  <Image
+                    src={agentLogo}
+                    alt="Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                ) : (
+                  <div className="text-white text-sm">No logo uploaded</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Preview Section */}
-      <div className="w-1/3">
-        <div className="w-full h-[600px] border border-gray-200 rounded-lg overflow-hidden flex flex-col">
+      <Card className="absolute flex flex-col justify-start w-[26%] h-full top-36 right-12 px-6">
+        <CardHeader className="flex flex-row items-center justify-between px-0">
+          <CardTitle>Playground</CardTitle>
+          {/* Toggle functionality commented out
+        <div className="flex items-center gap-2">
+          <span>{useTextWidget ? 'Text Mode' : 'Voice Mode'}</span>
+          <Switch
+            checked={useTextWidget}
+            onCheckedChange={setUseTextWidget}
+          />
+        </div>
+      
+        */}
+        </CardHeader>
+        <div className="w-full h-[75%] border border-gray-200 rounded-lg overflow-hidden flex flex-col">
           {/* Top Bar */}
           <div
             className="px-4 h-[50px] flex items-center"
@@ -223,9 +270,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
                   color: "#333",
                 }}
               >
-                Hey there! Welcome to Everzocial, your go-to digital marketing
-                agency in Cincinnati 👋 Ready to supercharge your online
-                presence? What's your biggest marketing challenge right now?
+                Hey there! Welcome.
               </div>
             </div>
 
@@ -252,10 +297,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
                   color: "#333",
                 }}
               >
-                Hello again! Let’s get back on track—what marketing goals are
-                you aiming to achieve in the next 6 months? Whether it's
-                boosting your online presence, improving engagement, or
-                something else, I'm here to help you strategize.
+                Hello again! Let's get back on track.
               </div>
             </div>
           </div>
@@ -299,34 +341,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
             powered by Flowon.AI
           </div>
         </div>
-      </div>
-
-      {/* Logo Preview Section */}
-      <div className="w-1/6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Logo Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center items-center">
-            <div
-              className="w-24 h-24 rounded-full flex items-center justify-center"
-              style={{
-                backgroundColor: primaryColor,
-              }}
-            >
-              {agentLogo ? (
-                <img
-                  src={agentLogo}
-                  alt="Logo"
-                  className="w-16 h-16 object-contain"
-                />
-              ) : (
-                <div className="text-white text-sm">No logo uploaded</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -9,9 +9,8 @@ import spacy
 from openai import AsyncOpenAI
 
 from app.core.config import settings
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 
-supabase = supabase_client()
 openai = AsyncOpenAI()
 
 # Set up logging
@@ -55,17 +54,17 @@ async def insert_chunk(
 ) -> None:
     logger.info(f"Inserting chunk {chunk_index} for document {parent_id}")
     try:
-        await asyncio.to_thread(
-            supabase.table('chunks').insert({
-                'parent_id': parent_id,
-                'content': content,
-                'chunk_index': chunk_index,
-                'jina_embedding': embedding,
-                'user_id': user_id,
-                'token_count' : token_count,
-                "title": title
-            }).execute
-        )
+        supabase = await get_supabase()
+
+        await supabase.table('chunks').insert({
+            'parent_id': parent_id,
+            'content': content,
+            'chunk_index': chunk_index,
+            'jina_embedding': embedding,
+            'user_id': user_id,
+            'token_count': token_count,
+            "title": title
+        }).execute()
         logger.debug(f"Successfully inserted chunk {chunk_index}")
     except Exception as e:
         logger.error(f"Failed to insert chunk {chunk_index}: {str(e)}")
@@ -133,12 +132,12 @@ async def process_item(item_id: str, content: str, user_id: str, title: str) -> 
 async def update_file_tokens(data_id: str, total_tokens: int, title: str) -> None:
     logger.info(f"Updating token count for file {title}")
     try:
-        await asyncio.to_thread(
-            supabase.table('user_text_files')
-            .update({'token_count': total_tokens})
-            .eq('id', data_id)
-            .execute
-        )
+        supabase = await get_supabase()
+
+        await supabase.table('user_text_files')\
+            .update({'token_count': total_tokens})\
+            .eq('id', data_id)\
+            .execute()
         logger.debug(f"Successfully updated token count for file {title}")
     except Exception as e:
         logger.error(f"Failed to update token count: {str(e)}")

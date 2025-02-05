@@ -11,12 +11,11 @@ from starlette.concurrency import run_in_threadpool
 
 from services.cache import get_agent_metadata
 from services.chat.chat import llm_response
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat
 from services.conversation import transcript_summary
 from services.chat.lk_chat import get_chat_rag_results
 
-supabase = supabase_client()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -41,12 +40,9 @@ async def get_conversation_history(
     user_id: Annotated[str, Depends(get_user_id)]
 ) -> Response:
     try:
-        response = (
-            supabase.table("conversation_logs")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
-        )
+        supabase = await get_supabase()
+        response = await supabase.table("conversation_logs").select("*").eq("user_id", user_id).execute()
+
         if response.data:
             return JSONResponse(content=response.data)
         return JSONResponse(content=[], status_code=200)
@@ -63,7 +59,8 @@ async def delete_conversation_history(
     user_id: Annotated[str, Depends(get_user_id)]
 ) -> Response:
     try:
-        supabase.table("conversation_logs").delete().eq(
+        supabase = await get_supabase()
+        await supabase.table("conversation_logs").delete().eq(
             "id", conversation_id
         ).eq("user_id", user_id).execute()
         return JSONResponse(content={}, status_code=200)
@@ -85,8 +82,9 @@ async def livekit_room_webhook(request: Request) -> Dict[str, str]:
     logger.info(f"Received webhook data: {data}")
 
     try:
+        supabase = await get_supabase()
         if data['transcript']:
-            supabase.table("conversation_logs").insert({
+            await supabase.table("conversation_logs").insert({
                 "transcript": data['transcript'],
                 "job_id": data['job_id'],
                 "participant_identity": data['participant_identity'],
@@ -258,12 +256,8 @@ async def events(participant_identity: str) -> EventSourceResponse:
 async def form_fields(agent_id: str) -> Response:
     logger.info(f"Fetching form fields for agent_id: {agent_id}")
     try:
-        response = (
-            supabase.table("agents")
-            .select("form_fields")
-            .eq("id", agent_id)
-            .execute()
-        )
+        supabase = await get_supabase()
+        response = await supabase.table("agents").select("form_fields").eq("id", agent_id).execute()
         logger.debug(f"Supabase response: {response}")
 
         if response.data:

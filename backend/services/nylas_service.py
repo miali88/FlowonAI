@@ -3,12 +3,11 @@ import os
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from nylas import Client # type: ignore
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from services.cache import get_all_agents
 import ast
 import html
 
-supabase = supabase_client()
 load_dotenv()
 
 NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
@@ -21,6 +20,8 @@ nylas = Client(
 
 
 async def get_agent_user_cache() -> dict[str, Any]:
+    supabase = await get_supabase()
+
     agents = await get_all_agents()
     # Convert list of agents to a dictionary mapping agent_id to user_id
     agent_user_cache = {agent['id']: agent['userId'] for agent in agents}
@@ -28,12 +29,7 @@ async def get_agent_user_cache() -> dict[str, Any]:
     # Fetch additional user data from Supabase
     expanded_agent_user_cache = {}
     user_ids = list(agent_user_cache.values())
-    response = (
-        supabase.table('users')
-        .select('id, account_settings')
-        .in_('id', user_ids)
-        .execute()
-    )
+    response = await supabase.table('users').select('id, account_settings').in_('id', user_ids).execute()
 
     if response.data:
         # Create a mapping of user_id to their settings
@@ -56,6 +52,8 @@ async def get_agent_user_cache() -> dict[str, Any]:
 
 async def send_email(participant_identity: str, conversation_history: List[Dict[str, Any]], agent_id: str) -> Any:
     try:
+        supabase = await get_supabase()
+
         # Get the agent-user cache first
         agent_user_cache = await get_agent_user_cache()
 
@@ -152,7 +150,7 @@ async def send_email(participant_identity: str, conversation_history: List[Dict[
         }
 
         # Store notification in Supabase
-        supabase.table('conversation_logs').update(
+        await supabase.table('conversation_logs').update(
             {"nylas_notification": nylas_notification}
         ).eq('participant_identity', participant_identity).execute()
 

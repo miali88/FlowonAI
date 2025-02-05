@@ -5,7 +5,7 @@ import math
 import logging
 
 from services.twilio.client import client
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +89,9 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
 async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
     try:
+        supabase = await get_supabase()
         logger.info(f"Fetching Twilio numbers for user: {user_id}")
-        numbers = supabase_client().table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
+        numbers = await supabase.table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
         logger.debug(f"Retrieved {len(numbers.data)} numbers for user {user_id}")
         return numbers.data
     except Exception as e:

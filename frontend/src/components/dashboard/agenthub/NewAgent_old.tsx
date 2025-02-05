@@ -224,7 +224,7 @@ export function NewAgent({ knowledgeBaseItems = [], onAgentCreated }: NewAgentPr
         delete dataToSend.tag;
       }
 
-      const response = await fetch(`${API_BASE_URL}/agent/new_agent`, {
+      const response = await fetch(`${API_BASE_URL}/agents/new_agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

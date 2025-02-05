@@ -31,7 +31,7 @@ export default function CreateAgentFromURL() {
     setUrl(''); // Clear URL field immediately
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/auto_create_agent`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agents/auto_create_agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

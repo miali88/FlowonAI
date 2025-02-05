@@ -7,20 +7,20 @@ from pathlib import Path
 from uuid import uuid4
 from datetime import datetime
 
+import logging
+import asyncio
+
 from livekit.agents import llm
-from livekit.plugins import openai, anthropic
+from livekit.plugins import openai
 from livekit.agents.llm.chat_context import ChatMessage
 
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
-
-import logging
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -509,7 +509,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         raise Exception(f"Failed to process chat message: {str(e)}")
 
 # Add near other global variables
-supabase = supabase_client()
 
 async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """
@@ -517,6 +516,8 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """
     print(f"save_chat_history_to_supabase called with agent_id: {agent_id}, room_name: {room_name}")
     try:
+        supabase = await get_supabase()
+        
         if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
             logger.warning(f"No chat history found for agent_id: {agent_id}, room_name: {room_name}")
             return
@@ -552,7 +553,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
         print(f"Saving chat history to Supabase for room: {room_name}")
         print(f"Number of messages: {len(formatted_transcript)}")
         
-        response = supabase.table("conversation_logs").insert(conversation_data).execute()
+        response = await supabase.table("conversation_logs").insert(conversation_data).execute()
         print(f"Successfully saved chat history to Supabase")
         
         # Add error handling for empty transcripts

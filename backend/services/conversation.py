@@ -1,11 +1,10 @@
 from typing import List, Dict
 import logging
 from services.chat.chat import llm_response
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import get_supabase
 
 # Set up logging
 logger = logging.getLogger(__name__)
-supabase = supabase_client()
 
 async def transcript_summary(transcript: str, job_id: str) -> str | None:
     """
@@ -38,6 +37,8 @@ async def transcript_summary(transcript: str, job_id: str) -> str | None:
     logger.debug(f"Transcript string length: {len(transcript_str)}")
     
     try:
+        supabase = await get_supabase()
+
         logger.info("Calling llm_response...")
         logger.debug(f"System prompt: {system_prompt}")
         logger.debug(f"Transcript input (first 200 chars): {transcript_str[:200]}...")
@@ -58,7 +59,7 @@ async def transcript_summary(transcript: str, job_id: str) -> str | None:
         print(f"Transcript summary generated successfully: {summary[:100]}...")  # Log first 100 chars
         try:
             logger.info("Attempting to update Supabase...")
-            result = supabase.table("conversation_logs").update({
+            result = await supabase.table("conversation_logs").update({
                 "summary": summary
             }).eq("job_id", job_id).execute()
             logger.info(f"Summary inserted into summary table for job_id: {job_id}")

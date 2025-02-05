@@ -3,9 +3,7 @@ from fastapi import Request, HTTPException, APIRouter
 import logging
 import traceback
 from typing import Any
-from services.db.supabase_services import supabase_client
-
-supabase = supabase_client()
+from services.db.supabase_services import get_supabase
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -15,6 +13,8 @@ logger = logging.getLogger(__name__)
 async def update_settings(request: Request) -> dict[str, str]:
     print('\n\n /settings')
     try:
+        supabase = await get_supabase()
+
         data = await request.json()
         user_id = data.get('userId')
 
@@ -31,12 +31,7 @@ async def update_settings(request: Request) -> dict[str, str]:
             raise HTTPException(status_code=400, detail="No valid settings provided")
 
         # Update the user's settings in Supabase
-        response = (
-            supabase.table('users')
-            .update(update_data)
-            .eq('id', user_id)
-            .execute()
-        )
+        response = await supabase.table('users').update(update_data).eq('id', user_id).execute()
 
         if not response.data:
             logger.error("User not found")
@@ -55,15 +50,13 @@ async def update_settings(request: Request) -> dict[str, str]:
 async def get_settings(request: Request) -> dict[str, Any]:
     print('\n\n /settings')
     try:
+        supabase = await get_supabase()
+
         # Get user_id from query parameters
         user_id = request.query_params.get('userId')
         # Fetch both notification_settings and account_settings from Supabase
-        response = (
-            supabase.table('users')
-            .select('notification_settings,account_settings,user_plan')
-            .eq('id', user_id)
-            .execute()
-        )
+        response = await supabase.table('users')\
+            .select('notification_settings,account_settings,user_plan').eq('id', user_id).execute()
         
         if not response.data:
             logger.error("User not found")
