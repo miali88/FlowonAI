@@ -9,6 +9,7 @@ from services.db.supabase_services import supabase
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
     port=settings.REDIS_PORT,
+    username=settings.REDIS_USER,
     password=settings.REDIS_PASSWORD,
     db=settings.REDIS_DB,
     decode_responses=True
@@ -24,8 +25,13 @@ class RedisChatStorage:
     async def save_chat(agent_id: str, room_name: str, chat_data: Dict[str, Any]) -> None:
         """Save chat data to Redis with TTL"""
         key = RedisChatStorage.get_chat_key(agent_id, room_name)
+        
+        # Handle both dictionary and ChatHistory object cases
+        if hasattr(chat_data, 'to_dict'):
+            chat_data = chat_data.to_dict()
+        
         serialized_data = json.dumps({
-            "messages": [msg.__dict__ for msg in chat_data.get("messages", [])],
+            "messages": chat_data.get("messages", []),
             "response_metadata": chat_data.get("response_metadata", {}),
             "last_updated": datetime.utcnow().isoformat()
         })
@@ -50,6 +56,26 @@ class RedisChatStorage:
         """Delete chat data from Redis"""
         key = RedisChatStorage.get_chat_key(agent_id, room_name)
         await redis_client.delete(key)
+
+    @staticmethod
+    async def get_all_chats(agent_id: str) -> Dict[str, Any]:
+        """Get all chat data for a specific agent"""
+        pattern = f"chat:{agent_id}:*"
+        chats = {}
+        
+        async for key in redis_client.scan_iter(match=pattern):
+            # Extract room name from key
+            room_name = key.split(":")[-1]  # Get last part after colon
+            chat_data = await redis_client.get(key)
+            if chat_data:
+                try:
+                    chats[room_name] = json.loads(chat_data)
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to decode chat data for key: {key}")
+                    continue
+                
+        return chats
+
 
 class RedisRateLimiter:
     def __init__(self, key_prefix: str, max_requests: int, window_seconds: int = 60):

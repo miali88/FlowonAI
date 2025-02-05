@@ -53,7 +53,10 @@ const SUGGESTED_QUESTIONS = [
 const DEBUG_SHOW_FORM = false; // Set to true to always show the form for debugging
 const DEBUG_SHOW_CALENDLY = false; // Set to true to always show Calendly widget for debugging
 
-const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
+const TextWidget: React.FC<ChatInterfaceProps> = ({ 
+  agentId, 
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1' 
+}) => {
   console.log("Received suggestedQuestions:", SUGGESTED_QUESTIONS);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");

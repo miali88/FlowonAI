@@ -57,11 +57,12 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
     
     # Redis settings
-    REDIS_HOST: str = "redis-18595.c328.europe-west3-1.gce.redns.redis-cloud.com"
-    REDIS_PORT: int = 18595
-    REDIS_PASSWORD: str = "123456789"
-    REDIS_DB: int = 0
-    REDIS_TTL: int = 3600
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_USER: str
+    REDIS_PASSWORD: str
+    REDIS_DB: int
+    REDIS_TTL: int
     
     # Supabase
     SUPABASE_URL: str = ""
