@@ -23,8 +23,6 @@ load_dotenv()
 API_BASE_URL = os.getenv("DOMAIN")
 
 """ QUESTION & ANSWER """
-
-
 @llm.ai_callable(
     name="question_and_answer",
     description=(
@@ -101,8 +99,6 @@ async def question_and_answer(
         )
 
 """ LEAD GENERATION """
-# TODO: rename to present_form
-
 @llm.ai_callable(
     name="request_personal_data",
     description=(
@@ -130,7 +126,6 @@ async def request_personal_data(
      or the user has requested a callback """
 
     return "Form presented to user. Waiting for user to complete and submit form."
-
 
 """ CALENDAR MANAGEMENT """
 @llm.ai_callable(
@@ -314,6 +309,103 @@ async def transfer_call(
 
     return f"Call transfer initiated to {transfer_number}"
 
+""" GET PROPERTY DETAILS """
+@llm.ai_callable(
+    name="get_property_details",
+    description="Get comprehensive property information based on provided details",
+    auto_retry=True
+)
+async def get_property_details(
+    street_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Full street name of the property"
+        )
+    ],
+    postcode: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Postal code of the property location"
+        )
+    ],
+    number_of_bedrooms: Annotated[
+        int,
+        llm.TypeInfo(
+            description="Number of bedrooms in the property"
+        )
+    ],
+    street_number: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="Street number or house number"
+        )
+    ] = None,
+    property_type: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="Type of property (house, apartment, condo, townhouse, or other)"
+        )
+    ] = None,
+    address_street_line_1: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="First line of the street address"
+        )
+    ] = None,
+    address_street_line_2: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="Optional second line of the street address (e.g., apartment, suite, unit number)"
+        )
+    ] = None,
+    city: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="City where the property is located"
+        )
+    ] = None,
+    state: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="State or region where the property is located"
+        )
+    ] = None,
+    country: Annotated[
+        Optional[str],
+        llm.TypeInfo(
+            description="Country where the property is located"
+        )
+    ] = None
+) -> str:
+    """
+    Retrieves detailed property information based on the provided parameters.
+    Returns formatted property details or an error message if the property cannot be found.
+    """
+    logger.info(f"Fetching property details for {street_name}, {postcode}")
+    
+    try:
+        # Here you would implement the actual property lookup logic
+        # For now, returning a placeholder response
+        property_details = {
+            "street_name": street_name,
+            "postcode": postcode,
+            "number_of_bedrooms": number_of_bedrooms,
+            "street_number": street_number,
+            "property_type": property_type,
+            "address": {
+                "street_line_1": address_street_line_1,
+                "street_line_2": address_street_line_2,
+                "city": city,
+                "state": state,
+                "country": country
+            }
+        }
+        
+        return f"Property details found: {json.dumps(property_details, indent=2)}"
+        
+    except Exception as e:
+        logger.error(f"Error in get_property_details: {str(e)}", exc_info=True)
+        return "I apologize, but I encountered an error while retrieving the property details."
 
 class AgentFunctions(llm.FunctionContext):
     current_room_name = None
@@ -373,6 +465,9 @@ class AgentFunctions(llm.FunctionContext):
             self._register_ai_function(transfer_call)
             logger.info("Registered call transfer function")
 
+        if features.get('propertyDetails', {}).get('enabled', False):
+            self._register_ai_function(get_property_details)
+            logger.info("Registered property details function")
 
 async def trigger_show_chat_input(
     room_name: str,
@@ -443,7 +538,6 @@ async def trigger_show_chat_input(
                 exc_info=True
             )
             raise
-
 
 async def send_lead_notification(chat_message: dict) -> None:
     """ nylas email send here """
