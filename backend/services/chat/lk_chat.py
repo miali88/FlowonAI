@@ -5,17 +5,16 @@ from typing import List, Optional
 import pickle
 from pathlib import Path
 from uuid import uuid4
-from datetime import datetime
 
 from livekit.agents import llm
-from livekit.plugins import openai, anthropic
+from livekit.plugins import openai
 from livekit.agents.llm.chat_context import ChatMessage
 
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
 from services.composio import get_calendar_slots
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import supabase
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
 from services.redis_service import RedisChatStorage
@@ -518,8 +517,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]", response_id=response_id)
         raise Exception(f"Failed to process chat message: {str(e)}")
 
-# Add near other global variables
-supabase = supabase_client()
 
 async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """Save chat history to Supabase and clean up Redis when chat ends"""

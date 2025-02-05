@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any
 import redis.asyncio as redis
 from datetime import datetime
 from app.core.config import settings
-from app.db.supabase import supabase
+from services.db.supabase_services import supabase
 
 # Redis connection pool
 redis_client = redis.Redis(

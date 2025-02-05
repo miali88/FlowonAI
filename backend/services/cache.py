@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict
 from services.db.supabase_services import supabase_client
 from services.redis_service import agent_metadata_cache
 from services.composio import get_calendar_slots
@@ -30,11 +30,6 @@ kb_cache: Dict[str, dict] = {}
 
 
 """ AGENT METADATA CACHE """
-# The main cache dictionary
-agent_metadata_cache: List[Dict[str, dict]] = []
-
-
-# Update the function assignments to use the imported cache
 get_all_agents = agent_metadata_cache.get_all_agents
 get_agent_metadata = agent_metadata_cache.get_agent_metadata
 clear_cache = agent_metadata_cache.clear_cache

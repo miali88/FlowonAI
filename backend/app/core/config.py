@@ -34,12 +34,15 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DOMAIN: str = "localhost"
     API_BASE_URL: str = "http://localhost:8000/api/v1"
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
     
     # Project settings
     PROJECT_NAME: str = "Flowon AI"
     STACK_NAME: str = "fastapi_react"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
     SECRET_KEY: str = "secret_key"
+    DEV_MODE: bool = True
+    DEV_SERVER: str = ""
     
     # Docker settings
     DOCKER_IMAGE_BACKEND: str = "backend"
@@ -118,6 +121,24 @@ class Settings(BaseSettings):
     # Logging settings
     SENTRY_DSN: str = ""
     POSTHOG_API_KEY: str = ""
+
+    # Payment and Authentication
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_SIGNING_SECRET: str = ""
+    CLERK_SIGNING_SECRET: str = ""
+    CLERK_SECRET_KEY: str = ""
+    CLERK_JWT_KEY: str = ""
+    
+    # Integration APIs
+    N8N_API_KEY: str = ""
+    GREPTILE_API_KEY: str = ""
+    GITHUB_TOKEN: str = ""
+    PIPEDRIVE_API_KEY: str = ""
+    DEEPSEEK_API_KEY: str = ""
+    
+    # LiveKit SIP
+    LIVEKIT_SIP_HOST: str = ""
+    SIP_OUTBOUND_TRUNK_ID: str = ""
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod

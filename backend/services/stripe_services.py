@@ -5,7 +5,7 @@ import stripe
 from typing import Optional
 import os 
 from dotenv import load_dotenv
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import supabase
 import logging
 
 load_dotenv()
@@ -67,7 +67,7 @@ async def update_user_features(
         
         # First get the clerk_user_id from customer_id
         logger.debug(f"Fetching clerk_user_id for customer_id: {customer_id}")
-        response = await supabase_client.table('users').select('clerk_user_id').eq('stripe_customer_id', customer_id).execute()
+        response = supabase.table('users').select('clerk_user_id').eq('stripe_customer_id', customer_id).execute()
         
         if not response.data or len(response.data) == 0:
             logger.error(f"No user found for customer_id: {customer_id}")
@@ -96,7 +96,7 @@ async def update_user_features(
         logger.debug(f"Applying feature updates: {update_config['updates']} for table: {update_config['table']}")
         
         # Update the appropriate features table
-        response = await supabase_client.table(update_config["table"]).upsert({
+        response = supabase.table(update_config["table"]).upsert({
             "clerk_user_id": clerk_user_id,
             **update_config["updates"]
         }).execute()

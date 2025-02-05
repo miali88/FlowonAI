@@ -1,23 +1,8 @@
 # flake8: noqa: E501
-from dotenv import load_dotenv
-import os
 import logging
 from fastapi import HTTPException
-from supabase import create_client, Client
-from app.core.config import settings
+from services.db.supabase_services import supabase
 from typing import Any, Dict
-
-
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-supabase: Client = create_client(
-    settings.SUPABASE_URL,
-    settings.SUPABASE_SERVICE_ROLE_KEY
-)
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
@@ -193,7 +178,6 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
   - Thank them for their time and express excitement about their journey with Flowon AI
 """
 
-
 async def create_agent(data: Dict) -> Any:
     print(f"data: {data}")
 
@@ -211,11 +195,9 @@ async def create_agent(data: Dict) -> Any:
     print(f"\n\nnew_agent: {new_agent}")
     return new_agent
 
-
 async def get_agents(user_id: str) -> Any:
     agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
     return agents
-
 
 async def delete_agent(agent_id: int, user_id: str) -> Any:
     try:
@@ -224,7 +206,6 @@ async def delete_agent(agent_id: int, user_id: str) -> Any:
     except Exception as e:
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 async def update_agent(agent_id: int, data: dict) -> Any:
     try:
@@ -242,16 +223,15 @@ async def update_agent(agent_id: int, data: dict) -> Any:
     except Exception as e:
         logger.error(f"Error updating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-async def get_agent_content(purpose: str) -> Any:
-    if purpose == 'onboarding':
-        return sys_prompt_onboarding
-    elif purpose == 'general':
-        return sys_prompt_scaffold
-    else:
-        raise HTTPException(status_code=400, detail="Invalid purpose")
-
+    
+async def get_agent_content(agent_id: str) -> Any:
+    logger.info(f"Getting agent content for agent_id: {agent_id}")
+    try:
+        content = supabase.table('agents').select('*').eq('id', agent_id).execute()
+        return content
+    except Exception as e:
+        logger.error(f"Error getting agent content: {str(e)}")
+        raise
 
 async def get_agent_completion(purpose: str, prompt: str) -> str:
     try:

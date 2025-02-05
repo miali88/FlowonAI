@@ -12,7 +12,7 @@ import asyncio
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from services.db.supabase_services import supabase_client
+from services.db.supabase_services import supabase
 from services.livekit.inbound_trunk import main
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Dial
@@ -119,7 +119,7 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
 async def fetch_twilio_numbers(user_id: str) -> list:
     # Select only the telephony_numbers column for the specific user
-    result = supabase_client().table('users').select('telephony_numbers').eq('id', user_id).execute()
+    result = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
     if not result.data or not result.data[0].get('telephony_numbers'):
         return []
     return result.data[0]['telephony_numbers']
