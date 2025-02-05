@@ -13,6 +13,7 @@ from tiktoken import encoding_for_model
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from fastapi import HTTPException
+from backend.services.redis_service import scrape_limiter, crawl_limiter
 
 load_dotenv()
 
@@ -141,64 +142,22 @@ CRAWL_RATE_LIMIT = 3    # per minute
 MAX_PAGES = 3000
 
 
-class RateLimiter:
-    def __init__(self, calls_per_minute: int, name: str = "") -> None:
-        self.calls_per_minute = calls_per_minute
-        self.calls: List[datetime] = []
-        self.name = name
-
-    async def acquire(self) -> None:
-        now = datetime.now()
-
-        # Clean up old calls
-        original_calls = len(self.calls)
-        self.calls = [
-            call_time for call_time in self.calls
-            if now - call_time < timedelta(minutes=1)
-        ]
-        cleaned_calls = len(self.calls)
-
-        logger.info(
-            f"{self.name} Limiter - Current calls in window: "
-            f"{len(self.calls)}/{self.calls_per_minute}"
-        )
-
-        if cleaned_calls < original_calls:
-            logger.info(
-                f"{self.name} Limiter - Cleaned up "
-                f"{original_calls - cleaned_calls} old calls"
-            )
-
-        if len(self.calls) >= self.calls_per_minute:
-            wait_time = 60 - (now - self.calls[0]).total_seconds()
-            if wait_time > 0:
-                logger.info(
-                    f"{self.name} Limiter - Rate limit reached. "
-                    f"Waiting {wait_time:.2f} seconds"
-                )
-                await asyncio.sleep(wait_time)
-
-        self.calls.append(now)
-        logger.info(
-            f"{self.name} Limiter - Added new call. "
-            f"Total calls in window: {len(self.calls)}"
-        )
-
-
-# Create named limiters
-scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
-crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
-
-
 @retry(
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=4, max=20)
 )
 async def scrape_with_retry(url: str) -> Dict[str, Any]:
     logger.info(f"Scraping URL: {url}")
+    
+    # Add rate limiting check
+    if not await scrape_limiter.acquire():
+        wait_info = await scrape_limiter.get_remaining()
+        logger.info(f"Rate limit reached. Remaining: {wait_info['remaining']}, Reset at: {wait_info['reset_time']}")
+        await asyncio.sleep(60)  # Wait for the next window
+        
     try:
         run_cfg = CrawlerRunConfig(
-            markdown_generator=DefaultMarkdownGenerator()  # Enable markdown generation
+            markdown_generator=DefaultMarkdownGenerator()
         )
         browser_config=BrowserConfig(
             browser_type="chromium",
@@ -309,20 +268,41 @@ async def scrape_url(
 
 async def map_url(url: str) -> List[str]:
     logger.info(f"Starting URL mapping for: {url}")
-
+    
+    # Add rate limiting check
+    if not await crawl_limiter.acquire():
+        wait_info = await crawl_limiter.get_remaining()
+        logger.info(f"Rate limit reached. Remaining: {wait_info['remaining']}, Reset at: {wait_info['reset_time']}")
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit reached. Please try again later."
+        )
+        
     try:
         # Configure the crawler with specific options
         run_cfg = CrawlerRunConfig(
-            markdown_generator=DefaultMarkdownGenerator()
+            markdown_generator=DefaultMarkdownGenerator(),
+            follow_links=True,  # Enable following links
+            max_depth=2,  # Limit crawl depth
+            ignore_robots_txt=True  # Skip robots.txt check
         )
-        browser_config=BrowserConfig(
+        
+        browser_config = BrowserConfig(
             browser_type="chromium",
             headless=True,
-            extra_args=["--disable-gpu"]
+            extra_args=[
+                "--disable-gpu",
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
         )
+        
         # Configure the dispatcher with rate limiting
         dispatcher = SemaphoreDispatcher(
-            max_session_permit=MAX_PAGES
+            max_session_permit=MAX_PAGES,
+            rate_limiter=RateLimiter(
+                requests_per_second=2  # Limit to 2 requests per second
+            )
         )
         
         logger.info("Initializing crawler...")
@@ -332,29 +312,49 @@ async def map_url(url: str) -> List[str]:
         ) as crawler:
             logger.info("Crawler started successfully")
             
-            result = await crawler.arun(
-                url=url,
-                config=run_cfg,
-                dispatcher=dispatcher
-            )
+            try:
+                result = await crawler.arun(
+                    url=url,
+                    config=run_cfg,
+                    dispatcher=dispatcher
+                )
+            except Exception as crawler_error:
+                logger.error(f"Crawler execution error: {str(crawler_error)}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to crawl URL: {str(crawler_error)}"
+                )
             
             if result.success:
                 # Extract URLs from the links dictionary
-                all_urls = []
+                all_urls = set()  # Use set to avoid duplicates
                 if result.links:
                     for link_type, links in result.links.items():
-                        extracted_urls = [link['href'] for link in links if 'href' in link]
-                        all_urls.extend(extracted_urls) 
+                        for link in links:
+                            if 'href' in link:
+                                href = link['href']
+                                # Only include URLs from the same domain
+                                parsed_url = urlparse(url)
+                                parsed_href = urlparse(href)
+                                if parsed_href.netloc == parsed_url.netloc:
+                                    all_urls.add(href)
                 
-                logger.info(f"Successfully mapped URL. Found {len(all_urls)} URLs")
-                return all_urls
+                logger.info(f"Successfully mapped URL. Found {len(all_urls)} unique URLs")
+                return list(all_urls)
             else:
-                logger.error(f"Failed to map URL {url}: {result.error_message}")
-                return []
+                error_msg = f"Failed to map URL {url}: {result.error_message}"
+                logger.error(error_msg)
+                raise HTTPException(
+                    status_code=400,
+                    detail=error_msg
+                )
                 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error mapping URL {url}: {str(e)}")
+        error_msg = f"Error mapping URL {url}: {str(e)}"
+        logger.error(error_msg)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to map URL: {str(e)}"
+            detail=error_msg
         )

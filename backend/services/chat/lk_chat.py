@@ -18,6 +18,7 @@ from services.composio import get_calendar_slots
 from services.db.supabase_services import supabase_client
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
+from services.redis_service import RedisChatStorage
 
 import logging
 import asyncio
@@ -55,25 +56,23 @@ class DataSource:
     data_type: str
 
 async def init_new_chat(agent_id: str, room_name: str):
-    chat_histories[agent_id][room_name] = ChatHistory()
-
-    # Initialize the LLM instance first
+    # Initialize new ChatHistory
+    chat_history = ChatHistory()
+    
+    # Initialize the LLM instance
     llm_instance = openai.LLM(
         model="gpt-4o",
     )
-
-    # Store the llm_instance in chat history immediately
-    chat_histories[agent_id][room_name].llm_instance = llm_instance
+    chat_history.llm_instance = llm_instance
 
     # Fetch agent configuration
     agent_metadata = await get_agent_metadata(agent_id)
-    print(f"agent_metadata: {agent_metadata['agentName']}")
     if not agent_metadata:
         raise ValueError(f"Agent {agent_id} not found")
 
     # Create chat context with history
     chat_ctx = llm.ChatContext()
-    chat_histories[agent_id][room_name].chat_ctx = chat_ctx  # Store chat_ctx immediately
+    chat_history.chat_ctx = chat_ctx
     
     # Ensure system instructions are not empty
     if agent_metadata.get('instructions'):
@@ -315,6 +314,9 @@ async def init_new_chat(agent_id: str, room_name: str):
         print(f"Registered calendar function")
         logger.info(f"Registered calendar function")
 
+    # Save initial chat state to Redis
+    await RedisChatStorage.save_chat(agent_id, room_name, chat_history.__dict__)
+    
     return llm_instance, chat_ctx, fnc_ctx
 
 @dataclass
@@ -369,7 +371,7 @@ class ChatHistory:
         # print(f"Stored RAG results for {response_id}: {rag_results}")
 
 # Global chat history store
-chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
+# chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
 
 async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) -> List[dict]:
     """
@@ -416,30 +418,35 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
 
 
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
-    print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
-    current_assistant_message = ""
-    chunk_count = 0
-    response_id = str(uuid4())
-    print(f"response_id in lk_chat_process : {response_id}")
-
-    try:
-        # Initialize or get existing chat history using both agent_id and room_name
-        if agent_id not in chat_histories:
-            print(f"Initializing new chat history for agent_id: {agent_id}")
-            chat_histories[agent_id] = {}
-        if room_name not in chat_histories[agent_id]:
-            print(f"Initializing new chat history for room_name: {room_name}")
-            llm_instance, chat_ctx, fnc_ctx = await init_new_chat(agent_id, room_name)
-            chat_histories[agent_id][room_name] = ChatHistory()
-            chat_histories[agent_id][room_name].llm_instance = llm_instance
-            chat_histories[agent_id][room_name].chat_ctx = chat_ctx
-            chat_histories[agent_id][room_name].fnc_ctx = fnc_ctx
-
-        chat_history = chat_histories[agent_id][room_name]
-        llm_instance = chat_history.llm_instance
-        chat_ctx = chat_history.chat_ctx
-        fnc_ctx = chat_history.fnc_ctx
+    # Get existing chat from Redis or create new
+    chat_data = await RedisChatStorage.get_chat(agent_id, room_name)
+    if not chat_data:
+        llm_instance, chat_ctx, fnc_ctx = await init_new_chat(agent_id, room_name)
+        chat_history = ChatHistory()
+        chat_history.llm_instance = llm_instance
+        chat_history.chat_ctx = chat_ctx
+        chat_history.fnc_ctx = fnc_ctx
+    else:
+        # Reconstruct ChatHistory from Redis data
+        chat_history = ChatHistory()
+        chat_history.messages = [ChatMessage(**msg) for msg in chat_data["messages"]]
+        chat_history.response_metadata = chat_data["response_metadata"]
         
+        # Reinitialize LLM and contexts if needed
+        if not chat_history.llm_instance:
+            llm_instance, chat_ctx, fnc_ctx = await init_new_chat(agent_id, room_name)
+            chat_history.llm_instance = llm_instance
+            chat_history.chat_ctx = chat_ctx
+            chat_history.fnc_ctx = fnc_ctx
+
+    # Process message and update chat history
+    try:
+        print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
+        current_assistant_message = ""
+        chunk_count = 0
+        response_id = str(uuid4())
+        print(f"response_id in lk_chat_process : {response_id}")
+
         # Add the new message directly through chat_history
         chat_history.add_message("user", message)
 
@@ -502,6 +509,9 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message, response_id=response_id)
 
+        # Save updated chat state to Redis after each message
+        await RedisChatStorage.save_chat(agent_id, room_name, chat_history.__dict__)
+
     except Exception as e:
         logger.error(f"Error in lk_chat_process: {str(e)}", exc_info=True)
         if current_assistant_message:
@@ -512,19 +522,16 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
 supabase = supabase_client()
 
 async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
-    """
-    Save the chat history to Supabase conversation_logs table when a chat session ends.
-    """
-    print(f"save_chat_history_to_supabase called with agent_id: {agent_id}, room_name: {room_name}")
+    """Save chat history to Supabase and clean up Redis when chat ends"""
     try:
-        if agent_id not in chat_histories or room_name not in chat_histories[agent_id]:
+        # Get chat history from Redis
+        chat_data = await RedisChatStorage.get_chat(agent_id, room_name)
+        if not chat_data:
             logger.warning(f"No chat history found for agent_id: {agent_id}, room_name: {room_name}")
             return
 
-        chat_history = chat_histories[agent_id][room_name]
-        
         # Use the helper function to format the transcript
-        formatted_transcript = format_transcript_messages(chat_history.messages)
+        formatted_transcript = format_transcript_messages(chat_data["messages"])
 
         # Check if there are actual messages to save
         if not formatted_transcript:
@@ -575,9 +582,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
             
             # Continue with cleanup immediately
             print("deleting chat history", room_name)
-            del chat_histories[agent_id][room_name]
-            if not chat_histories[agent_id]:
-                del chat_histories[agent_id]
+            await RedisChatStorage.delete_chat(agent_id, room_name)
             
         except Exception as e:
             logger.error(f"Error saving chat history: {str(e)}", exc_info=True)
