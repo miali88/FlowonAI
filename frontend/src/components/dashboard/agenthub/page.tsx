@@ -103,7 +103,7 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/agent/${selectedAgent.id}`, {
+      const response = await fetch(`${API_BASE_URL}/agents/${selectedAgent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agents/${selectedAgent.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +210,7 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/agent/`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           'x-user-id': userId
         }
@@ -267,7 +267,7 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/agent/`, {
+      const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
           'x-user-id': userId
         }
