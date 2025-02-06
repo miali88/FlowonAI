@@ -127,7 +127,6 @@ async def request_personal_data(
 
     return "Form presented to user. Waiting for user to complete and submit form."
 
-
 """ PROPERTY DETAILS """
 @llm.ai_callable(
     name="property_details",

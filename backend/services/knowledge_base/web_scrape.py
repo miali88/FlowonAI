@@ -1,15 +1,16 @@
 import asyncio, logging, aiohttp, os
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
-from requests.exceptions import RequestException
 from datetime import datetime, timedelta
-from tiktoken import encoding_for_model
-from dotenv import load_dotenv
-from fastapi import HTTPException
 
+from dotenv import load_dotenv
+from requests.exceptions import RequestException
+from tiktoken import encoding_for_model
+from fastapi import HTTPException
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 from services.db.supabase_services import get_supabase
 
 load_dotenv()
@@ -121,7 +122,6 @@ async def sliding_window_chunking(
 
 async def insert_to_db(data: Dict[str, Any]) -> None:
     try:
-
         supabase = await get_supabase()
         # Extract headers data
         headers_data = {
@@ -142,24 +142,16 @@ async def insert_to_db(data: Dict[str, Any]) -> None:
             "root_url": data["root_url"]
         }
 
-        # Insert into user_web_data
-        web_data_result = await asyncio.to_thread(
-            lambda: supabase.table('user_web_data')
-                .insert(main_data)
-                .execute()
-        )
+        # Insert into user_web_data - now properly awaited
+        web_data_result = await supabase.table('user_web_data').insert(main_data).execute()
         
         if not web_data_result.data:
             raise Exception("Failed to insert into user_web_data")
             
         logger.info(f"Successfully inserted data into user_web_data for URL: {main_data['url']}")
 
-        # Insert into user_web_data_headers
-        headers_result = await asyncio.to_thread(
-            lambda: supabase.table('user_web_data_headers')
-                .insert(headers_data)
-                .execute()
-        )
+        # Insert into user_web_data_headers - now properly awaited
+        headers_result = await supabase.table('user_web_data_headers').insert(headers_data).execute()
         
         if not headers_result.data:
             raise Exception("Failed to insert into user_web_data_headers")

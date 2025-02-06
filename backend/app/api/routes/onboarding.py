@@ -20,12 +20,10 @@ onboarding_table_to_steps = {
     "user_integrations": "INTEGRATE_FIRST_APP",
 }
 
-supabase = None
-
 @router.get("/")
 async def onboarding(current_user: str = Depends(get_current_user)):
-    if not supabase:
-        supabase = await get_supabase()
+    # Initialize supabase directly
+    supabase = await get_supabase()
     
     onboarding_checklist = await supabase.table("onboarding_steps").select("*").eq("user_id", current_user.id).execute()
     onboarding_checklist = onboarding_checklist.data[0]
@@ -38,18 +36,25 @@ async def onboarding(current_user: str = Depends(get_current_user)):
 async def onboarding_form(request: Request):
     print("POST onboarding/")
     data = await request.json()
-    print(data)
-
-    if not supabase:
-        supabase = await get_supabase()
+    print(f"Fields: {list(data.keys())}")
+    print(f"Data: {data}")
+    # Initialize supabase directly
+    supabase = await get_supabase()
     
     # Get current onboarding status
-    onboarding_completed = await supabase.table("users").select("onboarding_completed").eq("id", data["userId"]).execute()
+    if data.get("table") == "agents":
+        user_id = data.get("record")
+        user_id = user_id.get("userId")
+    else:
+        user_id = data.get("record")
+        user_id = user_id.get("user_id")
+    
+    onboarding_completed = await supabase.table("users").select("onboarding_completed").eq("id", user_id).execute()
     onboarding_completed = onboarding_completed.data[0]["onboarding_completed"]
 
     if not onboarding_completed:
         # Get user's onboarding checklist
-        onboarding_checklist = await supabase.table("onboarding_steps").select("*").eq("user_id", data["userId"]).execute()
+        onboarding_checklist = await supabase.table("onboarding_steps").select("*").eq("user_id", user_id).execute()
         onboarding_checklist = onboarding_checklist.data[0]
 
         # Find corresponding step for the table
@@ -66,7 +71,7 @@ async def onboarding_form(request: Request):
                 # Update onboarding steps
                 await supabase.table("onboarding_steps").update(
                     updates
-                ).eq("user_id", data["userId"]).execute()
+                ).eq("user_id", user_id).execute()
                 
                 return {"success": True, "message": f"Updated {step_name} status"}
         else:
