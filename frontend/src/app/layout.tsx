@@ -1,8 +1,9 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { Metadata } from 'next';
-import Script from 'next/script';
-import { Providers } from './providers';
+import { Metadata } from "next";
+import Script from "next/script";
+import { Providers } from "./providers";
+import OnboardingSteps from "./OnboardingSteps";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -16,10 +17,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Flowon AI - Create Your Own Chatbot Agents',
-  description: 'Create your own chatbot agents with Flowon AI. Our platform allows you to create, train, and deploy your own chatbot agents with ease.',
+  title: "Flowon AI - Create Your Own Chatbot Agents",
+  description:
+    "Create your own chatbot agents with Flowon AI. Our platform allows you to create, train, and deploy your own chatbot agents with ease.",
   icons: {
-    icon: '/favicon.ico',
+    icon: "/favicon.ico",
   },
 };
 
@@ -29,7 +31,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <head>
         <Script
           id="Cookiebot"
@@ -53,6 +59,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <Providers>
+          <OnboardingSteps />
           {children}
         </Providers>
       </body>

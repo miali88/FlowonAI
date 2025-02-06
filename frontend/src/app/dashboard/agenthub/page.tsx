@@ -25,7 +25,6 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { VOICE_OPTIONS } from "./workspace/agentSettings";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -56,7 +55,7 @@ const AgentHub = () => {
       data_type: string;
     }>
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoadingUserInfo, setIsLoadingUserInfo] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -95,21 +94,6 @@ const AgentHub = () => {
     }
   }, [userId]);
   const [isPageLoading, setIsPageLoading] = useState(true);
-
-  React.useEffect(() => {
-    if (!isLoaded) {
-      console.log("Still loading user data...");
-      return;
-    }
-
-    if (user) {
-      console.log("User Name:", user.fullName);
-      console.log("First Name:", user.firstName);
-      console.log("Last Name:", user.lastName);
-    } else {
-      console.log("User is authenticated: false");
-    }
-  }, [user, isLoaded]);
 
   const handleAgentSelect = (agent: Agent) => {
     console.log("Selected Agent with features:", agent.features);
@@ -312,13 +296,6 @@ const AgentHub = () => {
     // Update URL without full page reload
     window.history.pushState({}, "", "/dashboard/agenthub");
   }, []);
-
-  useEffect(() => {
-    if (selectedAgent) {
-      console.log("Selected Agent:", selectedAgent);
-      console.log("Selected Agent Features:", selectedAgent.features);
-    }
-  }, [selectedAgent]);
 
   const refreshAgents = useCallback(async () => {
     if (!userId) return;
