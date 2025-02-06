@@ -209,25 +209,32 @@ async def init_new_chat(agent_id: str, room_name: str):
                 text=rag_prompt
             )
 
-            # Add debug logging to see full chat context
-            print("\n=== Chat Context Before RAG Response ===")
-            for msg in chat_ctx.messages:
-                print(f"Role: {msg.role}")
-                print(f"Content: {msg.content}")
-                print("---")
+            # # Add debug logging to see full chat context
+            # print("\n=== Chat Context Before RAG Response ===")
+            # for msg in chat_ctx.messages:
+            #     print(f"Role: {msg.role}")
+            #     print(f"Content: {msg.content}")
+            #     print("---")
 
             response_stream = llm_instance.chat(chat_ctx=chat_ctx)
             
             # Then yield the actual response chunks
             async for chunk in response_stream:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                # Check if choices exist and are not empty
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    if chunk.choices[0].delta.content:
+                        yield chunk.choices[0].delta.content
+                else:
+                    logger.debug(f"Received chunk without content: {chunk}")
+                    continue
             
 
 
         except Exception as e:
             logger.error(f"Error in question_and_answer: {str(e)}", exc_info=True)
             yield "I apologize, but I encountered an error while searching for an answer to your question."
+
+
 
     """ CALENDAR MANAGEMENT """
     @llm.ai_callable(
@@ -414,7 +421,6 @@ async def get_chat_rag_results(agent_id: str, room_name: str, response_id: str) 
         for source in unique_sources
     ]
 
-
 async def lk_chat_process(message: str, agent_id: str, room_name: str):
     print(f"lk_chat_process called with message: {message}, agent_id: {agent_id}, room_name: {room_name}")
     current_assistant_message = ""
@@ -507,8 +513,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message + " [Message interrupted due to error]", response_id=response_id)
         raise Exception(f"Failed to process chat message: {str(e)}")
-
-# Add near other global variables
 
 async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
     """
