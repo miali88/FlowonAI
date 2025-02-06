@@ -37,7 +37,12 @@ export default function OnboardingSteps() {
             headers,
           });
           const data = await response.json();
-          setSteps(data);
+          // Transform the response data into OnboardingStep[] format
+          const transformedSteps: OnboardingStep[] = Object.entries(data).map(([key, value]) => ({
+            step: key.toUpperCase(),
+            isCompleted: value as boolean
+          }));
+          setSteps(transformedSteps);
         }
       } catch (error) {
         console.error("Failed to fetch onboarding status:", error);
@@ -62,10 +67,10 @@ export default function OnboardingSteps() {
   const progressPercentage = (completedSteps / totalSteps) * 100;
 
   const stepTitles: { [key: string]: string } = {
-    CREATE_AGENT: "Talk to the Agent Wizard",
+    CREATE_AGENT: "Create an AI agent",
     KNOWLEDGE_BASE_ADD: "Add data to the knowledge base",
-    FIRST_AGENT_INTERACTION: "Make your first test call",
-    INTEGRATE_FIRST_APP: "Set up integrations",
+    FIRST_AGENT_INTERACTION: "Have a chat or call with an agent",
+    INTEGRATE_FIRST_APP: "Integrate your agent with an app",
   };
 
   const stepDescriptions: { [key: string]: string } = {
