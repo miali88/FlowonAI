@@ -35,6 +35,11 @@ interface Source {
   source_file?: string;
 }
 
+interface ChatData {
+  messages: Array<any>;
+  // ... other chat data properties
+}
+
 const LoadingBubbles = () => (
   <div className={styles.loadingBubbles} data-loading-spinner>
     <div className={styles.bubble}></div>
@@ -67,7 +72,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [showForm, setShowForm] = useState(false);
   const [activeSuggestions, setActiveSuggestions] =
     useState<string[]>(SUGGESTED_QUESTIONS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(
     null
   );
@@ -93,6 +98,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
   const [dislikedMessages, setDislikedMessages] = useState<
     Record<string, boolean>
   >({});
+  const [chatData, setChatData] = useState<ChatData | null>(null);
+  const [currentResponseId, setCurrentResponseId] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -202,6 +209,39 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     }
   }, [agentName]);
 
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Generate a consistent room name based on agent and user
+        const roomName = `chat_${agentId}_${Date.now()}`; // You may want to use a more sophisticated method
+        
+        // Check for existing chat
+        const response = await fetch(`${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${roomName}`);
+        const data = await response.json();
+        
+        if (data.exists && data.chat_data) {
+          // Use existing chat data
+          setChatData(data.chat_data);
+          console.log('Retrieved existing chat:', data.chat_data);
+        } else {
+          // Initialize new chat
+          // Your existing chat initialization logic here
+          console.log('Creating new chat session');
+        }
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (agentId && apiBaseUrl) {
+      initializeChat();
+    }
+  }, [agentId, apiBaseUrl]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -259,6 +299,28 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
 
             if (content === "[DONE]") {
               console.log("Complete response:", accumulatedResponse);
+              
+              // Save complete response to Redis
+              try {
+                await fetch(`${apiBaseUrl}/chat/save-response`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    agent_id: agentId,
+                    room_name: roomName,
+                    response: {
+                      role: "assistant",
+                      content: accumulatedResponse,
+                      response_id: currentResponseId
+                    }
+                  }),
+                });
+                console.log("✅ Saved complete response to Redis");
+              } catch (saveError) {
+                console.error("Failed to save complete response:", saveError);
+              }
               break;
             }
 
@@ -267,7 +329,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
               if (data.response?.answer) {
                 const newText = data.response.answer;
                 const responseId = data.response?.response_id;
-                const hasSource = data.response?.has_source;
+                setCurrentResponseId(responseId);
                 accumulatedResponse += newText;
 
                 // Check if the bot's response should trigger Calendly
@@ -279,7 +341,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                   if (lastMessage.isBot) {
                     lastMessage.text = accumulatedResponse;
                     lastMessage.responseId = responseId;
-                    lastMessage.hasSource = hasSource;
+                    lastMessage.hasSource = data.response?.has_source;
                   }
                   return newMessages;
                 });
@@ -549,6 +611,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       // You could add error handling UI here
     }
   };
+
+  if (isLoading) {
+    return <div>Loading chat...</div>;
+  }
 
   return (
     <div

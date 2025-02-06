@@ -76,6 +76,20 @@ class RedisChatStorage:
                 
         return chats
 
+    @staticmethod
+    async def get_chat_if_exists(agent_id: str, room_name: str) -> Optional[Dict[str, Any]]:
+        """Get existing chat data if it exists in Redis"""
+        key = RedisChatStorage.get_chat_key(agent_id, room_name)
+        chat_data = await redis_client.get(key)
+        
+        if chat_data:
+            try:
+                return json.loads(chat_data)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to decode chat data for key: {key}")
+                return None
+        return None
+
 
 class RedisRateLimiter:
     def __init__(self, key_prefix: str, max_requests: int, window_seconds: int = 60):

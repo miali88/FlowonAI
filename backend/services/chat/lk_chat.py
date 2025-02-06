@@ -371,6 +371,7 @@ class ChatMessage:
         """Convert the ChatMessage instance to a dictionary"""
         return asdict(self)
 
+@dataclass
 class ChatHistory:
     def __init__(self):
         self.messages: List[ChatMessage] = []
@@ -378,35 +379,45 @@ class ChatHistory:
         self.llm_instance = None
         self.chat_ctx = None
         self.fnc_ctx = None
+        print("ChatHistory initialized")
 
     def to_dict(self):
         """Convert the ChatHistory instance to a dictionary"""
-        return {
+        result = {
             "messages": [msg.to_dict() for msg in self.messages],
             "response_metadata": {
                 k: v.to_dict() if hasattr(v, 'to_dict') else v 
                 for k, v in self.response_metadata.items()
             }
         }
+        print(f"ChatHistory.to_dict() called. Result: {json.dumps(result, indent=2)}")
+        return result
 
     def add_message(self, role: str, content: str, name: str = None, response_id: str = None):
         """Add a message to the chat history"""
         message = ChatMessage(role=role, content=content, name=name, response_id=response_id)
         self.messages.append(message)
+        print(f"Added message to ChatHistory: role={role}, content={content[:50]}..., response_id={response_id}")
 
     def add_rag_results(self, response_id: str, rag_results: List[dict]):
         """Add RAG results to the response metadata"""
+        print(f"Adding RAG results for response_id {response_id}: {json.dumps(rag_results, indent=2)}")
+        
         if response_id not in self.response_metadata:
+            print(f"Creating new ResponseMetadata for {response_id}")
             self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
         
         if isinstance(self.response_metadata[response_id], dict):
-            # Convert dict to ResponseMetadata if needed
+            print(f"Converting dict to ResponseMetadata for {response_id}")
             self.response_metadata[response_id] = ResponseMetadata(
                 response_id=response_id,
                 rag_results=rag_results
             )
         else:
+            print(f"Updating existing ResponseMetadata for {response_id}")
             self.response_metadata[response_id].rag_results = rag_results
+        
+        print(f"Current response_metadata state: {json.dumps(self.response_metadata, default=lambda x: x.to_dict() if hasattr(x, 'to_dict') else str(x), indent=2)}")
 
 # Global chat history store
 # chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
