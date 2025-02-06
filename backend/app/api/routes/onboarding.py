@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
 
-
 router = APIRouter()
 
 onboarding_steps = [

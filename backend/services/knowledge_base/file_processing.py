@@ -14,7 +14,6 @@ from backend.services.knowledge_base.vectorise_data import kb_item_to_chunks
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 async def process_file(file: UploadFile) -> Any:
     logger.info(f"Processing file: {file.filename}")
 
@@ -52,7 +51,6 @@ async def process_file(file: UploadFile) -> Any:
         logger.error(f"Error processing file: {str(e)}")
         raise
 
-
 async def process_pdf(file: UploadFile) -> str:
     logger.info("Processing PDF file")
 
@@ -62,7 +60,6 @@ async def process_pdf(file: UploadFile) -> str:
     logger.info(f"PDF processed. Number of pages: {len(pdf_reader.pages)}")
     return content
 
-
 async def process_docx(file: UploadFile) -> str:
     logger.info("Processing DOCX file")
     docx_content = await file.read()
@@ -70,7 +67,6 @@ async def process_docx(file: UploadFile) -> str:
     content = "\n".join(paragraph.text for paragraph in doc.paragraphs)
     logger.info(f"DOCX processed. Number of paragraphs: {len(doc.paragraphs)}")
     return content
-
 
 async def process_excel(file: UploadFile) -> list[dict]:
     logger.info("Processing Excel file")
@@ -111,6 +107,7 @@ async def process_csv(file: UploadFile) -> list[dict]:
     logger.info("CSV processed successfully")
     return content  # Returns a list of JSON-like dictionaries
 
+""" ENTRY POINT """
 async def process_and_store_file(
     file: UploadFile,
     user_id: str,
@@ -125,6 +122,7 @@ async def process_and_store_file(
     # Get supabase client
     supabase = await get_supabase()
     
+    """ Vectorising data """
     if is_tabular:
         # Create parent record
         parent_item = await supabase.table('user_text_files').insert({
@@ -140,7 +138,7 @@ async def process_and_store_file(
         
         # Batch insert rows into a new table for tabular data
         rows_to_insert = [{
-            "parent_id": parent_id,
+            "file_id": parent_id,
             "user_id": user_id,
             "row_data": row,
             "file_name": file.filename,
