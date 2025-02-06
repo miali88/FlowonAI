@@ -1,18 +1,16 @@
+import asyncio, logging, aiohttp, os
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
-import asyncio
-from datetime import datetime, timedelta
-import logging
-import aiohttp
-from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
-import os
-from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
-from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
+from datetime import datetime, timedelta
 from tiktoken import encoding_for_model
-from supabase import create_client, Client
 from dotenv import load_dotenv
 from fastapi import HTTPException
+
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
+from tenacity import retry, stop_after_attempt, wait_exponential
+from services.db.supabase_services import get_supabase
 
 load_dotenv()
 
@@ -22,6 +20,59 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+JINA_API_KEY = os.getenv('JINA_API_KEY')
+
+# Rate limit constants
+SCRAPE_RATE_LIMIT = 20  # per minute
+CRAWL_RATE_LIMIT = 3    # per minute
+MAX_PAGES = 3000
+
+class RateLimiter:
+    def __init__(self, calls_per_minute: int, name: str = "") -> None:
+        self.calls_per_minute = calls_per_minute
+        self.calls: List[datetime] = []
+        self.name = name
+
+    async def acquire(self) -> None:
+        now = datetime.now()
+
+        # Clean up old calls
+        original_calls = len(self.calls)
+        self.calls = [
+            call_time for call_time in self.calls
+            if now - call_time < timedelta(minutes=1)
+        ]
+        cleaned_calls = len(self.calls)
+
+        logger.info(
+            f"{self.name} Limiter - Current calls in window: "
+            f"{len(self.calls)}/{self.calls_per_minute}"
+        )
+
+        if cleaned_calls < original_calls:
+            logger.info(
+                f"{self.name} Limiter - Cleaned up "
+                f"{original_calls - cleaned_calls} old calls"
+            )
+
+        if len(self.calls) >= self.calls_per_minute:
+            wait_time = 60 - (now - self.calls[0]).total_seconds()
+            if wait_time > 0:
+                logger.info(
+                    f"{self.name} Limiter - Rate limit reached. "
+                    f"Waiting {wait_time:.2f} seconds"
+                )
+                await asyncio.sleep(wait_time)
+
+        self.calls.append(now)
+        logger.info(
+            f"{self.name} Limiter - Added new call. "
+            f"Total calls in window: {len(self.calls)}"
+        )
+
+# Create named limiters
+scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
+crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 
 async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     print("hello, count_tokens")
@@ -29,7 +80,6 @@ async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     tokens = encoder.encode(text)
     return len(tokens)
 
-JINA_API_KEY = os.getenv('JINA_API_KEY')
 async def get_embedding(text: str) -> Dict[str, Any]:
     """ JINA EMBEDDINGS """
     url = 'https://api.jina.ai/v1/embeddings'
@@ -69,21 +119,10 @@ async def sliding_window_chunking(
         start += max_window_size - overlap
     return chunks
 
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-if not SUPABASE_URL:
-    raise ValueError("SUPABASE_URL is not set in the environment variables")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-if not SUPABASE_SERVICE_ROLE_KEY:
-    raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in the environment variables")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
-if not SUPABASE_ANON_KEY:
-    raise ValueError("SUPABASE_KEY is not set in the environment variables")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
 async def insert_to_db(data: Dict[str, Any]) -> None:
     try:
+
+        supabase = await get_supabase()
         # Extract headers data
         headers_data = {
             "url": data["url"],
@@ -133,62 +172,6 @@ async def insert_to_db(data: Dict[str, Any]) -> None:
             status_code=500,
             detail=f"Failed to insert data: {str(e)}"
         )
-
-
-# Rate limit constants
-SCRAPE_RATE_LIMIT = 20  # per minute
-CRAWL_RATE_LIMIT = 3    # per minute
-MAX_PAGES = 3000
-
-
-class RateLimiter:
-    def __init__(self, calls_per_minute: int, name: str = "") -> None:
-        self.calls_per_minute = calls_per_minute
-        self.calls: List[datetime] = []
-        self.name = name
-
-    async def acquire(self) -> None:
-        now = datetime.now()
-
-        # Clean up old calls
-        original_calls = len(self.calls)
-        self.calls = [
-            call_time for call_time in self.calls
-            if now - call_time < timedelta(minutes=1)
-        ]
-        cleaned_calls = len(self.calls)
-
-        logger.info(
-            f"{self.name} Limiter - Current calls in window: "
-            f"{len(self.calls)}/{self.calls_per_minute}"
-        )
-
-        if cleaned_calls < original_calls:
-            logger.info(
-                f"{self.name} Limiter - Cleaned up "
-                f"{original_calls - cleaned_calls} old calls"
-            )
-
-        if len(self.calls) >= self.calls_per_minute:
-            wait_time = 60 - (now - self.calls[0]).total_seconds()
-            if wait_time > 0:
-                logger.info(
-                    f"{self.name} Limiter - Rate limit reached. "
-                    f"Waiting {wait_time:.2f} seconds"
-                )
-                await asyncio.sleep(wait_time)
-
-        self.calls.append(now)
-        logger.info(
-            f"{self.name} Limiter - Added new call. "
-            f"Total calls in window: {len(self.calls)}"
-        )
-
-
-# Create named limiters
-scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
-crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
-
 
 @retry(
     stop=stop_after_attempt(5),

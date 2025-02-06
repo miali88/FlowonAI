@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from tiktoken import encoding_for_model
 import requests
@@ -144,24 +143,71 @@ async def update_file_tokens(data_id: str, total_tokens: int, title: str) -> Non
         raise
 
 
-async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title: str) -> None:
-    logger.info(f"Starting knowledge base item processing for ID {data_id}")
-    cleaned_text = clean_data(data_content)
-    logger.debug(f"Cleaned text length: {len(cleaned_text)} characters")
-
-    if cleaned_text:
+async def process_tabular_item(item_id: str, rows: List[dict], user_id: str, title: str) -> int:
+    """Process tabular data rows and store them as chunks with embeddings"""
+    logger.info(f"Processing tabular item {item_id} with {len(rows)} rows")
+    total_tokens = 0
+    
+    for index, row in enumerate(rows):
+        logger.debug(f"Processing row {index}/{len(rows)}")
         try:
+            # Convert row dict to string representation
+            row_content = json.dumps(row, ensure_ascii=False)
+            
+            # Get embedding for the row
+            embedding, token_count = await get_embedding(row_content)
+            
+            # Store in chunks table
+            await insert_chunk(
+                item_id,
+                row_content,
+                index,
+                embedding,
+                user_id,
+                token_count,
+                title
+            )
+            total_tokens += token_count
+            
+        except Exception as e:
+            logger.error(f"Failed to process row {index}: {str(e)}")
+            raise
+    
+    return total_tokens
+
+
+async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title: str, is_tabular: bool = False) -> None:
+    """Modified to handle both text and tabular data"""
+    logger.info(f"Starting knowledge base item processing for ID {data_id}")
+    
+    try:
+        if is_tabular:
+            # For tabular data, data_content will be a list of dictionaries
+            total_tokens = await process_tabular_item(
+                item_id=data_id,
+                rows=data_content,
+                user_id=user_id,
+                title=title
+            )
+        else:
+            # Existing text processing logic
+            cleaned_text = clean_data(data_content)
+            logger.debug(f"Cleaned text length: {len(cleaned_text)} characters")
+            
+            if not cleaned_text:
+                logger.warning(f"No valid text content for item {title}")
+                return
+                
             total_tokens = await process_item(
                 item_id=data_id,
                 content=cleaned_text,
                 user_id=user_id,
                 title=title
             )
-            logger.info(f"Successfully processed knowledge base item {title}")
-            await update_file_tokens(data_id, total_tokens, title)
-
-        except Exception as e:
-            logger.error(f"Failed to process knowledge base item {title}: {str(e)}")
-            raise
-    else:
-        logger.warning(f"No valid text content for item {title}")
+            
+        logger.info(f"Successfully processed knowledge base item {title}")
+        await update_file_tokens(data_id, total_tokens, title)
+        
+    except Exception as e:
+        logger.error(f"Failed to process knowledge base item {title}: {str(e)}")
+        raise

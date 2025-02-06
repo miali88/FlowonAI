@@ -124,3 +124,11 @@ async def agent_completion_handler(request: Request, current_user: str = Depends
         logger.error(f"Error getting agent completion: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+
+onboarding_checklist = [
+    {"agent_created":True},
+    {"knowledge_base_added":False},
+    {"phone_number_added":False},
+]

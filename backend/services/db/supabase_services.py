@@ -1,4 +1,3 @@
-from supabase import create_client
 from supabase._async.client import AsyncClient
 import os
 from dotenv import load_dotenv
@@ -7,7 +6,18 @@ from typing import Optional
 import asyncio
 
 load_dotenv()
+
 logger = logging.getLogger(__name__)
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+if not SUPABASE_URL:
+    raise ValueError("SUPABASE_URL is not set in the environment variables")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+if not SUPABASE_SERVICE_ROLE_KEY:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in the environment variables")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
+if not SUPABASE_ANON_KEY:
+    raise ValueError("SUPABASE_KEY is not set in the environment variables")
 
 class SupabaseConnection:
     _client: Optional[AsyncClient] = None
@@ -60,3 +70,4 @@ async def get_supabase() -> AsyncClient:
     if supabase is None:
         supabase = await supabase_client.get_client()
     return supabase
+
