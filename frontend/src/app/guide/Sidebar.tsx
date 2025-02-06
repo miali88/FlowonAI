@@ -47,15 +47,20 @@ export default function Sidebar() {
         {isIntegrationsOpen && (
           <ul className="ml-4">
             <li>
-              <Link href="/integrations/whatsapp" className="hover:text-blue-300">
+              <Link href="/guide/bubble" className="hover:text-blue-300">
+                Bubble
+              </Link>
+            </li>
+            {/* <li>
+              <Link href="/guide/whatsapp" className="hover:text-blue-300">
                 Whatsapp
               </Link>
             </li>
             <li>
-              <Link href="/integrations/zapier" className="hover:text-blue-300">
+              <Link hr  ef="/guide/zapier" className="hover:text-blue-300">
                 Zapier
               </Link>
-            </li>
+            </li> */}
             {/* Add more links as needed */}
           </ul>
         )}
