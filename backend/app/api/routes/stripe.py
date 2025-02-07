@@ -89,3 +89,7 @@ async def webhook(request: Request, stripe_signature: str = Header(None, alias="
         raise HTTPException(status_code=400, detail=str(e))
     
 
+@router.post("/payment-result")
+async def payment_result(checkout_session_id: str):
+    logger.info(f"Payment result for checkout_session_id: {checkout_session_id}")
+    return {"status": "success"}
