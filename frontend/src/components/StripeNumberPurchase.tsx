@@ -8,11 +8,13 @@ const api_base_url = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 interface StripeNumberPurchaseProps {
   amount: number;
   disabled?: boolean;
+  twilioNumber?: string;
 }
 
 export default function StripeNumberPurchase({
   amount,
   disabled,
+  twilioNumber,
 }: StripeNumberPurchaseProps) {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +71,7 @@ export default function StripeNumberPurchase({
           body: JSON.stringify({
             customer_id: customerId,
             unit_amount: Math.round(amount * 100), // Round to ensure we send an integer
+            twilio_number: twilioNumber || "",
           }),
         }
       );

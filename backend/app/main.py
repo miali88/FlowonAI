@@ -13,7 +13,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from services.db.supabase_services import SupabaseConnection, supabase
+from services.supabase.client import SupabaseConnection, supabase
 
 from app.core.config import settings
 

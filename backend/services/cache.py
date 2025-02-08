@@ -1,5 +1,5 @@
 from typing import Dict, Optional, List
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 from services.composio import get_calendar_slots
 
 """ CALENDAR CACHE """

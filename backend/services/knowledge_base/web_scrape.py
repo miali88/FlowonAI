@@ -11,7 +11,7 @@ from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, Rat
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 
 load_dotenv()
 

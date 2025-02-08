@@ -7,9 +7,9 @@ from fastapi import Request, HTTPException, Depends, Header, APIRouter, Backgrou
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 from services.knowledge_base import file_processing
-from backend.services.knowledge_base.vectorise_data import kb_item_to_chunks
+from services.knowledge_base.vectorise_data import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
 from services.knowledge_base.web_scrape import map_url, scrape_url
 from app.api.deps import get_current_user

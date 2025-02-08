@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 import logging
 import json
 from pydantic import BaseModel
-from services.chat.lk_chat import lk_chat_process, get_chat_rag_results
+from services.chat.lk_chat import lk_chat_process
 from typing import AsyncGenerator
 
 router = APIRouter()

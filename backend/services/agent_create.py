@@ -1,14 +1,13 @@
 import uuid
-import requests
 from urllib.parse import urlparse
-from services.knowledge_base.web_scrape import map_url, scrape_url
-from services.chat.chat import llm_response
-from typing import List, Dict
-import openai
-from humanloop import Humanloop
-from dotenv import load_dotenv
 import os
 import httpx
+
+from dotenv import load_dotenv
+from humanloop import Humanloop
+
+from services.knowledge_base.web_scrape import map_url, scrape_url
+from services.chat.chat import llm_response
 
 load_dotenv()
 

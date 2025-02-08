@@ -10,12 +10,9 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import run_in_threadpool
 
 from services.cache import get_agent_metadata
-from services.chat.chat import llm_response
-from services.db.supabase_services import get_supabase
-from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat
+from services.supabase.client import get_supabase
+from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat, get_chat_rag_results
 from services.conversation import transcript_summary
-from services.chat.lk_chat import get_chat_rag_results
-
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

@@ -8,8 +8,8 @@ import csv  # Add this import at the top
 
 from fastapi import UploadFile, BackgroundTasks
 
-from services.db.supabase_services import get_supabase
-from backend.services.knowledge_base.vectorise_data import kb_item_to_chunks
+from services.supabase.client import get_supabase
+from services.knowledge_base.vectorise_data import kb_item_to_chunks
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
