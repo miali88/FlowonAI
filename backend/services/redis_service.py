@@ -24,22 +24,28 @@ class RedisChatStorage:
     @staticmethod
     async def save_chat(agent_id: str, room_name: str, chat_data: Dict[str, Any]) -> None:
         """Save chat data to Redis with TTL"""
-        key = RedisChatStorage.get_chat_key(agent_id, room_name)
-        
-        # Handle both dictionary and ChatHistory object cases
-        if hasattr(chat_data, 'to_dict'):
-            chat_data = chat_data.to_dict()
-        
-        serialized_data = json.dumps({
-            "messages": chat_data.get("messages", []),
-            "response_metadata": chat_data.get("response_metadata", {}),
-            "last_updated": datetime.utcnow().isoformat()
-        })
-        
-        async with redis_client.pipeline() as pipe:
-            await pipe.set(key, serialized_data)
-            await pipe.expire(key, settings.REDIS_TTL)
-            await pipe.execute()
+        try:
+            key = RedisChatStorage.get_chat_key(agent_id, room_name)
+            
+            # Handle both dictionary and ChatHistory object cases
+            if hasattr(chat_data, 'to_dict'):
+                chat_data = chat_data.to_dict()
+            
+            serialized_data = json.dumps({
+                "messages": chat_data.get("messages", []),
+                "response_metadata": chat_data.get("response_metadata", {}),
+                "last_updated": datetime.utcnow().isoformat()
+            })
+            
+            async with redis_client.pipeline() as pipe:
+                await pipe.set(key, serialized_data)
+                await pipe.expire(key, settings.REDIS_TTL)
+                await pipe.execute()
+            
+            print(f"Successfully saved chat to Redis - key: {key}, messages: {len(chat_data.get('messages', []))}")
+        except Exception as e:
+            logger.error(f"Error saving chat to Redis: {str(e)}", exc_info=True)
+            raise
 
     @staticmethod
     async def get_chat(agent_id: str, room_name: str) -> Optional[Dict[str, Any]]:

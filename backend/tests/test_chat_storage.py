@@ -51,14 +51,14 @@ async def test_chat_storage():
         print("\nRetrieved data:")
         print(f"- Number of messages: {len(retrieved_data.get('messages', []))}")
         print(f"- Response metadata exists: {bool(retrieved_data.get('response_metadata'))}")
-        """
+        
         # 4. Delete from Redis
         print("\n4. Deleting chat history from Redis...")
         await RedisChatStorage.delete_chat(agent_id, room_name)
         
         # Verify deletion
         deleted_data = await RedisChatStorage.get_chat(agent_id, room_name)
-        assert deleted_data is None, "Chat history not properly deleted"""
+        assert deleted_data is None, "Chat history not properly deleted
         print("✓ Chat history deleted successfully")
 
     except Exception as e:

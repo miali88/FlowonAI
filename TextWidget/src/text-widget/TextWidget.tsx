@@ -298,11 +298,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
             const content = line.slice(6).trim();
 
             if (content === "[DONE]") {
-              console.log("Complete response:", accumulatedResponse);
+              console.log("Starting Redis save process for response:", accumulatedResponse.slice(0, 100) + "...");
               
-              // Save complete response to Redis
               try {
-                await fetch(`${apiBaseUrl}/chat/save-response`, {
+                const saveResponse = await fetch(`${apiBaseUrl}/chat/save-response`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -317,9 +316,26 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
                     }
                   }),
                 });
-                console.log("✅ Saved complete response to Redis");
+
+                if (!saveResponse.ok) {
+                  const errorData = await saveResponse.text();
+                  console.error("Failed to save to Redis:", saveResponse.status, errorData);
+                  throw new Error(`Failed to save to Redis: ${saveResponse.status} ${errorData}`);
+                }
+
+                const saveResult = await saveResponse.json();
+                console.log("✅ Successfully saved to Redis:", {
+                  responseId: currentResponseId,
+                  status: saveResult.status,
+                  roomName,
+                  contentPreview: accumulatedResponse.slice(0, 100) + "..."
+                });
               } catch (saveError) {
-                console.error("Failed to save complete response:", saveError);
+                console.error("❌ Error saving to Redis:", {
+                  error: saveError,
+                  responseId: currentResponseId,
+                  roomName
+                });
               }
               break;
             }

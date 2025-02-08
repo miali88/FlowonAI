@@ -459,14 +459,28 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
     # Get existing chat from Redis or create new
     chat_data = await RedisChatStorage.get_chat(agent_id, room_name)
     print(f"Retrieved chat data from Redis: {bool(chat_data)}")
-    print(f"Chat data content: {json.dumps(chat_data, indent=2)}")
 
     chat_history = ChatHistory()
     
     if chat_data:
         print("Reconstructing existing chat history...")
-        # Reconstruct messages
-        chat_history.messages = [ChatMessage(**msg) for msg in chat_data.get("messages", [])]
+        # Reconstruct messages with proper role handling
+        for msg in chat_data.get("messages", []):
+            if msg["role"] == "function":
+                # Ensure function messages have the required 'name' parameter
+                chat_history.add_message(
+                    role="function",
+                    content=msg["content"],
+                    name=msg.get("name", "tool_response"),  # Default name if missing
+                    response_id=msg.get("response_id")
+                )
+            else:
+                chat_history.add_message(
+                    role=msg["role"],
+                    content=msg["content"],
+                    response_id=msg.get("response_id")
+                )
+
         # Reconstruct response metadata
         for response_id, metadata in chat_data.get("response_metadata", {}).items():
             if isinstance(metadata, dict):
@@ -474,23 +488,33 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     response_id=metadata['response_id'],
                     rag_results=metadata.get('rag_results', [])
                 )
-    
+
     # Initialize LLM and contexts if they don't exist
-    if not chat_history.llm_instance or not chat_history.chat_ctx or not chat_history.fnc_ctx:
+    if not chat_history.llm_instance or not chat_history.chat_ctx:
         print("Initializing LLM and contexts...")
         llm_instance, chat_ctx, fnc_ctx = await init_new_chat(agent_id, room_name)
         chat_history.llm_instance = llm_instance
         chat_history.chat_ctx = chat_ctx
         chat_history.fnc_ctx = fnc_ctx
         
-        # If we have existing messages, reconstruct the chat context
+        # Reconstruct chat context with proper role handling
         if chat_data and chat_history.messages:
             print("Reconstructing chat context from existing messages...")
             for msg in chat_history.messages:
-                chat_history.chat_ctx.append(
-                    role=msg.role,
-                    text=msg.content
-                )
+                if msg.role == "function":
+                    # For function messages, we need to use the function_call parameter
+                    chat_history.chat_ctx.append(
+                        role="function",
+                        text=msg.content,
+                        function_call={"name": msg.name or "tool_response"}
+                    )
+                else:
+                    # For non-function messages, just use role and text
+                    chat_history.chat_ctx.append(
+                        role=msg.role,
+                        text=msg.content
+                    )
+
     try:
         current_assistant_message = ""
         chunk_count = 0
@@ -567,11 +591,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                                 yield result_chunk
                             chat_history.add_message("function", tool_response, name="tool_response")
 
-                # Save to Redis periodically during streaming
-                if chunk_count % 10 == 0:  # Save every 10 chunks
-                    await RedisChatStorage.save_chat(agent_id, room_name, chat_history.to_dict())
-                    print(f"Saved chat history to Redis (chunk {chunk_count})")
-
             except Exception as chunk_error:
                 logger.error(f"Error processing chunk #{chunk_count}: {str(chunk_error)}", exc_info=True)
                 logger.error(f"Problematic chunk: {chunk}")
@@ -581,7 +600,7 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message, response_id=response_id)
             # Final save to Redis
-            await RedisChatStorage.save_chat(agent_id, room_name, chat_history.to_dict())
+            #await RedisChatStorage.save_chat(agent_id, room_name, chat_history.to_dict())
             print(f"Final chat history saved to Redis with message: {current_assistant_message[:100]}...")
 
     except Exception as e:

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from services.chat.lk_chat import lk_chat_process, get_chat_rag_results
 from typing import AsyncGenerator, Dict
 from services.redis_service import RedisChatStorage
+from datetime import datetime
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -135,7 +136,7 @@ async def save_complete_response(
     request: Request,
     response: dict = Body(...),
 ):
-    """Save complete chat response to Redis"""
+    """Save complete chat response to Redis - only for assistant messages"""
     try:
         agent_id = response.get("agent_id")
         room_name = response.get("room_name")
@@ -143,25 +144,37 @@ async def save_complete_response(
 
         if not all([agent_id, room_name, response_data]):
             raise HTTPException(status_code=400, detail="Missing required fields")
+            
+        # Only process assistant messages
+        if response_data.get("role") != "assistant":
+            return {"status": "skipped", "message": "Only assistant messages should be saved here"}
 
         # Get existing chat data
         chat_data = await RedisChatStorage.get_chat(agent_id, room_name)
         if not chat_data:
             chat_data = {"messages": [], "response_metadata": {}}
 
-        # Update the specific message with complete response
+        # Update or add the assistant message
+        message_exists = False
         for msg in chat_data["messages"]:
             if (msg.get("role") == "assistant" and 
                 msg.get("response_id") == response_data.get("response_id")):
                 msg["content"] = response_data["content"]
+                message_exists = True
                 break
 
-        # Save updated chat data
-        await RedisChatStorage.save_chat(agent_id, room_name, chat_data)
-        print("Successfully saved complete response to Redis, agent_id: ", agent_id, "room_name: ", room_name, "chat_data: ", chat_data)
-        return {"status": "success"}
+        if not message_exists:
+            chat_data["messages"].append({
+                "role": "assistant",
+                "content": response_data["content"],
+                "response_id": response_data.get("response_id")
+            })
 
+        # Save to Redis
+        await RedisChatStorage.save_chat(agent_id, room_name, chat_data)
+        
+        return {"status": "success"}
 
     except Exception as e:
         logger.error(f"Error saving complete response: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to save response")
