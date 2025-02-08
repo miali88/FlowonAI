@@ -600,7 +600,7 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         if current_assistant_message:
             chat_history.add_message("assistant", current_assistant_message, response_id=response_id)
             # Final save to Redis
-            #await RedisChatStorage.save_chat(agent_id, room_name, chat_history.to_dict())
+            await RedisChatStorage.save_chat(agent_id, room_name, chat_history.to_dict())
             print(f"Final chat history saved to Redis with message: {current_assistant_message[:100]}...")
 
     except Exception as e:

@@ -214,24 +214,65 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
       try {
         setIsLoading(true);
         
-        // Generate a consistent room name based on agent and user
-        const roomName = `chat_${agentId}_${Date.now()}`; // You may want to use a more sophisticated method
+        // Only use agent_id for the room name
+        const simpleRoomName = `${agentId}`;
+        setRoomName(simpleRoomName);
+        
+        console.log('🔍 Checking for existing chat with:', {
+          agentId,
+          simpleRoomName,
+          endpoint: `${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${simpleRoomName}`
+        });
         
         // Check for existing chat
-        const response = await fetch(`${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${roomName}`);
+        const response = await fetch(`${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${simpleRoomName}`);
         const data = await response.json();
         
+        console.log('📦 Redis response:', {
+          exists: data.exists,
+          messageCount: data.chat_data?.messages?.length || 0,
+          data: data.chat_data
+        });
+        
         if (data.exists && data.chat_data) {
-          // Use existing chat data
-          setChatData(data.chat_data);
-          console.log('Retrieved existing chat:', data.chat_data);
+          // Convert the Redis chat data format to our Message[] format
+          const existingMessages = data.chat_data.messages.map((msg: any) => {
+            console.log('🔄 Converting message:', {
+              role: msg.role,
+              content: msg.content?.slice(0, 50) + '...',  // Log first 50 chars
+              responseId: msg.response_id
+            });
+            
+            return {
+              text: msg.content,
+              isBot: msg.role === "assistant",
+              responseId: msg.response_id,
+              hasSource: false
+            };
+          });
+          
+          setMessages(existingMessages);
+          console.log('✅ Loaded existing chat:', {
+            messageCount: existingMessages.length,
+            firstMessage: existingMessages[0]?.text?.slice(0, 50) + '...',
+            lastMessage: existingMessages[existingMessages.length - 1]?.text?.slice(0, 50) + '...'
+          });
         } else {
-          // Initialize new chat
-          // Your existing chat initialization logic here
-          console.log('Creating new chat session');
+          console.log('🆕 No existing chat found, initializing with opening line:', openingLine);
+          // Initialize new chat with opening line if no existing chat
+          if (openingLine) {
+            setMessages([
+              { text: openingLine, isBot: true, responseId: "1a", hasSource: false }
+            ]);
+          }
         }
       } catch (error) {
-        console.error('Error initializing chat:', error);
+        console.error('❌ Error initializing chat:', error);
+        if (openingLine) {
+          setMessages([
+            { text: openingLine, isBot: true, responseId: "1a", hasSource: false }
+          ]);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -240,7 +281,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({
     if (agentId && apiBaseUrl) {
       initializeChat();
     }
-  }, [agentId, apiBaseUrl]);
+  }, [agentId, apiBaseUrl, openingLine]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

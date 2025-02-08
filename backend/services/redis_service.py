@@ -19,7 +19,7 @@ class RedisChatStorage:
     @staticmethod
     def get_chat_key(agent_id: str, room_name: str) -> str:
         """Generate a unique Redis key for a chat session"""
-        return f"chat:{agent_id}:{room_name}"
+        return f"chat:{agent_id}"
 
     @staticmethod
     async def save_chat(agent_id: str, room_name: str, chat_data: Dict[str, Any]) -> None:
