@@ -5,6 +5,7 @@ from typing import List, Optional
 import pickle
 from pathlib import Path
 from uuid import uuid4
+from datetime import datetime
 
 from livekit.agents import llm
 from livekit.plugins import openai
@@ -366,10 +367,24 @@ class ChatMessage:
     content: str
     name: str = None
     response_id: str = None
+    timestamp: str = None  # Add timestamp field
+
+    def __init__(self, role: str, content: str, name: str = None, response_id: str = None):
+        self.role = role
+        self.content = content
+        self.name = name
+        self.response_id = response_id
+        self.timestamp = datetime.utcnow().isoformat()  # Set timestamp on creation
 
     def to_dict(self):
         """Convert the ChatMessage instance to a dictionary"""
-        return asdict(self)
+        return {
+            "role": self.role,
+            "content": self.content,
+            "name": self.name,
+            "response_id": self.response_id,
+            "timestamp": self.timestamp
+        }
 
 @dataclass
 class ChatHistory:
@@ -395,6 +410,15 @@ class ChatHistory:
 
     def add_message(self, role: str, content: str, name: str = None, response_id: str = None):
         """Add a message to the chat history"""
+        # Check for duplicates
+        for msg in self.messages:
+            if (msg.role == role and 
+                msg.content == content and 
+                msg.name == name and 
+                msg.response_id == response_id):
+                print(f"Skipping duplicate message: {content[:50]}...")
+                return
+                
         message = ChatMessage(role=role, content=content, name=name, response_id=response_id)
         self.messages.append(message)
         print(f"Added message to ChatHistory: role={role}, content={content[:50]}..., response_id={response_id}")
@@ -481,14 +505,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
                     response_id=msg.get("response_id")
                 )
 
-        # Reconstruct response metadata
-        for response_id, metadata in chat_data.get("response_metadata", {}).items():
-            if isinstance(metadata, dict):
-                chat_history.response_metadata[response_id] = ResponseMetadata(
-                    response_id=metadata['response_id'],
-                    rag_results=metadata.get('rag_results', [])
-                )
-
     # Initialize LLM and contexts if they don't exist
     if not chat_history.llm_instance or not chat_history.chat_ctx:
         print("Initializing LLM and contexts...")
@@ -497,24 +513,6 @@ async def lk_chat_process(message: str, agent_id: str, room_name: str):
         chat_history.chat_ctx = chat_ctx
         chat_history.fnc_ctx = fnc_ctx
         
-        # Reconstruct chat context with proper role handling
-        if chat_data and chat_history.messages:
-            print("Reconstructing chat context from existing messages...")
-            for msg in chat_history.messages:
-                if msg.role == "function":
-                    # For function messages, we need to use the function_call parameter
-                    chat_history.chat_ctx.append(
-                        role="function",
-                        text=msg.content,
-                        function_call={"name": msg.name or "tool_response"}
-                    )
-                else:
-                    # For non-function messages, just use role and text
-                    chat_history.chat_ctx.append(
-                        role=msg.role,
-                        text=msg.content
-                    )
-
     try:
         current_assistant_message = ""
         chunk_count = 0

@@ -31,8 +31,13 @@ class RedisChatStorage:
             if hasattr(chat_data, 'to_dict'):
                 chat_data = chat_data.to_dict()
             
+            # Ensure each message has a timestamp
+            for message in chat_data.get("messages", []):
+                if "timestamp" not in message:
+                    message["timestamp"] = datetime.utcnow().isoformat()
+            
             serialized_data = json.dumps({
-                "messages": chat_data.get("messages", []),
+                "messages": sorted(chat_data.get("messages", []), key=lambda x: x.get("timestamp", "")),
                 "response_metadata": chat_data.get("response_metadata", {}),
                 "last_updated": datetime.utcnow().isoformat()
             })

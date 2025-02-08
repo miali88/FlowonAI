@@ -22,19 +22,38 @@ class ChatMessage(BaseModel):
 async def chat_message(request: Request) -> StreamingResponse:
     try:
         user_query = await request.json()
-    except Exception as e:
-        logger.error(f"Error parsing request: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        
+        # Save user message immediately with timestamp
+        chat_data = await RedisChatStorage.get_chat(
+            user_query['agent_id'], 
+            user_query['room_name']
+        ) or {"messages": [], "response_metadata": {}}
 
-    # Validate required fields before proceeding
-    if not all(key in user_query for key in ['message', 'agent_id', 'room_name']):
-        raise HTTPException(
-            status_code=400,
-            detail="Missing required fields"
-        )
+        # Check if this exact message was just saved (within last second)
+        current_time = datetime.utcnow()
+        recent_messages = [
+            msg for msg in chat_data["messages"] 
+            if (msg["role"] == "user" and 
+                msg["content"] == user_query['message'] and
+                (current_time - datetime.fromisoformat(msg["timestamp"])).total_seconds() < 1)
+        ]
 
-    try:
-        async def event_generator() -> AsyncGenerator[str, None]:
+        # Only save if not a duplicate
+        if not recent_messages:
+            chat_data["messages"].append({
+                "role": "user",
+                "content": user_query['message'],
+                "timestamp": current_time.isoformat()
+            })
+            
+            await RedisChatStorage.save_chat(
+                user_query['agent_id'],
+                user_query['room_name'],
+                chat_data
+            )
+
+        async def event_generator():
+            # Continue with existing streaming logic...
             response_id = None
             has_source = False
             try:
@@ -130,7 +149,6 @@ async def get_existing_chat(agent_id: str, room_name: str):
     except Exception as e:
         logger.error(f"Error fetching existing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("/save-response")
 async def save_complete_response(
     request: Request,
@@ -141,6 +159,10 @@ async def save_complete_response(
         agent_id = response.get("agent_id")
         room_name = response.get("room_name")
         response_data = response.get("response")
+
+        print("\n=== Save Response Debug ===")
+        print(f"Saving response for agent_id: {agent_id}, room_name: {room_name}")
+        print(f"Response data: {response_data}")
 
         if not all([agent_id, room_name, response_data]):
             raise HTTPException(status_code=400, detail="Missing required fields")
@@ -154,27 +176,35 @@ async def save_complete_response(
         if not chat_data:
             chat_data = {"messages": [], "response_metadata": {}}
 
-        # Update or add the assistant message
-        message_exists = False
-        for msg in chat_data["messages"]:
+        print(f"Current messages in Redis: {len(chat_data['messages'])}")
+        
+        # Check for existing message with same content
+        existing_messages = [
+            msg for msg in chat_data["messages"] 
             if (msg.get("role") == "assistant" and 
-                msg.get("response_id") == response_data.get("response_id")):
-                msg["content"] = response_data["content"]
-                message_exists = True
-                break
+                msg.get("content") == response_data.get("content"))
+        ]
 
-        if not message_exists:
-            chat_data["messages"].append({
-                "role": "assistant",
-                "content": response_data["content"],
-                "response_id": response_data.get("response_id")
-            })
+        if existing_messages:
+            print(f"Message with content already exists, skipping save")
+            return {"status": "skipped", "message": "Message already exists"}
+
+        # Add new message with timestamp
+        current_time = datetime.utcnow()
+        chat_data["messages"].append({
+            "role": "assistant",
+            "content": response_data["content"],
+            "response_id": response_data.get("response_id"),
+            "timestamp": current_time.isoformat()
+        })
 
         # Save to Redis
         await RedisChatStorage.save_chat(agent_id, room_name, chat_data)
+        print(f"Final message count in Redis: {len(chat_data['messages'])}")
         
         return {"status": "success"}
 
     except Exception as e:
         logger.error(f"Error saving complete response: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save response")
+
