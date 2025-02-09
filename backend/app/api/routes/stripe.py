@@ -7,7 +7,7 @@ import logging
 import stripe
 from fastapi import APIRouter, HTTPException, Request, Header
 
-from backend.services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
+from services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
 
 load_dotenv()
 router = APIRouter()

@@ -204,16 +204,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
 
     if (!inputText.trim() || !roomName) return;
 
-    // Check if the user wants to schedule a meeting
-    if (
-      inputText.toLowerCase().includes("schedule") ||
-      inputText.toLowerCase().includes("book") ||
-      inputText.toLowerCase().includes("meeting")
-    ) {
-      setShowCalendly(true);
-      return;
-    }
-
     const userMessage: Message = { text: inputText, isBot: false };
     setMessages((prev) => [...prev, userMessage]);
 
@@ -266,9 +256,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                 const responseId = data.response?.response_id;
                 const hasSource = data.response?.has_source;
                 accumulatedResponse += newText;
-
-                // Check if the bot's response should trigger Calendly
-                handleBotResponse(accumulatedResponse);
 
                 setMessages((prev) => {
                   const newMessages = [...prev];
@@ -446,17 +433,6 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       ...prev,
       [fieldLabel]: value,
     }));
-  };
-
-  // Add this function to handle bot responses that should trigger Calendly
-  const handleBotResponse = (response: string) => {
-    // Check if the bot's response contains keywords that should trigger Calendly
-    if (
-      response.toLowerCase().includes("schedule a meeting") ||
-      response.toLowerCase().includes("book a call")
-    ) {
-      setShowCalendly(true);
-    }
   };
 
   async function fetchSources(responseId: string) {

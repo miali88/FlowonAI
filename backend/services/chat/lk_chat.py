@@ -5,10 +5,11 @@ from typing import List, Optional
 import pickle
 from pathlib import Path
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import logging
 import asyncio
+import httpx
 
 from livekit.agents import llm
 from livekit.plugins import openai
@@ -17,7 +18,6 @@ from livekit.agents.llm.chat_context import ChatMessage
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
-from services.composio import get_calendar_slots
 from services.supabase.client import get_supabase
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
@@ -53,6 +53,57 @@ class DataSource:
     id: int
     title: str
     data_type: str
+@dataclass
+class ResponseMetadata:
+    response_id: str
+    rag_results: List[dict] = field(default_factory=list)
+
+@dataclass
+class ChatHistory:
+    messages: List[ChatMessage] = field(default_factory=list)
+    llm_instance: Any = None
+    chat_ctx: Any = None
+    fnc_ctx: Any = None
+    response_metadata: Dict[str, ResponseMetadata] = field(default_factory=dict)
+    
+    def add_message(self, role: str, content: str, name: str = None, response_id: str = None):
+        message = ChatMessage(
+            role=role,
+            content=content,
+            name=name
+        )
+        self.messages.append(message)
+        if self.chat_ctx:
+            self.chat_ctx.messages.append(message)
+        
+        # Store metadata if this is an assistant message
+        if role == "assistant" and response_id:
+            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
+
+    def add_rag_results(self, response_id: str, rag_results: List[dict]):
+        """
+        Add RAG results to the response metadata, creating the entry if it doesn't exist.
+        """
+        if not response_id:
+            logger.error("Attempted to add RAG results with empty response_id")
+            return
+        
+        print(f"\n=== Adding RAG Results ===")
+        print(f"Response ID: {response_id}")
+        # print(f"Current metadata state: {self.response_metadata}")
+        
+        # Create or update ResponseMetadata
+        if response_id not in self.response_metadata:
+            print(f"Creating new ResponseMetadata for {response_id}")
+            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
+        
+        # Add the RAG results
+        self.response_metadata[response_id].rag_results = rag_results
+        
+        # Verify storage
+        # print(f"Updated metadata state: {self.response_metadata}")
+        # print(f"Stored RAG results for {response_id}: {rag_results}")
+
 
 async def init_new_chat(agent_id: str, room_name: str):
     chat_histories[agent_id][room_name] = ChatHistory()
@@ -235,53 +286,95 @@ async def init_new_chat(agent_id: str, room_name: str):
             yield "I apologize, but I encountered an error while searching for an answer to your question."
 
 
-
     """ CALENDAR MANAGEMENT """
     @llm.ai_callable(
         name="fetch_calendar",
-        description="Fetch available calendar slots for booking appointments or meetings",
+        description="Schema for retrieving available calendar slots for a specific agent and property",
         auto_retry=True
     )
     async def fetch_calendar(
-        date_range: Annotated[
+        agent_name: Annotated[
             str,
             llm.TypeInfo(
-                description="The date range to search for available slots (e.g., 'next week', '2024-03-20 to 2024-03-25')"
+                description="Name of the agent whose calendar slots are being queried"
             )
         ],
+        property_id: Annotated[
+            str,
+            llm.TypeInfo(
+                description="Unique identifier for the property being scheduled"
+            )
+        ],
+        start_date: Annotated[
+            str,
+            llm.TypeInfo(
+                description="Start date in YYYY-MM-DD format. Defaults to current date if not provided"
+            )
+        ] = None,
+        end_date: Annotated[
+            str,
+            llm.TypeInfo(
+                description="End date in YYYY-MM-DD format. Defaults to 30 days from start if not provided"
+            )
+        ] = None,
     ) -> str:
         """
-        Fetches available calendar slots based on the specified date range and appointment type.
+        Fetches available calendar slots based on the specified agent, property, and date range.
         Returns formatted information about available time slots.
         """
-        logger.info(f"Fetching calendar slots for date range: {date_range}")
-        
         try:
-            print("\n\nfetch calendar func triggered")
-
-            agent_metadata: Dict = await get_agent_metadata(agent_id)
-            logger.info(f"Retrieved agent metadata: {bool(agent_metadata)}")
-
-            if not agent_metadata:
-                logger.error("Agent metadata is None or empty")
-                return "I apologize, but I couldn't access the agent information. Please try again later."
-
-            user_id: str = agent_metadata['userId']
-            logger.info(f"User ID: {user_id}")
-
-            print("have user_id, now fetching calendar slots")
-            try:
-                free_slots = await get_calendar_slots(user_id, "googlecalendar")
-                logger.info(f"Calendar slots retrieved: {free_slots}")
-                print(f"free_slots: {free_slots}")
-                return f"Available slots found: {free_slots}"
-            except Exception as calendar_error:
-                logger.error(f"Error fetching calendar slots: {str(calendar_error)}", exc_info=True)
-                return "I apologize, but I encountered an error while fetching calendar slots. Please try again later."
+            logger.info("fetch_calendar func triggered")
+            print("\n\nfetch_calendar func triggered")
             
+            # Log input parameters
+            logger.info(f"Parameters - agent_name: {agent_name}, property_id: {property_id}, start_date: {start_date}, end_date: {end_date}")
+            
+            # Use provided dates or defaults
+            start_date = start_date or datetime.now().strftime('%Y-%m-%d')
+            end_date = end_date or (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+            logger.info(f"Processed dates - start_date: {start_date}, end_date: {end_date}")
+            
+            # # Get agent metadata for agent_name
+            # logger.info(f"Attempting to get agent metadata for: {agent_name}")
+            # agent_metadata: Dict = await get_agent_metadata(agent_name)
+            # logger.info(f"Retrieved agent metadata: {agent_metadata}")
+            
+            # if not agent_metadata:
+            #     logger.error(f"No agent metadata found for agent_name: {agent_name}")
+            #     return "I apologize, but I couldn't access the agent information. I can flag this issue to the agent for you after this call and have them get back to you."
+
+            ### TODO: get workflow_id from agent_metadata
+            workflow_id = "3483c1df-fe57-4935-a804-b0261ec39639"
+            logger.info(f"Using workflow_id: {workflow_id}")
+
+            # Construct API URL
+            base_url = f"http://localhost:5678/webhook/{workflow_id}"
+            url = f"{base_url}/{agent_name}/{property_id}/{start_date}/{end_date}"
+            logger.info(f"Constructed URL: {url}")
+
+            print(f"Attempting to fetch calendar slots from URL: {url}")
+            
+            async with httpx.AsyncClient() as client:
+                try:
+                    response = await client.get(url)
+                    logger.info(f"Calendar API response status: {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        slots = response.json()
+                        logger.info(f"Successfully fetched calendar slots: {slots}")
+                        return f"The following slots are booked, propose 30 minutes slots around these times: {slots}"
+                    else:
+                        logger.error(f"Calendar API error: Status={response.status_code}, URL={url}, Response={response.text}")
+                        return "I apologize, but I encountered an error while fetching calendar slots. I can forward these details to the agent for you after this call."
+                        
+                except httpx.RequestError as e:
+                    logger.error(f"Network error while fetching calendar slots: {str(e)}, URL={url}", exc_info=True)
+                    return "I apologize, but I encountered a network error while checking the calendar. I can forward these details to the agent for you after this call."
+
         except Exception as e:
             logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
-            return "I apologize, but I encountered an error while checking the calendar availability."
+            return "I apologize, but I encountered an error while checking the calendar availability. I can forward these details to the agent for you after this call."
+
 
     @llm.ai_callable(
         name="request_personal_data",
@@ -324,56 +417,6 @@ async def init_new_chat(agent_id: str, room_name: str):
 
     return llm_instance, chat_ctx, fnc_ctx
 
-@dataclass
-class ResponseMetadata:
-    response_id: str
-    rag_results: List[dict] = field(default_factory=list)
-
-@dataclass
-class ChatHistory:
-    messages: List[ChatMessage] = field(default_factory=list)
-    llm_instance: Any = None
-    chat_ctx: Any = None
-    fnc_ctx: Any = None
-    response_metadata: Dict[str, ResponseMetadata] = field(default_factory=dict)
-    
-    def add_message(self, role: str, content: str, name: str = None, response_id: str = None):
-        message = ChatMessage(
-            role=role,
-            content=content,
-            name=name
-        )
-        self.messages.append(message)
-        if self.chat_ctx:
-            self.chat_ctx.messages.append(message)
-        
-        # Store metadata if this is an assistant message
-        if role == "assistant" and response_id:
-            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
-
-    def add_rag_results(self, response_id: str, rag_results: List[dict]):
-        """
-        Add RAG results to the response metadata, creating the entry if it doesn't exist.
-        """
-        if not response_id:
-            logger.error("Attempted to add RAG results with empty response_id")
-            return
-        
-        print(f"\n=== Adding RAG Results ===")
-        print(f"Response ID: {response_id}")
-        # print(f"Current metadata state: {self.response_metadata}")
-        
-        # Create or update ResponseMetadata
-        if response_id not in self.response_metadata:
-            print(f"Creating new ResponseMetadata for {response_id}")
-            self.response_metadata[response_id] = ResponseMetadata(response_id=response_id)
-        
-        # Add the RAG results
-        self.response_metadata[response_id].rag_results = rag_results
-        
-        # Verify storage
-        # print(f"Updated metadata state: {self.response_metadata}")
-        # print(f"Stored RAG results for {response_id}: {rag_results}")
 
 # Global chat history store
 chat_histories: Dict[str, Dict[str, ChatHistory]] = {}  # nested dict for agent_id -> room_name -> history
