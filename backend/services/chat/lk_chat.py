@@ -21,6 +21,13 @@ from services.voice.tool_use import trigger_show_chat_input
 from services.supabase.client import get_supabase
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
+from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage, SystemMessage
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 logger = logging.getLogger(__name__)
 
@@ -332,6 +339,15 @@ async def init_new_chat(agent_id: str, room_name: str):
             # Use provided dates or defaults
             start_date = start_date or datetime.now().strftime('%Y-%m-%d')
             end_date = end_date or (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+            
+            # Ensure end_date is after start_date
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            
+            if end_dt <= start_dt:
+                end_dt = start_dt + timedelta(days=30)
+                end_date = end_dt.strftime('%Y-%m-%d')
+            
             logger.info(f"Processed dates - start_date: {start_date}, end_date: {end_date}")
             
             # # Get agent metadata for agent_name
@@ -360,20 +376,75 @@ async def init_new_chat(agent_id: str, room_name: str):
                     logger.info(f"Calendar API response status: {response.status_code}")
                     
                     if response.status_code == 200:
-                        slots = response.json()
-                        logger.info(f"Successfully fetched calendar slots: {slots}")
-                        return f"The following slots are booked, propose 30 minutes slots around these times: {slots}"
+                        unavailable_slots = response.json()
+                        logger.info(f"Successfully fetched unavailable slots: {unavailable_slots}")
+
+                        # Initialize Groq
+                        chat_model = ChatGroq(model_name="Llama-3.3-70b-Specdec")
+
+                        # Prepare the system and user prompts
+                        cal_system_prompt = """
+                        You are helpful assistant that helps me find available slots for my calendar.
+                        You must only respond with the available slots, no other text.
+                        """
+
+                        cal_user_prompt = f"""
+                        # instructions 
+                        I will provide the start and end dates (window), along with the unavailable slots in between. 
+                        You must respond with two available 30 minutes slots in between this window, ideally spread out.
+                        You must only respond with the available slots, no other text.
+
+                        ## start and end dates:
+                        {{'start': {{'dateTime': '{start_date}', 'timeZone': 'Europe/London'}}, 
+                          'end': {{'dateTime': '{end_date}', 'timeZone': 'Europe/London'}}}}
+
+                        ## unavailable slots:
+                        {unavailable_slots}
+
+                        ## available slots:
+                        """
+
+                        # Create messages and get response
+                        messages = [
+                            SystemMessage(content=cal_system_prompt),
+                            HumanMessage(content=cal_user_prompt)
+                        ]   
+                        
+                        available_slots = await chat_model.ainvoke(messages)
+                        
+                        # Instead of returning directly, add to chat context and process through main LLM
+                        calendar_info = f"The following slots are available for booking: {available_slots.content}"
+                        print(f"calendar_info: {calendar_info}")
+                        # Add to chat context - fixing the append method call
+                        chat_ctx.messages.append(
+                            ChatMessage(
+                                role="function",
+                                content=calendar_info,
+                                name="fetch_calendar"  # Add the required name parameter
+                            )
+                        )
+                        
+                        # Get response from main LLM to maintain conversation consistency
+                        response_stream = llm_instance.chat(chat_ctx=chat_ctx)
+                        response = ""
+                        async for chunk in response_stream:
+                            if hasattr(chunk, 'choices') and chunk.choices:
+                                if chunk.choices[0].delta.content:
+                                    response += chunk.choices[0].delta.content
+                        
+                        return response 
+                        
                     else:
                         logger.error(f"Calendar API error: Status={response.status_code}, URL={url}, Response={response.text}")
-                        return "I apologize, but I encountered an error while fetching calendar slots. I can forward these details to the agent for you after this call."
+                        return "I apologize, but I encountered an error while fetching calendar slots."
                         
                 except httpx.RequestError as e:
                     logger.error(f"Network error while fetching calendar slots: {str(e)}, URL={url}", exc_info=True)
-                    return "I apologize, but I encountered a network error while checking the calendar. I can forward these details to the agent for you after this call."
+                    return "I apologize, but I encountered a network error while checking the calendar."
 
         except Exception as e:
             logger.error(f"Error in fetch_calendar: {str(e)}", exc_info=True)
-            return "I apologize, but I encountered an error while checking the calendar availability. I can forward these details to the agent for you after this call."
+            return "I apologize, but I encountered an error while checking the calendar availability."
 
 
     @llm.ai_callable(
