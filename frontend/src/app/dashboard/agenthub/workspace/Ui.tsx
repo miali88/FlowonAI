@@ -53,7 +53,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
     });
   };
 
-  // Updated save handler to separate colors and logo
+  // Updated save handler to use JWT
   const handleSaveSettings = async () => {
     setIsSaving(true);
     setSaveError(null);
@@ -67,12 +67,17 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
         throw new Error("Agent ID is undefined");
       }
 
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       // Single API call with both chat_ui and agent_logo
       const response = await fetch(`${API_BASE_URL}/agent/${agentId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": selectedAgent.userId,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           chat_ui: {
@@ -252,7 +257,7 @@ const Ui: React.FC<UiProps> = ({ selectedAgent, setSelectedAgent }) => {
                   color: "#333",
                 }}
               >
-                Hello again! Let’s get back on track—what marketing goals are
+                Hello again! Let's get back on track—what marketing goals are
                 you aiming to achieve in the next 6 months? Whether it's
                 boosting your online presence, improving engagement, or
                 something else, I'm here to help you strategize.

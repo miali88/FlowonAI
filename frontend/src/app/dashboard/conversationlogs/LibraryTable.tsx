@@ -38,6 +38,7 @@ import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
 import { useUser } from "@clerk/nextjs"
 import "@/components/loading.css";
+import { getToken } from "@clerk/nextjs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -94,12 +95,17 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [showLeadsOnly, setShowLeadsOnly] = useState(false);
 
-  // Define handleDeleteChat inside the component
+  // Update handleDeleteChat to use JWT
   const handleDeleteChat = React.useCallback(async (id: string) => {
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
         headers: {
-          'x-user-id': user?.id
+          'Authorization': `Bearer ${token}`
         }
       });
       // Remove the deleted conversation from the local state
@@ -108,7 +114,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     } catch (error) {
       console.error(`Error deleting chat with id: ${id}`, error);
     }
-  }, [user]);
+  }, []);
 
   // Define columns inside the component using useMemo
   const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
@@ -234,9 +240,14 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           return;   
         }
 
+        const token = await getToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+
         const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
           headers: {
-            'x-user-id': user.id
+            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -246,7 +257,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
         // Fetch agent data
         const agentResponse = await axios.get(`${API_BASE_URL}/agent/`, {
           headers: {
-            'x-user-id': user.id
+            'Authorization': `Bearer ${token}`
           }
         });
         const agents = agentResponse.data.data as Agent[];

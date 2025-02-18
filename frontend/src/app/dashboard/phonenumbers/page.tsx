@@ -20,6 +20,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useAuth } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
+import { getToken } from "@clerk/nextjs";
 
 // This would come from your API
 interface PhoneNumber {
@@ -51,10 +52,15 @@ export default function PhoneNumbersPage() {
       if (!userId) return;
 
       try {
+        const token = await getToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+
         const response = await fetch(`${API_BASE_URL}/twilio/user_numbers`, {
           method: 'GET',
           headers: {
-            'x-user-id': userId,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
@@ -82,9 +88,14 @@ export default function PhoneNumbersPage() {
       if (!userId) return;
 
       try {
+        const token = await getToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+
         const response = await fetch(`${API_BASE_URL}/agent/`, {
           headers: {
-            'x-user-id': userId
+            'Authorization': `Bearer ${token}`
           }
         });
         

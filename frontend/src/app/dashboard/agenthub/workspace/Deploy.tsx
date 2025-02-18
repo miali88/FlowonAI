@@ -231,12 +231,18 @@ const Deploy: React.FC<DeployProps> = ({
   const fetchAvailableNumbers = async (countryCode: string) => {
     setIsLoadingNumbers(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/available_numbers/${countryCode}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
