@@ -12,7 +12,7 @@ from services.knowledge_base import file_processing
 from services.dashboard import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
 from services.knowledge_base.web_scrape import map_url, scrape_url
-from app.api.deps import get_current_user
+from app.core.auth import get_current_user
 
 supabase = supabase_client()
 
@@ -52,27 +52,22 @@ class ScrapeUrlRequest(BaseModel):
 async def upload_file_handler(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    authorization: str = Header(...),
-    x_user_id: str = Header(..., alias="X-User-ID")
+    current_user: str = Depends(get_current_user)
 ):
     try:
         logger.info(f"Received file: {file.filename}")
-        logger.info(f"User ID from header: {x_user_id}")
-
-        # Validate the token (you may want to use your get_current_user function here)
-        if not authorization or not authorization.startswith('Bearer '):
-            raise HTTPException(status_code=401, detail="Invalid or missing token")
+        logger.info(f"User ID from auth: {current_user}")
 
         content, file_extension = await file_processing.process_file(file)
         logger.info("Finished processing file")
 
         # Insert the processed content into the knowledge base
         new_item = supabase.table('user_text_files').insert({
-            "title": file.filename, # TODO: replace with user's entered title
+            "title": file.filename,
             "heading": file.filename,
             "file_name": file.filename,
             "content": content,
-            "user_id": x_user_id,  # Use the user ID from the header
+            "user_id": current_user,  # Use authenticated user ID
             "data_type": file_extension
         }).execute()
 
@@ -80,7 +75,7 @@ async def upload_file_handler(
         headers_item = supabase.table('user_text_files_headers').insert({
             "heading": file.filename,
             "file_name": file.filename,
-            "user_id": x_user_id,
+            "user_id": current_user,
             "data_type": file_extension,
             "parent_id": new_item.data[0]['id']
         }).execute()
@@ -105,9 +100,10 @@ async def upload_file_handler(
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
-        # items = []
-        # total_tokens = 0
-        print("\n\ntotal_tokens:", total_tokens)
+        
+        # Ensure total_tokens is an integer, default to 0 if None
+        total_tokens = total_tokens or 0
+        
         return JSONResponse(content={
             "items": items,
             "total_tokens": total_tokens
@@ -195,9 +191,9 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
 async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_headers(current_user)
-        # items = []
-        # total_tokens = 0
-        print("\n\ntotal_tokens:", total_tokens)
+        # Ensure total_tokens is an integer, default to 0 if None
+        total_tokens = total_tokens or 0
+        
         return JSONResponse(content={
             "items": items,
             "total_tokens": total_tokens

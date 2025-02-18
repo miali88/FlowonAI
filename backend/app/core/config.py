@@ -129,6 +129,8 @@ class Settings(BaseSettings):
     CLERK_SIGNING_SECRET: str = ""
     CLERK_SECRET_KEY: str = ""
     CLERK_JWT_KEY: str = ""
+    CLERK_JWT_ISSUER: str
+    CLERK_PUBLIC_KEY: str
     
     # Integration APIs
     N8N_API_KEY: str = ""

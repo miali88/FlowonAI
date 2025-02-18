@@ -54,7 +54,7 @@ async def get_kb_items(
             grouped: List[Dict] = group_by_root_url(results.data)
             logger.info(f"After grouping: {len(grouped)} unique root_urls")
             all_items.extend(grouped)
-            total_tokens += sum(item.get('token_count', 0) for item in results.data)
+            total_tokens += sum(item.get('token_count', 0) or 0 for item in results.data)
 
         elif table == "user_text_files":
             items = (
@@ -74,12 +74,12 @@ async def get_kb_items(
                     'user_id': current_user,
                     'data_type': item.get('data_type'),
                     'tag': item.get('tag', ''),
-                    'token_count': item.get('token_count', 0)
+                    'token_count': item.get('token_count', 0) or 0
                 }
                 for item in items.data
             ]
             all_items.extend(formatted_items)
-            total_tokens += sum(item.get('token_count', 0) for item in items.data)
+            total_tokens += sum(item.get('token_count', 0) or 0 for item in items.data)
 
     logger.info(f"Retrieved {len(all_items)} total items")
     return all_items, total_tokens

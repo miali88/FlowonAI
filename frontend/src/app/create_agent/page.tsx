@@ -35,7 +35,6 @@ export default function CreateAgentFromURL() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'user_2mmXezcGmjZCf88gT2v2waCBsXv',
         },
         body: JSON.stringify({ url }),
       });

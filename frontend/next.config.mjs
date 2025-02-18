@@ -13,6 +13,7 @@ const nextConfig = {
               "frame-ancestors *",
               "frame-src *",
               "script-src * 'self' 'unsafe-inline' 'unsafe-eval'",
+              "worker-src 'self' blob: data:",
               "connect-src *",
               "style-src * 'self' 'unsafe-inline'",
               "img-src * data: blob: 'self'",
