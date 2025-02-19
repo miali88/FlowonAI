@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/table"
 import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useAuth } from "@clerk/nextjs"
 import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -80,6 +80,7 @@ function Loader() {
 
 export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [data, setData] = useState<ConversationLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -97,9 +98,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   // Define handleDeleteChat inside the component
   const handleDeleteChat = React.useCallback(async (id: string) => {
     try {
+      const token = await getToken();
       await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
         headers: {
-          'x-user-id': user?.id
+          'Authorization': `Bearer ${token}`
         }
       });
       // Remove the deleted conversation from the local state
@@ -108,7 +110,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     } catch (error) {
       console.error(`Error deleting chat with id: ${id}`, error);
     }
-  }, [user]);
+  }, [getToken]);
 
   // Define columns inside the component using useMemo
   const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
@@ -234,9 +236,10 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           return;   
         }
 
+        const token = await getToken();
         const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
           headers: {
-            'x-user-id': user.id
+            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -246,7 +249,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
         // Fetch agent data
         const agentResponse = await axios.get(`${API_BASE_URL}/agent/`, {
           headers: {
-            'x-user-id': user.id
+            'Authorization': `Bearer ${token}`
           }
         });
         const agents = agentResponse.data.data as Agent[];
@@ -272,7 +275,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     }
 
     fetchData();
-  }, [user])
+  }, [user, getToken])
 
   // Create a memoized filtered data array
   const filteredData = useMemo(() => {

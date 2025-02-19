@@ -28,7 +28,7 @@ const AgentHub = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
-  const { userId, user, isLoaded } = useAuth();
+  const { userId, user, isLoaded, getToken } = useAuth();
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -51,10 +51,11 @@ const AgentHub = () => {
     
     setIsLoadingUserInfo(true);
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/knowledge_base/users`, {
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId,
+          'Authorization': `Bearer ${token}`,
         },
       });
       
@@ -103,11 +104,12 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/agent/${selectedAgent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           agentName: selectedAgent.agentName,
@@ -142,11 +144,12 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${selectedAgent.id}`, {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/agent/${selectedAgent.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -180,10 +183,11 @@ const AgentHub = () => {
     
     try {
       setIsLoading(true);
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/knowledge_base/headers`, {
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId,
+          'Authorization': `Bearer ${token}`,
         },
       });
       
@@ -210,9 +214,10 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
+      const token = await getToken();
       const response = await axios.get(`${API_BASE_URL}/agent/`, {
         headers: {
-          'x-user-id': userId
+          'Authorization': `Bearer ${token}`
         }
       });
       console.log('Fetched Agents Data:', response.data.data);
@@ -267,9 +272,10 @@ const AgentHub = () => {
     
     setAgentsLoading(true);
     try {
+      const token = await getToken();
       const response = await axios.get(`${API_BASE_URL}/agent/`, {
         headers: {
-          'x-user-id': userId
+          'Authorization': `Bearer ${token}`
         }
       });
       console.log('Refreshed Agents Data:', response.data.data);
@@ -280,7 +286,7 @@ const AgentHub = () => {
     } finally {
       setAgentsLoading(false);
     }
-  }, [userId]);
+  }, [userId, getToken]);
 
   return (
     <>
