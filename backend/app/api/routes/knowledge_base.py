@@ -194,6 +194,13 @@ async def scrape_url_handler(
         request_data: List[str] = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
         
+        # Limit to first 5 URLs and raise an error if too many are provided
+        if len(urls) > 5:
+            raise HTTPException(
+                status_code=400, 
+                detail="Too many URLs. Maximum of 5 URLs allowed per request."
+            )
+        
         # Schedule scraping to run in the background
         background_tasks.add_task(scrape_url, urls, current_user)
         

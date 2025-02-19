@@ -107,6 +107,13 @@ export const handleScrapeAll = async ({
 }) => {
   try {
     console.log("=== Starting handleScrapeAll ===");
+    if (selectedUrls.length > 5) {
+      setScrapeError("You can only scrape up to 5 URLs at a time");
+      setAlertMessage("Maximum 5 URLs allowed per scrape");
+      setAlertType("error");
+      return false;
+    }
+
     console.log("User ID:", user.id);
     console.log("Selected URLs:", selectedUrls);
     console.log("API Endpoint:", `${API_BASE_URL}/knowledge_base/scrape_web`);
