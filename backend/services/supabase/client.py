@@ -68,6 +68,7 @@ async def get_supabase() -> AsyncClient:
     """
     global supabase
     if supabase is None:
+        
         supabase = await supabase_client.get_client()
     return supabase
 
