@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   LucideIcon,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -73,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeItem, setActiveItem] = useState("");
 
   const sidebarItems = [
+    { icon: Compass, label: "Guided-Setup", href: "/dashboard/guided-setup" },
     { icon: Mic, label: "Agent Hub", href: "/dashboard/agenthub" },
     {
       icon: BookOpen,

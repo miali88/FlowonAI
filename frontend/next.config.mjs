@@ -72,6 +72,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  env: {
+    NEXT_PUBLIC_GOOGLE_PLACES_API_KEY:
+      process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
+  },
 };
 
 export default nextConfig;
