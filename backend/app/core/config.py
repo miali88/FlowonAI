@@ -138,6 +138,7 @@ class Settings(BaseSettings):
     GITHUB_TOKEN: str = ""
     PIPEDRIVE_API_KEY: str = ""
     DEEPSEEK_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     
     # LiveKit SIP
     LIVEKIT_SIP_HOST: str = ""
