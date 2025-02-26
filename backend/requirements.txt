@@ -204,7 +204,7 @@ pytest-mockito==0.0.4
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
 python-dotenv==1.0.1
-python-multipart==0.0.7
+python-multipart==0.0.18
 pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
