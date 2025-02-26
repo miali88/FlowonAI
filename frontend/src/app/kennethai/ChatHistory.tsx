@@ -44,7 +44,6 @@ const ChatHistory: React.FC = () => {
       const response = await axios.get(`${API_BASE_URL}/chat/history`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'X-User-ID': user.id,
         },
       });
 

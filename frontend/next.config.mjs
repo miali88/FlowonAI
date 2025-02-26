@@ -16,6 +16,7 @@ const nextConfig = {
               "frame-ancestors *",
               "frame-src *",
               "script-src * 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com",
+              "worker-src 'self' blob: data:",
               "connect-src *",
               "style-src * 'self' 'unsafe-inline'",
               "img-src * data: blob: 'self'",

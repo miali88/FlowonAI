@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { NewAgent } from "./NewAgent";
 import Workspace from "./workspace/Workspace";
 import { LocalParticipant } from "livekit-client";
@@ -42,7 +42,7 @@ const AgentHub = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogMessage, setAlertDialogMessage] = useState("");
-  const { userId, user, isLoaded } = useAuth();
+  const { userId, user, isLoaded, getToken } = useAuth();
   const [isLiveKitActive, setIsLiveKitActive] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -68,10 +68,15 @@ const AgentHub = () => {
 
     setIsLoadingUserInfo(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(`${API_BASE_URL}/knowledge_base/users`, {
         headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -124,10 +129,14 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       // Clean up features before sending to backend
       const cleanedFeatures = selectedAgent.features
         ? Object.entries(selectedAgent.features).reduce((acc, [key, value]) => {
-            // Skip unwanted features
             if (
               key !== "prospects" &&
               key !== "prospecting" &&
@@ -146,7 +155,8 @@ const AgentHub = () => {
         {
           method: "PATCH",
           headers: {
-            "x-user-id": userId,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             agentName: selectedAgent.agentName,
@@ -159,7 +169,7 @@ const AgentHub = () => {
             voiceProvider: selectedAgent.voiceProvider,
             instructions: selectedAgent.instructions,
             uiConfig: selectedAgent.uiConfig,
-            features: cleanedFeatures, // Use cleaned features here
+            features: cleanedFeatures,
             showSourcesInChat: selectedAgent.showSourcesInChat,
           }),
         }
@@ -187,13 +197,18 @@ const AgentHub = () => {
     if (!selectedAgent || !userId) return;
 
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents/${selectedAgent.id}`,
         {
           method: "DELETE",
           headers: {
-            "Content-Type": "application/json",
-            "x-user-id": userId,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
@@ -203,7 +218,6 @@ const AgentHub = () => {
           `${selectedAgent.agentName} has been successfully deleted.`
         );
         setSelectedAgent(null);
-        // Optionally, refresh the agent list here
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to delete agent");
@@ -234,10 +248,15 @@ const AgentHub = () => {
 
     try {
       setIsLoading(true);
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(`${API_BASE_URL}/knowledge_base/headers`, {
         headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -264,9 +283,14 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
-          "x-user-id": userId,
+          'Authorization': `Bearer ${token}`,
         },
       });
       console.log("Fetched Agents Data:", response.data.data);
@@ -325,9 +349,14 @@ const AgentHub = () => {
 
     setAgentsLoading(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await axios.get(`${API_BASE_URL}/agents/`, {
         headers: {
-          "x-user-id": userId,
+          'Authorization': `Bearer ${token}`,
         },
       });
       console.log("Refreshed Agents Data:", response.data.data);
@@ -338,7 +367,7 @@ const AgentHub = () => {
     } finally {
       setAgentsLoading(false);
     }
-  }, [userId]);
+  }, [userId, getToken]);
 
   // Add this useEffect to handle URL-based agent selection
   useEffect(() => {

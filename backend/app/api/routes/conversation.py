@@ -8,6 +8,7 @@ from fastapi import Request, HTTPException, APIRouter, Depends
 from fastapi.responses import JSONResponse, Response
 from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import run_in_threadpool
+from app.core.auth import get_current_user
 
 from services.cache import get_agent_metadata
 from services.supabase.client import get_supabase
@@ -25,21 +26,17 @@ event_broadcasters: Dict[str, asyncio.Event] = {}
 conversation_logs: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
 
-async def get_user_id(request: Request) -> str:
-    user_id = request.headers.get("X-User-ID")
-    if not user_id:
-        raise HTTPException(status_code=400, detail="X-User-ID header is missing")
-    return user_id
-
-
 @router.get("/history")
 async def get_conversation_history(
-    user_id: Annotated[str, Depends(get_user_id)]
+    current_user: str = Depends(get_current_user)
 ) -> Response:
     try:
-        supabase = await get_supabase()
-        response = await supabase.table("conversation_logs").select("*").eq("user_id", user_id).execute()
-
+        response = (
+            supabase.table("conversation_logs")
+            .select("*")
+            .eq("user_id", current_user)
+            .execute()
+        )
         if response.data:
             return JSONResponse(content=response.data)
         return JSONResponse(content=[], status_code=200)
@@ -53,13 +50,13 @@ async def get_conversation_history(
 @router.delete("/{conversation_id}")
 async def delete_conversation_history(
     conversation_id: str,
-    user_id: Annotated[str, Depends(get_user_id)]
+    current_user: str = Depends(get_current_user)
 ) -> Response:
     try:
         supabase = await get_supabase()
         await supabase.table("conversation_logs").delete().eq(
             "id", conversation_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", current_user).execute()
         return JSONResponse(content={}, status_code=200)
     except Exception as e:
         raise HTTPException(

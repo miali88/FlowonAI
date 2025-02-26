@@ -282,3 +282,4 @@ pytest-asyncio==0.25.3
 iniconfig==2.0.0
 fake-useragent>=2.0.3
 pyOpenSSL>=24.3.0
+aioredis>=2.0.0

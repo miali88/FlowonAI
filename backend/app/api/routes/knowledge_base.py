@@ -12,7 +12,7 @@ from services.knowledge_base import file_processing
 from services.knowledge_base.vectorise_data import kb_item_to_chunks
 from services.knowledge_base.kb import get_kb_items, get_kb_headers
 from services.knowledge_base.web_scrape import map_url, scrape_url
-from app.api.deps import get_current_user
+from app.core.auth import get_current_user
 
 
 # Set up logging with timestamps
@@ -51,18 +51,14 @@ class ScrapeUrlRequest(BaseModel):
 async def upload_file_handler(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    authorization: str = Header(...),
-    x_user_id: str = Header(..., alias="X-User-ID")
+    current_user: str = Depends(get_current_user)
 ):
     try:
-        # Validate the token
-        if not authorization or not authorization.startswith('Bearer '):
-            raise HTTPException(status_code=401, detail="Invalid or missing token")
 
         # Process, store and schedule chunking
         new_item = await file_processing.process_and_store_file(
             file=file,
-            user_id=x_user_id,
+            user_id=current_user,
             background_tasks=background_tasks
         )
 
@@ -78,9 +74,10 @@ async def upload_file_handler(
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
-        # items = []
-        # total_tokens = 0
-        print("\n\ntotal_tokens:", total_tokens)
+        
+        # Ensure total_tokens is an integer, default to 0 if None
+        total_tokens = total_tokens or 0
+        
         return JSONResponse(content={
             "items": items,
             "total_tokens": total_tokens
@@ -172,9 +169,9 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
 async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_headers(current_user)
-        # items = []
-        # total_tokens = 0
-        print("\n\ntotal_tokens:", total_tokens)
+        # Ensure total_tokens is an integer, default to 0 if None
+        total_tokens = total_tokens or 0
+        
         return JSONResponse(content={
             "items": items,
             "total_tokens": total_tokens

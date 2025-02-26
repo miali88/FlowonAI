@@ -17,59 +17,50 @@ interface RoomDetails {
 const STORAGE_KEY = 'livekit_room_details';
 const userId = "visitor";
 
-export function LiveKitTextEntry({ 
+const LiveKitTextEntry: React.FC<LiveKitTextEntryProps> = ({ 
   agentId, 
-  apiBaseUrl,
+  apiBaseUrl, 
   onRoomConnected 
-}: LiveKitTextEntryProps) {
+}) => {
   const [token, setToken] = useState<string | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const initializationAttempted = useRef(false);
 
-  // Initialize room connection on mount
+  // Add validation for required props
   useEffect(() => {
-    const getRoomFromStorage = (): RoomDetails | null => {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const details = JSON.parse(stored);
-          // Verify all required fields are present
-          if (details.token && details.url && details.roomName) {
-            return details;
-          }
-        } catch (e) {
-          console.error('Failed to parse stored room details');
-        }
-      }
-      return null;
-    };
+    if (!apiBaseUrl) {
+      console.error('API Base URL is required');
+      return;
+    }
+    if (!agentId) {
+      console.error('Agent ID is required');
+      return;
+    }
 
     const initializeRoom = async () => {
       // Prevent multiple initialization attempts
       if (initializationAttempted.current) return;
       initializationAttempted.current = true;
 
-      // Check for existing room details
-      const storedDetails = getRoomFromStorage();
-      if (storedDetails) {
-        setToken(storedDetails.token);
-        setUrl(storedDetails.url);
-        setRoomName(storedDetails.roomName);
-        onRoomConnected?.(storedDetails.roomName);
-        return;
-      }
-
       try {
-        const response = await fetch(`${apiBaseUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}&medium=textbot`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        console.log('Initializing room with:', {
+          apiBaseUrl,
+          agentId
         });
-        
+
+        const response = await fetch(
+          `${apiBaseUrl}/livekit/token?agent_id=${agentId}&user_id=${userId}&medium=textbot`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch token: ${response.status}`);
+          throw new Error(`Failed to fetch token: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
@@ -100,7 +91,7 @@ export function LiveKitTextEntry({
       // Optional: Clear storage on unmount if needed
       // sessionStorage.removeItem(STORAGE_KEY);
     };
-  }, [agentId, apiBaseUrl]); // Removed onRoomConnected from dependencies
+  }, [agentId, apiBaseUrl]);
 
   const handleConnected = useCallback((room: Room) => {
     console.log('Connected to LiveKit room:', room.name);
@@ -132,6 +123,6 @@ export function LiveKitTextEntry({
       onDisconnected={handleDisconnected}
     />
   );
-}
+};
 
 export default LiveKitTextEntry;

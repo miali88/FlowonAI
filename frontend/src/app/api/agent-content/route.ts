@@ -1,25 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const agentId = searchParams.get('agentId');
-  const userId = searchParams.get('userId');
-
+  
   if (!agentId) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
 
   try {
-    console.log(`API_BASE_URL: ${API_BASE_URL}`);
-    console.log(`Fetching from: ${API_BASE_URL}/agent/agent_content/${agentId}`);
-    
+    const { getToken } = auth();
+    const token = await getToken();
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const response = await fetch(`${API_BASE_URL}/agent/agent_content/${agentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId || '',
+        'Authorization': `Bearer ${token}`,
       },
     });
 

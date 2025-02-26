@@ -19,7 +19,6 @@ export const handleScrape = async ({
   scrapeUrl,
   setScrapeError,
   getToken,
-  user,
   API_BASE_URL,
   setNewItemContent,
   setShowScrapeInput,
@@ -45,7 +44,6 @@ export const handleScrape = async ({
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          'X-User-ID': user.id,
         },
       }
     );
@@ -86,12 +84,10 @@ export const handleScrape = async ({
   }
 };
 
-// Add this new function
 export const handleScrapeAll = async ({
   scrapeUrl,
   setScrapeError,
   getToken,
-  user,
   API_BASE_URL,
   setNewItemContent,
   setShowScrapeInput,
@@ -102,7 +98,6 @@ export const handleScrapeAll = async ({
 }: Omit<HandleScrapeProps, 'mappedUrls' | 'setMappedUrls'> & { selectedUrls: string[] }) => {
   try {
     console.log('=== Starting handleScrapeAll ===');
-    console.log('User ID:', user.id);
     console.log('Selected URLs:', selectedUrls);
     console.log('API Endpoint:', `${API_BASE_URL}/knowledge_base/scrape_web`);
 
@@ -118,7 +113,6 @@ export const handleScrapeAll = async ({
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          'X-User-ID': user.id,
         },
       }
     );
@@ -127,21 +121,18 @@ export const handleScrapeAll = async ({
     console.log('Response status:', response.status);
     console.log('Response data:', response.data);
 
-    // Modified response handling
     if (response.data.message === "completed") {
       setAlertMessage("URLs added to your library");
       setAlertType("success");
       setShowScrapeInput(false);
       setScrapeUrl("");
-      return true; // Add this to indicate success
+      return true;
     }
 
-    // Check if response.data exists before accessing content
     if (!response.data) {
       throw new Error("No response data received from server");
     }
 
-    // Handle both possible response formats
     const content = response.data.content || response.data;
     if (!content) {
       throw new Error("No content received from the server");

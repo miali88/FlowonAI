@@ -41,13 +41,16 @@ export const handleScrape = async ({
 
   try {
     const token = await getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
     const response = await axios.post(
       `${API_BASE_URL}/knowledge_base/crawl_url`,
       { url: scrapeUrl },
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
         },
       }
     );
@@ -107,11 +110,13 @@ export const handleScrapeAll = async ({
 }) => {
   try {
     console.log("=== Starting handleScrapeAll ===");
-    console.log("User ID:", user.id);
     console.log("Selected URLs:", selectedUrls);
     console.log("API Endpoint:", `${API_BASE_URL}/knowledge_base/scrape_web`);
 
     const token = await getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
     console.log("Token obtained successfully");
 
     const requestData = { urls: selectedUrls };
@@ -123,7 +128,6 @@ export const handleScrapeAll = async ({
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
         },
       }
     );

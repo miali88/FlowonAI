@@ -40,6 +40,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function PhoneNumbersPage() {
   const { userId } = useAuth();
+  const { getToken } = useAuth();
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +52,11 @@ export default function PhoneNumbersPage() {
       if (!userId) return;
 
       try {
+        const token = await getToken();
         const response = await fetch(`${API_BASE_URL}/twilio/user_numbers`, {
           method: 'GET',
           headers: {
-            'x-user-id': userId,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
@@ -75,16 +77,17 @@ export default function PhoneNumbersPage() {
     };
 
     fetchPhoneNumbers();
-  }, [userId]);
+  }, [userId, getToken]);
 
   useEffect(() => {
     const fetchAgents = async () => {
       if (!userId) return;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/agents/`, {
+        const token = await getToken();
+        const response = await fetch(`${API_BASE_URL}/agent/`, {
           headers: {
-            'x-user-id': userId
+            'Authorization': `Bearer ${token}`
           }
         });
         
@@ -101,7 +104,7 @@ export default function PhoneNumbersPage() {
     };
 
     fetchAgents();
-  }, [userId]);
+  }, [userId, getToken]);
 
   if (loading || agentsLoading) {
     return <div className="flex justify-center items-center h-full">Loading...</div>;

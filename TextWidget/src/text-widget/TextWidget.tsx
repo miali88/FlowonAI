@@ -35,6 +35,11 @@ interface Source {
   source_file?: string;
 }
 
+interface ChatData {
+  messages: Array<any>;
+  // ... other chat data properties
+}
+
 const LoadingBubbles = () => (
   <div className={styles.loadingBubbles} data-loading-spinner>
     <div className={styles.bubble}></div>
@@ -53,7 +58,10 @@ const SUGGESTED_QUESTIONS = [
 const DEBUG_SHOW_FORM = false; // Set to true to always show the form for debugging
 const DEBUG_SHOW_CALENDLY = false; // Set to true to always show Calendly widget for debugging
 
-const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
+const TextWidget: React.FC<ChatInterfaceProps> = ({ 
+  agentId, 
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1' 
+}) => {
   console.log("Received suggestedQuestions:", SUGGESTED_QUESTIONS);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -64,7 +72,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   const [showForm, setShowForm] = useState(false);
   const [activeSuggestions, setActiveSuggestions] =
     useState<string[]>(SUGGESTED_QUESTIONS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [participantIdentity, setParticipantIdentity] = useState<string | null>(
     null
   );
@@ -90,6 +98,8 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
   const [dislikedMessages, setDislikedMessages] = useState<
     Record<string, boolean>
   >({});
+  const [chatData, setChatData] = useState<ChatData | null>(null);
+  const [currentResponseId, setCurrentResponseId] = useState<string | null>(null);
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -199,6 +209,80 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
     }
   }, [agentName]);
 
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Only use agent_id for the room name
+        const simpleRoomName = `${agentId}`;
+        setRoomName(simpleRoomName);
+        
+        console.log('🔍 Checking for existing chat with:', {
+          agentId,
+          simpleRoomName,
+          endpoint: `${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${simpleRoomName}`
+        });
+        
+        // Check for existing chat
+        const response = await fetch(`${apiBaseUrl}/chat/existing-chat?agent_id=${agentId}&room_name=${simpleRoomName}`);
+        const data = await response.json();
+        
+        console.log('📦 Redis response:', {
+          exists: data.exists,
+          messageCount: data.chat_data?.messages?.length || 0,
+          data: data.chat_data
+        });
+        
+        if (data.exists && data.chat_data) {
+          // Convert the Redis chat data format to our Message[] format
+          const existingMessages = data.chat_data.messages.map((msg: any) => {
+            console.log('🔄 Converting message:', {
+              role: msg.role,
+              content: msg.content?.slice(0, 50) + '...',  // Log first 50 chars
+              responseId: msg.response_id
+            });
+            
+            return {
+              text: msg.content,
+              isBot: msg.role === "assistant",
+              responseId: msg.response_id,
+              hasSource: false
+            };
+          });
+          
+          setMessages(existingMessages);
+          console.log('✅ Loaded existing chat:', {
+            messageCount: existingMessages.length,
+            firstMessage: existingMessages[0]?.text?.slice(0, 50) + '...',
+            lastMessage: existingMessages[existingMessages.length - 1]?.text?.slice(0, 50) + '...'
+          });
+        } else {
+          console.log('🆕 No existing chat found, initializing with opening line:', openingLine);
+          // Initialize new chat with opening line if no existing chat
+          if (openingLine) {
+            setMessages([
+              { text: openingLine, isBot: true, responseId: "1a", hasSource: false }
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error initializing chat:', error);
+        if (openingLine) {
+          setMessages([
+            { text: openingLine, isBot: true, responseId: "1a", hasSource: false }
+          ]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (agentId && apiBaseUrl) {
+      initializeChat();
+    }
+  }, [agentId, apiBaseUrl, openingLine]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -245,7 +329,45 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
             const content = line.slice(6).trim();
 
             if (content === "[DONE]") {
-              console.log("Complete response:", accumulatedResponse);
+              console.log("Starting Redis save process for response:", accumulatedResponse.slice(0, 100) + "...");
+              
+              try {
+                const saveResponse = await fetch(`${apiBaseUrl}/chat/save-response`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    agent_id: agentId,
+                    room_name: roomName,
+                    response: {
+                      role: "assistant",
+                      content: accumulatedResponse,
+                      response_id: currentResponseId
+                    }
+                  }),
+                });
+
+                if (!saveResponse.ok) {
+                  const errorData = await saveResponse.text();
+                  console.error("Failed to save to Redis:", saveResponse.status, errorData);
+                  throw new Error(`Failed to save to Redis: ${saveResponse.status} ${errorData}`);
+                }
+
+                const saveResult = await saveResponse.json();
+                console.log("✅ Successfully saved to Redis:", {
+                  responseId: currentResponseId,
+                  status: saveResult.status,
+                  roomName,
+                  contentPreview: accumulatedResponse.slice(0, 100) + "..."
+                });
+              } catch (saveError) {
+                console.error("❌ Error saving to Redis:", {
+                  error: saveError,
+                  responseId: currentResponseId,
+                  roomName
+                });
+              }
               break;
             }
 
@@ -254,7 +376,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
               if (data.response?.answer) {
                 const newText = data.response.answer;
                 const responseId = data.response?.response_id;
-                const hasSource = data.response?.has_source;
+                setCurrentResponseId(responseId);
                 accumulatedResponse += newText;
 
                 setMessages((prev) => {
@@ -263,7 +385,7 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
                   if (lastMessage.isBot) {
                     lastMessage.text = accumulatedResponse;
                     lastMessage.responseId = responseId;
-                    lastMessage.hasSource = hasSource;
+                    lastMessage.hasSource = data.response?.has_source;
                   }
                   return newMessages;
                 });
@@ -522,6 +644,10 @@ const TextWidget: React.FC<ChatInterfaceProps> = ({ agentId, apiBaseUrl }) => {
       // You could add error handling UI here
     }
   };
+
+  if (isLoading) {
+    return <div>Loading chat...</div>;
+  }
 
   return (
     <div

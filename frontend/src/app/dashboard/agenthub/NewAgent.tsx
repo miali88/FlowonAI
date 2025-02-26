@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import styles from './NewAgent.module.css';
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { Agent } from "./AgentCards";
 
 type SetupMethod = 'telephone' | 'text' | 'voice-web' | 'feedback' | 'name' | null;
@@ -22,7 +22,7 @@ interface NewAgentProps {
 }
 
 export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
-  const { user } = useUser();
+  const { user, getToken } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [setupMethod, setSetupMethod] = useState<SetupMethod>(null);
   const [agentType, setAgentType] = useState<AgentType>(null);
@@ -71,11 +71,16 @@ export function NewAgent({ onAgentCreated, setSelectedAgent }: NewAgentProps) {
     setError(null);
 
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(`${API_BASE_URL}/agents/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           userId: user.id,
