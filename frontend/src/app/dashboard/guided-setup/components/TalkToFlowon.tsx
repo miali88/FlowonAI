@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   PhoneCall,
@@ -25,22 +26,38 @@ interface TalkToFlowonProps {
 }
 
 export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
+  const { getToken } = useAuth();
   const [flowonPhoneNumber, setFlowonPhoneNumber] = useState<string | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
+        
+        // Get auth token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+        
         // Use the API_BASE_URL environment variable
         const response = await fetch(
-          `${API_BASE_URL}/guided-setup/phone-number`
+          `${API_BASE_URL}/guided-setup/phone-number`,
+          {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
 
         if (!response.ok) {
+          const errorData = await response.text();
+          console.error("Error fetching phone number:", errorData);
           throw new Error("Failed to fetch phone number");
         }
 
@@ -63,6 +80,15 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
 
     fetchPhoneNumber();
   }, []);
+
+  const handleNext = () => {
+    setSuccessMessage("Great! Let's continue to the final step.");
+    
+    // Proceed to next step after a short delay
+    setTimeout(() => {
+      onNext();
+    }, 1500);
+  };
 
   return (
     <div className="space-y-8">
@@ -93,6 +119,13 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         </Alert>
       )}
 
+      {successMessage && (
+        <Alert className="bg-green-50 text-green-800 border-green-200">
+          <Check className="h-4 w-4 text-green-500" />
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="font-medium text-blue-500">Give Flowon a call</h3>
@@ -120,7 +153,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           You can launch or continue training Flowon on the next step
         </div>
         <Button
-          onClick={onNext}
+          onClick={handleNext}
           className="bg-blue-500 hover:bg-blue-600 text-white"
         >
           Continue <ArrowRight className="ml-2 h-4 w-4" />

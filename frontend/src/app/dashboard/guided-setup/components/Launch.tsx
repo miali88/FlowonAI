@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   CreditCard,
   PhoneForwarded,
   CheckCircle2,
+  Loader2,
+  Phone,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface LaunchProps {
   onNext: () => void;
@@ -17,6 +23,97 @@ interface LaunchProps {
 
 export default function Launch({ onNext }: LaunchProps) {
   const [isForwarding, setIsForwarding] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    async function fetchPhoneNumber() {
+      try {
+        setIsLoading(true);
+        
+        // Get auth token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/guided-setup/phone-number`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error("Error fetching phone number:", errorData);
+          throw new Error("Failed to fetch phone number");
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.phoneNumber) {
+          setPhoneNumber(data.phoneNumber);
+        } else {
+          throw new Error(data.error || "Invalid response format");
+        }
+      } catch (err) {
+        console.error("Error fetching phone number:", err);
+        setError("Could not load your Flowon phone number.");
+        // Fallback to a constant
+        setPhoneNumber("(814) 261-0317");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchPhoneNumber();
+  }, [getToken]);
+
+  const handleCompleteSetup = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      
+      // Mark setup as complete
+      const response = await fetch(`${API_BASE_URL}/guided-setup/mark-complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Error marking setup as complete:", errorData);
+        throw new Error("Failed to complete setup");
+      }
+
+      // Show success message
+      setSuccessMessage("Setup completed successfully! Redirecting to dashboard...");
+      
+      // Proceed to next step after a short delay
+      setTimeout(() => {
+        onNext();
+      }, 2000);
+      
+    } catch (err: any) {
+      console.error("Error completing setup:", err);
+      setError(err.message || "Failed to complete setup");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -33,6 +130,42 @@ export default function Launch({ onNext }: LaunchProps) {
           problem - reach out and we&apos;ll get you sorted.
         </p>
       </div>
+
+      {/* Show Flowon phone number */}
+      <Card className="p-6 border-l-4 border-l-blue-500 bg-gray-50">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Phone className="h-5 w-5 text-blue-500" />
+              Your Flowon Phone Number
+            </h3>
+            <p className="text-gray-600 mt-1">
+              Forward your business calls to this Flowon number:
+            </p>
+          </div>
+          
+          <div className="text-xl font-bold">
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+            ) : (
+              phoneNumber
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {successMessage && (
+        <Alert className="bg-green-50 text-green-800 border-green-200">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-6">
         {/* Step 1 */}
@@ -119,11 +252,20 @@ export default function Launch({ onNext }: LaunchProps) {
 
       <div className="flex justify-end pt-8">
         <Button
-          onClick={onNext}
+          onClick={handleCompleteSetup}
           className="bg-black hover:bg-gray-800 text-white"
-          disabled={!isForwarding}
+          disabled={!isForwarding || isSubmitting}
         >
-          Complete Setup <ArrowRight className="ml-2 h-4 w-4" />
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Completing Setup...
+            </>
+          ) : (
+            <>
+              Complete Setup <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
       </div>
     </div>

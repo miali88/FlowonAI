@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SetupStep } from "./types";
 import QuickSetup from "./components/QuickSetup";
 import TalkToFlowon from "./components/TalkToFlowon";
 import Launch from "./components/Launch";
+import { Loader2 } from "lucide-react";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const steps: { id: SetupStep; label: string }[] = [
   { id: "quick-setup", label: "Quick Set-up" },
@@ -16,6 +20,49 @@ const steps: { id: SetupStep; label: string }[] = [
 
 export default function GuidedSetupPage() {
   const [currentStep, setCurrentStep] = useState<SetupStep>("quick-setup");
+  const [isLoading, setIsLoading] = useState(true);
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    async function checkSetupStatus() {
+      try {
+        setIsLoading(true);
+        
+        // Get auth token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/guided-setup/setup-status`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch setup status");
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log("Setup status:", data.isComplete ? "completed" : "not completed");
+          
+          // If setup is already completed, skip to last step
+          if (data.isComplete) {
+            setCurrentStep("launch");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking setup status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkSetupStatus();
+  }, []);
 
   const handleNext = () => {
     const currentIndex = steps.findIndex((step) => step.id === currentStep);
@@ -23,6 +70,17 @@ export default function GuidedSetupPage() {
       setCurrentStep(steps[currentIndex + 1].id);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <p className="text-gray-500">Loading setup status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[900px] mx-auto">

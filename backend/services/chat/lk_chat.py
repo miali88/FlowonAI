@@ -6,7 +6,8 @@ import pickle
 from pathlib import Path
 from uuid import uuid4
 from datetime import datetime, timedelta
-
+import os 
+from dotenv import load_dotenv
 import logging
 import asyncio
 import httpx
@@ -18,13 +19,13 @@ from livekit.agents.llm.chat_context import ChatMessage
 from services.cache import get_agent_metadata
 from services.chat.chat import similarity_search
 from services.voice.tool_use import trigger_show_chat_input
-from services.composio import get_calendar_slots
 from services.db.supabase_services import supabase
 from services.helper import format_transcript_messages
 from services.conversation import transcript_summary
 from services.redis_service import RedisChatStorage
 
 load_dotenv()
+
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 logger = logging.getLogger(__name__)

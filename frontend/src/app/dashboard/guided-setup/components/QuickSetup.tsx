@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { QuickSetupData } from "../types";
-import { Info, X, ArrowRight, AlertCircle } from "lucide-react";
+import { Info, X, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm, Controller, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -99,6 +100,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [newService, setNewService] = useState("");
   const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
   const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
+  const { getToken } = useAuth();
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Initialize form with React Hook Form and Zod resolver
   const form = useForm<FormValues>({
@@ -149,8 +154,62 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     mode: "onChange",
   });
 
-  const { control, handleSubmit, formState, watch, setValue, getValues } = form;
+  const { control, handleSubmit, formState, watch, setValue, getValues, reset } = form;
   const { errors, isSubmitting } = formState;
+
+  // Fetch existing setup data when component loads
+  useEffect(() => {
+    async function fetchExistingSetupData() {
+      try {
+        setIsLoadingData(true);
+        
+        // Get auth token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/guided-setup/setup-data`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            // No data found is not an error, just means this is the first time
+            setIsLoadingData(false);
+            return;
+          }
+          
+          const errorData = await response.text();
+          console.error("Error fetching setup data:", errorData);
+          throw new Error("Failed to fetch existing setup data");
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.setupData) {
+          console.log("Loaded existing setup data:", data.setupData);
+          
+          // Use reset to update all form values at once
+          reset({
+            trainingSources: data.setupData.trainingSources,
+            businessInformation: data.setupData.businessInformation,
+            messageTaking: data.setupData.messageTaking,
+            callNotifications: data.setupData.callNotifications
+          });
+        }
+      } catch (error) {
+        console.error("Error loading setup data:", error);
+        setLoadError("Failed to load your existing setup data. Starting with default values.");
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+
+    fetchExistingSetupData();
+  }, [getToken, reset]);
 
   const addService = () => {
     if (newService.trim()) {
@@ -173,21 +232,40 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
   const onSubmit = async (data: FormValues) => {
     try {
+      setSuccessMessage(null);
+      
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       // Send data to backend using API_BASE_URL
       const response = await fetch(`${API_BASE_URL}/guided-setup/quick-setup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Error submitting setup data:", errorData);
         throw new Error("Failed to submit quick setup data");
       }
 
-      // Proceed to next step
-      onNext();
+      const result = await response.json();
+      console.log("Setup data saved successfully:", result);
+      
+      // Set success message
+      setSuccessMessage("Your setup data has been saved successfully!");
+      
+      // Proceed to next step after a short delay
+      setTimeout(() => {
+        onNext();
+      }, 1500);
     } catch (error) {
       console.error("Error submitting quick setup data:", error);
       // You could add error handling UI here if needed
@@ -343,9 +421,37 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
   };
 
+  // Render a loading indicator if data is being loaded
+  if (isLoadingData) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="text-gray-500">Loading your setup data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Show error alert if loading failed */}
+        {loadError && (
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Show success message */}
+        {successMessage && (
+          <Alert className="mb-8 bg-green-50 text-green-800 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Place Change Dialog */}
         <Dialog open={placeChangeDialog} onOpenChange={setPlaceChangeDialog}>
           <DialogContent>
