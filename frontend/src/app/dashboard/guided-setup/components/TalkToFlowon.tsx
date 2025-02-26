@@ -20,12 +20,14 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-interface TalkToRosieProps {
+interface TalkToFlowonProps {
   onNext: () => void;
 }
 
-export default function TalkToRosie({ onNext }: TalkToRosieProps) {
-  const [rosiePhoneNumber, setRosiePhoneNumber] = useState<string | null>(null);
+export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
+  const [flowonPhoneNumber, setFlowonPhoneNumber] = useState<string | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,15 +47,15 @@ export default function TalkToRosie({ onNext }: TalkToRosieProps) {
         const data = await response.json();
 
         if (data.success && data.phoneNumber) {
-          setRosiePhoneNumber(data.phoneNumber);
+          setFlowonPhoneNumber(data.phoneNumber);
         } else {
           throw new Error(data.error || "Invalid response format");
         }
       } catch (err) {
-        console.error("Error fetching Rosie phone number:", err);
-        setError("Could not load Rosie phone number. Using fallback number.");
+        console.error("Error fetching Flowon phone number:", err);
+        setError("Could not load Flowon phone number. Using fallback number.");
         // Fallback to a constant if the API fails
-        setRosiePhoneNumber("(814) 261-0317");
+        setFlowonPhoneNumber("(814) 261-0317");
       } finally {
         setIsLoading(false);
       }
@@ -69,16 +71,16 @@ export default function TalkToRosie({ onNext }: TalkToRosieProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          Call Rosie to test out your agent
+          Call Flowon to test out your agent
         </h2>
       </div>
 
       <Alert variant="default" className="bg-black border-blue-500">
         <Info className="h-4 w-4 text-blue-500" />
         <AlertDescription className="text-white">
-          Call your Rosie number listed below to test out your agent for
-          yourself. When you are ready for Rosie to start answering your calls,
-          your customers won&apos;t need to call your Rosie number; instead you
+          Call your Flowon number listed below to test out your agent for
+          yourself. When you are ready for Flowon to start answering your calls,
+          your customers won&apos;t need to call your Flowon number; instead you
           can forward calls from your existing business phone number to ensure a
           seamless customer experience. We&apos;ll walk you through that in the
           next step.
@@ -93,9 +95,9 @@ export default function TalkToRosie({ onNext }: TalkToRosieProps) {
 
       <div className="space-y-6">
         <div className="space-y-2">
-          <h3 className="font-medium text-blue-500">Give Rosie a call</h3>
+          <h3 className="font-medium text-blue-500">Give Flowon a call</h3>
           <p className="text-sm text-gray-400">
-            Experience how Rosie handles a call and takes a message.
+            Experience how Flowon handles a call and takes a message.
           </p>
         </div>
 
@@ -105,9 +107,9 @@ export default function TalkToRosie({ onNext }: TalkToRosieProps) {
           ) : (
             <div className="flex items-center gap-3">
               <div className="text-3xl font-bold text-white">
-                {rosiePhoneNumber}
+                {flowonPhoneNumber}
               </div>
-              <CopyToClipboardButton text={rosiePhoneNumber || ""} />
+              <CopyToClipboardButton text={flowonPhoneNumber || ""} />
             </div>
           )}
         </div>
@@ -115,7 +117,7 @@ export default function TalkToRosie({ onNext }: TalkToRosieProps) {
 
       <div className="flex justify-between pt-8">
         <div className="text-sm text-gray-400">
-          You can launch or continue training Rosie on the next step
+          You can launch or continue training Flowon on the next step
         </div>
         <Button
           onClick={onNext}

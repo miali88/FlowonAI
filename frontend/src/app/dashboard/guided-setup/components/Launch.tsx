@@ -28,7 +28,7 @@ export default function Launch({ onNext }: LaunchProps) {
         </div>
         <h2 className="text-2xl font-bold">Ready to Launch!</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Well done! Forward your business number to Rosie so she can start
+          Well done! Forward your business number to Flowon so she can start
           answering your calls. Don&apos;t have a business number yet? No
           problem - reach out and we&apos;ll get you sorted.
         </p>
@@ -60,7 +60,7 @@ export default function Launch({ onNext }: LaunchProps) {
             <div className="space-y-4">
               <div className="text-blue-500 font-semibold">STEP 2</div>
               <h3 className="text-lg font-semibold">
-                Forward your business number to Rosie
+                Forward your business number to Flowon
               </h3>
 
               <div className="space-y-2">
@@ -68,7 +68,7 @@ export default function Launch({ onNext }: LaunchProps) {
                   <div className="text-blue-500 text-sm font-medium">
                     OPTION 1
                   </div>
-                  <p>Forward all calls to Rosie.</p>
+                  <p>Forward all calls to Flowon.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function Launch({ onNext }: LaunchProps) {
                     OPTION 2
                   </div>
                   <p>
-                    Conditionally forward calls to Rosie so she only answers
+                    Conditionally forward calls to Flowon so she only answers
                     when you can&apos;t.
                   </p>
                 </div>
