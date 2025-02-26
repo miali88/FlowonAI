@@ -5,12 +5,12 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SetupStep } from "./types";
 import QuickSetup from "./components/QuickSetup";
-import TalkToRosie from "./components/TalkToRosie";
+import TalkToFlowon from "./components/TalkToFlowon";
 import Launch from "./components/Launch";
 
 const steps: { id: SetupStep; label: string }[] = [
   { id: "quick-setup", label: "Quick Set-up" },
-  { id: "talk-to-rosie", label: "Talk to Rosie" },
+  { id: "talk-to-rosie", label: "Talk to Flowon" },
   { id: "launch", label: "Launch" },
 ];
 
@@ -25,7 +25,7 @@ export default function GuidedSetupPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-[1200px] mx-auto">
+    <div className="flex flex-col gap-6 p-6 max-w-[900px] mx-auto">
       {/* Step Tabs */}
       <div className="flex items-center gap-2 mb-8">
         {steps.map((step, index) => {
@@ -79,7 +79,9 @@ export default function GuidedSetupPage() {
       {/* Step Content */}
       <Card className="p-6">
         {currentStep === "quick-setup" && <QuickSetup onNext={handleNext} />}
-        {currentStep === "talk-to-rosie" && <TalkToRosie onNext={handleNext} />}
+        {currentStep === "talk-to-rosie" && (
+          <TalkToFlowon onNext={handleNext} />
+        )}
         {currentStep === "launch" && <Launch onNext={handleNext} />}
       </Card>
     </div>

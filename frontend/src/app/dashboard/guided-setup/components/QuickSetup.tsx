@@ -21,7 +21,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import GooglePlacesSearch, { PlaceData } from "./GooglePlacesSearch";
+import AutoSearchPlacesInput from "./AutoSearchPlacesInput";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -89,6 +97,8 @@ type FormValues = z.infer<typeof quickSetupSchema>;
 
 export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [newService, setNewService] = useState("");
+  const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
+  const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
 
   // Initialize form with React Hook Form and Zod resolver
   const form = useForm<FormValues>({
@@ -105,13 +115,13 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         primaryBusinessPhone: "",
         coreServices: [],
         businessHours: {
-          Monday: { open: "10:00", close: "20:00" },
-          Tuesday: { open: "10:00", close: "20:00" },
-          Wednesday: { open: "10:00", close: "20:00" },
-          Thursday: { open: "10:00", close: "20:00" },
-          Friday: { open: "10:00", close: "20:00" },
-          Saturday: { open: "10:00", close: "20:00" },
-          Sunday: { open: "10:00", close: "20:00" },
+          Monday: { open: "", close: "" },
+          Tuesday: { open: "", close: "" },
+          Wednesday: { open: "", close: "" },
+          Thursday: { open: "", close: "" },
+          Friday: { open: "", close: "" },
+          Saturday: { open: "", close: "" },
+          Sunday: { open: "", close: "" },
         },
       },
       messageTaking: {
@@ -184,47 +194,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
   };
 
-  // Handle Google Places selection
-  const handlePlaceSelect = (placeData: PlaceData) => {
-    // Update business information with Google Places data
-    if (placeData.name) {
-      setValue("businessInformation.businessName", placeData.name);
-    }
-
-    if (placeData.address) {
-      setValue("businessInformation.primaryBusinessAddress", placeData.address);
-    }
-
-    if (placeData.phoneNumber) {
-      setValue(
-        "businessInformation.primaryBusinessPhone",
-        placeData.phoneNumber
-      );
-    }
-
-    if (placeData.website) {
-      setValue("trainingSources.businessWebsite", placeData.website);
-    }
-
-    // Update business hours if available
-    if (placeData.businessHours) {
-      // Create a new object with all days of the week
-      const defaultHours = {
-        Monday: { open: "10:00", close: "20:00" },
-        Tuesday: { open: "10:00", close: "20:00" },
-        Wednesday: { open: "10:00", close: "20:00" },
-        Thursday: { open: "10:00", close: "20:00" },
-        Friday: { open: "10:00", close: "20:00" },
-        Saturday: { open: "10:00", close: "20:00" },
-        Sunday: { open: "10:00", close: "20:00" },
-      };
-
-      // Merge with the hours from Google Places
-      const mergedHours = { ...defaultHours, ...placeData.businessHours };
-      setValue("businessInformation.businessHours", mergedHours);
-    }
-  };
-
   // Watch values for conditional rendering
   const emailNotificationsEnabled = watch(
     "callNotifications.emailNotifications.enabled"
@@ -235,9 +204,195 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const coreServices = watch("businessInformation.coreServices");
   const googleBusinessProfile = watch("trainingSources.googleBusinessProfile");
 
+  // Function to update all fields with place data
+  const updateFieldsWithPlaceData = (placeData: any, forceUpdate = false) => {
+    if (!placeData) return;
+
+    // Clear all fields if forceUpdate is true
+    if (forceUpdate) {
+      setValue("businessInformation.businessName", "");
+      setValue("businessInformation.businessOverview", "");
+      setValue("businessInformation.primaryBusinessAddress", "");
+      setValue("businessInformation.primaryBusinessPhone", "");
+      setValue("trainingSources.businessWebsite", "");
+      setValue("businessInformation.coreServices", []);
+
+      // Reset business hours to empty values but keep all days
+      setValue("businessInformation.businessHours", {
+        Monday: { open: "", close: "" },
+        Tuesday: { open: "", close: "" },
+        Wednesday: { open: "", close: "" },
+        Thursday: { open: "", close: "" },
+        Friday: { open: "", close: "" },
+        Saturday: { open: "", close: "" },
+        Sunday: { open: "", close: "" },
+      });
+    }
+
+    // Update business name if available
+    if (placeData.name) {
+      setValue("businessInformation.businessName", placeData.name);
+    }
+
+    // Update address if available
+    if (placeData.formatted_address) {
+      setValue(
+        "businessInformation.primaryBusinessAddress",
+        placeData.formatted_address
+      );
+    }
+
+    // Update phone if available
+    if (placeData.formatted_phone_number) {
+      setValue(
+        "businessInformation.primaryBusinessPhone",
+        placeData.formatted_phone_number
+      );
+    }
+
+    // Update website if available
+    if (placeData.website) {
+      setValue("trainingSources.businessWebsite", placeData.website);
+    }
+
+    // Update business overview if available
+    if (placeData.editorial_summary?.overview) {
+      setValue(
+        "businessInformation.businessOverview",
+        placeData.editorial_summary.overview
+      );
+    }
+
+    // Update business hours if available
+    if (placeData.opening_hours?.periods) {
+      const daysOfWeek = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+
+      // Start with current hours or empty structure with all days
+      const businessHours: Record<string, { open: string; close: string }> =
+        forceUpdate
+          ? {
+              Monday: { open: "", close: "" },
+              Tuesday: { open: "", close: "" },
+              Wednesday: { open: "", close: "" },
+              Thursday: { open: "", close: "" },
+              Friday: { open: "", close: "" },
+              Saturday: { open: "", close: "" },
+              Sunday: { open: "", close: "" },
+            }
+          : { ...getValues("businessInformation.businessHours") };
+
+      placeData.opening_hours.periods.forEach((period: any) => {
+        if (period.open && period.close) {
+          const dayName = daysOfWeek[period.open.day];
+
+          // Format time from 0000 to HH:MM format
+          const formatTime = (time: string) => {
+            if (!time) return "";
+            const hours = time.substring(0, 2);
+            const minutes = time.substring(2);
+            return `${hours}:${minutes}`;
+          };
+
+          const openTime = formatTime(period.open.time);
+          const closeTime = formatTime(period.close.time);
+
+          if (dayName && openTime && closeTime) {
+            businessHours[dayName] = {
+              open: openTime,
+              close: closeTime,
+            };
+          }
+        }
+      });
+
+      // Always set hours to ensure the structure is maintained
+      setValue("businessInformation.businessHours", businessHours);
+    }
+
+    // Extract and add core services/types if available
+    if (placeData.types && placeData.types.length > 0) {
+      // Filter out generic types and format them to be more readable
+      const relevantTypes = placeData.types
+        .filter(
+          (type: string) =>
+            ![
+              "point_of_interest",
+              "establishment",
+              "place",
+              "business",
+            ].includes(type)
+        )
+        .map((type: string) =>
+          type
+            .split("_")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")
+        );
+
+      if (relevantTypes.length > 0) {
+        setValue("businessInformation.coreServices", relevantTypes);
+      }
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Place Change Dialog */}
+        <Dialog open={placeChangeDialog} onOpenChange={setPlaceChangeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Business Information?</DialogTitle>
+              <DialogDescription>
+                You&apos;ve selected a new business. Would you like to update
+                all your business information with data from this new place?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Just update the place name without changing other fields
+                  if (pendingPlaceData) {
+                    setValue(
+                      "trainingSources.googleBusinessProfile",
+                      pendingPlaceData.name || ""
+                    );
+                  }
+                  setPendingPlaceData(null);
+                  setPlaceChangeDialog(false);
+                }}
+              >
+                Keep Current Data
+              </Button>
+              <Button
+                onClick={() => {
+                  // Update all fields with the new place data
+                  if (pendingPlaceData) {
+                    setValue(
+                      "trainingSources.googleBusinessProfile",
+                      pendingPlaceData.name || ""
+                    );
+                    updateFieldsWithPlaceData(pendingPlaceData, true);
+                  }
+                  setPendingPlaceData(null);
+                  setPlaceChangeDialog(false);
+                }}
+              >
+                Update All Fields
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Training Sources */}
         <Card
           className={
@@ -254,10 +409,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-gray-500 mb-4">
-              Rosie uses these sources to learn about your business, which helps
-              her answer caller questions effectively. While entering both
+              Flowon uses these sources to learn about your business, which
+              helps her answer caller questions effectively. While entering both
               sources is ideal, just one is enough to get her started. Update
-              these sources at anytime to retrain Rosie.
+              these sources at anytime to retrain Flowon.
             </div>
             {errors.trainingSources &&
               Object.keys(errors.trainingSources).some(
@@ -276,30 +431,45 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                   <FormField
                     control={control}
                     name="trainingSources.googleBusinessProfile"
-                    render={({
-                      field,
-                    }: {
-                      field: ControllerRenderProps<
-                        FormValues,
-                        "trainingSources.googleBusinessProfile"
-                      >;
-                    }) => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Google Business Profile</FormLabel>
                         <FormControl>
-                          <GooglePlacesSearch
+                          <AutoSearchPlacesInput
                             value={field.value}
                             onChange={field.onChange}
-                            onPlaceSelect={handlePlaceSelect}
-                            placeholder="Search for your business..."
-                            className={
-                              errors.trainingSources &&
-                              Object.keys(errors.trainingSources).some(
-                                (key) => key === "_errors"
-                              )
-                                ? "border-red-500"
-                                : ""
-                            }
+                            onPlaceSelect={(placeData) => {
+                              // Log the full place data
+                              console.log("Place data in parent:", placeData);
+
+                              // Check if we already have data in the form
+                              const hasExistingData =
+                                getValues("businessInformation.businessName") ||
+                                getValues(
+                                  "businessInformation.primaryBusinessAddress"
+                                ) ||
+                                getValues(
+                                  "businessInformation.primaryBusinessPhone"
+                                ) ||
+                                getValues("trainingSources.businessWebsite");
+
+                              if (
+                                hasExistingData &&
+                                field.value &&
+                                field.value !== placeData.name
+                              ) {
+                                // Store the place data and show confirmation dialog
+                                setPendingPlaceData(placeData);
+                                setPlaceChangeDialog(true);
+                              } else {
+                                // First time selecting a place or no existing data, update directly
+                                setValue(
+                                  "trainingSources.googleBusinessProfile",
+                                  placeData.name || ""
+                                );
+                                updateFieldsWithPlaceData(placeData);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -357,9 +527,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-gray-500 mb-4">
-              This business information gives Rosie context to handle your calls
-              and was gathered from the training sources you provided above.
-              Refine it here as you see fit. Update or add to it at anytime.
+              This business information gives Flowon context to handle your
+              calls and was gathered from the training sources you provided
+              above. Refine it here as you see fit. Update or add to it at
+              anytime.
             </div>
             <div className="space-y-4">
               <FormField
@@ -561,7 +732,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-gray-500 mb-4">
-              Add specific questions you&apos;d like Rosie to ask your callers
+              Add specific questions you&apos;d like Flowon to ask your callers
               when taking a message.
             </div>
             <div className="space-y-4">
