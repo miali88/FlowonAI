@@ -34,18 +34,21 @@ export default function Launch({ onNext }: LaunchProps) {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
-        
+
         // Get auth token
         const token = await getToken();
         if (!token) {
           throw new Error("Not authenticated");
         }
-        
-        const response = await fetch(`${API_BASE_URL}/guided-setup/phone-number`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
+
+        const response = await fetch(
+          `${API_BASE_URL}/guided-setup/phone-number`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.text();
@@ -54,7 +57,7 @@ export default function Launch({ onNext }: LaunchProps) {
         }
 
         const data = await response.json();
-        
+
         if (data.success && data.phoneNumber) {
           setPhoneNumber(data.phoneNumber);
         } else {
@@ -77,21 +80,24 @@ export default function Launch({ onNext }: LaunchProps) {
     try {
       setIsSubmitting(true);
       setError(null);
-      
+
       // Get auth token
       const token = await getToken();
       if (!token) {
         throw new Error("Not authenticated");
       }
-      
+
       // Mark setup as complete
-      const response = await fetch(`${API_BASE_URL}/guided-setup/mark-complete`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+      const response = await fetch(
+        `${API_BASE_URL}/guided-setup/mark-complete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.text();
@@ -100,13 +106,14 @@ export default function Launch({ onNext }: LaunchProps) {
       }
 
       // Show success message
-      setSuccessMessage("Setup completed successfully! Redirecting to dashboard...");
-      
+      setSuccessMessage(
+        "Setup completed successfully! Redirecting to dashboard..."
+      );
+
       // Proceed to next step after a short delay
       setTimeout(() => {
         onNext();
       }, 2000);
-      
     } catch (err: any) {
       console.error("Error completing setup:", err);
       setError(err.message || "Failed to complete setup");
@@ -143,7 +150,7 @@ export default function Launch({ onNext }: LaunchProps) {
               Forward your business calls to this Flowon number:
             </p>
           </div>
-          
+
           <div className="text-xl font-bold">
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
@@ -198,14 +205,14 @@ export default function Launch({ onNext }: LaunchProps) {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="text-blue-500 text-sm font-medium">
+                  <div className="text-blue-500 text-sm min-w-20 font-medium">
                     OPTION 1
                   </div>
                   <p>Forward all calls to Flowon.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="text-blue-500 text-sm font-medium">
+                  <div className="text-blue-500 text-sm min-w-20 font-medium">
                     OPTION 2
                   </div>
                   <p>
@@ -215,7 +222,15 @@ export default function Launch({ onNext }: LaunchProps) {
                 </div>
               </div>
             </div>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Button
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() =>
+                window.open(
+                  "http://localhost:3000/guide/call_forwarding",
+                  "_blank"
+                )
+              }
+            >
               View Instructions <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

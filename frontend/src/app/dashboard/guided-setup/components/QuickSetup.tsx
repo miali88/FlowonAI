@@ -104,6 +104,8 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
 
   // Initialize form with React Hook Form and Zod resolver
   const form = useForm<FormValues>({
@@ -154,7 +156,15 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     mode: "onChange",
   });
 
-  const { control, handleSubmit, formState, watch, setValue, getValues, reset } = form;
+  const {
+    control,
+    handleSubmit,
+    formState,
+    watch,
+    setValue,
+    getValues,
+    reset,
+  } = form;
   const { errors, isSubmitting } = formState;
 
   // Fetch existing setup data when component loads
@@ -162,18 +172,21 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     async function fetchExistingSetupData() {
       try {
         setIsLoadingData(true);
-        
+
         // Get auth token
         const token = await getToken();
         if (!token) {
           throw new Error("Not authenticated");
         }
-        
-        const response = await fetch(`${API_BASE_URL}/guided-setup/setup-data`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
+
+        const response = await fetch(
+          `${API_BASE_URL}/guided-setup/setup-data`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -181,28 +194,30 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
             setIsLoadingData(false);
             return;
           }
-          
+
           const errorData = await response.text();
           console.error("Error fetching setup data:", errorData);
           throw new Error("Failed to fetch existing setup data");
         }
 
         const data = await response.json();
-        
+
         if (data.success && data.setupData) {
           console.log("Loaded existing setup data:", data.setupData);
-          
+
           // Use reset to update all form values at once
           reset({
             trainingSources: data.setupData.trainingSources,
             businessInformation: data.setupData.businessInformation,
             messageTaking: data.setupData.messageTaking,
-            callNotifications: data.setupData.callNotifications
+            callNotifications: data.setupData.callNotifications,
           });
         }
       } catch (error) {
         console.error("Error loading setup data:", error);
-        setLoadError("Failed to load your existing setup data. Starting with default values.");
+        setLoadError(
+          "Failed to load your existing setup data. Starting with default values."
+        );
       } finally {
         setIsLoadingData(false);
       }
@@ -233,7 +248,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const onSubmit = async (data: FormValues) => {
     try {
       setSuccessMessage(null);
-      
+
       // Get auth token
       const token = await getToken();
       if (!token) {
@@ -245,7 +260,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -258,10 +273,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
       const result = await response.json();
       console.log("Setup data saved successfully:", result);
-      
+
       // Set success message
       setSuccessMessage("Your setup data has been saved successfully!");
-      
+
       // Proceed to next step after a short delay
       setTimeout(() => {
         onNext();
@@ -421,6 +436,66 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
   };
 
+  const handleTraining = async () => {
+    try {
+      setIsTraining(true);
+      setTrainingError(null);
+
+      // Get the business website URL
+      const websiteUrl = getValues("trainingSources.businessWebsite");
+
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Send request to retrain agent
+      const response = await fetch(
+        `${API_BASE_URL}/guided-setup/retrain_agent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            url: websiteUrl,
+            setup_data: getValues(), // Send current form data
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || "Failed to retrain agent");
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.setup_data) {
+        // Update form with the new data
+        reset({
+          trainingSources: result.setup_data.trainingSources,
+          businessInformation: result.setup_data.businessInformation,
+          messageTaking: result.setup_data.messageTaking,
+          callNotifications: result.setup_data.callNotifications,
+        });
+
+        setSuccessMessage("AI training completed successfully!");
+      } else {
+        throw new Error(result.error || "Training failed");
+      }
+    } catch (error) {
+      console.error("Error training AI:", error);
+      setTrainingError(
+        error instanceof Error ? error.message : "Failed to train AI"
+      );
+    } finally {
+      setIsTraining(false);
+    }
+  };
+
   // Render a loading indicator if data is being loaded
   if (isLoadingData) {
     return (
@@ -443,7 +518,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
             <AlertDescription>{loadError}</AlertDescription>
           </Alert>
         )}
-        
+
         {/* Show success message */}
         {successMessage && (
           <Alert className="mb-8 bg-green-50 text-green-800 border-green-200">
@@ -620,6 +695,47 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 </div>
                 <Button variant="outline" className="mt-6">
                   Edit
+                </Button>
+              </div>
+              <div className="flex gap-2 mt-4">
+                {trainingError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{trainingError}</AlertDescription>
+                  </Alert>
+                )}
+                <Button
+                  type="button"
+                  variant="default"
+                  disabled={
+                    !watch("trainingSources.businessWebsite") || isTraining
+                  }
+                  onClick={handleTraining}
+                  className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold"
+                >
+                  {isTraining ? (
+                    <>
+                      <span className="mr-2">🔄</span>
+                      Training...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">🤖</span>
+                      Train with AI
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    // Reset the website field
+                    setValue("trainingSources.businessWebsite", "");
+                    setTrainingError(null);
+                  }}
+                  disabled={isTraining}
+                >
+                  Cancel
                 </Button>
               </div>
             </div>
