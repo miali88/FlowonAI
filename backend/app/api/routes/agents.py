@@ -1,26 +1,18 @@
 import logging
 from fastapi import Request, HTTPException, APIRouter, Depends, Header
-from supabase import create_client, Client
 
-from app.core.config import settings
 from services.voice.agents import (
     create_agent, get_agents, delete_agent, 
     get_agent_content, update_agent, get_agent_completion
 )
 from services.agent_create import create_agents_from_urls
-
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+from app.core.auth import get_current_user
 
 router = APIRouter()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-async def get_current_user(x_user_id: str = Header(...)):
-    logger.info("Authenticating user")
-    logger.debug(f"x_user_id header: {x_user_id}")
-    logger.info(f"User authenticated: {x_user_id}")
-    return x_user_id
 
 @router.post("/")
 async def new_agent_handler(request: Request, current_user: str = Depends(get_current_user)):

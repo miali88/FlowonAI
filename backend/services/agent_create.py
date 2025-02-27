@@ -1,14 +1,14 @@
 import uuid
-import requests
 from urllib.parse import urlparse
-from services.knowledge_base.web_scrape import map_url, scrape_url
-from services.chat.chat import llm_response
-from typing import List, Dict
-import openai
-from humanloop import Humanloop
-from dotenv import load_dotenv
 import os
 import httpx
+from app.core.auth import get_current_user
+
+from dotenv import load_dotenv
+from humanloop import Humanloop
+
+from services.knowledge_base.web_scrape import map_url, scrape_url
+from services.chat.chat import llm_response
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ async def create_agent_instructions(scraped_content: str) -> str:
     response = await llm_response(system_prompt, user_prompt)
     return response
 
-async def create_agents_from_urls(url: str) -> str:
+async def create_agents_from_urls(url: str, current_user: str) -> str:
     try:
         print("url:", url)
         # Get domain name for agent name
@@ -53,7 +53,7 @@ async def create_agents_from_urls(url: str) -> str:
         
         # Map and scrape the URL
         mapped_url = await map_url(url)
-        scraped_content = await scrape_url(mapped_url[:100], user_id="user_2mmXezcGmjZCf88gT2v2waCBsXv")
+        scraped_content = await scrape_url(mapped_url[:100], user_id=current_user)
         
         web_content = ""
         for i in scraped_content:
@@ -103,7 +103,6 @@ async def create_agents_from_urls(url: str) -> str:
             response = await http_client.post(
                 "https://flowon.ai/api/v1/livekit/new_agent",
                 json=payload,
-                headers={"x-user-id": "user_2mmXezcGmjZCf88gT2v2waCBsXv"},
                 timeout=30.0
             )
             

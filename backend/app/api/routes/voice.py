@@ -1,11 +1,8 @@
-import os
 import logging
 from typing import List, Dict, Any, Optional
 import json
 
 from fastapi import Request, APIRouter
-from twilio.rest import Client # type: ignore
-from supabase import create_client
 
 from services.cache import call_data
 router = APIRouter()
@@ -13,15 +10,6 @@ logger = logging.getLogger(__name__)
 
 # global variable to store the jobs
 jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
-
-# Initialize Supabase client
-supabase_url = os.environ.get("SUPABASE_URL")
-if not supabase_url:
-    raise ValueError("SUPABASE_URL environment variable is not set")
-supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-if not supabase_key:
-    raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is not set")
-supabase = create_client(supabase_url, supabase_key)
 
 
 @router.post("/wh")

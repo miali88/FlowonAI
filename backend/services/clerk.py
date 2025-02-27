@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 import stripe 
 
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 
 load_dotenv()
 

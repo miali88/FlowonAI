@@ -5,7 +5,7 @@ import math
 import logging
 
 from services.twilio.client import client
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,6 @@ class PhoneNumberSchema(BaseModel):
     toll_free: NumberGroup | None = None
     mobile: NumberGroup | None = None
     national: NumberGroup | None = None
-
 
 def get_country_codes() -> List[str]:
     try:
@@ -98,3 +97,10 @@ async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
         logger.error(f"Error fetching Twilio numbers for user {user_id}: {str(e)}")
         raise
 
+""" TESTING PURCHASE OF NUMBER """
+def purchase_twilio_number(number: str):
+    try:
+        client.incoming_phone_numbers.create(phone_number=number)
+    except Exception as e:
+        logger.error(f"Error purchasing Twilio number: {str(e)}")
+        raise

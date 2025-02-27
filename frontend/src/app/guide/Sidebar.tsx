@@ -6,6 +6,7 @@ import Link from 'next/link';
 export default function Sidebar() {
   const [isAgentOpen, setAgentOpen] = useState(false);
   const [isIntegrationsOpen, setIntegrationsOpen] = useState(false);
+  const [isConfigurationOpen, setConfigurationOpen] = useState(false);
 
   return (
     <div className="w-64 bg-gray-800 text-white h-full p-4">
@@ -36,6 +37,26 @@ export default function Sidebar() {
         )}
       </div>
 
+      {/* Configuration Dropdown */}
+      <div>
+        <button
+          onClick={() => setConfigurationOpen(!isConfigurationOpen)}
+          className="w-full text-left font-semibold mb-2"
+        >
+          Configuration
+        </button>
+        {isConfigurationOpen && (
+          <ul className="ml-4 mb-4">
+            <li>
+              <Link href="/guide/call_forwarding" className="hover:text-blue-300">
+                Call Forwarding
+              </Link>
+            </li>
+            {/* Add more configuration links as needed */}
+          </ul>
+        )}
+      </div>
+
       {/* Integrations Dropdown */}
       <div>
         <button
@@ -47,15 +68,20 @@ export default function Sidebar() {
         {isIntegrationsOpen && (
           <ul className="ml-4">
             <li>
-              <Link href="/integrations/whatsapp" className="hover:text-blue-300">
+              <Link href="/guide/bubble" className="hover:text-blue-300">
+                Bubble
+              </Link>
+            </li>
+            {/* <li>
+              <Link href="/guide/whatsapp" className="hover:text-blue-300">
                 Whatsapp
               </Link>
             </li>
             <li>
-              <Link href="/integrations/zapier" className="hover:text-blue-300">
+              <Link href="/guide/zapier" className="hover:text-blue-300">
                 Zapier
               </Link>
-            </li>
+            </li> */}
             {/* Add more links as needed */}
           </ul>
         )}

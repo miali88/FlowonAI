@@ -2,6 +2,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  publicRuntimeConfig: {
+    GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
+  },
   async headers() {
     return [
       {
@@ -12,7 +15,8 @@ const nextConfig = {
             value: [
               "frame-ancestors *",
               "frame-src *",
-              "script-src * 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src * 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com",
+              "worker-src 'self' blob: data:",
               "connect-src *",
               "style-src * 'self' 'unsafe-inline'",
               "img-src * data: blob: 'self'",
@@ -45,7 +49,6 @@ const nextConfig = {
           options: {
             limit: config.inlineImageLimit,
             fallback: "file-loader",
-            publicPath: `${config.assetPrefix}/_next/static/images/`,
             outputPath: `${isServer ? "../" : ""}static/images/`,
             name: "[name]-[hash].[ext]",
             esModule: config.esModule || false,
@@ -71,6 +74,10 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  env: {
+    NEXT_PUBLIC_GOOGLE_PLACES_API_KEY:
+      process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
   },
 };
 

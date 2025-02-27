@@ -77,7 +77,6 @@ function KnowledgeBaseContent() {
       const response = await axios.get(`${API_BASE_URL}/knowledge_base/`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
         },
       });
       console.log("API response:", response);
@@ -167,7 +166,6 @@ function KnowledgeBaseContent() {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
-            "X-User-ID": user.id,
           },
         }
       );
@@ -225,7 +223,6 @@ function KnowledgeBaseContent() {
       await axios.delete(`${API_BASE_URL}/knowledge_base/${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
         },
         data: {
           data_type: itemToDelete?.data_type,

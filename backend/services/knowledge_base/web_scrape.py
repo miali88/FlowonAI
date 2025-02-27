@@ -1,18 +1,17 @@
+import asyncio, logging, aiohttp, os
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
-import asyncio
 from datetime import datetime, timedelta
-import logging
-import aiohttp
-from tenacity import retry, stop_after_attempt, wait_exponential
+
+from dotenv import load_dotenv
 from requests.exceptions import RequestException
-import os
+from tiktoken import encoding_for_model
+from fastapi import HTTPException
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
-from tiktoken import encoding_for_model
-from supabase import create_client, Client
-from dotenv import load_dotenv
-from fastapi import HTTPException
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+from services.supabase.client import get_supabase
 
 load_dotenv()
 
@@ -22,124 +21,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-async def count_tokens(text: str, model: str = "gpt-4o") -> int:
-    print("hello, count_tokens")
-    encoder = encoding_for_model(model)
-    tokens = encoder.encode(text)
-    return len(tokens)
-
 JINA_API_KEY = os.getenv('JINA_API_KEY')
-async def get_embedding(text: str) -> Dict[str, Any]:
-    """ JINA EMBEDDINGS """
-    url = 'https://api.jina.ai/v1/embeddings'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {os.getenv("JINA_API_KEY")}'
-    }
-
-    data = {
-        "model": "jina-embeddings-v3",
-        "task": "retrieval.passage",
-        "dimensions": 1024,
-        "late_chunking": False,
-        "embedding_type": "float",
-        "input": text
-    }
-
-    timeout = aiohttp.ClientTimeout(total=30)  # 30 seconds timeout
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.post(url, headers=headers, json=data) as response:
-            return await response.json()
-
-async def sliding_window_chunking(
-    text: str, 
-    max_window_size: int = 900, 
-    overlap: int = 200
-) -> List[str]:
-    encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
-    tokens = encoder.encode(text)
-    chunks = []
-    start = 0
-    while start < len(tokens):
-        end = start + max_window_size
-        chunk_tokens = tokens[start:end]
-        chunk = encoder.decode(chunk_tokens)
-        chunks.append(chunk)
-        start += max_window_size - overlap
-    return chunks
-
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-if not SUPABASE_URL:
-    raise ValueError("SUPABASE_URL is not set in the environment variables")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-if not SUPABASE_SERVICE_ROLE_KEY:
-    raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in the environment variables")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
-if not SUPABASE_ANON_KEY:
-    raise ValueError("SUPABASE_KEY is not set in the environment variables")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-async def insert_to_db(data: Dict[str, Any]) -> None:
-    try:
-        # Extract headers data
-        headers_data = {
-            "url": data["url"],
-            "header": data["header"],
-            "user_id": data["user_id"],
-            "root_url": data["root_url"]
-        }
-        
-        # Prepare main data
-        main_data = {
-            "url": data["url"],
-            "header": data["header"],
-            "content": data["content"],
-            "token_count": data["token_count"],
-            "jina_embedding": data["jina_embedding"],
-            "user_id": data["user_id"],
-            "root_url": data["root_url"]
-        }
-
-        # Insert into user_web_data
-        web_data_result = await asyncio.to_thread(
-            lambda: supabase.table('user_web_data')
-                .insert(main_data)
-                .execute()
-        )
-        
-        if not web_data_result.data:
-            raise Exception("Failed to insert into user_web_data")
-            
-        logger.info(f"Successfully inserted data into user_web_data for URL: {main_data['url']}")
-
-        # Insert into user_web_data_headers
-        headers_result = await asyncio.to_thread(
-            lambda: supabase.table('user_web_data_headers')
-                .insert(headers_data)
-                .execute()
-        )
-        
-        if not headers_result.data:
-            raise Exception("Failed to insert into user_web_data_headers")
-            
-        logger.info(f"Successfully inserted data into user_web_data_headers for URL: {headers_data['url']}")
-
-    except Exception as e:
-        logger.error(f"Database insertion error: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to insert data: {str(e)}"
-        )
-
 
 # Rate limit constants
 SCRAPE_RATE_LIMIT = 20  # per minute
 CRAWL_RATE_LIMIT = 3    # per minute
 MAX_PAGES = 3000
-
 
 class RateLimiter:
     def __init__(self, calls_per_minute: int, name: str = "") -> None:
@@ -184,11 +71,99 @@ class RateLimiter:
             f"Total calls in window: {len(self.calls)}"
         )
 
-
 # Create named limiters
 scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
 crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 
+async def count_tokens(text: str, model: str = "gpt-4o") -> int:
+    print("hello, count_tokens")
+    encoder = encoding_for_model(model)
+    tokens = encoder.encode(text)
+    return len(tokens)
+
+async def get_embedding(text: str) -> Dict[str, Any]:
+    """ JINA EMBEDDINGS """
+    url = 'https://api.jina.ai/v1/embeddings'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {os.getenv("JINA_API_KEY")}'
+    }
+
+    data = {
+        "model": "jina-embeddings-v3",
+        "task": "retrieval.passage",
+        "dimensions": 1024,
+        "late_chunking": False,
+        "embedding_type": "float",
+        "input": text
+    }
+
+    timeout = aiohttp.ClientTimeout(total=30)  # 30 seconds timeout
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.post(url, headers=headers, json=data) as response:
+            return await response.json()
+
+async def sliding_window_chunking(
+    text: str, 
+    max_window_size: int = 900, 
+    overlap: int = 200
+) -> List[str]:
+    encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
+    tokens = encoder.encode(text)
+    chunks = []
+    start = 0
+    while start < len(tokens):
+        end = start + max_window_size
+        chunk_tokens = tokens[start:end]
+        chunk = encoder.decode(chunk_tokens)
+        chunks.append(chunk)
+        start += max_window_size - overlap
+    return chunks
+
+async def insert_to_db(data: Dict[str, Any]) -> None:
+    try:
+        supabase = await get_supabase()
+        # Extract headers data
+        headers_data = {
+            "url": data["url"],
+            "header": data["header"],
+            "user_id": data["user_id"],
+            "root_url": data["root_url"]
+        }
+        
+        # Prepare main data
+        main_data = {
+            "url": data["url"],
+            "header": data["header"],
+            "content": data["content"],
+            "token_count": data["token_count"],
+            "jina_embedding": data["jina_embedding"],
+            "user_id": data["user_id"],
+            "root_url": data["root_url"]
+        }
+
+        # Insert into user_web_data - now properly awaited
+        web_data_result = await supabase.table('user_web_data').insert(main_data).execute()
+        
+        if not web_data_result.data:
+            raise Exception("Failed to insert into user_web_data")
+            
+        logger.info(f"Successfully inserted data into user_web_data for URL: {main_data['url']}")
+
+        # Insert into user_web_data_headers - now properly awaited
+        headers_result = await supabase.table('user_web_data_headers').insert(headers_data).execute()
+        
+        if not headers_result.data:
+            raise Exception("Failed to insert into user_web_data_headers")
+            
+        logger.info(f"Successfully inserted data into user_web_data_headers for URL: {headers_data['url']}")
+
+    except Exception as e:
+        logger.error(f"Database insertion error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to insert data: {str(e)}"
+        )
 
 @retry(
     stop=stop_after_attempt(5),
@@ -196,9 +171,16 @@ crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 )
 async def scrape_with_retry(url: str) -> Dict[str, Any]:
     logger.info(f"Scraping URL: {url}")
+    
+    # Add rate limiting check
+    if not await scrape_limiter.acquire():
+        wait_info = await scrape_limiter.get_remaining()
+        logger.info(f"Rate limit reached. Remaining: {wait_info['remaining']}, Reset at: {wait_info['reset_time']}")
+        await asyncio.sleep(60)  # Wait for the next window
+        
     try:
         run_cfg = CrawlerRunConfig(
-            markdown_generator=DefaultMarkdownGenerator()  # Enable markdown generation
+            markdown_generator=DefaultMarkdownGenerator()
         )
         browser_config=BrowserConfig(
             browser_type="chromium",
@@ -309,20 +291,41 @@ async def scrape_url(
 
 async def map_url(url: str) -> List[str]:
     logger.info(f"Starting URL mapping for: {url}")
-
+    
+    # Add rate limiting check
+    if not await crawl_limiter.acquire():
+        wait_info = await crawl_limiter.get_remaining()
+        logger.info(f"Rate limit reached. Remaining: {wait_info['remaining']}, Reset at: {wait_info['reset_time']}")
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit reached. Please try again later."
+        )
+        
     try:
         # Configure the crawler with specific options
         run_cfg = CrawlerRunConfig(
-            markdown_generator=DefaultMarkdownGenerator()
+            markdown_generator=DefaultMarkdownGenerator(),
+            follow_links=True,  # Enable following links
+            max_depth=2,  # Limit crawl depth
+            ignore_robots_txt=True  # Skip robots.txt check
         )
-        browser_config=BrowserConfig(
+        
+        browser_config = BrowserConfig(
             browser_type="chromium",
             headless=True,
-            extra_args=["--disable-gpu"]
+            extra_args=[
+                "--disable-gpu",
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
         )
+        
         # Configure the dispatcher with rate limiting
         dispatcher = SemaphoreDispatcher(
-            max_session_permit=MAX_PAGES
+            max_session_permit=MAX_PAGES,
+            rate_limiter=RateLimiter(
+                requests_per_second=2  # Limit to 2 requests per second
+            )
         )
         
         logger.info("Initializing crawler...")
@@ -332,29 +335,49 @@ async def map_url(url: str) -> List[str]:
         ) as crawler:
             logger.info("Crawler started successfully")
             
-            result = await crawler.arun(
-                url=url,
-                config=run_cfg,
-                dispatcher=dispatcher
-            )
+            try:
+                result = await crawler.arun(
+                    url=url,
+                    config=run_cfg,
+                    dispatcher=dispatcher
+                )
+            except Exception as crawler_error:
+                logger.error(f"Crawler execution error: {str(crawler_error)}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to crawl URL: {str(crawler_error)}"
+                )
             
             if result.success:
                 # Extract URLs from the links dictionary
-                all_urls = []
+                all_urls = set()  # Use set to avoid duplicates
                 if result.links:
                     for link_type, links in result.links.items():
-                        extracted_urls = [link['href'] for link in links if 'href' in link]
-                        all_urls.extend(extracted_urls) 
+                        for link in links:
+                            if 'href' in link:
+                                href = link['href']
+                                # Only include URLs from the same domain
+                                parsed_url = urlparse(url)
+                                parsed_href = urlparse(href)
+                                if parsed_href.netloc == parsed_url.netloc:
+                                    all_urls.add(href)
                 
-                logger.info(f"Successfully mapped URL. Found {len(all_urls)} URLs")
-                return all_urls
+                logger.info(f"Successfully mapped URL. Found {len(all_urls)} unique URLs")
+                return list(all_urls)
             else:
-                logger.error(f"Failed to map URL {url}: {result.error_message}")
-                return []
+                error_msg = f"Failed to map URL {url}: {result.error_message}"
+                logger.error(error_msg)
+                raise HTTPException(
+                    status_code=400,
+                    detail=error_msg
+                )
                 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error mapping URL {url}: {str(e)}")
+        error_msg = f"Error mapping URL {url}: {str(e)}"
+        logger.error(error_msg)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to map URL: {str(e)}"
+            detail=error_msg
         )

@@ -1,16 +1,11 @@
 # flake8: noqa: E501
 import logging
 from fastapi import HTTPException, APIRouter, Request
-from supabase import create_client, Client
 from nylas import Client as NylasClient # type: ignore
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 
 from app.core.config import settings
 
-supabase: Client = create_client(
-    settings.SUPABASE_URL,
-    settings.SUPABASE_SERVICE_ROLE_KEY
-)
 
 router = APIRouter()
 

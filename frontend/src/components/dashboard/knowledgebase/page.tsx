@@ -78,7 +78,6 @@ function KnowledgeBaseContent() {
         const response = await axios.get(`${API_BASE_URL}/knowledge_base/`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'X-User-ID': user.id,
           },
         });
         console.log("API response:", response);
@@ -159,7 +158,6 @@ function KnowledgeBaseContent() {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
-            'X-User-ID': user.id,
           },
         });
   
@@ -186,7 +184,6 @@ function KnowledgeBaseContent() {
       await handleNewItem({
         activeAddTab: selectedTab,
         newItemContent,
-        user: { id: user.id },
         getToken: async () => token,
         handleFileUpload,
         setSavedItems,
@@ -211,7 +208,6 @@ function KnowledgeBaseContent() {
         await axios.delete(`${API_BASE_URL}/knowledge_base/${itemId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'X-User-ID': user.id,
           },
           data: {
             data_type: itemToDelete?.data_type
@@ -295,7 +291,6 @@ function KnowledgeBaseContent() {
           scrapeUrl,
           setScrapeError,
           getToken: async () => token,
-          user: { id: user.id },
           API_BASE_URL,
           setNewItemContent,
           setShowScrapeInput,
@@ -321,9 +316,9 @@ function KnowledgeBaseContent() {
       setIsScrapingUrls(true);
       try {
         await handleScrapeAll({
+          scrapeUrl,
           setScrapeError,
           getToken: async () => token,
-          user: { id: user.id },
           API_BASE_URL,
           setNewItemContent,
           setShowScrapeInput,

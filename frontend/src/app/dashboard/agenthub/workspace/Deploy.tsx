@@ -111,9 +111,9 @@ const Deploy: React.FC<DeployProps> = ({
   setSelectedAgent,
   userId: propUserId,
 }) => {
-  const { userId: clerkUserId } = useAuth();
+  const { userId, user, isLoaded, getToken } = useAuth();
   console.log("Deploy Component - propUserId:", propUserId);
-  console.log("Deploy Component - clerkUserId:", clerkUserId);
+  console.log("Deploy Component - clerkUserId:", userId);
   const [countryCodes, setCountryCodes] = useState<CountryData[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [availableNumbers, setAvailableNumbers] = useState<TwilioNumbers>({});
@@ -231,12 +231,18 @@ const Deploy: React.FC<DeployProps> = ({
   const fetchAvailableNumbers = async (countryCode: string) => {
     setIsLoadingNumbers(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/available_numbers/${countryCode}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
@@ -274,12 +280,17 @@ const Deploy: React.FC<DeployProps> = ({
     const fetchUserNumbers = async () => {
       setIsLoadingUserNumbers(true);
       try {
+        const token = await getToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/user_numbers`,
           {
             headers: {
               "Content-Type": "application/json",
-              "x-user-id": clerkUserId || "",
+              'Authorization': `Bearer ${token}`,
             },
           }
         );
@@ -299,10 +310,10 @@ const Deploy: React.FC<DeployProps> = ({
       }
     };
 
-    if (clerkUserId) {
+    if (userId) {
       fetchUserNumbers();
     }
-  }, [clerkUserId]);
+  }, [userId]);
 
   // Update useEffect to handle changes to selectedAgent and set initial number
   useEffect(() => {
@@ -338,13 +349,17 @@ const Deploy: React.FC<DeployProps> = ({
     setIsAssignSuccess(false);
 
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/livekit/agents/${selectedAgent.id}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            "x-user-id": selectedAgent?.userId || "",
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             assigned_telephone: selectedExistingNumber,

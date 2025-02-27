@@ -1,6 +1,7 @@
-from services.cache import get_all_agents
 import logging
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
+from livekit import api
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,39 @@ async def get_agent_id_from_call_data(room_name: str):
         return None
 
 
+async def get_room_metadata(room_name: str) -> str:
+    """
+    Retrieves metadata from a LiveKit room.
+    
+    Args:
+        room_name (str): The name of the room
+        
+    Returns:
+        str: The metadata string or None if not found
+    """
+    try:
+        livekit_api = api.LiveKitAPI(
+            url=os.getenv("LIVEKIT_URL"),
+            api_key=os.getenv("LIVEKIT_API_KEY"),
+            api_secret=os.getenv("LIVEKIT_API_SECRET")
+        )
+        
+        # List rooms and find the one with matching name
+        rooms_response = await livekit_api.room.list_rooms(api.ListRoomsRequest())
+        
+        for room in rooms_response.rooms:
+            if room.name == room_name:
+                await livekit_api.aclose()
+                return room.metadata
+                
+        logger.warning(f"Room {room_name} not found when retrieving metadata")
+        await livekit_api.aclose()
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error retrieving room metadata: {str(e)}")
+        return None
+
 
 async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
     """
@@ -44,7 +78,7 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
         tuple[str, str]: A tuple containing (agent_id, call_type)
     """
     if room_name.startswith("call-"):
-        print("entrypoint - telephone call detected")
+        logger.info("Inbound telephone call detected")
         agent_id = await get_agent_id_from_call_data(room_name)
         if not agent_id:
             logger.error(f"Could not find agent_id for room: {room_name}")
@@ -52,7 +86,15 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
         return agent_id, "telephone"
 
     elif room_name.startswith("outbound_"):
-        print("outbound call detected")
+        logger.info("Outbound call detected")
+        
+        # First check if agent_id is in room metadata
+        metadata = await get_room_metadata(room_name)
+        if metadata:
+            logger.info(f"Found agent_id in room metadata: {metadata}")
+            return metadata, "outbound"
+            
+        # Fallback to looking up by phone number
         modified_room_name = room_name[9:]  # Skip 'outbound_' prefix
         agent_id = await get_agent_id_from_call_data(modified_room_name)
         if not agent_id:
@@ -61,14 +103,14 @@ async def detect_call_type_and_get_agent_id(room_name: str) -> tuple[str, str]:
         return agent_id, "outbound"
 
     elif room_name.endswith("_textbot"):
-        print("Textbot chat call detected")
+        logger.info("Textbot chat call detected")
         # Extract agent_id from room name
         # format: agent_{agent_id}_room_{visitor_id}_textbot
         agent_id = room_name.split("_room_")[0].replace("agent_", "")
         return agent_id, "textbot"
 
     else:
-        print("voice chat call detected")
+        logger.info("Voice chat call detected")
         # Extract agent_id from room name format: agent_{agent_id}_room_{visitor_id}
         agent_id = room_name.split("_room_")[0].replace("agent_", "")
         return agent_id, "voice"

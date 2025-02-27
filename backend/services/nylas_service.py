@@ -3,7 +3,7 @@ import os
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from nylas import Client # type: ignore
-from services.db.supabase_services import get_supabase
+from services.supabase.client import get_supabase
 from services.cache import get_all_agents
 import ast
 import html

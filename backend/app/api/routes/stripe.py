@@ -4,11 +4,10 @@ import os
 from dotenv import load_dotenv
 import logging
 
-
 import stripe
 from fastapi import APIRouter, HTTPException, Request, Header
 
-from services.stripe_services import create_payment_link, update_user_features
+from services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
 
 load_dotenv()
 router = APIRouter()
@@ -23,6 +22,7 @@ class PaymentLinkRequest(BaseModel):
     unit_amount: int 
     currency: Optional[str] = "usd"
     customer_id: str
+    twilio_number: str
 
 endpoint_secret = os.getenv("STRIPE_SIGNING_SECRET")
 
@@ -37,6 +37,10 @@ async def create_payment_link_handler(request: PaymentLinkRequest):
         logger.error(f"Error creating payment link: {str(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
+""" TODO: COMPARE THIS ENDPOINT WITH THAT OF BELOW. Simply need to identiy the newly purchase number
+and invoke the twilio number purchase function, update user's database with the number.
+
+ """
 @router.post("/webhook")
 async def webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
     try:
@@ -58,22 +62,12 @@ async def webhook(request: Request, stripe_signature: str = Header(None, alias="
         
         if event.type == 'checkout.session.completed':
             session = event.data.object
-            customer_id = session.metadata.get('customer_id')
-            logger.info(f"Processing checkout.session.completed for customer_id: {customer_id}")
+            # Add detailed logging of the session metadata
+            logger.info(f"Session metadata received: {session.metadata}")
+            logger.info(f"Full session object: {session}")
             
-            if customer_id and session.mode == 'subscription':
-                # Retrieve subscription to get product details
-                subscription = stripe.Subscription.retrieve(session.subscription)
-                product_id = subscription.items.data[0].price.product
-                quantity = subscription.items.data[0].quantity
-                
-                logger.info(f"Updating user features - customer_id: {customer_id}, product_id: {product_id}, quantity: {quantity}")
-                await update_user_features(
-                    customer_id=customer_id,
-                    product_id=product_id,
-                    quantity=quantity
-                )
-                logger.info(f"Successfully updated user features for customer_id: {customer_id}")
+            if session.mode == 'subscription':
+                await handle_subscription_completed(session)
                 
         elif event.type == 'payment_intent.succeeded':
             payment_intent = event.data.object
@@ -89,3 +83,10 @@ async def webhook(request: Request, stripe_signature: str = Header(None, alias="
         raise HTTPException(status_code=400, detail=str(e))
     
 
+""" Abdul to create the payment result frontend component which requests data from this endpoint """
+@router.post("/payment-result")
+async def payment_result_handler(checkout_session_id: str):
+    logger.info(f"Payment result for checkout_session_id: {checkout_session_id}")
+    checkout_result = await payment_result(checkout_session_id)
+
+    return checkout_result

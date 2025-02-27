@@ -12,16 +12,14 @@ import asyncio
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from services.db.supabase_services import get_supabase
-from services.livekit.inbound_trunk import main
-from twilio.rest import Client
+from services.supabase.client import get_supabase
+from services.twilio.client import client
 from twilio.twiml.voice_response import VoiceResponse, Dial
 from twilio.base.exceptions import TwilioRestException
 
 
 load_dotenv()
 
-client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
 
 # Add this near the top of the file, after imports

@@ -125,7 +125,6 @@ const kennethai_agent_id = "83b0f5db-9691-4328-8f47-6ab9cbf9f10d"
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-          'X-User-ID': user.id,
         },
         body: JSON.stringify(payload),
       });
@@ -265,7 +264,6 @@ const kennethai_agent_id = "83b0f5db-9691-4328-8f47-6ab9cbf9f10d"
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
-          'X-User-ID': user?.id || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ content: lastBotMessage.text }),

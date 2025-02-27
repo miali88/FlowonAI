@@ -127,6 +127,97 @@ async def request_personal_data(
 
     return "Form presented to user. Waiting for user to complete and submit form."
 
+""" PROPERTY DETAILS """
+@llm.ai_callable(
+    name="property_details",
+    description="Capture and process comprehensive property information",
+    auto_retry=True
+)
+async def property_details(
+    street_name: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Full street name of the property"
+        )
+    ],
+    street_number: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Street number or house number"
+        )
+    ],
+    postcode: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Postal code of the property location"
+        )
+    ],
+    number_of_bedrooms: Annotated[
+        int,
+        llm.TypeInfo(
+            description="Number of bedrooms in the property"
+        )
+    ],
+    property_type: Annotated[
+        str,
+        llm.TypeInfo(
+            description="Type of property (house, apartment, condo, townhouse, or other)"
+        )
+    ],
+    address: Annotated[
+        dict,
+        llm.TypeInfo(
+            description={
+                "type": "object",
+                "properties": {
+                    "streetLine1": "First line of the street address",
+                    "streetLine2": "Optional second line of the street address",
+                    "city": "City where the property is located",
+                    "state": "State or region where the property is located",
+                    "country": "Country where the property is located"
+                },
+                "required": ["streetLine1", "city", "country"]
+            }
+        )
+    ]
+) -> str:
+    """
+    Processes and stores comprehensive property information.
+    Returns a confirmation message with the processed property details.
+    """
+    logger.info("Processing property details")
+    
+    try:
+        # Get the room_name from the current AgentFunctions instance
+        room_name = AgentFunctions.current_room_name
+        if room_name is None:
+            logger.error("Room name is not set")
+            return "Error: Room name is not available"
+
+        property_info = {
+            "streetName": street_name,
+            "streetNumber": street_number,
+            "postcode": postcode,
+            "numberOfBedrooms": number_of_bedrooms,
+            "propertyType": property_type,
+            "address": address
+        }
+
+        logger.info(f"Processed property details: {property_info}")
+        
+        return (
+            f"Successfully captured property details for {address['streetLine1']}, "
+            f"{address['city']}, {address['country']}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error in property_details: {str(e)}", exc_info=True)
+        return (
+            "I apologize, but I encountered an error while processing "
+            "the property details."
+        )
+
+
 """ CALENDAR MANAGEMENT """
 @llm.ai_callable(
     name="fetch_calendar",

@@ -1,49 +1,14 @@
-import { Header } from "@/components/header";
-import { Hero } from "@/components/hero";
-import { CtaSection } from "@/components/cta-section";
-import { Footer } from "@/components/footer";
-import TelephonySection from "@/components/TelephonySection";
-import AppUILanding from "@/components/AppUILanding";
-import dynamic from "next/dynamic";
+import React from 'react';
 
-const ComparisonSection = dynamic(() => import('@/components/Compare'), {
-  loading: () => <div className="h-[600px]" />, // Adjust height as needed
-  ssr: false
-});
-
-// Convert components to dynamic imports
-const DynamicTimelineDeploy = dynamic(() => import('@/components/TimelineDeploy').then(mod => mod.TimelineDeploy), {
-  loading: () => <div className="h-[400px]" />,
-  ssr: true
-});
-
-const DynamicBenefitsSection = dynamic(() => import('@/components/BenefitsSection').then(mod => mod.BenefitsSection), {
-  loading: () => <div className="h-[400px]" />,
-  ssr: true
-});
-
-const DynamicPricing = dynamic(() => import('@/components/pricing').then(mod => mod.Pricing), {
-  loading: () => <div className="h-[600px]" />,
-  ssr: true
-});
-
-
-export default function HomePage() {
+export default function Home() {
   return (
-    <div className="overflow-x-hidden relative">
-      <Header />
-      <main className="w-full relative pt-[64px] sm:pt-0">
-        <div className="mx-auto max-w-7xl">
-          <Hero />
-          <AppUILanding />
-          <DynamicTimelineDeploy />
-          <DynamicBenefitsSection />
-          {/* <TelephonySection /> */}
-          <DynamicPricing />
-          <CtaSection /> 
-          <Footer />
-        </div>
-      </main>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-start pt-24 p-4 bg-gray-50">
+      <div className="max-w-2xl w-full text-center space-y-6">
+        <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap">
+          Flowon AI is under maintenance, we&apos;ll be back soon :)
+        </h1>
+
+      </div>
+    </main>
   );
 }

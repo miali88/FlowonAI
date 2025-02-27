@@ -32,21 +32,25 @@ export function GridPattern({
   const id = useId();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [squares, setSquares] = useState(() => generateSquares(numSquares));
-
+  
+  // Define getPos first so generateSquares can use it
   const getPos = useCallback(() => {
     return [
-      Math.floor((Math.random() * dimensions.width) / width),
-      Math.floor((Math.random() * dimensions.height) / height),
+      Math.floor((Math.random() * (dimensions.width || 100)) / width),
+      Math.floor((Math.random() * (dimensions.height || 100)) / height),
     ];
   }, [dimensions, width, height]);
 
+  // Then define generateSquares which depends on getPos
   const generateSquares = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       pos: getPos(),
     }));
   }, [getPos]);
+
+  // Now we can safely initialize the squares state with generateSquares
+  const [squares, setSquares] = useState(() => generateSquares(numSquares));
 
   // Function to update a single square's position
   const updateSquarePosition = (id: number) => {
