@@ -44,6 +44,17 @@ async def get_jwks():
         logger.error(f"Error fetching JWKS: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching JWKS: {str(e)}")
 
+
+async def get_current_user_mock(user_id: str) -> str:
+    """
+    Mock function that simply returns the passed user ID without validation.
+    This should only be used in development/testing environments.
+    """
+    logger.info(f"Using mock authentication with user_id: {user_id}")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No user ID provided")
+    return user_id
+
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     """
