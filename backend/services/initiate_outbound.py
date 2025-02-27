@@ -33,7 +33,6 @@ async def create_sip_participant(phone_number: str, room_name: str) -> None:
     )
     await livekit_api.aclose()
 
-
 async def initiate_outbound_call(phone_number: str, room_name: str, agent_id: str = None) -> None:
     # First create the SIP participant
     await create_sip_participant(phone_number, room_name)
