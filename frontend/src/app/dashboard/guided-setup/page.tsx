@@ -81,7 +81,7 @@ export default function GuidedSetupPage() {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-[900px] mx-auto">
       {/* Step Tabs */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex justify-center items-center gap-2 mb-8">
         {steps.map((step, index) => {
           const isActive = currentStep === step.id;
           const isPast = steps.findIndex((s) => s.id === currentStep) > index;
