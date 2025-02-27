@@ -20,49 +20,49 @@ module.exports = {
         PYTHONUNBUFFERED: "1"
       }
     },
-    {
-      name: "chatwidget",
-      script: "npm",
-      args: "run dev",
-      watch: false,
-      cwd: "./ChatWidget",
-      env: {
-        NODE_ENV: "development",
-        PORT: 5173 
-      }
-    },
-    {
-      name: "demo",
-      script: "npm",
-      args: "run dev",
-      watch: false,
-      cwd: "./Demo",
-      env: {
-        NODE_ENV: "development",
-        PORT: 5175
-      }      
-    },
-    {
-      name: "textwidget",
-      script: "npm",
-      args: "run dev",
-      watch: false,
-      cwd: "./TextWidget",
-      env: {
-        NODE_ENV: "development",
-        PORT: 5180 
-      }
-    },
-    {
-      name: "iframe",
-      script: "npm",
-      args: "run dev",
-      watch: false,
-      cwd: "./iframe",
-      env: {
-        NODE_ENV: "development",
-        PORT: 5185 
-      }
-    },
+    // {
+    //   name: "chatwidget",
+    //   script: "npm",
+    //   args: "run dev",
+    //   watch: false,
+    //   cwd: "./ChatWidget",
+    //   env: {
+    //     NODE_ENV: "development",
+    //     PORT: 5173 
+    //   }
+    // },
+    // {
+    //   name: "demo",
+    //   script: "npm",
+    //   args: "run dev",
+    //   watch: false,
+    //   cwd: "./Demo",
+    //   env: {
+    //     NODE_ENV: "development",
+    //     PORT: 5175
+    //   }      
+    // },
+    // {
+    //   name: "textwidget",
+    //   script: "npm",
+    //   args: "run dev",
+    //   watch: false,
+    //   cwd: "./TextWidget",
+    //   env: {
+    //     NODE_ENV: "development",
+    //     PORT: 5180 
+    //   }
+    // },
+    // {
+    //   name: "iframe",
+    //   script: "npm",
+    //   args: "run dev",
+    //   watch: false,
+    //   cwd: "./iframe",
+    //   env: {
+    //     NODE_ENV: "development",
+    //     PORT: 5185 
+    //   }
+    // },
   ]
 }

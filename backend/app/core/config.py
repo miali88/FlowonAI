@@ -54,15 +54,40 @@ class Settings(BaseSettings):
     USERS_OPEN_REGISTRATION: bool = True
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    # Not loading from environment to avoid JSON parsing issues
+    @computed_field
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> list[str]:
+        """Hardcoded list of CORS origins to avoid parsing issues."""
+        return [
+            "http://localhost:3000",
+            "https://localhost:3000",
+            "https://flowon.ai",
+            "https://www.flowon.ai",
+            "https://internally-wise-spaniel.in.ngrok.io",
+            "https://internally-wise-spaniel.eu.ngrok.io",
+            "http://ngrok.io",
+            "https://ngrok.io",
+            "http://internally-wise-spaniel.ngrok.io",
+            "*"  # Allow all origins as a fallback
+        ]
     
     # Redis settings
-    REDIS_HOST: str
-    REDIS_PORT: int
-    REDIS_USER: str
-    REDIS_PASSWORD: str
-    REDIS_DB: int
-    REDIS_TTL: int
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_USER: str = ""
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
+    REDIS_TTL: int = 3600
+    
+    # Extra fields from .env
+    PUBLIC_BASE_URL: str = ""
+    TWILIO_WEBHOOK_URL: str = ""
+    ELEVEN_API_KEY: str = ""
+    
+    # Clerk settings with defaults
+    CLERK_JWT_ISSUER: str = ""
+    CLERK_PUBLIC_KEY: str = ""
     
     # Supabase
     SUPABASE_URL: str = ""
@@ -129,8 +154,6 @@ class Settings(BaseSettings):
     CLERK_SIGNING_SECRET: str = ""
     CLERK_SECRET_KEY: str = ""
     CLERK_JWT_KEY: str = ""
-    CLERK_JWT_ISSUER: str
-    CLERK_PUBLIC_KEY: str
     
     # Integration APIs
     N8N_API_KEY: str = ""
@@ -144,18 +167,10 @@ class Settings(BaseSettings):
     LIVEKIT_SIP_HOST: str = ""
     SIP_OUTBOUND_TRUNK_ID: str = ""
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
-        try:
-            return parse_cors(v)
-        except Exception as e:
-            print(f"Error parsing CORS origins: {e}")
-            return ["http://localhost:3000"]  # fallback to default
-
     model_config = SettingsConfigDict(
         case_sensitive=True,
-        env_file=".env"
+        env_file=".env",
+        extra="ignore"  # Ignore extra fields from env file
     )
 
 

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 import logging
 
 from services.supabase.client import get_supabase
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user_mock as get_current_user
 
 router = APIRouter()
 

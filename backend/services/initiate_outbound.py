@@ -11,7 +11,7 @@ LIVEKIT_API_SECRET = os.getenv('LIVEKIT_API_SECRET')
 SIP_TRUNK_ID = "ST_q8fzfH63TurF"
 
 """
-cli: lk dispatch
+agent should be dispatched in livekit_server.py as defined by our agent_id param. 
 """
 
 async def create_sip_participant(phone_number: str, room_name: str) -> None:
