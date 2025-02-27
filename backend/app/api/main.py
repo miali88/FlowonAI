@@ -4,7 +4,7 @@ from app.api.routes import (twilio, knowledge_base, whatsapp,
                             chat, voice, livekit, agents, clerk,
                             conversation, settings, nylas_service, 
                             composio, feedback, stripe, onboarding,
-                            guided_setup)
+                            guided_setup, outbound)
 
 api_router = APIRouter()
 
@@ -24,3 +24,4 @@ api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
 api_router.include_router(whatsapp.router, prefix="/whatsapp", tags=["whatsapp"])
 api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 api_router.include_router(guided_setup.router, prefix="/guided-setup", tags=["guided_setup"])
+api_router.include_router(outbound.router, prefix="/outbound", tags=["outbound"])
