@@ -128,7 +128,7 @@ async def has_completed_setup(user_id: str) -> bool:
     setup = await get_guided_setup(user_id)
     return setup is not None and setup.get("is_setup_complete", False)
 
-@router.post("/quick-setup")
+@router.post("/quick_setup")
 async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(get_current_user)):
     """
     Endpoint to receive quick setup data and return a mock phone number
@@ -152,14 +152,14 @@ async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(g
         logging.error(f"Error in quick-setup: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.options("/quick-setup")
+@router.options("/quick_setup")
 async def options_quick_setup():
     """
     Handle OPTIONS requests for CORS preflight.
     """
     return {}
 
-@router.get("/phone-number")
+@router.get("/phone_number")
 async def get_rosie_phone_number(current_user: str = Depends(get_current_user)):
     """
     Endpoint to get the Rosie phone number for the Talk to Rosie step.
@@ -187,14 +187,14 @@ async def get_rosie_phone_number(current_user: str = Depends(get_current_user)):
         logging.error(f"Error getting phone number: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.options("/phone-number")
+@router.options("/phone_number")
 async def options_phone_number():
     """
     Handle OPTIONS requests for CORS preflight.
     """
     return {}
 
-@router.get("/setup-status", response_model=dict)
+@router.get("/setup_status", response_model=dict)
 async def get_setup_status(user_id: str = Depends(get_current_user)):
     """
     Check if the user has completed the guided setup
@@ -219,7 +219,7 @@ async def get_setup_status(user_id: str = Depends(get_current_user)):
             "error": str(e)
         }
 
-@router.post("/mark-complete", response_model=dict)
+@router.post("/mark_complete", response_model=dict)
 async def mark_setup_complete(user_id: str = Depends(get_current_user)):
     """
     Mark the guided setup as complete
@@ -263,7 +263,7 @@ async def mark_setup_complete(user_id: str = Depends(get_current_user)):
             "error": str(e)
         }
 
-@router.get("/setup-data")
+@router.get("/setup_data")
 async def get_setup_data(current_user: str = Depends(get_current_user)):
     """
     Endpoint to retrieve the complete guided setup data for the current user.
@@ -295,7 +295,7 @@ async def get_setup_data(current_user: str = Depends(get_current_user)):
         logging.error(f"Error retrieving setup data: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.options("/setup-data")
+@router.options("/setup_data")
 async def options_setup_data():
     """
     Handle OPTIONS requests for CORS preflight.
