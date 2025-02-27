@@ -26,7 +26,7 @@ interface TalkToFlowonProps {
 }
 
 export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
-  const { getToken } = useAuth();
+  const { userId } = useAuth();
   const [flowonPhoneNumber, setFlowonPhoneNumber] = useState<string | null>(
     null
   );
@@ -38,21 +38,11 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
-        
-        // Get auth token
-        const token = await getToken();
-        if (!token) {
-          throw new Error("Not authenticated");
-        }
-        
+
         // Use the API_BASE_URL environment variable
         const response = await fetch(
-          `${API_BASE_URL}/guided-setup/phone-number`,
-          {
-            headers: {
-              "Authorization": `Bearer ${token}`
-            }
-          }
+          `${API_BASE_URL}/guided_setup/phone_number?user_id=${userId || ""}`,
+          {}
         );
 
         if (!response.ok) {
@@ -79,11 +69,11 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
     }
 
     fetchPhoneNumber();
-  }, []);
+  }, [userId]);
 
   const handleNext = () => {
     setSuccessMessage("Great! Let's continue to the final step.");
-    
+
     // Proceed to next step after a short delay
     setTimeout(() => {
       onNext();

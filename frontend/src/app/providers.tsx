@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { ClerkProvider } from '@clerk/nextjs'
-import { ThemeProvider } from 'next-themes'
-import posthog from 'posthog-js'
-import { PostHogProvider } from 'posthog-js/react'
+import { ClerkProvider } from "@clerk/nextjs";
+import { ThemeProvider } from "next-themes";
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
 
 // Initialize PostHog
-if (typeof window !== 'undefined') {
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+if (typeof window !== "undefined") {
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
   if (!posthogKey || !posthogHost) {
-    console.error('PostHog environment variables are not set')
+    console.error("PostHog environment variables are not set");
   } else {
     posthog.init(posthogKey, {
       api_host: posthogHost,
-      person_profiles: 'identified_only',
-    })
+      person_profiles: "identified_only",
+    });
   }
 }
 
@@ -24,11 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PostHogProvider client={posthog}>
       <ClerkProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-        >
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           {children}
         </ThemeProvider>
       </ClerkProvider>

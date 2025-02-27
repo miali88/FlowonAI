@@ -39,7 +39,6 @@ export function AppSidebar({
 
   const items = [
     { title: "Guided Setup", icon: Compass, href: "/dashboard/guided-setup" },
-    { title: "Agent Hub", icon: Mic, href: "/dashboard/agenthub" },
     {
       title: "Knowledge Base",
       icon: BookOpen,

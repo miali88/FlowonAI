@@ -100,7 +100,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [newService, setNewService] = useState("");
   const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
   const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -173,19 +173,9 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       try {
         setIsLoadingData(true);
 
-        // Get auth token
-        const token = await getToken();
-        if (!token) {
-          throw new Error("Not authenticated");
-        }
-
         const response = await fetch(
-          `${API_BASE_URL}/guided-setup/setup-data`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `${API_BASE_URL}/guided_setup/setup_data?user_id=${userId || ""}`,
+          {}
         );
 
         if (!response.ok) {
@@ -224,7 +214,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
 
     fetchExistingSetupData();
-  }, [getToken, reset]);
+  }, [userId, reset]);
 
   const addService = () => {
     if (newService.trim()) {
@@ -249,21 +239,17 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     try {
       setSuccessMessage(null);
 
-      // Get auth token
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
       // Send data to backend using API_BASE_URL
-      const response = await fetch(`${API_BASE_URL}/guided-setup/quick-setup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/guided_setup/quick_setup?user_id=${userId || ""}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.text();
@@ -283,7 +269,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       }, 1500);
     } catch (error) {
       console.error("Error submitting quick setup data:", error);
-      // You could add error handling UI here if needed
     }
   };
 
@@ -444,20 +429,13 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       // Get the business website URL
       const websiteUrl = getValues("trainingSources.businessWebsite");
 
-      // Get auth token
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
       // Send request to retrain agent
       const response = await fetch(
-        `${API_BASE_URL}/guided-setup/retrain_agent`,
+        `${API_BASE_URL}/guided_setup/retrain_agent?user_id=${userId || ""}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             url: websiteUrl,

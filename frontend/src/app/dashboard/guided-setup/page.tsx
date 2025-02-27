@@ -21,34 +21,30 @@ const steps: { id: SetupStep; label: string }[] = [
 export default function GuidedSetupPage() {
   const [currentStep, setCurrentStep] = useState<SetupStep>("quick-setup");
   const [isLoading, setIsLoading] = useState(true);
-  const { getToken } = useAuth();
+  const { userId } = useAuth();
 
   useEffect(() => {
     async function checkSetupStatus() {
       try {
         setIsLoading(true);
-        
-        // Get auth token
-        const token = await getToken();
-        if (!token) {
-          throw new Error("Not authenticated");
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/guided-setup/setup-status`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+
+        const response = await fetch(
+          `${API_BASE_URL}/guided_setup/setup_status?user_id=${userId || ""}`,
+          {}
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch setup status");
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
-          console.log("Setup status:", data.isComplete ? "completed" : "not completed");
-          
+          console.log(
+            "Setup status:",
+            data.isComplete ? "completed" : "not completed"
+          );
+
           // If setup is already completed, skip to last step
           if (data.isComplete) {
             setCurrentStep("launch");
@@ -62,7 +58,7 @@ export default function GuidedSetupPage() {
     }
 
     checkSetupStatus();
-  }, []);
+  }, [userId]);
 
   const handleNext = () => {
     const currentIndex = steps.findIndex((step) => step.id === currentStep);

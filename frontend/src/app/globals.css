@@ -12,6 +12,47 @@
   }
 
   :root {
+    --background: 0 0% 100%; /* White background */
+    --foreground: 0 0% 12%; /* Dark gray text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 38%;
+
+    --accent: 210 40% 90%; /* Light grayish-blue for light mode */
+    --accent-foreground: 210 40% 20%;
+
+    --destructive: 349 52% 61%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 84%;
+    --input: 0 0% 90%;
+    --ring: 27 100% 50%;
+
+    --sidebar-background: 0 0% 96%; /* Very light gray */
+    --sidebar-foreground: 0 0% 12%; /* Dark gray text */
+    --sidebar-primary: 0 0% 92%; /* Slightly darker than background */
+    --sidebar-primary-foreground: 0 0% 12%;
+    --sidebar-accent: 0 0% 88%; /* Light accent */
+    --sidebar-accent-foreground: 0 0% 12%;
+    --sidebar-border: 0 0% 84%; /* Light border */
+    --sidebar-ring: 0 0% 76%; /* Light ring */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
     --background: 0 0% 0%; /* Black background */
     --foreground: 0 0% 88%; /* Light gray text */
 
@@ -30,8 +71,8 @@
     --muted: 0 0% 24%;
     --muted-foreground: 0 0% 62%;
 
-    --accent: 210 40% 90%; /* Light grayish-blue for light mode */
-    --accent-foreground: 210 40% 20%;
+    --accent: 210 40% 20%; /* Dark grayish-blue for dark mode */
+    --accent-foreground: 210 40% 90%;
 
     --destructive: 349 52% 61%;
     --destructive-foreground: 0 0% 100%;
@@ -41,18 +82,6 @@
     --ring: 27 100% 70%;
 
     --sidebar-background: 0 0% 4%; /* Very dark gray (almost black) */
-    --sidebar-foreground: 0 0% 88%; /* Keeping the same light gray text */
-    --sidebar-primary: 0 0% 8%; /* Slightly lighter than background */
-    --sidebar-primary-foreground: 0 0% 88%;
-    --sidebar-accent: 0 0% 12%; /* Keeping the same accent */
-    --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 0 0% 16%; /* Keeping the same border */
-    --sidebar-ring: 0 0% 24%; /* Keeping the same ring */
-
-    --radius: 0.5rem;
-  }
-  .dark {
-    --sidebar-background: 0 0% 4%; /* Very dark gray (almost black) */
     --sidebar-foreground: 0 0% 88%; /* Light gray text */
     --sidebar-primary: 0 0% 8%; /* Slightly lighter than background */
     --sidebar-primary-foreground: 0 0% 88%;
@@ -60,8 +89,6 @@
     --sidebar-accent-foreground: 0 0% 88%;
     --sidebar-border: 0 0% 16%; /* Keeping the same border */
     --sidebar-ring: 0 0% 24%; /* Keeping the same ring */
-    --accent: 210 40% 20%; /* Dark grayish-blue for dark mode */
-    --accent-foreground: 210 40% 90%;
   }
 }
 

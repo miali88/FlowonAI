@@ -28,26 +28,16 @@ export default function Launch({ onNext }: LaunchProps) {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { getToken } = useAuth();
+  const { userId } = useAuth();
 
   useEffect(() => {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
 
-        // Get auth token
-        const token = await getToken();
-        if (!token) {
-          throw new Error("Not authenticated");
-        }
-
         const response = await fetch(
-          `${API_BASE_URL}/guided-setup/phone-number`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `${API_BASE_URL}/guided_setup/phone_number?user_id=${userId || ""}`,
+          {}
         );
 
         if (!response.ok) {
@@ -58,8 +48,8 @@ export default function Launch({ onNext }: LaunchProps) {
 
         const data = await response.json();
 
-        if (data.success && data.phoneNumber) {
-          setPhoneNumber(data.phoneNumber);
+        if (data.success && data.phone_number) {
+          setPhoneNumber(data.phone_number);
         } else {
           throw new Error(data.error || "Invalid response format");
         }
@@ -74,27 +64,20 @@ export default function Launch({ onNext }: LaunchProps) {
     }
 
     fetchPhoneNumber();
-  }, [getToken]);
+  }, [userId]);
 
   const handleCompleteSetup = async () => {
     try {
       setIsSubmitting(true);
       setError(null);
 
-      // Get auth token
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
       // Mark setup as complete
       const response = await fetch(
-        `${API_BASE_URL}/guided-setup/mark-complete`,
+        `${API_BASE_URL}/guided_setup/mark_complete?user_id=${userId || ""}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
         }
       );

@@ -32,7 +32,6 @@ const layoutStyles = {
 
 const ROUTE_TITLES = [
   { href: "/dashboard/guided-setup", title: "Guided Setup" },
-  { href: "/dashboard/agenthub", title: "Agent Hub" },
   { href: "/dashboard/knowledgebase", title: "Knowledge Base" },
   { href: "/dashboard/conversationlogs", title: "Conversation Logs" },
   { href: "/dashboard/integrations", title: "Integrations" },

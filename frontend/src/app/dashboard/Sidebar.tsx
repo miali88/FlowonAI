@@ -75,7 +75,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarItems = [
     { icon: Compass, label: "Guided-Setup", href: "/dashboard/guided-setup" },
-    { icon: Mic, label: "Agent Hub", href: "/dashboard/agenthub" },
     {
       icon: BookOpen,
       label: "Knowledge Base",
