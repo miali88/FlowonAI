@@ -90,6 +90,45 @@
     --sidebar-border: 0 0% 16%; /* Keeping the same border */
     --sidebar-ring: 0 0% 24%; /* Keeping the same ring */
   }
+
+  .white {
+    --background: 0 0% 100%; /* Pure white background */
+    --foreground: 0 0% 0%; /* Pure black text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 100%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 98%;
+    --muted-foreground: 0 0% 30%;
+
+    --accent: 0 0% 95%; /* Very light gray for white mode */
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 0 0% 80%;
+
+    --sidebar-background: 0 0% 100%; /* Pure white */
+    --sidebar-foreground: 0 0% 0%; /* Pure black text */
+    --sidebar-primary: 0 0% 100%; /* Pure white */
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 95%; /* Very light gray */
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%; /* Very light gray border */
+    --sidebar-ring: 0 0% 85%; /* Light gray ring */
+  }
 }
 
 @layer base {

@@ -91,9 +91,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         </h2>
       </div>
 
-      <Alert variant="default" className="bg-black border-blue-500">
+      <Alert variant="default" className="border-blue-500">
         <Info className="h-4 w-4 text-blue-500" />
-        <AlertDescription className="text-white">
+        <AlertDescription>
           Call your Flowon number listed below to test out your agent for
           yourself. When you are ready for Flowon to start answering your calls,
           your customers won&apos;t need to call your Flowon number; instead you
@@ -124,12 +124,12 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           </p>
         </div>
 
-        <div className="bg-black rounded-xl p-6 flex justify-center items-center min-h-[80px]">
+        <div className="bg-card rounded-xl p-6 flex justify-center items-center min-h-[80px] border">
           {isLoading ? (
-            <Loader2 className="h-6 w-6 text-white animate-spin" />
+            <Loader2 className="h-6 w-6 animate-spin" />
           ) : (
             <div className="flex items-center gap-3">
-              <div className="text-3xl font-bold text-white">
+              <div className="text-3xl font-bold">
                 {flowonPhoneNumber}
               </div>
               <CopyToClipboardButton text={flowonPhoneNumber || ""} />
@@ -174,7 +174,7 @@ function CopyToClipboardButton({ text }: { text: string }) {
             variant="ghost"
             size="icon"
             onClick={handleCopy}
-            className="text-white hover:bg-white/10"
+            className="hover:bg-muted"
           >
             {copied ? (
               <Check className="h-4 w-4" />

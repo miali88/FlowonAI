@@ -19,12 +19,13 @@ import {
   Settings,
   Search,
 } from "lucide-react";
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 interface HeaderProps {
   activeItem: string;
   selectedFeature: string | null;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  isDarkMode?: boolean;
+  toggleDarkMode?: () => void;
 }
 
 function LogoutMenuItem() {
@@ -71,6 +72,9 @@ export default function Header({ activeItem, selectedFeature }: HeaderProps) {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8 w-64" />
         </div>
+        
+        <ThemeSwitcher />
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">

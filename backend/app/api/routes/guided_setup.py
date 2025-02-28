@@ -86,15 +86,15 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
         "phone_number": phone_number,
     }
     
-    # If record exists, preserve the is_setup_complete value
-    # If it's a new record, set is_setup_complete to False by default
+    # If record exists, preserve the setup_completed value
+    # If it's a new record, set setup_completed to False by default
     if existing_setup:
-        # Preserve the existing is_setup_complete status 
-        setup_data["is_setup_complete"] = existing_setup.get("is_setup_complete", False)
+        # Preserve the existing setup_completed status 
+        setup_data["setup_completed"] = existing_setup.get("setup_completed", False)
         logging.info(f"Updating existing guided setup data for user {user_id}")
     else:
         # New record, not completed yet
-        setup_data["is_setup_complete"] = False
+        setup_data["setup_completed"] = False
         logging.info(f"Creating new guided setup data for user {user_id}")
     
     # Update or insert the record
@@ -126,7 +126,7 @@ async def get_guided_setup(user_id: str):
 async def has_completed_setup(user_id: str) -> bool:
     """Check if a user has completed the guided setup."""
     setup = await get_guided_setup(user_id)
-    return setup is not None and setup.get("is_setup_complete", False)
+    return setup is not None and setup.get("setup_completed", False)
 
 @router.post("/quick_setup")
 async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(get_current_user)):
@@ -138,6 +138,14 @@ async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(g
         
         # Mock phone number - in production this would be dynamically assigned
         phone_number = "(814) 261-0317"
+        
+        # Log the specific questions for debugging
+        specific_questions = data.messageTaking.specificQuestions if data.messageTaking else []
+        question_count = len(specific_questions)
+        logging.info(f"Received {question_count} specific questions for user {current_user}")
+        if question_count > 0:
+            for i, q in enumerate(specific_questions):
+                logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
         # Save the setup data to Supabase
         await save_guided_setup(current_user, data, phone_number)
@@ -206,7 +214,7 @@ async def get_setup_status(user_id: str = Depends(get_current_user)):
         setup_data = await get_guided_setup(user_id)
         
         # Check if setup is complete
-        is_complete = setup_data.get("is_setup_complete", False) if setup_data else False
+        is_complete = setup_data.get("setup_completed", False) if setup_data else False
         
         return {
             "success": True,
@@ -237,7 +245,7 @@ async def mark_setup_complete(user_id: str = Depends(get_current_user)):
             }
         
         # Update setup data to mark as complete
-        updated_data = {**setup_data, "is_setup_complete": True}
+        updated_data = {**setup_data, "setup_completed": True}
         
         # Update in the database
         supabase = await get_supabase()
@@ -322,6 +330,15 @@ async def retrain_agent(request: RetrainAgentRequest, current_user: str = Depend
         existing_setup = await get_guided_setup(current_user)
         if not existing_setup:
             logging.warning(f"No existing setup data found for user {current_user}")
+            
+        # Log specific questions if provided in setup data
+        if request.setup_data and request.setup_data.messageTaking:
+            specific_questions = request.setup_data.messageTaking.specificQuestions
+            question_count = len(specific_questions)
+            logging.info(f"Received {question_count} specific questions for retraining")
+            if question_count > 0:
+                for i, q in enumerate(specific_questions):
+                    logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
         # Generate business overview from the URL
         # TODO: Implement the actual web crawling and scraping logic

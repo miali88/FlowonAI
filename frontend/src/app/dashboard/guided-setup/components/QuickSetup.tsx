@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { QuickSetupData } from "../types";
 import { Info, X, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm, Controller, ControllerRenderProps } from "react-hook-form";
@@ -106,6 +105,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isTraining, setIsTraining] = useState(false);
   const [trainingError, setTrainingError] = useState<string | null>(null);
+  const [newQuestion, setNewQuestion] = useState("");
 
   // Initialize form with React Hook Form and Zod resolver
   const form = useForm<FormValues>({
@@ -474,6 +474,15 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
   };
 
+  const addQuestion = () => {
+    const currentQuestions = getValues("messageTaking.specificQuestions");
+    setValue("messageTaking.specificQuestions", [
+      ...currentQuestions,
+      { question: newQuestion, required: true }
+    ]);
+    setNewQuestion("");
+  };
+
   // Render a loading indicator if data is being loaded
   if (isLoadingData) {
     return (
@@ -488,7 +497,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 mb-16">
         {/* Show error alert if loading failed */}
         {loadError && (
           <Alert variant="destructive" className="mb-8">
@@ -890,35 +899,68 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
               <div>
                 <Label>Business Hours</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  {Object.entries(
-                    getValues("businessInformation.businessHours")
-                  ).map(([day, hours]) => (
-                    <div key={day} className="flex items-center gap-4">
-                      <span className="w-24 font-medium">{day}</span>
-                      <div className="flex items-center gap-2 flex-1">
-                        <Controller
-                          control={control}
-                          name={
-                            `businessInformation.businessHours.${day}.open` as any
-                          }
-                          render={({ field }: { field: any }) => (
-                            <Input type="time" {...field} />
-                          )}
-                        />
-                        <span>to</span>
-                        <Controller
-                          control={control}
-                          name={
-                            `businessInformation.businessHours.${day}.close` as any
-                          }
-                          render={({ field }: { field: any }) => (
-                            <Input type="time" {...field} />
-                          )}
-                        />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                  {/* Weekdays Column */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-500">Weekdays</h3>
+                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((day) => (
+                      <div key={day} className="flex items-center gap-4">
+                        <span className="w-24 font-medium">{day}</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <Controller
+                            control={control}
+                            name={
+                              `businessInformation.businessHours.${day}.open` as any
+                            }
+                            render={({ field }: { field: any }) => (
+                              <Input type="time" {...field} />
+                            )}
+                          />
+                          <span>to</span>
+                          <Controller
+                            control={control}
+                            name={
+                              `businessInformation.businessHours.${day}.close` as any
+                            }
+                            render={({ field }: { field: any }) => (
+                              <Input type="time" {...field} />
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  {/* Weekends Column */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-500">Weekends</h3>
+                    {["Saturday", "Sunday"].map((day) => (
+                      <div key={day} className="flex items-center gap-4">
+                        <span className="w-24 font-medium">{day}</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <Controller
+                            control={control}
+                            name={
+                              `businessInformation.businessHours.${day}.open` as any
+                            }
+                            render={({ field }: { field: any }) => (
+                              <Input type="time" {...field} />
+                            )}
+                          />
+                          <span>to</span>
+                          <Controller
+                            control={control}
+                            name={
+                              `businessInformation.businessHours.${day}.close` as any
+                            }
+                            render={({ field }: { field: any }) => (
+                              <Input type="time" {...field} />
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -961,6 +1003,73 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                     />
                   )}
                 />
+              </div>
+              
+              {/* Custom Questions Section */}
+              <div className="pt-4 border-t">
+                <Label className="block mb-2">Specific Questions</Label>
+                <div className="text-sm text-gray-500 mb-4">
+                  Add custom questions for Flowon to ask callers. All questions will be required.
+                </div>
+                
+                {/* List of existing questions */}
+                <div className="space-y-3 mb-4">
+                  {watch("messageTaking.specificQuestions").map((_, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <Controller
+                          control={control}
+                          name={`messageTaking.specificQuestions.${index}.question`}
+                          render={({ field }) => (
+                            <Input 
+                              {...field} 
+                              placeholder="Enter question..." 
+                            />
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentQuestions = getValues("messageTaking.specificQuestions");
+                          setValue(
+                            "messageTaking.specificQuestions",
+                            currentQuestions.filter((_, i) => i !== index)
+                          );
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Add new question input and button */}
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Type new question here..."
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && newQuestion.trim()) {
+                          e.preventDefault();
+                          addQuestion();
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addQuestion}
+                  >
+                    <span className="mr-1">+</span> Add
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -1076,14 +1185,14 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           </Alert>
         )}
 
-        <div className="flex justify-end mt-8">
+        <div className="flex justify-end mt-12 mb-8">
           <Button
             type="submit"
-            className="bg-black hover:bg-gray-800 text-white px-8"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-lg font-semibold rounded-xl shadow-lg transition-all hover:shadow-xl hover:scale-105"
             disabled={isSubmitting}
           >
             Next Step
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-3 h-5 w-5" />
           </Button>
         </div>
       </form>

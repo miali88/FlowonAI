@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
+import { ThemeModeProvider } from "@/components/DarkModeProvider";
 
 // Initialize PostHog
 if (typeof window !== "undefined") {
@@ -24,8 +25,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PostHogProvider client={posthog}>
       <ClerkProvider>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          {children}
+        <ThemeProvider attribute="class" defaultTheme="white" enableSystem={false}>
+          <ThemeModeProvider>
+            {children}
+          </ThemeModeProvider>
         </ThemeProvider>
       </ClerkProvider>
     </PostHogProvider>
