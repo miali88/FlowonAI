@@ -36,10 +36,9 @@ export function Footer() {
             <Link href="/" className="flex gap-2">
               <Image 
                 alt="Flowon AI Logo" 
-                src="/flowon.png" 
+                src="/flowon_circle.png" 
                 width={32}
                 height={32}
-                className="invert" 
               />
             </Link>
             <p className="max-w-xs"> </p>

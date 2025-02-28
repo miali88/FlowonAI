@@ -217,7 +217,7 @@
   .animate-fade-in {
     animation: fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     animation-delay: var(--animation-delay, 0ms);
-    opacity: 0; /* Ensure initial state is hidden */
+    /* Initial opacity is set by animation keyframes */
   }
 
   .animate-fade-up {

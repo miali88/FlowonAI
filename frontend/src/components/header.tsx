@@ -28,11 +28,10 @@ export function Header() {
           {/* Left side - Logo + Name */}
           <Link href="/" className="flex items-center">
             <Image 
-              src="/flowon_partial.png"
+              src="/flowon_circle.png"
               alt="Flowon AI Logo"
               width={32}
               height={32}
-              className="h-8 w-8 invert"
               priority
             />
             <span className="ml-2 text-xl font-medium">Flowon AI</span>

@@ -59,7 +59,7 @@ export default function HomePage() {
         <DynamicFeaturesAndBenefits />
         <DynamicHowItWorks />
         <DynamicVoiceSocialProof />
-        <DynamicPricing />
+        <DynamicPricing />  
         <DynamicCtaSection />
       </main>
       <DynamicFooter />
