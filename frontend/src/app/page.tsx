@@ -37,6 +37,16 @@ const DynamicPricing = dynamic(() => import('@/components/pricing').then(mod => 
   ssr: true
 });
 
+const DynamicCtaSection = dynamic(() => import('@/components/CtaSection').then(mod => mod.CtaSection), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
+});
+
+const DynamicFooter = dynamic(() => import('@/components/footer').then(mod => mod.Footer), {
+  loading: () => <div className="h-[200px]" />,
+  ssr: true
+});
+
 
 export default function HomePage() {
   return (
@@ -50,7 +60,9 @@ export default function HomePage() {
         <DynamicHowItWorks />
         <DynamicVoiceSocialProof />
         <DynamicPricing />
+        <DynamicCtaSection />
       </main>
+      <DynamicFooter />
     </div>
   );
 }
