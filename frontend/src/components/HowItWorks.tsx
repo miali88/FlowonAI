@@ -86,12 +86,9 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="order-2 lg:order-1">
-            <Timeline data={timelineData} />
-          </div>
-
-          <div className="order-1 lg:order-2 bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl p-4 mx-auto max-w-md lg:max-w-full shadow-lg">
+        {/* Display the preview on small screens only */}
+        <div className="lg:hidden mb-10">
+          <div className="bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl p-4 mx-auto max-w-md shadow-lg">
             <div className="aspect-video relative overflow-hidden rounded-lg">
               <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-lg">
                 <div className="flex items-center justify-between p-2 bg-black/40">
@@ -103,7 +100,6 @@ export function HowItWorks() {
                   <div className="text-xs text-white/70">Flowon Setup Wizard</div>
                   <div></div>
                 </div>
-
                 <div className="flex flex-1 p-4">
                   <div className="bg-white/10 rounded-lg p-4 w-full flex flex-col">
                     <div className="flex mb-4">
@@ -153,6 +149,12 @@ export function HowItWorks() {
             </div>
           </div>
         </div>
+
+        {/* Timeline section - now full-width and centered */}
+        <div className="w-full max-w-5xl mx-auto">
+          <Timeline data={timelineData} />
+        </div>
+
       </div>
     </section>
   );

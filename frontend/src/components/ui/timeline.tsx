@@ -33,30 +33,11 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
 
   return (
     <div
-      className="w-full bg-white dark:bg-neutral-950 font-sans md:px-10"
+      className="w-full bg-white dark:bg-neutral-950 font-sans"
       ref={containerRef}
     >
-      <div className="max-w-7xl mx-auto py-20 px-4 md:px-8 lg:px-10">
-        <h1 className="text-4xl font-bold text-black dark:text-white max-w-4xl">
-          How it works:
-        </h1>
-        <h3 className="mt-2 text-base md:text-xl mb-4 text-black dark:text-white max-w-4xl leading-[3]">
-          ① Import Data
-          <br />
-          <br />
-          ② Suggest Agent Behaviour
-          <br />
-          <br />
-          ③ Deploy Your New Agent
-          <br />
-          <br />
-          ④ Enjoy The Results
-        </h3>
-        <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-sm">
-        </p>
-      </div>
 
-      <div ref={ref} className="relative max-w-7xl mx-auto pb-20">
+      <div ref={ref} className="relative w-full max-w-full mx-auto pb-20">
         {data.map((item, index) => (
           <div
             key={index}

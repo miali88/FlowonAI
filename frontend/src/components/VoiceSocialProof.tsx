@@ -18,10 +18,7 @@ export function VoiceSocialProof() {
         <div className="mx-auto max-w-4xl mb-12">
           <CardSpotlight className="p-8 bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl">
             <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-20 w-20 border-2 border-primary">
-                <AvatarImage src="/images/testimonial-avatar-1.jpg" alt="Maria Rodriguez" />
-                <AvatarFallback>MR</AvatarFallback>
-              </Avatar>
+    
               
               <div className="flex space-x-1">
                 {[...Array(5)].map((_, i) => (

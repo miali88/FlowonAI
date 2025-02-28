@@ -8,24 +8,27 @@ import Image from 'next/image';
 
 // Shared button component
 const CallToActionButton = () => (
-  <Link 
-    href="#free-trial" 
-    className="inline-block relative z-20 animate-fade-in [--animation-delay:600ms]"
-  >
-    <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base group">
-      Sign up today for 20 minutes free – No Credit Card Required
-      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-    </Button>
-  </Link>
+  <div className="flex flex-col items-center relative z-20 animate-fade-in [--animation-delay:600ms]">
+    <Link 
+      href="#free-trial" 
+      className="inline-block"
+    >
+      <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base group bg-black hover:bg-black/90 text-white shadow-lg">
+        Sign up today for 20 minutes free
+        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+      </Button>
+    </Link>
+    <p className="text-sm text-gray-500 mt-2">No credit card required</p>
+  </div>
 );
 
 // Mobile Hero component
 const MobileHero = memo(() => (
   <section className="relative mx-auto px-4 text-center max-w-[100rem] sm:hidden 
-    before:content-[''] before:absolute before:w-[30rem] before:h-[10rem] before:rounded-full before:bg-[#ff69b440] before:blur-3xl before:-z-10 before:animate-blob before:top-[20%] before:left-[10%]
-    after:content-[''] after:absolute after:w-[30rem] after:h-[10rem] after:rounded-full after:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[30%] after:right-[10%]">
-    <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8 pb-32">
-      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-1 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent animate-fade-in [--animation-delay:200ms] caret-foreground max-w-[95vw]">
+    before:content-[''] before:absolute before:w-[30rem] before:h-[30rem] before:rounded-full before:bg-[#ff69b450] before:blur-[80px] before:-z-10 before:animate-blob before:top-[10%] before:left-[5%]
+    after:content-[''] after:absolute after:w-[30rem] after:h-[30rem] after:rounded-full after:bg-[#4ea8de50] after:blur-[80px] after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[20%] after:right-[5%]">
+    <div className="min-h-[50dvh] flex flex-col items-center justify-start pt-8 pb-32 relative overflow-hidden">
+      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-1 text-4xl font-medium font-heading leading-[1.1] tracking-tighter text-transparent animate-fade-in [--animation-delay:200ms] caret-foreground w-full mx-auto">
         <div className="whitespace-nowrap">Excellent AI Phone</div>
         <div className="relative whitespace-nowrap mt-2">Answering Service</div>
       </h1>
@@ -45,10 +48,10 @@ MobileHero.displayName = 'MobileHero';
 // Desktop Hero component
 const DesktopHero = memo(() => (
   <section className="relative mx-auto px-4 sm:px-6 text-center md:px-8 max-w-[100rem] hidden sm:block
-    before:content-[''] before:absolute before:w-[40rem] before:h-[40rem] before:rounded-full before:bg-[#ff69b440] before:blur-3xl before:-z-10 before:animate-blob before:top-[-15%] before:left-[10%]
-    after:content-[''] after:absolute after:w-[40rem] after:h-[40rem] after:rounded-full before:bg-[#4ea8de40] after:blur-3xl after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[20%] after:right-[10%]">
-    <div className="min-h-[65vh] flex flex-col items-center justify-center py-16">
-      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl animate-fade-in [--animation-delay:200ms] caret-foreground">
+    before:content-[''] before:absolute before:w-[60rem] before:h-[60rem] before:rounded-full before:bg-[#ff69b450] before:blur-[100px] before:-z-10 before:animate-blob before:top-[-15%] before:left-[5%]
+    after:content-[''] after:absolute after:w-[60rem] after:h-[60rem] after:rounded-full after:bg-[#4ea8de50] after:blur-[100px] after:-z-10 after:animate-blob after:animation-delay-2000 after:top-[20%] after:right-[5%]">
+    <div className="min-h-[65vh] flex flex-col items-center justify-center py-16 relative overflow-hidden">
+      <h1 className="bg-gradient-to-br from-foreground from-30% to-foreground/40 bg-clip-text py-8 text-center text-5xl font-medium font-heading leading-tight tracking-tighter text-transparent sm:text-6xl md:text-7xl lg:text-8xl animate-fade-in [--animation-delay:200ms] caret-foreground w-full mx-auto">
         <div className="whitespace-nowrap">Excellent AI Phone</div>
         <div className="relative whitespace-nowrap mt-2">Answering Service</div>
       </h1>
