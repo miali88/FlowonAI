@@ -86,11 +86,19 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
         "phone_number": phone_number,
     }
     
-    # If record exists, preserve the setup_completed value
+    # If record exists, preserve the setup_completed value and agent_id
     # If it's a new record, set setup_completed to False by default
     if existing_setup:
         # Preserve the existing setup_completed status 
         setup_data["setup_completed"] = existing_setup.get("setup_completed", False)
+        
+        # Preserve the existing agent_id if it exists
+        if "agent_id" in existing_setup and existing_setup["agent_id"]:
+            setup_data["agent_id"] = existing_setup["agent_id"]
+            logging.info(f"Preserving existing agent_id: {existing_setup['agent_id']} for user {user_id}")
+        else:
+            logging.info(f"No agent_id to preserve for user {user_id}")
+            
         logging.info(f"Updating existing guided setup data for user {user_id}")
     else:
         # New record, not completed yet
@@ -99,14 +107,34 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
     
     # Update or insert the record
     supabase = await get_supabase()
-    if existing_setup:
-        # Update existing record
-        result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
-    else:
-        # Insert new record
-        result = await supabase.table("guided_setup").insert(setup_data).execute()
+    try:
+        if existing_setup:
+            # Update existing record
+            result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
+            logging.info(f"Successfully updated guided setup data for user {user_id}")
+        else:
+            # Insert new record
+            result = await supabase.table("guided_setup").insert(setup_data).execute()
+            logging.info(f"Successfully created guided setup data for user {user_id}")
+        
+        # Supabase client might return different response object types
+        if hasattr(result, 'error') and result.error:
+            logging.error(f"Database error with guided setup: {result.error}")
+    except Exception as e:
+        logging.error(f"Exception during guided setup save: {str(e)}")
     
-    logging.info(f"Saved guided setup data for user {user_id}")
+    # Verify the data was saved correctly
+    updated_setup = await get_guided_setup(user_id)
+    if updated_setup:
+        # Check if agent_id was preserved
+        if "agent_id" in setup_data and setup_data["agent_id"]:
+            if updated_setup.get("agent_id") == setup_data["agent_id"]:
+                logging.info(f"Verified agent_id was correctly preserved: {setup_data['agent_id']}")
+            else:
+                logging.warning(f"agent_id was not correctly preserved. Expected: {setup_data['agent_id']}, Got: {updated_setup.get('agent_id')}")
+    else:
+        logging.error(f"Failed to verify guided setup data save for user {user_id}")
+    
     return setup_data
 
 async def get_guided_setup(user_id: str):
@@ -141,17 +169,24 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
     """
     try:
         logging.info(f"Checking for existing agents for user {user_id}")
-        user_agents = await get_agents(user_id)
         
-        # Get the user's guided setup data to retrieve the phone number
+        # Get the user's guided setup data to retrieve the phone number and agent_id
         guided_setup_data = await get_guided_setup(user_id)
         phone_number = guided_setup_data.get("phone_number", "") if guided_setup_data else ""
+        agent_id = guided_setup_data.get("agent_id") if guided_setup_data else None
+        
         logging.info(f"Retrieved phone number for agent assignment: {phone_number}")
+        if agent_id:
+            logging.info(f"Found existing agent_id in guided_setup: {agent_id}")
+        else:
+            logging.info(f"No agent_id found in guided_setup for user {user_id}")
         
         # Extract business information for agent creation/update
         business_info = setup_data.get("businessInformation", {})
         business_name = business_info.get("businessName", "My Business")
         business_overview = business_info.get("businessOverview", "")
+        
+        logging.info(f"Preparing agent data for business: {business_name}")
 
         features = {
                     "end_call": {
@@ -170,13 +205,13 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             "agentName": f"{business_name} Assistant",
             "agentPurpose": "telephone-agent",  # Default purpose
             "instructions": prompts.answering_service.format(company_name=business_name, business_overview=business_overview),  # Include both variables
-            "dataSource": "all",  # Mark this agent as created from guided setup
+            "dataSource": "guided_setup",  # Mark this agent as created from guided setup
             "openingLine": f"Hello! Thank you for calling {business_name}. Our call may be recorded for quality control purposes, my name is Fiona. How can I help you today?",
-            "language": "EN-US",  # Default to English
-            "voice": "Fiona",
+            "language": "en-US",  # Default to English
+            "voice": "Ize3YDdGqJYYKQSDLORJ", # jessica
             "features" : features,
             "assigned_telephone" : phone_number,  # Use the phone number from guided setup
-            "voiceProvider" : "Ize3YDdGqJYYKQSDLORJ", ## Jessica
+            "voiceProvider" : "elevenlabs",
             "notify": True,  # Enable notifications
         }
         
@@ -197,34 +232,134 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
                         "required": q.required
                     })
             if form_fields:
-                agent_data["formFields"] = form_fields
+                agent_data["form_fields"] = form_fields
+                logging.info(f"Added {len(form_fields)} form fields to agent data")
         
-        # Check if there's an existing agent with dataSource=guided_setup
-        existing_agent = None
-        if user_agents and user_agents.data:
-            for agent in user_agents.data:
-                if agent.get("dataSource") == "guided_setup":
-                    existing_agent = agent
-                    logging.info(f"Found existing guided setup agent with ID: {agent.get('id')}")
-                    break
-        
-        # Update or create the agent
-        if existing_agent:
-            agent_id = existing_agent.get("id")
-            logging.info(f"Updating existing agent with ID: {agent_id}")
+        # First check if we have an agent_id in the guided_setup table
+        if agent_id:
+            logging.info(f"Updating existing agent with ID from guided_setup: {agent_id}")
             result = await update_agent(agent_id, agent_data)
             logging.info(f"Successfully updated agent for user {user_id}")
             return True, f"Updated existing agent with ID: {agent_id}", result
         else:
-            logging.info(f"Creating new agent for user {user_id}")
-            result = await create_agent(agent_data)
-            logging.info(f"Successfully created new agent for user {user_id}")
-            return True, "Created new agent", result
+            # If no agent_id in guided_setup, check if there's an existing agent with dataSource=guided_setup
+            user_agents = await get_agents(user_id)
+            existing_agent = None
+            
+            if user_agents and user_agents.data:
+                logging.info(f"Found {len(user_agents.data)} agents for user {user_id}")
+                for agent in user_agents.data:
+                    logging.info(f"Checking agent: {agent.get('id')} with dataSource: {agent.get('dataSource')}")
+                    if agent.get("dataSource") == "guided_setup":
+                        existing_agent = agent
+                        logging.info(f"Found existing guided setup agent with ID: {agent.get('id')}")
+                        break
+            else:
+                logging.info(f"No existing agents found for user {user_id}")
+            
+            # Update or create the agent
+            if existing_agent:
+                agent_id = existing_agent.get("id")
+                logging.info(f"Updating existing agent with ID: {agent_id}")
+                result = await update_agent(agent_id, agent_data)
+                
+                # Store the agent_id in the guided_setup table for future reference
+                update_success = await update_guided_setup_agent_id(user_id, agent_id)
+                if update_success:
+                    logging.info(f"Successfully stored agent_id in guided_setup table")
+                else:
+                    logging.warning(f"Failed to store agent_id in guided_setup table")
+                
+                logging.info(f"Successfully updated agent for user {user_id}")
+                return True, f"Updated existing agent with ID: {agent_id}", result
+            else:
+                logging.info(f"Creating new agent for user {user_id}")
+                result = await create_agent(agent_data)
+                
+                # Store the created agent_id in the guided_setup table
+                if result and "id" in result:
+                    new_agent_id = result["id"]
+                    update_success = await update_guided_setup_agent_id(user_id, new_agent_id)
+                    if update_success:
+                        logging.info(f"Successfully stored new agent_id {new_agent_id} in guided_setup table")
+                    else:
+                        logging.warning(f"Failed to store new agent_id {new_agent_id} in guided_setup table")
+                else:
+                    logging.warning(f"Created agent result does not contain an ID: {result}")
+                
+                logging.info(f"Successfully created new agent for user {user_id}")
+                return True, "Created new agent", result
     
     except Exception as e:
         error_msg = f"Error creating/updating agent: {str(e)}"
         logging.error(error_msg)
         return False, error_msg, None
+
+async def update_guided_setup_agent_id(user_id: str, agent_id: str) -> bool:
+    """Update the agent_id field in the guided_setup table for a user."""
+    try:
+        if not user_id:
+            logging.error("Cannot update guided_setup agent_id: user_id is empty")
+            return False
+            
+        if not agent_id:
+            logging.error("Cannot update guided_setup agent_id: agent_id is empty")
+            return False
+            
+        logging.info(f"Updating guided_setup agent_id to {agent_id} for user {user_id}")
+        
+        # First, check if the agent exists
+        try:
+            from services.voice.agents import get_agent
+            agent = await get_agent(agent_id)
+            if not agent or not agent.data:
+                logging.error(f"Cannot update guided_setup agent_id: Agent {agent_id} does not exist")
+                return False
+            
+            logging.info(f"Verified agent {agent_id} exists")
+        except Exception as agent_error:
+            # If we can't verify the agent, we'll proceed anyway but log the error
+            logging.warning(f"Could not verify agent existence, proceeding anyway: {str(agent_error)}")
+            
+        # Next, check if the guided_setup record exists
+        existing_setup = await get_guided_setup(user_id)
+        if not existing_setup:
+            logging.error(f"Cannot update guided_setup agent_id: No setup record found for user {user_id}")
+            return False
+            
+        # Update the agent_id
+        supabase = await get_supabase()
+        try:
+            result = await supabase.table("guided_setup").update(
+                {"agent_id": agent_id}
+            ).eq("user_id", user_id).execute()
+            
+            if hasattr(result, 'error') and result.error:
+                logging.error(f"Error updating guided_setup agent_id: {result.error}")
+                return False
+                
+            logging.info(f"Database update for agent_id completed")
+        except Exception as e:
+            logging.error(f"Exception during database update for agent_id: {str(e)}")
+            return False
+            
+        # Verify the update was successful
+        try:
+            updated_setup = await get_guided_setup(user_id)
+            if updated_setup and updated_setup.get("agent_id") == agent_id:
+                logging.info(f"Successfully verified agent_id update to {agent_id} for user {user_id}")
+                return True
+            else:
+                current_id = updated_setup.get("agent_id") if updated_setup else "None"
+                logging.warning(f"Failed to verify agent_id update. Expected: {agent_id}, Got: {current_id}")
+                return False
+        except Exception as e:
+            logging.error(f"Exception during verification of agent_id update: {str(e)}")
+            return False
+            
+    except Exception as e:
+        logging.error(f"Exception updating guided_setup agent_id: {str(e)}")
+        return False
 
 async def mark_setup_complete(user_id: str) -> Dict[str, Any]:
     """Mark the guided setup as complete."""
@@ -432,6 +567,12 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         existing_setup = await get_guided_setup(user_id)
         if not existing_setup:
             logging.warning(f"No existing setup data found for user {user_id}")
+        else:
+            logging.info(f"Found existing guided setup data for user {user_id}")
+            if "agent_id" in existing_setup and existing_setup["agent_id"]:
+                logging.info(f"Found existing agent_id in guided setup: {existing_setup['agent_id']}")
+            else:
+                logging.info(f"No agent_id found in existing guided setup for user {user_id}")
             
         # Log specific questions if provided in setup data
         if request.setup_data and request.setup_data.messageTaking:
@@ -463,6 +604,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
                 "messageTaking": existing_setup.get("message_taking", {}),
                 "callNotifications": existing_setup.get("call_notifications", {})
             }
+            logging.info(f"Using existing setup data from database for user {user_id}")
         else:
             # Create minimal setup data with the business overview
             setup_data = {
@@ -485,20 +627,38 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
                     "smsNotifications": {"enabled": False, "phoneNumber": None}
                 }
             }
+            logging.info(f"Created minimal setup data for user {user_id}")
         
         # Always update the business overview with the newly generated one
         if "businessInformation" in setup_data:
             setup_data["businessInformation"]["businessOverview"] = business_overview
+            logging.info("Updated business overview in setup data")
         
         # Convert to QuickSetupData for saving
         quick_setup_data = QuickSetupData(**setup_data)
         # Save the updated or new data
-        await save_guided_setup(user_id, quick_setup_data)
-        
-        logging.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
+        try:
+            await save_guided_setup(user_id, quick_setup_data)
+            logging.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
+        except Exception as save_error:
+            logging.error(f"Error saving guided setup data: {str(save_error)}")
+            return RetrainAgentResponse(
+                success=False,
+                business_overview=None,
+                setup_data=None,
+                error=f"Error saving guided setup data: {str(save_error)}"
+            )
         
         # Get the freshly updated setup data
         updated_setup = await get_guided_setup(user_id)
+        if not updated_setup:
+            logging.error("Failed to retrieve updated setup data after save")
+            return RetrainAgentResponse(
+                success=False,
+                business_overview=business_overview,
+                setup_data=None,
+                error="Failed to retrieve updated setup data after save"
+            )
         
         # Convert back to frontend format for the response
         formatted_data = {
@@ -509,9 +669,34 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         }
         
         # Create or update the agent using the centralized function
-        success, message, _ = await create_or_update_agent_from_setup(user_id, formatted_data)
-        if not success:
-            logging.warning(f"Agent creation/update during retraining: {message}")
+        try:
+            success, message, agent_result = await create_or_update_agent_from_setup(user_id, formatted_data)
+            
+            if success:
+                logging.info(f"Successfully completed agent creation/update: {message}")
+                
+                # If we have an agent_id now, ensure it's stored in guided_setup
+                if agent_result and "id" in agent_result:
+                    agent_id = agent_result["id"]
+                    logging.info(f"Ensuring agent_id {agent_id} is stored in guided_setup")
+                    await update_guided_setup_agent_id(user_id, agent_id)
+            else:
+                logging.warning(f"Agent creation/update during retraining failed: {message}")
+                return RetrainAgentResponse(
+                    success=False,
+                    business_overview=business_overview,
+                    setup_data=formatted_data,
+                    error=f"Agent creation/update failed: {message}"
+                )
+        except Exception as agent_error:
+            error_msg = f"Error in agent creation/update: {str(agent_error)}"
+            logging.error(error_msg)
+            return RetrainAgentResponse(
+                success=False,
+                business_overview=business_overview,
+                setup_data=formatted_data,
+                error=error_msg
+            )
         
         return RetrainAgentResponse(
             success=True,
@@ -520,10 +705,11 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
             error=None
         )
     except Exception as e:
-        logging.error(f"Error retraining agent: {str(e)}")
+        error_msg = f"Error retraining agent: {str(e)}"
+        logging.error(error_msg)
         return RetrainAgentResponse(
             success=False,
             business_overview=None,
             setup_data=None,
-            error=str(e)
+            error=error_msg
         )

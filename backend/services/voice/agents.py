@@ -255,7 +255,7 @@ async def update_agent(agent_id: Union[int, str, UUID], data: Dict[str, Any]) ->
     Raises:
         HTTPException: If an error occurs during update
     """
-    logger.info(f"Updating agent with ID: {agent_id}, data: {data}")
+    logger.info(f"Updating agent with ID: {agent_id}")
     try:
         # Create chat_ui field if the incoming data contains UI-related fields
         if any(key in data for key in ['primaryColor', 'secondaryColor', 'logo']):
