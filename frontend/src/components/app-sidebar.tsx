@@ -40,7 +40,7 @@ export function AppSidebar({
   const items = [
     { title: "Guided Setup", icon: Compass, href: "/dashboard/guided-setup" },
     {
-      title: "Conversation Logs",
+      title: "Call Logs",
       icon: MessageSquare,
       href: "/dashboard/conversationlogs",
     },

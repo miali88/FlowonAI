@@ -9,7 +9,7 @@ import { ArrowRight } from "lucide-react";
 const CallToActionButton = () => (
   <div className="flex flex-col items-center relative z-20 animate-fade-in [--animation-delay:600ms]">
     <Link 
-      href="#free-trial" 
+      href="/sign-up" 
       className="inline-block"
     >
       <Button size="lg" className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base group bg-black hover:bg-black/90 text-white shadow-lg">

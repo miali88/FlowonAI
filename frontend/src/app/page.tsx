@@ -67,11 +67,11 @@ export default function HomePage() {
         <DynamicVoiceHero />
         <DynamicPainPointsSolutions />
         <DynamicGuidedSetupSection />
+        <DynamicCarouselTestimonials />
         <DynamicValueProposition />
         <DynamicFeaturesAndBenefits />
         <DynamicHowItWorks />
         <DynamicVoiceSocialProof />
-        <DynamicCarouselTestimonials />
         <DynamicPricing />  
         <DynamicCtaSection />
       </main>
