@@ -43,6 +43,10 @@ def clean_data(data):
                         # If no match found, just clean it as best we can
                         cleaned_value = re.sub(r'[^\+\d\s\-]', '', cleaned_value)
                         cleaned_value = cleaned_value.strip()
+                    
+                    # Wrap the cleaned phone number in double quotes
+                    cleaned_value = '""' + cleaned_value + '""'
+                    logger.debug(f"Phone wrapped in quotes: '{cleaned_value}'")
                 # Special handling for address
                 elif key == 'address':
                     # Remove control characters and normalize whitespace
