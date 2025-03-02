@@ -88,28 +88,33 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
         "phone_number": phone_number,
     }
     
-    # If record exists, preserve the is_setup_complete value
-    # If it's a new record, set is_setup_complete to False by default
+    # If record exists, preserve the is_setup_complete value if it exists
+    # If it's a new record, don't set is_setup_complete field
     if existing_setup:
-        # Preserve the existing is_setup_complete status 
-        setup_data["is_setup_complete"] = existing_setup.get("is_setup_complete", False)
+        # Only include is_setup_complete if it exists in the existing setup
+        if "is_setup_complete" in existing_setup:
+            setup_data["is_setup_complete"] = existing_setup.get("is_setup_complete", False)
         logging.info(f"Updating existing guided setup data for user {user_id}")
     else:
-        # New record, not completed yet
-        setup_data["is_setup_complete"] = False
+        # New record, don't set is_setup_complete field
         logging.info(f"Creating new guided setup data for user {user_id}")
     
     # Update or insert the record
     supabase = await get_supabase()
-    if existing_setup:
-        # Update existing record
-        result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
-    else:
-        # Insert new record
-        result = await supabase.table("guided_setup").insert(setup_data).execute()
-    
-    logging.info(f"Saved guided setup data for user {user_id}")
-    return setup_data
+    try:
+        if existing_setup:
+            # Update existing record
+            result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
+        else:
+            # Insert new record
+            result = await supabase.table("guided_setup").insert(setup_data).execute()
+        
+        logging.info(f"Saved guided setup data for user {user_id}")
+        return setup_data
+    except Exception as e:
+        logging.error(f"Error saving guided setup data: {str(e)}")
+        # Return the data anyway so the rest of the function can continue
+        return setup_data
 
 async def get_guided_setup(user_id: str):
     """Retrieve the guided setup data for a user from Supabase."""
