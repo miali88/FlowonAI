@@ -93,7 +93,7 @@ function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
             <Button variant="ghost" className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src="/assets/invert_waves.png"
+                  src="/flowon_circle.png"
                   alt="Flowon AI Logo"
                 />
                 <AvatarFallback>FA</AvatarFallback>

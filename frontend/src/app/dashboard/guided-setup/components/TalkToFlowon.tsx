@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,23 +26,32 @@ interface TalkToFlowonProps {
 }
 
 export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
-  const { userId } = useAuth();
-  const [flowonPhoneNumber, setFlowonPhoneNumber] = useState<string | null>(
-    null
-  );
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { userId, getToken } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
+        setError(null);
 
-        // Use the API_BASE_URL environment variable
+        // Get the authentication token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Authentication required");
+        }
+
         const response = await fetch(
-          `${API_BASE_URL}/guided_setup/phone_number?user_id=${userId || ""}`,
-          {}
+          `${API_BASE_URL}/guided_setup/phone_number`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
 
         if (!response.ok) {
@@ -54,7 +63,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         const data = await response.json();
 
         if (data.success && data.phoneNumber) {
-          setFlowonPhoneNumber(data.phoneNumber);
+          setPhoneNumber(data.phoneNumber);
         } else {
           throw new Error(data.error || "Invalid response format");
         }
@@ -62,14 +71,14 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         console.error("Error fetching Flowon phone number:", err);
         setError("Could not load Flowon phone number. Using fallback number.");
         // Fallback to a constant if the API fails
-        setFlowonPhoneNumber("(814) 261-0317");
+        setPhoneNumber("(814) 261-0317");
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchPhoneNumber();
-  }, [userId]);
+  }, [userId, getToken]);
 
   const handleNext = () => {
     setSuccessMessage("Great! Let's continue to the final step.");
@@ -130,9 +139,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           ) : (
             <div className="flex items-center gap-3">
               <div className="text-3xl font-bold">
-                {flowonPhoneNumber}
+                {phoneNumber}
               </div>
-              <CopyToClipboardButton text={flowonPhoneNumber || ""} />
+              <CopyToClipboardButton text={phoneNumber || ""} />
             </div>
           )}
         </div>

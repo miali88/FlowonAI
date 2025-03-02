@@ -85,17 +85,7 @@ function KnowledgeBaseContent() {
       if (response.data && response.data.items) {
         console.log("Fetched items:", response.data.items);
         const formattedItems = response.data.items.map(
-          (item: {
-            id: number;
-            title: string;
-            content: string;
-            data_type: string;
-            tag?: string;
-            token_count?: number;
-            url_tokens?: number;
-            created_at?: string;
-            root_url?: string;
-          }) => ({
+          (item: any) => ({
             id: item.id,
             title: item.title,
             content: item.content,
@@ -119,6 +109,7 @@ function KnowledgeBaseContent() {
             data_type: item.data_type,
             tokens: item.tokens,
             url_tokens: item.url_tokens,
+            contentType: Array.isArray(item.content) ? "array" : "string",
           });
         });
       } else {

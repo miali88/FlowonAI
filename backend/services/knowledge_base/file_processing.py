@@ -25,21 +25,21 @@ async def process_file(file: UploadFile) -> Any:
 
     try:
         if file_extension == 'pdf':
-            print('file is pdf')
+            logger.info('Processing PDF file type')
             content = await process_pdf(file)
             return content, file_extension, False  # False indicates non-tabular data
         elif file_extension in ['docx', 'doc']:
-            print('file is docx')
+            logger.info('Processing DOCX file type')
             content = await process_docx(file)
         elif file_extension in ['xlsx', 'xls']:
-            print('file is excel')
+            logger.info('Processing Excel file type')
             content = await process_excel(file)
             return content, file_extension, True   # True indicates tabular data
         elif file_extension == 'txt':
-            print('file is txt')
+            logger.info('Processing TXT file type')
             content = (await file.read()).decode('utf-8')
         elif file_extension == 'csv':
-            print('file is csv')
+            logger.info('Processing CSV file type')
             content = await process_csv(file)
             return content, file_extension, True
         else:

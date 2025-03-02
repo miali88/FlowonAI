@@ -194,10 +194,6 @@ function Header({ activeItem, selectedFeature, isDarkMode, toggleDarkMode }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/assets/invert_waves.png" alt="Flowon AI Logo" />
-                <AvatarFallback>FA</AvatarFallback>
-              </Avatar>
               <span>{user?.fullName || "User"}</span>
               <Badge variant="outline" className="ml-2">
                 {userPlan}

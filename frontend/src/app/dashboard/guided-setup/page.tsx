@@ -21,16 +21,28 @@ const steps: { id: SetupStep; label: string }[] = [
 export default function GuidedSetupPage() {
   const [currentStep, setCurrentStep] = useState<SetupStep>("quick-setup");
   const [isLoading, setIsLoading] = useState(true);
-  const { userId } = useAuth();
+  const { userId, getToken } = useAuth();
 
   useEffect(() => {
     async function checkSetupStatus() {
       try {
         setIsLoading(true);
 
+        // Get the authentication token from Clerk
+        const token = await getToken();
+        if (!token) {
+          console.error("No authentication token available");
+          throw new Error("Authentication required");
+        }
+
         const response = await fetch(
-          `${API_BASE_URL}/guided_setup/setup_status?user_id=${userId || ""}`,
-          {}
+          `${API_BASE_URL}/guided_setup/setup_status`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
 
         if (!response.ok) {
@@ -58,7 +70,7 @@ export default function GuidedSetupPage() {
     }
 
     checkSetupStatus();
-  }, [userId]);
+  }, [userId, getToken]);
 
   const handleNext = () => {
     const currentIndex = steps.findIndex((step) => step.id === currentStep);

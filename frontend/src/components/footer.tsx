@@ -65,6 +65,19 @@ export function Footer() {
                 </li>
               </ul>
             </div>
+            <div>
+              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Resources</h2>
+              <ul className="gap-2 grid list-none">
+                <li>
+                  <Link
+                    href="/guide/call_forwarding"
+                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
+                  >
+                    Call Forwarding
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center gap-4 border-t border-neutral-700/20 py-4">

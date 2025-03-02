@@ -28,16 +28,28 @@ export default function Launch({ onNext }: LaunchProps) {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { userId } = useAuth();
+  const { userId, getToken } = useAuth();
 
   useEffect(() => {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
+        setError(null);
+        
+        // Get the authentication token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Authentication required");
+        }
 
         const response = await fetch(
-          `${API_BASE_URL}/guided_setup/phone_number?user_id=${userId || ""}`,
-          {}
+          `${API_BASE_URL}/guided_setup/phone_number`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
 
         if (!response.ok) {
@@ -64,21 +76,28 @@ export default function Launch({ onNext }: LaunchProps) {
     }
 
     fetchPhoneNumber();
-  }, [userId]);
+  }, [userId, getToken]);
 
   const handleCompleteSetup = async () => {
     try {
       setIsSubmitting(true);
       setError(null);
+      
+      // Get the authentication token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
 
       // Mark setup as complete
       const response = await fetch(
-        `${API_BASE_URL}/guided_setup/mark_complete?user_id=${userId || ""}`,
+        `${API_BASE_URL}/guided_setup/mark_complete`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          },
+            "Authorization": `Bearer ${token}`
+          }
         }
       );
 

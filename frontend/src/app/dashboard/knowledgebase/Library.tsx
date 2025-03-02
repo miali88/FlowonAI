@@ -3,22 +3,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KnowledgeBaseTable } from './KnowledgeBaseTable';
-
-interface UrlContent {
-  id: number;
-  url: string;
-  token_count: number;
-}
-
-interface KnowledgeBaseItem {
-  id: number;
-  title: string;
-  content: string;
-  data_type: 'web' | 'text';
-  tag: string;
-  tokens: number;
-  created_at: string;
-}
+import { KnowledgeBaseItem, WebContent } from './types';
 
 interface LibraryProps {
   savedItems: KnowledgeBaseItem[];
@@ -46,7 +31,13 @@ export function Library({
           totalTokens={totalTokens}
           onEdit={(item) => {
             setSelectedItem(item);
-            setNewItemContent(item.content);
+            // If content is an array of web content, we don't want to set it as editing content
+            if (typeof item.content === 'string') {
+              setNewItemContent(item.content);
+            } else {
+              // For web content, we might set some placeholder or just leave it empty
+              setNewItemContent('');
+            }
           }}
           onDelete={handleDeleteItem}
           setSelectedItem={setSelectedItem}
@@ -61,8 +52,8 @@ export function Library({
             <ScrollArea className="h-[calc(100vh-200px)]">
               {selectedItem.data_type === 'web' && Array.isArray(selectedItem.content) ? (
                 <div className="space-y-4">
-                  {(selectedItem.content as UrlContent[]).map((urlItem: UrlContent) => (
-                    <div key={urlItem.id} className="border-b pb-2">
+                  {(selectedItem.content as WebContent[]).map((urlItem: WebContent) => (
+                    <div key={String(urlItem.id)} className="border-b pb-2">
                       <p className="text-sm font-medium">{urlItem.url}</p>
                       <p className="text-sm text-muted-foreground">
                         Token count: {urlItem.token_count}
@@ -71,7 +62,7 @@ export function Library({
                   ))}
                 </div>
               ) : (
-                <p className="whitespace-pre-wrap">{selectedItem.content}</p>
+                <p className="whitespace-pre-wrap">{typeof selectedItem.content === 'string' ? selectedItem.content : JSON.stringify(selectedItem.content, null, 2)}</p>
               )}
             </ScrollArea>
           </div>

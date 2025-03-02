@@ -1,7 +1,9 @@
-from typing import Optional, List
-from pydantic import BaseModel
+from typing import Optional, List, Dict, Any, Union, Tuple
+from pydantic import BaseModel, Field
 import json, logging
 import tiktoken
+from datetime import datetime
+from uuid import UUID
 
 from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -30,31 +32,115 @@ logger.addHandler(stream_handler)
 
 router = APIRouter()
 
-class KnowledgeBaseItem(BaseModel):
-    id: int
-    title: str
-    content: Optional[str]
-    url: Optional[str] = None      # Add 'url' if applicable
-    token_count: Optional[int] = None
-    user_id: str
-    data_type: Optional[str] = None
+# Model for web content url items
+class WebContentItem(BaseModel):
+    url: str
+    id: Union[int, UUID]
+    token_count: Optional[int] = 0
 
+# Base models for different data types
+class BaseKnowledgeItem(BaseModel):
+    id: Union[int, UUID]
+    created_at: Optional[datetime] = None
+    user_id: str
+    token_count: Optional[int] = None
+    data_type: Optional[str] = None
+    title: str
+    
+class TextFileItem(BaseKnowledgeItem):
+    heading: Optional[str] = None
+    content: str
+    file_name: Optional[str] = None
+    tag: Optional[str] = None
+
+class WebDataItem(BaseKnowledgeItem):
+    header: Optional[str] = None
+    content: List[WebContentItem]  # Changed from string to List[WebContentItem]
+    root_url: Optional[str] = None
+    url_tokens: Optional[int] = None
+    user_name: Optional[str] = None
+    tag: Optional[str] = None
+    rag_query: Optional[str] = None
+
+# Request models
 class KnowledgeBaseItemCreate(BaseModel):
     title: str
     content: str
     user_id: str
+    data_type: Optional[str] = "text"
+    token_count: Optional[int] = None
+    file_name: Optional[str] = None
+    tag: Optional[str] = None
+
+class WebDataItemCreate(BaseModel):
+    url: str
+    content: str
+    user_id: str
+    header: Optional[str] = None
+    token_count: Optional[int] = None
+    user_name: Optional[str] = None
+    root_url: Optional[str] = None
+    tag: Optional[str] = None
 
 class ScrapeUrlRequest(BaseModel):
     url: str
 
-@router.post("/upload_file")
+class DeleteItemRequest(BaseModel):
+    data_type: str
+
+class TokenCalculationRequest(BaseModel):
+    content: str
+
+# Response models
+class KnowledgeBaseItemResponse(BaseModel):
+    id: Union[int, UUID]
+    title: str
+    content: Union[str, List[WebContentItem]]  # Updated to handle both text and web content
+    token_count: Optional[int] = None
+    user_id: str
+    data_type: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+# Model validator to handle mixed item types
+class KnowledgeBaseItem(BaseModel):
+    id: Union[int, UUID]
+    title: str
+    content: Union[str, List[WebContentItem]]  # Can be either string or list of web content
+    user_id: str
+    token_count: Optional[int] = None
+    url_tokens: Optional[int] = None
+    data_type: Optional[str] = None
+    root_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+    tag: Optional[str] = None
+
+class KnowledgeBaseItemsResponse(BaseModel):
+    items: List[KnowledgeBaseItem]  # Using a single model that can handle both types
+    total_tokens: int
+
+class KnowledgeBaseHeadersResponse(BaseModel):
+    items: List[Dict[str, Any]]
+    total_tokens: int
+
+class MessageResponse(BaseModel):
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
+class TokenCountResponse(BaseModel):
+    token_count: int
+
+class UserResponse(BaseModel):
+    id: str
+    email: Optional[str] = None
+    # Add other user fields as needed
+
+@router.post("/upload_file", response_model=MessageResponse)
 async def upload_file_handler(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: str = Depends(get_current_user)
 ):
     try:
-
         # Process, store and schedule chunking
         new_item = await file_processing.process_and_store_file(
             file=file,
@@ -62,15 +148,15 @@ async def upload_file_handler(
             background_tasks=background_tasks
         )
 
-        return JSONResponse(status_code=200, content={
-            "message": "File processed and added to knowledge base successfully",
-            "data": new_item
-        })
+        return MessageResponse(
+            message="File processed and added to knowledge base successfully",
+            data=new_item
+        )
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-@router.get("/")
+@router.get("/", response_model=KnowledgeBaseItemsResponse)
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_items(current_user)
@@ -78,15 +164,19 @@ async def get_items_handler(current_user: str = Depends(get_current_user)):
         # Ensure total_tokens is an integer, default to 0 if None
         total_tokens = total_tokens or 0
         
-        return JSONResponse(content={
-            "items": items,
-            "total_tokens": total_tokens
-        })
+        # Validate each item (remove this in production)
+        for i, item in enumerate(items):
+            logger.debug(f"Item {i} structure: {json.dumps(item, default=str)}")
+        
+        return KnowledgeBaseItemsResponse(
+            items=items,
+            total_tokens=total_tokens
+        )
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.post("/")
+@router.post("/", response_model=MessageResponse)
 async def create_item_handler(request: Request, 
                             background_tasks: BackgroundTasks,
                             ):
@@ -118,16 +208,23 @@ async def create_item_handler(request: Request,
             new_item.data[0]['user_id'],
         )
 
-        return JSONResponse(status_code=200, content={"message": "Item created successfully", "data": new_item.data[0]})
+        return MessageResponse(
+            message="Item created successfully", 
+            data=new_item.data[0]
+        )
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON: {str(e)}")
-        return JSONResponse(status_code=400, content={"detail": "Invalid JSON data"})
+        raise HTTPException(status_code=400, detail="Invalid JSON data")
     except Exception as e:
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.delete("/{item_id}")
-async def delete_item_handler(item_id: int, request: Request, current_user: str = Depends(get_current_user)):
+@router.delete("/{item_id}", response_model=MessageResponse)
+async def delete_item_handler(
+    item_id: int, 
+    request: Request, 
+    current_user: str = Depends(get_current_user)
+):
     try:
         supabase = await get_supabase()
 
@@ -147,7 +244,7 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
             if len(result.data) == 0:
                 raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
                 
-            return {"message": "Item deleted successfully"}
+            return MessageResponse(message="Item deleted successfully")
             
         except HTTPException as he:
             # Re-raise HTTP exceptions
@@ -165,22 +262,22 @@ async def delete_item_handler(item_id: int, request: Request, current_user: str 
         logger.error(f"Error parsing delete request: {str(e)}")
         raise HTTPException(status_code=400, detail="Error parsing delete request")
 
-@router.get("/headers")
+@router.get("/headers", response_model=KnowledgeBaseHeadersResponse)
 async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
     try:
         items, total_tokens = await get_kb_headers(current_user)
         # Ensure total_tokens is an integer, default to 0 if None
         total_tokens = total_tokens or 0
         
-        return JSONResponse(content={
-            "items": items,
-            "total_tokens": total_tokens
-        })
+        return KnowledgeBaseHeadersResponse(
+            items=items,
+            total_tokens=total_tokens
+        )
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/scrape_web")
+@router.post("/scrape_web", response_model=MessageResponse)
 async def scrape_url_handler(
     request: Request, 
     background_tasks: BackgroundTasks,
@@ -194,11 +291,14 @@ async def scrape_url_handler(
         # Schedule scraping to run in the background
         background_tasks.add_task(scrape_url, urls, current_user)
         
-        return {"message": "Scraping started in background", "urls": len(urls)}
+        return MessageResponse(
+            message="Scraping started in background", 
+            data={"urls_count": len(urls)}
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing URLs: {str(e)}")
 
-@router.post("/crawl_url")
+@router.post("/crawl_url", response_model=List[str])
 async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
         map_result: List[str] = await map_url(request.url)
@@ -206,18 +306,16 @@ async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depen
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error crawling URL: {str(e)}")
 
-@router.post("/calculate_tokens")
-async def calculate_tokens_handler(request: Request, current_user: str = Depends(get_current_user)):
+@router.post("/calculate_tokens", response_model=TokenCountResponse)
+async def calculate_tokens_handler(request: TokenCalculationRequest, current_user: str = Depends(get_current_user)):
     try:
-        data = await request.json()
-        content = data.get('content', '')
-        token_count = num_tokens_from_string(content, "cl100k_base")
-        return {"token_count": token_count}
+        token_count = num_tokens_from_string(request.content, "cl100k_base")
+        return TokenCountResponse(token_count=token_count)
     except Exception as e:
         logger.error(f"Error calculating tokens: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/users")
+@router.get("/users", response_model=UserResponse)
 async def user_info(current_user: str = Depends(get_current_user)):
     try:
         supabase = await get_supabase()

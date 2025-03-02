@@ -76,7 +76,7 @@ scrape_limiter = RateLimiter(SCRAPE_RATE_LIMIT, "Scrape")
 crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 
 async def count_tokens(text: str, model: str = "gpt-4o") -> int:
-    print("hello, count_tokens")
+    logger.debug("Counting tokens with model gpt-4o")
     encoder = encoding_for_model(model)
     tokens = encoder.encode(text)
     return len(tokens)
@@ -212,7 +212,7 @@ async def process_single_url(
     user_id: str, 
     root_url: str
 ) -> Optional[List[Dict[str, Any]]]:
-    print("\nprocessing single url: ", site)
+    logger.info(f"Processing single URL: {site}")
     
     if "screen" in site:
         logger.info(f"Skipping screen {site}")
@@ -235,7 +235,7 @@ async def process_single_url(
 
             header = f"## Title: {title} ## Description: {description}"
         except KeyError:
-            print(f"KeyError occurred for site {site}: Missing description")
+            logger.warning(f"KeyError occurred for site {site}: Missing description")
             header = "## Title: " + response['metadata']['title']
 
         chunks = await sliding_window_chunking(content)
@@ -274,7 +274,7 @@ async def scrape_url(
     urls: List[str], 
     user_id: Optional[str] = None
 ) -> Dict[str, str]:
-    print(f"\nurls to scrape at {datetime.now()} : ", urls)
+    logger.info(f"URLs to scrape at {datetime.now()}: {urls}")
     parsed_url = urlparse(urls[0])
     root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
@@ -286,7 +286,7 @@ async def scrape_url(
         if isinstance(result, list):
             flat_results.extend(result)
 
-    print("end, scrape_url")
+    logger.info("Scraping completed")
     return {"message": "Scraping completed"}
 
 async def map_url(url: str) -> List[str]:

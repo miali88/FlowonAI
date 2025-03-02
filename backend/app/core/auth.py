@@ -7,12 +7,24 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 import logging
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
+# Set logging level to DEBUG for this module
+logger.setLevel(logging.DEBUG)
 
 security = HTTPBearer()
 
-CLERK_JWT_ISSUER = os.getenv("CLERK_JWT_ISSUER")
-CLERK_PUBLIC_KEY = os.getenv("CLERK_PUBLIC_KEY")
+# Replace direct environment variables with settings
+# CLERK_JWT_ISSUER = os.getenv("CLERK_JWT_ISSUER")
+# CLERK_PUBLIC_KEY = os.getenv("CLERK_PUBLIC_KEY")
+CLERK_JWT_ISSUER = settings.CLERK_JWT_ISSUER
+CLERK_PUBLIC_KEY = settings.CLERK_PUBLIC_KEY
+
+# Debug log values of important variables
+logger.debug(f"CLERK_JWT_ISSUER value: '{CLERK_JWT_ISSUER}'")
+logger.debug(f"Settings ENVIRONMENT: '{settings.ENVIRONMENT}'")
+
 if not CLERK_JWT_ISSUER:
     logger.error("CLERK_JWT_ISSUER environment variable is not set")
 
@@ -32,6 +44,7 @@ async def get_jwks():
             return _jwks_cache
             
         jwks_url = f"{CLERK_JWT_ISSUER}/.well-known/jwks.json"
+        logger.debug(f"Fetching JWKS from URL: {jwks_url}")
         
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url)

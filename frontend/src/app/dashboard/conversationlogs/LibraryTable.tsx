@@ -36,9 +36,8 @@ import {
 } from "@/components/ui/table"
 import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@clerk/nextjs"
 import "@/components/loading.css";
-import { getToken } from "@clerk/nextjs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -80,7 +79,7 @@ function Loader() {
 }
 
 export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
-  const { user } = useUser();
+  const { userId, getToken } = useAuth();
   const [data, setData] = useState<ConversationLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -135,55 +134,6 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       sortingFn: "datetime",
     },
     {
-      accessorKey: "agentName",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Agent Name
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
-      cell: ({ row }) => <div>{(row.getValue("agentName") as string) || "N/A"}</div>,
-    },
-    {
-      accessorKey: "agentPurpose",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Agent Purpose
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
-      cell: ({ row }) => {
-        const agentPurpose = row.getValue("agentPurpose");
-        console.log('Agent Purpose:', agentPurpose);
-        return <div>{agentPurpose as string || "N/A"}</div>;
-      },
-    },
-    {
-      accessorKey: "summary",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            ✨Summary
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
-      cell: ({ row }) => <div>{(row.getValue("summary") as string) || "N/A"}</div>,
-    },
-    {
       accessorKey: "lead",
       header: ({ column }) => {
         return (
@@ -234,33 +184,41 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!user) {
+        if (!userId) {
           setError('User not authenticated');
           setLoading(false);
           return;   
         }
+
+        setLoading(true);
+        setError(null);
 
         const token = await getToken();
         if (!token) {
           throw new Error('Not authenticated');
         }
 
+        console.log('Fetching conversation history...');
         const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
 
+        console.log('Conversation history response:', response.data);
         const conversations = response.data;
-        console.log('Fetched conversations:', conversations);
 
         // Fetch agent data
+        console.log('Fetching agent data...');
         const agentResponse = await axios.get(`${API_BASE_URL}/agents/`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
         const agents = agentResponse.data.data as Agent[];
+        console.log('Agent data response:', agents);
 
         const updatedData = conversations.map((conversation: ConversationLog) => {
           const agent = agents.find((a) => a.id === conversation.agent_id);
@@ -272,18 +230,18 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           };
         });
 
-        console.log('Updated data:', updatedData);
+        console.log('Updated conversation data with agent info:', updatedData);
         setData(updatedData);
         setLoading(false);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to fetch data');
+      } catch (error: any) {
+        console.error('Error fetching data:', error.response || error);
+        setError(error.response?.data?.detail || error.message || 'Failed to fetch conversation history');
         setLoading(false);
       }
-    }
+    };
 
     fetchData();
-  }, [user])
+  }, [userId, getToken]);
 
   // Create a memoized filtered data array
   const filteredData = useMemo(() => {

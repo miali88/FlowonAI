@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { AnimatedMobileNavbar } from "@/components/animated-mobile-navbar";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Link as ScrollLink } from "react-scroll";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);

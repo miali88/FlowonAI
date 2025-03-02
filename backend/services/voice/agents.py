@@ -2,7 +2,8 @@
 import logging
 from fastapi import HTTPException
 from services.db.supabase_services import supabase
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
+from uuid import UUID
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
@@ -178,8 +179,17 @@ You are Flora, the onboarding assistant for Flowon AI. Your primary purpose is t
   - Thank them for their time and express excitement about their journey with Flowon AI
 """
 
-async def create_agent(data: Dict) -> Any:
-    print(f"data: {data}")
+async def create_agent(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Create a new agent in the database.
+    
+    Args:
+        data: Dictionary containing agent data
+        
+    Returns:
+        The newly created agent data from Supabase
+    """
+    logger.info(f"Creating agent with data: {data}")
 
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']
@@ -195,11 +205,35 @@ async def create_agent(data: Dict) -> Any:
     print(f"\n\nnew_agent: {new_agent}")
     return new_agent
 
-async def get_agents(user_id: str) -> Any:
+async def get_agents(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Get all agents for a user.
+    
+    Args:
+        user_id: ID of the user whose agents to fetch
+        
+    Returns:
+        List of agents belonging to the user
+    """
+    logger.info(f"Fetching agents for user_id: {user_id}")
     agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
     return agents
 
-async def delete_agent(agent_id: int, user_id: str) -> Any:
+async def delete_agent(agent_id: Union[int, str, UUID], user_id: str) -> Dict[str, Any]:
+    """
+    Delete an agent from the database.
+    
+    Args:
+        agent_id: ID of the agent to delete
+        user_id: ID of the user who owns the agent
+        
+    Returns:
+        Response from Supabase
+        
+    Raises:
+        HTTPException: If an error occurs during deletion
+    """
+    logger.info(f"Deleting agent with ID: {agent_id} for user: {user_id}")
     try:
         response = supabase.table('agents').delete().eq('id', agent_id).execute()
         return response
@@ -207,7 +241,21 @@ async def delete_agent(agent_id: int, user_id: str) -> Any:
         logger.error(f"Error deleting agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-async def update_agent(agent_id: int, data: dict) -> Any:
+async def update_agent(agent_id: Union[int, str, UUID], data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update an agent in the database.
+    
+    Args:
+        agent_id: ID of the agent to update
+        data: Dictionary containing agent data to update
+        
+    Returns:
+        Updated agent data from Supabase
+        
+    Raises:
+        HTTPException: If an error occurs during update
+    """
+    logger.info(f"Updating agent with ID: {agent_id}, data: {data}")
     try:
         # Create chat_ui field if the incoming data contains UI-related fields
         if any(key in data for key in ['primaryColor', 'secondaryColor', 'logo']):
@@ -215,6 +263,7 @@ async def update_agent(agent_id: int, data: dict) -> Any:
                 'chat_ui': {
                     'primaryColor': data.get('primaryColor'),
                     'secondaryColor': data.get('secondaryColor'),
+                    'logo': data.get('logo'),
                 }
             }
             
@@ -224,19 +273,45 @@ async def update_agent(agent_id: int, data: dict) -> Any:
         logger.error(f"Error updating agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
     
-async def get_agent_content(agent_id: str) -> Any:
+async def get_agent_content(agent_id: Union[str, UUID]) -> Dict[str, Any]:
+    """
+    Get the content of an agent from the database.
+    
+    Args:
+        agent_id: ID of the agent to get
+        
+    Returns:
+        Agent content from Supabase
+        
+    Raises:
+        HTTPException: If an error occurs during fetching
+    """
     logger.info(f"Getting agent content for agent_id: {agent_id}")
     try:
         content = supabase.table('agents').select('*').eq('id', agent_id).execute()
         return content
     except Exception as e:
         logger.error(f"Error getting agent content: {str(e)}")
-        raise
+        raise HTTPException(status_code=500, detail=f"Failed to get agent content: {str(e)}")
 
 async def get_agent_completion(purpose: str, prompt: str) -> str:
+    """
+    Get a completion from an agent.
+    
+    Args:
+        purpose: ID or purpose of the agent
+        prompt: User prompt to complete
+        
+    Returns:
+        Generated completion text
+        
+    Raises:
+        Exception: If an error occurs during generation
+    """
     try:
         # First, get the agent's content/context
         agent_content = await get_agent_content(purpose)
+        logger.info(f"Got agent content for purpose: {purpose}")
         
         # Here you would typically:
         # 1. Format the prompt with the agent's content
@@ -249,6 +324,8 @@ async def get_agent_completion(purpose: str, prompt: str) -> str:
         User Question: {prompt}
 
         Please provide a response based on the context above."""
+        
+        logger.info(f"Formatted prompt for completion: {formatted_prompt[:100]}...")
                 
         # TODO: Replace with your actual LLM service call
         # response = await llm_service.complete(formatted_prompt)

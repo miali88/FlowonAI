@@ -172,10 +172,21 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     async function fetchExistingSetupData() {
       try {
         setIsLoadingData(true);
+        
+        // Get the authentication token
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Authentication required");
+        }
 
         const response = await fetch(
-          `${API_BASE_URL}/guided_setup/setup_data?user_id=${userId || ""}`,
-          {}
+          `${API_BASE_URL}/guided_setup/setup_data`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
 
         if (!response.ok) {
@@ -214,7 +225,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
 
     fetchExistingSetupData();
-  }, [userId, reset]);
+  }, [userId, reset, getToken]);
 
   const addService = () => {
     if (newService.trim()) {
@@ -239,15 +250,30 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     try {
       setSuccessMessage(null);
 
-      // Send data to backend using API_BASE_URL
+      // Get the authentication token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      const formData = {
+        business_name: data.businessInformation.businessName,
+        website_url: data.trainingSources.businessWebsite,
+        business_purpose: data.businessInformation.businessOverview,
+        industry: data.businessInformation.coreServices.join(", "),
+        preferred_voice: data.businessInformation.businessName,
+        // ... rest of form data ...
+      };
+
       const response = await fetch(
-        `${API_BASE_URL}/guided_setup/quick_setup?user_id=${userId || ""}`,
+        `${API_BASE_URL}/guided_setup/quick_setup`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(formData),
         }
       );
 
@@ -429,13 +455,20 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       // Get the business website URL
       const websiteUrl = getValues("trainingSources.businessWebsite");
 
+      // Get the authentication token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
       // Send request to retrain agent
       const response = await fetch(
-        `${API_BASE_URL}/guided_setup/retrain_agent?user_id=${userId || ""}`,
+        `${API_BASE_URL}/guided_setup/retrain_agent`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify({
             url: websiteUrl,

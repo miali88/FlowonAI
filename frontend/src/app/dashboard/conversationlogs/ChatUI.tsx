@@ -3,6 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
 import { ConversationLog } from './LibraryTable';
 import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ChatMessage {
   user_message?: string;
@@ -23,7 +24,7 @@ const generateRoomSummary = (fullRoomName: string): string => {
     return match[1] === 'visitor' ? 'Visitor Chat' : 'Agent Chat';
   }
   
-  return 'Visitor Chat'; // Default fallback
+  return 'Call'; // Default fallback
 };
 
 const renderChatBubble = (message: ChatMessage, index: number) => {
@@ -60,8 +61,17 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedConversation }) => {
           <h3 className="text-xl font-semibold mb-4">
             {generateRoomSummary(selectedConversation.room_name)}
           </h3>
+          
+          {/* AI Summary Card */}
+          {selectedConversation.summary && (
+            <Card className="mb-4">
+              <CardContent>
+                <p>{selectedConversation.summary}</p>
+              </CardContent>
+            </Card>
+          )}
+          
           <div className="mb-2">
-            <p><strong>Job ID:</strong> {selectedConversation.job_id}</p>
             <p><strong>Created At:</strong> {new Date(selectedConversation.created_at).toLocaleString()}</p>
           </div>
           <ScrollArea className="flex-grow space-y-4">

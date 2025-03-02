@@ -66,7 +66,7 @@ async def question_and_answer(
 
         # Ensure data_source is a dictionary before passing to similarity_search
         if isinstance(data_source, str):
-            if data_source == "all":
+            if data_source.lower() == "all":
                 data_source = {"web": ["all"], "text_files": ["all"]}
             else:
                 data_source = json.loads(data_source)
