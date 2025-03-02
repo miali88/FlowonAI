@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { Youtube, Twitter } from "lucide-react";
+import { Linkedin } from "lucide-react";
 import { useState, useEffect } from 'react';
 import Image from "next/image";
 
@@ -87,13 +87,9 @@ export function Footer() {
             </div>
           )}
           <div className="flex space-x-5 justify-center">
-            <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
-              <Youtube size={15} />
-              <span className="sr-only">Youtube</span>
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
-              <Twitter size={15} />
-              <span className="sr-only">Twitter</span>
+            <a href="https://www.linkedin.com/company/104203824/admin/dashboard/" className="text-muted-foreground hover:text-muted-foreground/80">
+              <Linkedin size={15} />
+              <span className="sr-only">LinkedIn</span>
             </a>
           </div>
           <div className="flex flex-row justify-center text-sm text-muted-foreground gap-1">
