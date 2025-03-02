@@ -41,7 +41,6 @@ async def new_agent_handler(request: Request, current_user: str = Depends(get_cu
     try:
         data = await request.json()
         data['userId'] = current_user
-        logger.debug(f"Received data with user_id: {data}")
 
         new_agent = await create_agent(data)
         return new_agent
@@ -89,7 +88,7 @@ async def update_agent_handler(agent_id: str, request: Request):
     """
     try:
         data = await request.json()
-        logger.info(f"Updating agent {agent_id} with data: {data}")
+        logger.info(f"Updating agent {agent_id}")
         updated_agent = await update_agent(agent_id, data)
         return {"data": updated_agent}
     except Exception as e:

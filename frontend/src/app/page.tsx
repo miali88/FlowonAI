@@ -7,11 +7,6 @@ const DynamicVoiceHero = dynamic(() => import('@/components/VoiceHero').then(mod
   ssr: true
 });
 
-const DynamicValueProposition = dynamic(() => import('@/components/ValueProposition').then(mod => mod.ValueProposition), {
-  loading: () => <div className="h-[600px]" />,
-  ssr: true
-});
-
 const DynamicHowItWorks = dynamic(() => import('@/components/HowItWorks').then(mod => mod.HowItWorks), {
   loading: () => <div className="h-[600px]" />,
   ssr: true
@@ -68,7 +63,6 @@ export default function HomePage() {
         <DynamicPainPointsSolutions />
         <DynamicGuidedSetupSection />
         <DynamicCarouselTestimonials />
-        <DynamicValueProposition />
         <DynamicFeaturesAndBenefits />
         <DynamicHowItWorks />
         <DynamicVoiceSocialProof />

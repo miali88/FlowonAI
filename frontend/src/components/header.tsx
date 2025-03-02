@@ -57,7 +57,7 @@ export function Header() {
           </div> */}
 
           {/* Right side - Auth buttons */}
-          <div className="ml-auto hidden md:flex items-center gap-4">
+          {/* <div className="ml-auto hidden md:flex items-center gap-4">
             <Link 
               href="/dashboard" 
               className="text-sm font-medium hover:text-gray-900"
@@ -67,7 +67,7 @@ export function Header() {
             <Button asChild variant="secondary" className="text-sm">
               <Link href="/dashboard">Sign up</Link>
             </Button>
-          </div>
+          </div> */}
 
           {/* Mobile Navigation */}
           <AnimatedMobileNavbar>
@@ -79,7 +79,7 @@ export function Header() {
               className="fixed left-0 top-[3.5rem] z-50 h-[calc(100vh-3.5rem)] w-full overflow-auto bg-background backdrop-blur-[12px]"
             >
               <ul className="flex flex-col md:flex-row md:items-center">
-                <motion.li
+                {/* <motion.li
                   exit={{ y: "-20px", opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   initial={{ y: "-20px", opacity: 0 }}
@@ -106,7 +106,7 @@ export function Header() {
                   >
                     Sign up
                   </Link>
-                </motion.li>
+                </motion.li> */}
               </ul>
             </motion.nav>
           </AnimatedMobileNavbar>

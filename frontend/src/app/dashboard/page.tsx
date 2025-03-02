@@ -9,7 +9,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (pathname === "/dashboard") {
-      router.push("/dashboard/agenthub");
+      router.push("/dashboard/guided-setup");
     }
   }, [pathname, router]);
 

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { CardSpotlight } from "@/components/ui/card-spotlight";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarIcon } from "lucide-react";
 
 export function VoiceSocialProof() {
@@ -27,7 +26,7 @@ export function VoiceSocialProof() {
               </div>
               
               <blockquote className="text-lg md:text-xl italic text-center">
-                "I was missing 40% of my potential customers by not answering after-hours calls. Since implementing this AI assistant, we've increased monthly bookings by 32% and added approximately $8,400 in additional revenue."
+                "I was missing 40% of my potential customers by not answering after-hours calls. Since implementing Flowon, we've increased monthly bookings by 28% and added approximately $6,400 in additional revenue."
               </blockquote>
               
               <div className="text-center">

@@ -179,7 +179,7 @@ async def livekit_room_webhook(request: Request) -> Dict[str, str]:
 @router.post("/create_embeddings")
 async def create_embeddings(request: Request) -> Dict[str, str]:
     data = await request.json()
-    logger.info(f"🔍 Received embedding data: {data}")
+    # logger.info(f"🔍 Received embedding data: {data}")
     # This endpoint appears to be a placeholder
     return {"status": "success", "message": "Embedding request received"}
 
@@ -404,7 +404,7 @@ async def auth_diagnostics():
             except Exception as e:
                 diagnostics["jwks_fetch_error"] = str(e)
         
-        logger.info(f"Auth diagnostics: {diagnostics}")
+        # logger.info(f"Auth diagnostics: {diagnostics}")
         return JSONResponse(content=diagnostics)
     except Exception as e:
         logger.error(f"❌ Error in auth diagnostics: {str(e)}")

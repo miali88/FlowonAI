@@ -189,8 +189,6 @@ async def create_agent(data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         The newly created agent data from Supabase
     """
-    logger.info(f"Creating agent with data: {data}")
-
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']
         del data['tag']
@@ -202,7 +200,6 @@ async def create_agent(data: Dict[str, Any]) -> Dict[str, Any]:
         data['agentPurpose'] = data.pop('agentType')
 
     new_agent = supabase.table('agents').insert(data).execute()
-    print(f"\n\nnew_agent: {new_agent}")
     return new_agent
 
 async def get_agents(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
