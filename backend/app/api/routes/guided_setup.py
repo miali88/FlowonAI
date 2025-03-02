@@ -5,6 +5,8 @@ import logging
 
 from services.supabase.client import get_supabase
 from app.core.auth import get_current_user_mock as get_current_user
+from services.knowledge_base.web_scrape import scrape_url, scrape_url_simple  # Import the scrape function
+from services.llm import generate_business_overview  # Import the new LLM function
 
 router = APIRouter()
 
@@ -323,14 +325,13 @@ async def retrain_agent(request: RetrainAgentRequest, current_user: str = Depend
         if not existing_setup:
             logging.warning(f"No existing setup data found for user {current_user}")
         
-        # Generate business overview from the URL
-        # TODO: Implement the actual web crawling and scraping logic
-        # TODO: Then summarise by invoking a function which calls a langchain LLM.
+        # Use the simplified scraping function that doesn't save to database
+        scraped_content = await scrape_url_simple(request.url)
         
-        # This would be replaced with actual web scraping and LLM summarization
-        business_overview = f"This is a business overview generated from {request.url}. In production, this would be created by crawling the website, extracting content, and using an LLM to generate a comprehensive business summary."
+        # Generate business overview using LLM
+        business_overview = await generate_business_overview(scraped_content)
         
-        logging.info(f"Generated business overview for user {current_user}")
+        logging.info(f"Generated business overview for user {current_user}: {business_overview}")
         
         # Use provided setup data or create minimal setup data
         setup_data = {}
@@ -386,21 +387,10 @@ async def retrain_agent(request: RetrainAgentRequest, current_user: str = Depend
             updated_data = await save_guided_setup(current_user, quick_setup_data)
             logging.info(f"Created new guided setup data for user {current_user}")
         
-        # Get the freshly updated setup data
-        updated_setup = await get_guided_setup(current_user)
-        
-        # Convert back to frontend format for the response
-        formatted_data = {
-            "trainingSources": updated_setup.get("training_sources", {}),
-            "businessInformation": updated_setup.get("business_information", {}),
-            "messageTaking": updated_setup.get("message_taking", {}),
-            "callNotifications": updated_setup.get("call_notifications", {})
-        }
-        
         return {
             "success": True,
             "business_overview": business_overview,
-            "setup_data": formatted_data,
+            "setup_data": setup_data,
             "error": None
         }
     except Exception as e:

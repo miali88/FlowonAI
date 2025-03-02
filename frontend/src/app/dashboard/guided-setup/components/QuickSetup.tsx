@@ -100,7 +100,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [newService, setNewService] = useState("");
   const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
   const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -195,7 +195,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           // Use reset to update all form values at once
           reset({
             trainingSources: data.setupData.trainingSources,
-            businessInformation: data.setupData.businessInformation,
+            businessInformation: {
+              ...data.setupData.businessInformation,
+              businessOverview: data.setupData.businessInformation.businessOverview || "",
+            },
             messageTaking: data.setupData.messageTaking,
             callNotifications: data.setupData.callNotifications
           });
@@ -421,6 +424,74 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     }
   };
 
+  const fetchLLMBusinessInformation = async () => {
+    try {
+      setIsLoadingData(true);
+      setLoadError(null);
+
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Get the website URL
+      const websiteUrl = getValues("trainingSources.businessWebsite");
+      
+      // Validate URL before sending
+      if (!websiteUrl || !websiteUrl.trim()) {
+        setLoadError("Please enter a valid website URL first.");
+        setIsLoadingData(false);
+        return;
+      }
+      
+      if (!userId) {
+        throw new Error("User ID not available");
+      }
+
+      // Send only the required fields in the correct format
+      console.log("Sending request with:", JSON.stringify({ url: websiteUrl, user_id: userId }));
+      
+      // Add user_id as a query parameter
+      const response = await fetch(`${API_BASE_URL}/guided_setup/retrain_agent?user_id=${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          url: websiteUrl
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching LLM business information:", errorText);
+        throw new Error(`Failed to fetch LLM business information: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (data.success && data.business_overview) {
+        console.log("Fetched business overview:", data.business_overview);
+
+        // Update form with LLM-generated business overview
+        setValue("businessInformation.businessOverview", data.business_overview);
+        
+        // Show success message
+        setSuccessMessage("Business overview updated successfully!");
+      } else {
+        setLoadError("No business overview was generated. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error fetching LLM business information:", error);
+      setLoadError(error instanceof Error ? error.message : "Failed to fetch LLM business information.");
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
   // Render a loading indicator if data is being loaded
   if (isLoadingData) {
     return (
@@ -618,7 +689,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                     )}
                   />
                 </div>
-                <Button variant="outline" className="mt-6">
+                <Button variant="outline" className="mt-6" onClick={fetchLLMBusinessInformation}>
                   Edit
                 </Button>
               </div>
