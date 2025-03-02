@@ -16,42 +16,51 @@ interface PricingProps {
 
 // Extract price configuration
 const PRICING_CONFIG = {
-  taster: {
-    name: 'Taster',
-    description: 'A basic plan for startups and individual users',
-    price: '0',
+  professional: {
+    name: 'Professional',
+    description: 'Perfect for small businesses starting with automation',
+    monthlyPrice: '49',
+    yearlyPrice: '490',
     features: [
-      'AI-powered analytics',
-      'Basic support',
-      '50 interactions',
-      'All agent features'
+      'Up to 250 minutes',
+      'Then $0.25 per minute',
+      'Message taking with custom questions',
+      'Smart spam detection',
+      'Bilingual agent - English + Spanish'
     ]
   },
-  startup: {
-    name: 'Startup',
-    description: 'A basic plan for startups and individual users',
-    monthlyPrice: '19',
-    yearlyPrice: '190',
+  scale: {
+    name: 'Scale',
+    description: 'For growing businesses with moderate call volume',
+    monthlyPrice: '99',
+    yearlyPrice: '990',
     features: [
-      '1,000 interactions',
-      'All integrations',
-      'Consultation to tune AI',
-      'Unlimited knowledge base size',
-      'Twilio integration',
+      'Up to 500 minutes',
+      'Then $0.25 per minute',
+      'Message taking with custom questions',
+      'Smart spam detection',
+      'Bilingual agent - English + Spanish',
+      'Appointment Links',
+      'Call Transfers'
     ],
     popular: true
   },
-  enterprise: {
-    name: 'Enterprise',
+  growth: {
+    name: 'Growth',
     description: 'The ultimate plan with all features for industry leaders',
+    monthlyPrice: '199',
+    yearlyPrice: '1990',
     features: [
-      'Unlimited interactions',
-      'Priority support',
-      'Custom AI model training',
-      'Advanced analytics',
-      'API access',
-      'Custom integrations',
-      'Dedicated account manager'
+      'Up to 1000 minutes',
+      'Then $0.25 per minute',
+      'Message taking with custom questions',
+      'Smart spam detection',
+      'Bilingual agent - English + Spanish',
+      'Appointment Links',
+      'Call Transfers',
+      'Live Transfers (Coming Soon)',
+      'Training Files',
+      'Custom Agent Training'
     ]
   }
 };
@@ -91,7 +100,7 @@ export function Pricing({ currentPlan }: PricingProps) {
 
   const getButtonText = useCallback((planName: string) => {
     if (currentPlan?.toLowerCase() === planName.toLowerCase()) return "Manage Plan";
-    return planName.toLowerCase() === "enterprise" ? "Partner" : "Subscribe";
+    return planName.toLowerCase() === "growth" ? "Subscribe" : "Subscribe";
   }, [currentPlan]);
 
   return (
@@ -122,9 +131,9 @@ export function Pricing({ currentPlan }: PricingProps) {
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Taster</h2>
+                <h2 className="text-base font-semibold leading-7">Professional</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  A basic plan for startups and individual users
+                  Perfect for small businesses starting with automation
                 </p>
               </div>
               <motion.div
@@ -134,17 +143,20 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">£0</span>
-                <span className="text-xs mb-1">/month</span>
+                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.professional.yearlyPrice : PRICING_CONFIG.professional.monthlyPrice}</span>
+                <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
-              <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>{getButtonText("taster")}</span>
+              <Button 
+                className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
+                onClick={() => handlePlanClick("professional")}
+              >
+                <span>{getButtonText("professional")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.taster.features} />
+              <FeatureList features={PRICING_CONFIG.professional.features} />
             </CardContent>
           </Card>
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border bg-primary/5 border-primary">
@@ -153,9 +165,9 @@ export function Pricing({ currentPlan }: PricingProps) {
             </div>
             <CardContent className="flex flex-col gap-8 p-4 pt-12">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Startup</h2>
+                <h2 className="text-base font-semibold leading-7">Scale</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  A basic plan for startups and indsividual users
+                  For growing businesses with moderate call volume
                 </p>
               </div>
               <motion.div
@@ -165,26 +177,26 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">£{isAnnual ? '1,690' : '169'}</span>
+                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.scale.yearlyPrice : PRICING_CONFIG.scale.monthlyPrice}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
               <Button 
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
-                onClick={() => handlePlanClick("startup")}
+                onClick={() => handlePlanClick("scale")}
               >
-                <span>{getButtonText("startup")}</span>
+                <span>{getButtonText("scale")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                   Subscribe
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.startup.features} />
+              <FeatureList features={PRICING_CONFIG.scale.features} />
             </CardContent>
           </Card>
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Enterprise</h2>
+                <h2 className="text-base font-semibold leading-7">Growth</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
                   The ultimate plan with all features for industry leaders
                 </p>
@@ -196,17 +208,20 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.25, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">Contact Us</span>
-                <span className="text-xs mb-1">for pricing</span>
+                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.growth.yearlyPrice : PRICING_CONFIG.growth.monthlyPrice}</span>
+                <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
-              <Button className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2">
-                <span>{getButtonText("enterprise")}</span>
+              <Button 
+                className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
+                onClick={() => handlePlanClick("growth")}
+              >
+                <span>{getButtonText("growth")}</span>
                 <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Partner
+                  Subscribe
                 </span>
               </Button>
               <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.enterprise.features} />
+              <FeatureList features={PRICING_CONFIG.growth.features} />
             </CardContent>
           </Card>
         </div>

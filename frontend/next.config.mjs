@@ -65,8 +65,13 @@ const nextConfig = {
         hostname: "assets.aceternity.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "framerusercontent.com",
+        pathname: "/**",
+      },
     ],
-    domains: ["assets.aceternity.com"],
+    domains: ["assets.aceternity.com", "framerusercontent.com"],
   },
   // Disable TypeScript and ESLint during the build process
   typescript: {

@@ -76,17 +76,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const sidebarItems = [
     { icon: Compass, label: "Guided-Setup", href: "/dashboard/guided-setup" },
     {
-      icon: BookOpen,
-      label: "Knowledge Base",
-      href: "/dashboard/knowledgebase",
-    },
-    {
       icon: MessageSquare,
       label: "Conversation Logs",
       href: "/dashboard/conversationlogs",
     },
     { icon: Plug, label: "Integrations", href: "/dashboard/integrations" },
     { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+    {
+      icon: BookOpen,
+      label: "Knowledge Base",
+      href: "/dashboard/knowledgebase",
+    },
     {
       icon: Calendar,
       label: "Contact Founders",

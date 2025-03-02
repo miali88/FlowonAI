@@ -71,6 +71,7 @@ const config: Config = {
         shine: "shine var(--duration) infinite linear",
         marquee: "marquee var(--duration) infinite linear",
         "marquee-vertical": "marquee-vertical var(--duration) linear infinite",
+        "marquee-horizontal": "marquee-horizontal 30s linear infinite",
         "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
         orbit: "orbit calc(var(--duration)*1s) linear infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -99,6 +100,14 @@ const config: Config = {
           },
           to: {
             transform: "translateX(calc(-100% - var(--gap)))",
+          },
+        },
+        "marquee-horizontal": {
+          "0%": {
+            transform: "translateX(0)",
+          },
+          "100%": {
+            transform: "translateX(-50%)",
           },
         },
         "marquee-vertical": {

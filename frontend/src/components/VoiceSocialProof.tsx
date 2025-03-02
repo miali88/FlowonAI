@@ -38,39 +38,6 @@ export function VoiceSocialProof() {
           </CardSpotlight>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-            <div className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">92%</div>
-            <p className="text-muted-foreground">of callers complete the entire conversation with our AI</p>
-          </div>
-          
-          <div className="bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-            <div className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">4.8/5</div>
-            <p className="text-muted-foreground">average caller satisfaction rating</p>
-          </div>
-          
-          <div className="bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-            <div className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">$4,200</div>
-            <p className="text-muted-foreground">average additional monthly revenue reported by users</p>
-          </div>
-        </div>
-
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            { name: "John's Auto Repair", industry: "Automotive" },
-            { name: "Sunset Dental", industry: "Healthcare" },
-            { name: "Bright Home Realty", industry: "Real Estate" },
-            { name: "Metro IT Solutions", industry: "Technology" }
-          ].map((business, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <div className="w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                <span className="text-xl font-bold">{business.name.charAt(0)}</span>
-              </div>
-              <h3 className="font-medium">{business.name}</h3>
-              <p className="text-sm text-muted-foreground">{business.industry}</p>
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );

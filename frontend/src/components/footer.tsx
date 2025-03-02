@@ -97,7 +97,7 @@ export function Footer() {
             </a>
           </div>
           <div className="flex flex-row justify-center text-sm text-muted-foreground gap-1">
-            <span>© 2024 </span>
+            <span>© 2025 </span>
             <Link href="/" className="cursor-pointer">
               Flowon AI
             </Link>

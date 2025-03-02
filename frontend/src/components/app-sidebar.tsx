@@ -40,17 +40,17 @@ export function AppSidebar({
   const items = [
     { title: "Guided Setup", icon: Compass, href: "/dashboard/guided-setup" },
     {
-      title: "Knowledge Base",
-      icon: BookOpen,
-      href: "/dashboard/knowledgebase",
-    },
-    {
       title: "Conversation Logs",
       icon: MessageSquare,
       href: "/dashboard/conversationlogs",
     },
+    { title: "Insights", icon: BarChart3, href: "/dashboard/analytics" },
     { title: "Integrations", icon: Plug, href: "/dashboard/integrations" },
-    { title: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
+    {
+      title: "Knowledge Base",
+      icon: BookOpen,
+      href: "/dashboard/knowledgebase",
+    },
     {
       title: "Contact Founders",
       icon: Calendar,
