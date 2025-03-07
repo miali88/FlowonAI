@@ -1,18 +1,19 @@
 import localFont from "next/font/local";
-import "./globals.css";
-import { Metadata } from 'next';
+import "../globals.css";
+import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { Providers } from './providers';
+import { Providers } from '../providers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/get-messages';
+import { notFound } from 'next/navigation';
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+  src: "../fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
+  src: "../fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
 });
@@ -23,6 +24,9 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+};
+
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#000000' },
@@ -47,15 +51,27 @@ const preventFOUCScript = `
   })();
 `;
 
-export default async function RootLayout({
+export async function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'es' }];
+}
+
+export default async function LocaleLayout({
   children,
-  params = { locale: 'en' }, // Default locale to English
+  params
 }: {
   children: React.ReactNode;
-  params?: { locale?: string };
+  params: { locale: string };
 }) {
-  // Get locale from params or default to 'en'
-  const locale = params.locale || 'en';
+  // Validate that the locale is supported
+  const locale = params.locale;
+  
+  // List of supported locales
+  const locales = ['en', 'es'];
+  
+  // If the locale is not supported, return 404
+  if (!locales.includes(locale)) {
+    notFound();
+  }
   
   // Get messages for the current locale
   const messages = await getMessages(locale);
@@ -109,4 +125,4 @@ export default async function RootLayout({
       </body>
     </html>
   );
-}
+} 

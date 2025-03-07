@@ -1,21 +1,20 @@
-import sentry_sdk
 import os 
-from dotenv import load_dotenv
 import subprocess
 import psutil
 import time
 import platform
 import sys
 import logging
+from dotenv import load_dotenv
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-
-from app.api.main import api_router
-from services.supabase.client import SupabaseConnection
+import sentry_sdk
 
 from app.core.config import settings
+from app.api.main import api_router
+from services.supabase.client import SupabaseConnection
 
 load_dotenv()
 

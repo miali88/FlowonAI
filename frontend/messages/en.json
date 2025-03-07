@@ -1,0 +1,26 @@
+{
+  "home": {
+    "title": "AI phone answering for your business",
+    "description": "Flowon answers calls when you cannot. Ready to qualify new leads, provide answers, take messages, set appointments, and notifies you all the while.",
+    "cta": "Sign up today for 20 minutes free",
+    "noCreditCard": "No credit card required",
+    "neverMissCall": "Never miss another call or opportunity",
+    "neverMissCallDesc": "Flowon is there anytime you're not available. You'll never miss another opportunity just because you can't answer the phone.",
+    "smartConversations": "Smart, natural conversations",
+    "smartConversationsDesc": "Our AI assistant engages with callers naturally, gathering information and handling basic tasks just like a human receptionist would."
+  },
+  "header": {
+    "logoAlt": "Flowon AI Logo",
+    "siteTitle": "Flowon AI"
+  },
+  "footer": {
+    "logoAlt": "Flowon AI Logo",
+    "legalTitle": "Legal",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "resourcesTitle": "Resources",
+    "callForwarding": "Call Forwarding",
+    "connectingFrom": "Connecting from",
+    "allRightsReserved": "All Rights Reserved"
+  }
+} 

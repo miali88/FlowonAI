@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Youtube, Twitter } from "lucide-react";
 import { useState, useEffect } from 'react';
 import Image from "next/image";
+import { useTranslations } from 'next-intl';
 
 interface GeoData {
   country: string;
@@ -12,6 +13,7 @@ interface GeoData {
 
 export function Footer() {
   const [countryCode, setCountryCode] = useState<string>('');
+  const t = useTranslations('footer');
 
   useEffect(() => {
     const fetchGeoData = async () => {
@@ -35,7 +37,7 @@ export function Footer() {
           <div className="flex flex-col gap-4 items-center md:items-start">
             <Link href="/" className="flex gap-2">
               <Image 
-                alt="Flowon AI Logo" 
+                alt={t('logoAlt')} 
                 src="/flowon_circle.png" 
                 width={32}
                 height={32}
@@ -45,14 +47,14 @@ export function Footer() {
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-6 sm:grid-cols-3">
             <div>
-              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Legal</h2>
+              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">{t('legalTitle')}</h2>
               <ul className="gap-2 grid list-none">
                 <li>
                   <Link
                     href="/terms"
                     className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
                   >
-                    Terms
+                    {t('terms')}
                   </Link>
                 </li>
                 <li>
@@ -60,20 +62,20 @@ export function Footer() {
                     href="/privacy"
                     className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
                   >
-                    Privacy
+                    {t('privacy')}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">Resources</h2>
+              <h2 className="mb-6 text-sm tracking-tighter font-medium uppercase">{t('resourcesTitle')}</h2>
               <ul className="gap-2 grid list-none">
                 <li>
                   <Link
                     href="/guide/call_forwarding"
                     className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
                   >
-                    Call Forwarding
+                    {t('callForwarding')}
                   </Link>
                 </li>
               </ul>
@@ -83,25 +85,19 @@ export function Footer() {
         <div className="flex flex-col items-center justify-center gap-4 border-t border-neutral-700/20 py-4">
           {countryCode && (
             <div className="text-sm text-muted-foreground">
-              Connecting from: {countryCode}
+              {t('connectingFrom')}: {countryCode}
             </div>
           )}
           <div className="flex space-x-5 justify-center">
             <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
-              <Youtube size={15} />
-              <span className="sr-only">Youtube</span>
+              <Youtube className="w-4 h-4" />
             </a>
             <a href="#" className="text-muted-foreground hover:text-muted-foreground/80">
-              <Twitter size={15} />
-              <span className="sr-only">Twitter</span>
+              <Twitter className="w-4 h-4" />
             </a>
           </div>
-          <div className="flex flex-row justify-center text-sm text-muted-foreground gap-1">
-            <span>© 2025 </span>
-            <Link href="/" className="cursor-pointer">
-              Flowon AI
-            </Link>
-            <span>, All Rights Reserved.</span>
+          <div className="text-center text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} Flowon AI. {t('allRightsReserved')}</p>
           </div>
         </div>
       </div>

@@ -1,0 +1,26 @@
+{
+  "home": {
+    "title": "Respuesta telefónica con IA para tu negocio",
+    "description": "Flowon responde llamadas cuando tú no puedes. Listo para calificar nuevos leads, proporcionar respuestas, tomar mensajes, programar citas y notificarte todo el tiempo.",
+    "cta": "Regístrate hoy para 20 minutos gratis",
+    "noCreditCard": "No se requiere tarjeta de crédito",
+    "neverMissCall": "Nunca pierdas otra llamada u oportunidad",
+    "neverMissCallDesc": "Flowon está ahí cuando no estás disponible. Nunca perderás otra oportunidad solo porque no puedes contestar el teléfono.",
+    "smartConversations": "Conversaciones inteligentes y naturales",
+    "smartConversationsDesc": "Nuestro asistente de IA interactúa con las personas que llaman de forma natural, recopilando información y manejando tareas básicas como lo haría una recepcionista humana."
+  },
+  "header": {
+    "logoAlt": "Logo de Flowon AI",
+    "siteTitle": "Flowon AI"
+  },
+  "footer": {
+    "logoAlt": "Logo de Flowon AI",
+    "legalTitle": "Legal",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "resourcesTitle": "Recursos",
+    "callForwarding": "Desvío de llamadas",
+    "connectingFrom": "Conectando desde",
+    "allRightsReserved": "Todos los derechos reservados"
+  }
+} 

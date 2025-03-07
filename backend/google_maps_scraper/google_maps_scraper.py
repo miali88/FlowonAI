@@ -28,12 +28,12 @@ logging.basicConfig(
 logger = logging.getLogger('google_maps_scraper')
 
 # Constants
-GOOGLE_MAPS_URL = "https://www.google.com/maps/search/Roofers/@31.863223,-106.5993968,33655m/data=!3m1!1e3?entry=ttu&g_ep=EgoyMDI1MDIyMy4xIKXMDSoASAFQAw%3D%3D"
+GOOGLE_MAPS_URL = "https://www.google.com/maps/place/American+Precision+Routing/@32.8175431,-96.896077,11z/data=!4m10!1m2!2m1!1scarpenter!3m6!1s0x864e958aef79f383:0x3ebe6944c79e053f!8m2!3d32.6030431!4d-96.7513228!15sCgljYXJwZW50ZXJaCyIJY2FycGVudGVykgENY2FiaW5ldF9tYWtlcpoBJENoZERTVWhOTUc5blMwVkpRMEZuU1VNMU5uSlBZMmRSUlJBQuABAPoBBAgAEB4!16s%2Fg%2F1tgtfxkb?entry=ttu&g_ep=EgoyMDI1MDIyNi4xIKXMDSoASAFQAw%3D%3D"
 OUTPUT_DIR = Path("../data/roofers")
 OUTPUT_FILE = OUTPUT_DIR / f"roofers_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 OUTPUT_CSV_FILE = OUTPUT_DIR / f"roofers_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 WAIT_BETWEEN_ACTIONS = 1  # seconds
-MAX_BUSINESSES = 50  # maximum number of businesses to scrape
+MAX_BUSINESSES = 100  # maximum number of businesses to scrape
 
 
 async def setup_browser():
@@ -58,7 +58,7 @@ async def navigate_to_maps(page: Page) -> None:
     await asyncio.sleep(WAIT_BETWEEN_ACTIONS)
 
 
-async def scroll_results(page: Page, max_scrolls: int = 10) -> None:
+async def scroll_results(page: Page, max_scrolls: int = 60) -> None:
     """Scroll through the results to load more businesses."""
     results_container = await page.query_selector('div[role="feed"]')
     if not results_container:
