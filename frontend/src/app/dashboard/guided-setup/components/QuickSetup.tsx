@@ -100,6 +100,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
   const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
   const { getToken, userId } = useAuth();
+  const { getToken, userId } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -209,7 +210,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           // Use reset to update all form values at once
           reset({
             trainingSources: data.setupData.trainingSources,
-            businessInformation: data.setupData.businessInformation,
+            businessInformation: {
+              ...data.setupData.businessInformation,
+              businessOverview: data.setupData.businessInformation.businessOverview || "",
+            },
             messageTaking: data.setupData.messageTaking,
             callNotifications: data.setupData.callNotifications,
           });
@@ -713,7 +717,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                     )}
                   />
                 </div>
-                <Button variant="outline" className="mt-6">
+                <Button variant="outline" className="mt-6" onClick={fetchLLMBusinessInformation}>
                   Edit
                 </Button>
               </div>

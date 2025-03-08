@@ -11,14 +11,27 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-async def get_current_user(x_user_id: str = Header(...)) -> str:
+async def get_current_user(
+    user_id: Optional[str] = None,  # Accept as query parameter
+    x_user_id: Optional[str] = Header(None)  # Accept as header
+) -> str:
+    """
+    Get the current user ID from either query parameter or header.
+    
+    Returns:
+        The user ID
+    """
     logger.info("Authenticating user")
-    logger.debug(f"x_user_id header: {x_user_id}")
-
-    # Here you would typically validate the token with Clerk
-    # For now, we'll just return the user ID from the header
-    logger.info(f"User authenticated: {x_user_id}")
-    return x_user_id 
+    
+    # Use the user_id from query parameter or header
+    current_user = user_id or x_user_id
+    
+    if not current_user:
+        logger.error("No user ID provided")
+        raise HTTPException(status_code=401, detail="User ID is required")
+    
+    logger.info(f"User authenticated: {current_user}")
+    return current_user
 
 
 
