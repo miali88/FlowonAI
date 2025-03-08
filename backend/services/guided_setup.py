@@ -175,12 +175,18 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
         guided_setup_data = await get_guided_setup(user_id)
         phone_number = guided_setup_data.get("phone_number", "") if guided_setup_data else ""
         agent_id = guided_setup_data.get("agent_id") if guided_setup_data else None
+        guided_setup_id = guided_setup_data.get("id") if guided_setup_data else None
         
         logging.info(f"Retrieved phone number for agent assignment: {phone_number}")
         if agent_id:
             logging.info(f"Found existing agent_id in guided_setup: {agent_id}")
         else:
             logging.info(f"No agent_id found in guided_setup for user {user_id}")
+            
+        if guided_setup_id:
+            logging.info(f"Found guided_setup_id: {guided_setup_id}")
+        else:
+            logging.warning(f"No guided_setup_id found for user {user_id}")
         
         # Extract business information for agent creation/update
         business_info = setup_data.get("businessInformation", {})
@@ -216,6 +222,11 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             "notify": True,  # Enable notifications
         }
         
+        # Add guided_setup_id reference to agent data if available
+        if guided_setup_id:
+            agent_data["guided_setup_id"] = guided_setup_id
+            logging.info(f"Added guided_setup_id {guided_setup_id} to agent data")
+        
         # Add specific questions as form fields if available
         specific_questions = setup_data.get("messageTaking", {}).get("specificQuestions", [])
         if specific_questions:
@@ -239,6 +250,11 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
         # First check if we have an agent_id in the guided_setup table
         if agent_id:
             logging.info(f"Updating existing agent with ID from guided_setup: {agent_id}")
+            
+            # Make sure guided_setup_id is also updated for this existing agent
+            if guided_setup_id:
+                logging.info(f"Adding guided_setup_id {guided_setup_id} to existing agent {agent_id}")
+            
             result = await update_agent(agent_id, agent_data)
             logging.info(f"Successfully updated agent for user {user_id}")
             return True, f"Updated existing agent with ID: {agent_id}", result
@@ -262,6 +278,14 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             if existing_agent:
                 agent_id = existing_agent.get("id")
                 logging.info(f"Updating existing agent with ID: {agent_id}")
+                
+                # Make sure guided_setup_id is also updated if it's not already set
+                if guided_setup_id and not existing_agent.get("guided_setup_id"):
+                    logging.info(f"Adding guided_setup_id {guided_setup_id} to existing agent {agent_id}")
+                    # Don't overwrite any existing guided_setup_id
+                elif existing_agent.get("guided_setup_id") and existing_agent.get("guided_setup_id") != guided_setup_id:
+                    logging.warning(f"Agent already has a different guided_setup_id: {existing_agent.get('guided_setup_id')} vs new: {guided_setup_id}")
+                
                 result = await update_agent(agent_id, agent_data)
                 
                 # Store the agent_id in the guided_setup table for future reference
