@@ -95,7 +95,7 @@ export function Pricing({ currentPlan }: PricingProps) {
   // Memoize handlers
   const handlePlanClick = useCallback((planName: string) => {
     if (currentPlan?.toLowerCase() === planName.toLowerCase()) return;
-    window.location.href = "/sign-up";
+    window.location.href = "https://calendly.com/michael-flowon/catch-up";
   }, [currentPlan]);
 
   const getButtonText = useCallback((planName: string) => {
