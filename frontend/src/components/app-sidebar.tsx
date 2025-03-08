@@ -75,11 +75,10 @@ export function AppSidebar({
       <SidebarHeader className="px-4 py-2">
         <Link href="/" className="flex flex-row items-center gap-2">
           <Image
-            src="/flowon_partial.png"
+            src="/flowon_circle.png"
             alt="Flowon Logo"
             width={24}
             height={24}
-            className="invert"
           />
           {!isCollapsed && (
             <span className="text-2xl font-semibold">Flowon</span>

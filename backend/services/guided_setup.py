@@ -7,7 +7,8 @@ from humanloop import Humanloop
 from services import prompts
 from services.supabase.client import get_supabase
 from services.voice.agents import create_agent, get_agents, update_agent
-
+from services.chat.chat import llm_response
+from services.knowledge_base.web_scrape import scrape_url_simple
 # Pydantic models matching the frontend types
 class TrainingSource(BaseModel):
     googleBusinessProfile: Optional[str] = None
@@ -532,30 +533,37 @@ async def check_setup_status(user_id: str) -> Dict[str, Any]:
             "error": str(e)
         }
 
-async def crawl_scrape_website(url: str) -> str:
+async def generate_business_overview(scraped_content: str) -> str:
     """
-    Crawl a website and extract relevant content for business overview.
+    Generate a business overview using an LLM from the scraped content.
     
-    Note: This is a placeholder implementation.
-    In production, this would be implemented with actual web crawling capabilities.
+    Args:
+        scraped_content: The content scraped from the website.
+        
+    Returns:
+        A string containing the business overview.
     """
-    logging.info(f"Crawling website: {url}")
-    # TODO: Implement actual web crawling logic
-    # This would be replaced with actual web scraping using a library like Playwright, Selenium, or BeautifulSoup
-    return f"This is a business overview generated from {url}. In production, this would be created by crawling the website, extracting content, and using an LLM to generate a comprehensive business summary."
+    try:
+        # Use the working llm_response function from chat.py
+        system_prompt = "You are a helpful assistant that generates concise business overviews. Extract key information about the business including what they do, their value proposition, target audience, and any unique selling points. You must only output the business overview, nothing else, with no other text or commentary."
+        user_prompt = f"Generate a business overview from the following content. You must only output the business overview, nothing else, with no other text or commentary. Focus on creating a clear, professional summary that captures the essence of the business in 3-5 sentences:\n\n{scraped_content}"
+        
+        # Call the llm_response function with appropriate parameters
+        response = await llm_response(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            conversation_history=None,  # No conversation history needed for this task
+            model="claude",  # Using Claude as the default model
+            token_size=300  # Increase token count for more detailed overview
+        )
+        
+        return response.strip() if response else "Unable to generate business overview."
+    except Exception as e:
+        logging.error(f"Error generating business overview: {str(e)}")
+        # Return a fallback message instead of raising an exception
+        return "Unable to generate business overview due to an error."
 
-async def generate_business_overview(content: str) -> str:
-    """
-    Generate a business overview from website content using LLM.
-    
-    Note: This is a placeholder implementation.
-    In production, this would use LangChain or a similar framework to invoke an LLM.
-    """
-    logging.info("Generating business overview from crawled content")
-    # TODO: Implement actual LLM invocation
-    # This would be replaced with an actual call to an LLM service
-    return content
-
+""" ENTRY POINT FOR RETRAINING AGENT """
 async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> RetrainAgentResponse:
     """
     Business logic for retraining an agent with website data.
@@ -585,9 +593,10 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         
         # Generate business overview from the URL
         # 1. Crawl the website to get content
-        website_content = await crawl_scrape_website(request.url)
+        scraped_content = await scrape_url_simple(request.url)
+
         # 2. Generate business overview from content using LLM
-        business_overview = await generate_business_overview(website_content)
+        business_overview = await generate_business_overview(scraped_content)
         
         logging.info(f"Generated business overview for user {user_id}")
         

@@ -23,7 +23,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-<<<<<<< HEAD
 async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     logger.debug("Counting tokens with model gpt-4o")
     encoder = encoding_for_model(model)
@@ -134,8 +133,6 @@ async def insert_to_db(data: Dict[str, Any]) -> None:
             status_code=500,
             detail=f"Failed to insert data: {str(e)}"
         )
-=======
->>>>>>> DEV-78-Gabriel
 
 
 # Rate limit constants

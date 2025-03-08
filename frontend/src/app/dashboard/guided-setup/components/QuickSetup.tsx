@@ -100,7 +100,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [placeChangeDialog, setPlaceChangeDialog] = useState(false);
   const [pendingPlaceData, setPendingPlaceData] = useState<any>(null);
   const { getToken, userId } = useAuth();
-  const { getToken, userId } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -260,14 +259,47 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         throw new Error("Authentication required");
       }
 
-      const formData = {
-        business_name: data.businessInformation.businessName,
-        website_url: data.trainingSources.businessWebsite,
-        business_purpose: data.businessInformation.businessOverview,
-        industry: data.businessInformation.coreServices.join(", "),
-        preferred_voice: data.businessInformation.businessName,
-        // ... rest of form data ...
+      // Log the data before sending to check the format
+      console.log("Form data to be sent:", data);
+
+      // Format the data to match the expected structure in the backend
+      const formattedData = {
+        trainingSources: {
+          googleBusinessProfile: data.trainingSources.googleBusinessProfile,
+          businessWebsite: data.trainingSources.businessWebsite
+        },
+        businessInformation: {
+          businessName: data.businessInformation.businessName,
+          businessOverview: data.businessInformation.businessOverview,
+          primaryBusinessAddress: data.businessInformation.primaryBusinessAddress,
+          primaryBusinessPhone: data.businessInformation.primaryBusinessPhone,
+          coreServices: data.businessInformation.coreServices,
+          businessHours: data.businessInformation.businessHours
+        },
+        messageTaking: {
+          callerName: {
+            required: data.messageTaking.callerName.required,
+            alwaysRequested: data.messageTaking.callerName.alwaysRequested
+          },
+          callerPhoneNumber: {
+            required: data.messageTaking.callerPhoneNumber.required,
+            automaticallyCaptured: data.messageTaking.callerPhoneNumber.automaticallyCaptured
+          },
+          specificQuestions: data.messageTaking.specificQuestions
+        },
+        callNotifications: {
+          emailNotifications: {
+            enabled: data.callNotifications.emailNotifications.enabled,
+            email: data.callNotifications.emailNotifications.email
+          },
+          smsNotifications: {
+            enabled: data.callNotifications.smsNotifications.enabled,
+            phoneNumber: data.callNotifications.smsNotifications.phoneNumber
+          }
+        }
       };
+
+      console.log("Formatted data to be sent:", formattedData);
 
       const response = await fetch(
         `${API_BASE_URL}/guided_setup/quick_setup`,
@@ -277,14 +309,28 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(formattedData),
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.text();
+        const errorData = await response.json().catch(() => response.text());
         console.error("Error submitting setup data:", errorData);
-        throw new Error("Failed to submit quick setup data");
+        
+        // Provide more detailed error message
+        if (typeof errorData === 'object' && errorData.detail) {
+          // Format validation errors in a more readable way
+          if (Array.isArray(errorData.detail)) {
+            const errors = errorData.detail.map((err: any) => 
+              `Field ${err.loc.join('.')} is ${err.type}: ${err.msg}`
+            ).join('\n');
+            throw new Error(`Validation errors:\n${errors}`);
+          } else {
+            throw new Error(`API Error: ${JSON.stringify(errorData.detail)}`);
+          }
+        } else {
+          throw new Error("Failed to submit quick setup data");
+        }
       }
 
       const result = await response.json();
@@ -299,6 +345,12 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       }, 1500);
     } catch (error) {
       console.error("Error submitting quick setup data:", error);
+      // Display the error message to the user
+      if (error instanceof Error) {
+        setLoadError(error.message);
+      } else {
+        setLoadError("An unknown error occurred while submitting the form data.");
+      }
     }
   };
 
@@ -717,9 +769,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                     )}
                   />
                 </div>
-                <Button variant="outline" className="mt-6" onClick={fetchLLMBusinessInformation}>
-                  Edit
-                </Button>
               </div>
               <div className="flex gap-2 mt-4">
                 {trainingError && (
@@ -748,18 +797,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                       Train with AI
                     </>
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    // Reset the website field
-                    setValue("trainingSources.businessWebsite", "");
-                    setTrainingError(null);
-                  }}
-                  disabled={isTraining}
-                >
-                  Cancel
                 </Button>
               </div>
             </div>
