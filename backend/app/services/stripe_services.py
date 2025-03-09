@@ -5,8 +5,9 @@ import stripe
 from typing import Optional
 import os 
 from dotenv import load_dotenv
-from services.db.supabase_services import supabase
 import logging
+
+from app.clients.supabase_client import get_supabase
 
 load_dotenv()
 
@@ -67,6 +68,7 @@ async def update_user_features(
         
         # First get the clerk_user_id from customer_id
         logger.debug(f"Fetching clerk_user_id for customer_id: {customer_id}")
+        supabase = await get_supabase()
         response = supabase.table('users').select('clerk_user_id').eq('stripe_customer_id', customer_id).execute()
         
         if not response.data or len(response.data) == 0:

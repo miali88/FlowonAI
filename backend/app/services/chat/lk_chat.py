@@ -16,13 +16,13 @@ from livekit.agents import llm
 from livekit.plugins import openai
 from livekit.agents.llm.chat_context import ChatMessage
 
-from services.cache import get_agent_metadata
-from services.chat.chat import similarity_search
-from services.voice.tool_use import trigger_show_chat_input
-from services.db.supabase_services import supabase
-from services.helper import format_transcript_messages
-from services.conversation import transcript_summary
-from services.redis_service import RedisChatStorage
+from app.services.cache import get_agent_metadata
+from app.services.chat.chat import similarity_search
+from app.services.voice.tool_use import trigger_show_chat_input
+from app.clients.supabase_client import get_supabase
+from app.services.helper import format_transcript_messages
+from app.services.conversation import transcript_summary
+from app.services.redis_service import RedisChatStorage
 
 load_dotenv()
 
@@ -810,6 +810,7 @@ async def save_chat_history_to_supabase(agent_id: str, room_name: str) -> None:
         print(f"Saving chat history to Supabase for room: {room_name}")
         print(f"Number of messages: {len(formatted_transcript)}")
         
+        supabase = await get_supabase()
         response = await supabase.table("conversation_logs").insert(conversation_data).execute()
         print(f"Successfully saved chat history to Supabase")
         

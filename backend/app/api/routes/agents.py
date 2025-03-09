@@ -2,11 +2,11 @@ import logging
 from fastapi import Request, HTTPException, APIRouter, Depends, Header, Body
 from typing import Dict, List, Any
 
-from services.voice.agents import (
+from app.services.voice.agents import (
     create_agent, get_agents, delete_agent, 
     get_agent_content, update_agent, get_agent_completion
 )
-from services.agent_create import create_agents_from_urls
+from app.services.agent_create import create_agents_from_urls
 from app.core.auth import get_current_user
 from app.models.agent import (
     AgentInDB, 

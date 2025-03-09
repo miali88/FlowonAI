@@ -4,8 +4,8 @@ from enum import Enum
 import math
 import logging
 
-from services.twilio.client import client
-from services.supabase.client import get_supabase
+from app.services.twilio.client import client
+from app.clients.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 

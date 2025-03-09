@@ -1,9 +1,10 @@
 # flake8: noqa: E501
 import logging
 from fastapi import HTTPException
-from services.db.supabase_services import supabase
 from typing import Any, Dict, List, Union
 from uuid import UUID
+
+from app.clients.supabase_client import supabase
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)

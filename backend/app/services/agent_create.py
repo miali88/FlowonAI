@@ -2,13 +2,12 @@ import uuid
 from urllib.parse import urlparse
 import os
 import httpx
-from app.core.auth import get_current_user
 
 from dotenv import load_dotenv
 from humanloop import Humanloop
 
-from services.knowledge_base.web_scrape import map_url, scrape_url
-from services.chat.chat import llm_response
+from app.services.knowledge_base.web_scrape import map_url, scrape_url
+from app.services.chat.chat import llm_response
 
 load_dotenv()
 

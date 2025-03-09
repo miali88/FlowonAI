@@ -24,11 +24,11 @@ from livekit.agents.voice_assistant import VoiceAssistant
 
 
 from mute_track import CallTransferHandler
-from services.cache import get_agent_metadata
-from services.nylas_service import send_email
-from services.voice.livekit_helper import detect_call_type_and_get_agent_id
-from services.voice.livekit_services import create_voice_assistant
-from services.voice.tool_use import trigger_show_chat_input
+from app.services.cache import get_agent_metadata
+from app.services.nylas_service import send_email
+from app.services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from app.services.voice.livekit_services import create_voice_assistant
+from app.services.voice.tool_use import trigger_show_chat_input
 
 # Add both the project root and backend directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -43,14 +43,12 @@ from livekit.agents import AutoSubscribe, JobContext, JobProcess, JobRequest, Wo
 from livekit.plugins import silero
 from livekit.agents.voice_assistant import VoiceAssistant
 
-from services.voice.livekit_services import create_voice_assistant
-from services.voice.tool_use import trigger_show_chat_input, transfer_call
-from services.nylas_service import send_email
-from services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
-from services.voice.livekit_helper import detect_call_type_and_get_agent_id
-from services.helper import format_transcript_messages
-
-from backend.mute_track import CallTransferHandler
+from app.services.voice.livekit_services import create_voice_assistant
+from app.services.voice.tool_use import trigger_show_chat_input, transfer_call
+from app.services.nylas_service import send_email
+from app.services.cache import get_all_agents, call_data, get_agent_metadata, initialize_calendar_cache
+from app.services.voice.livekit_helper import detect_call_type_and_get_agent_id
+from app.services.helper import format_transcript_messages
 
 # Add logging configuration
 logging.getLogger('livekit').setLevel(logging.WARNING)

@@ -12,10 +12,10 @@ from starlette.concurrency import run_in_threadpool
 from app.core.auth import get_current_user
 from pydantic import BaseModel, Field, UUID4
 
-from services.cache import get_agent_metadata
-from services.supabase.client import get_supabase
-from services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat, get_chat_rag_results
-from services.conversation import transcript_summary
+from app.services.cache import get_agent_metadata
+from app.clients.supabase_client import get_supabase
+from app.services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat, get_chat_rag_results
+from app.services.conversation import transcript_summary
 from app.core.config import settings
 
 # Set up logging

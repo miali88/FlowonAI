@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 
-from app.api.deps import get_current_user
-from services.supabase.client import get_supabase
+from app.core.auth import get_current_user
+from app.clients.supabase_client import get_supabase
 
 router = APIRouter()
 

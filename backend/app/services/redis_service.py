@@ -3,8 +3,9 @@ from typing import Optional, Dict, Any
 import redis.asyncio as redis
 from datetime import datetime
 import logging
+
 from app.core.config import settings
-from services.db.supabase_services import supabase
+from app.clients.supabase_client import get_supabase
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -214,6 +215,7 @@ class RedisAgentMetadataCache:
     async def get_all_agents() -> list:
         """Get all agents and cache them in Redis"""
         logger.debug("Fetching all agents from database and updating cache")
+        supabase = await get_supabase()
         response = supabase.table("agents").select("*").execute()
         agents = response.data
         
@@ -241,6 +243,7 @@ class RedisAgentMetadataCache:
         
         # If not in cache, get from database and cache it
         logger.debug(f"Cache miss for agent_id={agent_id}, fetching from database")
+        supabase = await get_supabase()
         response = supabase.table("agents").select("*").execute()
         agents_dict = {agent['id']: agent for agent in response.data}
         agent = agents_dict.get(agent_id)

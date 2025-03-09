@@ -13,7 +13,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from services.supabase.client import SupabaseConnection
+from app.clients.supabase_client import SupabaseConnection
 
 from app.core.config import settings
 
@@ -175,7 +175,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    from services.twilio.call_handle import cleanup
+    from app.services.twilio.call_handle import cleanup
     global livekit_process
 
     await SupabaseConnection.close()

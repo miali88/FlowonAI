@@ -1,7 +1,8 @@
 import logging
-from services.supabase.client import get_supabase
 from livekit import api
 import os
+
+from app.clients.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 

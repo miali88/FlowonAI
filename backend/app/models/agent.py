@@ -41,12 +41,18 @@ class AgentBase(BaseModel):
     agent_logo: Optional[str] = None
 
 
-class AgentCreate(AgentBase):
-    """Schema for creating a new agent"""
-    # Additional fields specific to creation can be added here
-    formFields: Optional[List[str]] = None  # This will be transformed to form_fields
-    agentType: Optional[str] = None  # This will be transformed to agentPurpose
-    tag: Optional[str] = None  # This can be transformed to dataSource
+class AgentCreateRequest(BaseModel):
+    agentName: str
+    agentPurpose: str
+    dataSource: Optional[str]
+    tag: Optional[str]
+    openingLine: Optional[str]
+    language: str
+    voice: Optional[str]
+    voiceProvider: Optional[str]
+    instructions: Optional[str]
+    uiConfig: Optional[Dict]
+    features: Dict
 
 
 class AgentUpdate(BaseModel):
@@ -74,22 +80,36 @@ class AgentUpdate(BaseModel):
     secondaryColor: Optional[str] = None
     logo: Optional[str] = None
 
-
 class AgentInDB(AgentBase):
     """Schema for agent as stored in database with ID"""
     id: UUID
     userId: str
     datetime_creation: Optional[datetime] = None
 
+class AgentCreateResponse(BaseModel):
+    id: str
+    agentName: str
+    agentPurpose: str
+    dataSource: Optional[str]
+    tag: Optional[str]
+    openingLine: Optional[str]
+    language: str
+    voice: Optional[str]
+    voiceProvider: Optional[str]
+    instructions: Optional[str]
+    uiConfig: Optional[Dict]
+    features: Dict
+    created_at: datetime
+    updated_at: datetime
 
 class AgentResponse(BaseModel):
     """Schema for agent response data"""
-    data: List[AgentInDB]
+    data: List[AgentCreateResponse]
 
 
 class AgentContentResponse(BaseModel):
     """Schema for agent content response"""
-    data: List[AgentInDB]
+    data: List[AgentCreateResponse]
 
 
 class AgentCompletionRequest(BaseModel):

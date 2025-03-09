@@ -3,10 +3,11 @@ from fastapi.responses import StreamingResponse
 import logging
 import json
 from pydantic import BaseModel
-from services.chat.lk_chat import lk_chat_process
 from typing import AsyncGenerator, Dict
-from services.redis_service import RedisChatStorage
 from datetime import datetime
+
+from app.services.chat.lk_chat import lk_chat_process
+from app.services.redis_service import RedisChatStorage
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

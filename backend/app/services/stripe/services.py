@@ -7,8 +7,8 @@ import logging
 
 import stripe
 
-from services.supabase.client import get_supabase
-from services.livekit.inbound_trunk import number_purchased
+from app.clients.supabase_client import get_supabase
+from app.services.livekit.inbound_trunk import number_purchased
 
 """ TODO: create the twilio number purchase function, also add new numb metadata """
 

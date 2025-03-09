@@ -4,8 +4,8 @@ from typing import Dict, List
 from pydantic import BaseModel
 import logging
 
-from services.twilio import call_handle, helper
-from app.api.deps import get_current_user
+from app.services.twilio import call_handle, helper
+from app.core.auth import get_current_user
 
 # Add logger configuration at the top after imports
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ async def get_available_numbers_handler(country_code: str) -> AvailableNumbersRe
 
 @router.get("/user_numbers")
 async def get_user_numbers_handler(
-    current_user: str = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ) -> JSONResponse:
     """Get list of Twilio numbers for the current user from database"""
     logger.info(f"Fetching Twilio numbers for user: {current_user}")

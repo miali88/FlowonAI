@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional, List
 
 from app.core.auth import get_current_user
-from services.guided_setup import (
+from app.services.guided_setup import (
     QuickSetupData, 
     RetrainAgentRequest, 
     RetrainAgentResponse,
@@ -15,6 +17,21 @@ from services.guided_setup import (
 )
 
 router = APIRouter()
+
+class OnboardingPreviewRequest(BaseModel):
+    """Request model for generating onboarding preview audio with minimal business information."""
+    businessName: str
+    businessDescription: str
+    businessWebsite: Optional[str] = None
+    businessAddress: Optional[str] = None
+    businessPhone: Optional[str] = None
+
+class AudioPreviewResponse(BaseModel):
+    """Response model for audio preview generation."""
+    success: bool
+    greeting_audio_url: Optional[str] = None
+    message_audio_url: Optional[str] = None
+    error: Optional[str] = None
 
 @router.post("/quick_setup")
 async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(get_current_user)):
@@ -140,6 +157,56 @@ async def retrain_agent(request: RetrainAgentRequest, current_user: str = Depend
 
 @router.options("/retrain_agent")
 async def options_retrain_agent():
+    """
+    Handle OPTIONS requests for CORS preflight.
+    """
+    return {}
+
+@router.post("/onboarding_preview", response_model=AudioPreviewResponse)
+async def generate_onboarding_preview(request: OnboardingPreviewRequest, current_user: str = Depends(get_current_user)):
+    """
+    Generate audio previews for the onboarding process using minimal business information.
+    Returns greeting and message-taking audio samples.
+    """
+    try:
+        logging.info(f"Generating onboarding preview for user {current_user} with business name: {request.businessName}")
+        
+        # Use the business information to generate preview audio files
+        # This is a simplified version that doesn't require the full guided setup data
+        from app.services.voice.livekit_services import generate_greeting_preview, generate_message_preview
+        
+        # Generate greeting audio
+        greeting_result = await generate_greeting_preview(
+            user_id=current_user,
+            business_name=request.businessName,
+            business_description=request.businessDescription,
+            business_website=request.businessWebsite
+        )
+        
+        # Generate message-taking audio
+        message_result = await generate_message_preview(
+            user_id=current_user,
+            business_name=request.businessName
+        )
+        
+        if not greeting_result.get("success") or not message_result.get("success"):
+            error_message = greeting_result.get("error") or message_result.get("error") or "Failed to generate audio previews"
+            return AudioPreviewResponse(
+                success=False,
+                error=error_message
+            )
+        
+        return AudioPreviewResponse(
+            success=True,
+            greeting_audio_url=greeting_result.get("audio_url"),
+            message_audio_url=message_result.get("audio_url")
+        )
+    except Exception as e:
+        logging.error(f"Error in generate_onboarding_preview endpoint: {str(e)}")
+        return AudioPreviewResponse(success=False, error=str(e))
+
+@router.options("/onboarding_preview")
+async def options_onboarding_preview():
     """
     Handle OPTIONS requests for CORS preflight.
     """

@@ -1,7 +1,8 @@
-from typing import Dict
-from services.db.supabase_services import supabase_client
-from services.redis_service import agent_metadata_cache
-from services.composio import get_calendar_slots
+from typing import Dict 
+
+from app.clients.supabase_client import supabase_client
+from app.services.redis_service import agent_metadata_cache
+from app.services.composio import get_calendar_slots
 
 """ CALENDAR CACHE """
 calendar_cache: Dict[str, dict] = {}

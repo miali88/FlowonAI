@@ -3,7 +3,8 @@ import logging
 
 from fastapi import Request, APIRouter, Header, HTTPException
 from svix.webhooks import Webhook, WebhookVerificationError
-from services.clerk import post_user, get_clerk_private_metadata
+
+from app.services.clerk import post_user, get_clerk_private_metadata
 
 logger = logging.getLogger(__name__)
 

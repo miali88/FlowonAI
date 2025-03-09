@@ -9,7 +9,6 @@ from composio import ComposioToolSet, Composio
 
 load_dotenv()
 
-
 # Initialize the Composio client
 client = Composio()
 logger = logging.getLogger(__name__)

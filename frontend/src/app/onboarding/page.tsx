@@ -20,6 +20,7 @@ import {
   Volume2
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import AutoSearchPlacesInput from "@/app/dashboard/guided-setup/components/AutoSearchPlacesInput";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -27,18 +28,18 @@ export default function OnboardingPage() {
   const [businessName, setBusinessName] = useState("");
   const [businessWebsite, setBusinessWebsite] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
+  const [businessAddress, setBusinessAddress] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showAudioTest, setShowAudioTest] = useState(false);
-  const [isLoadingGreeting, setIsLoadingGreeting] = useState(false);
-  const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+  
+  // Audio state
   const [greetingAudioUrl, setGreetingAudioUrl] = useState<string | null>(null);
   const [messageAudioUrl, setMessageAudioUrl] = useState<string | null>(null);
   const [isPlayingGreeting, setIsPlayingGreeting] = useState(false);
   const [isPlayingMessage, setIsPlayingMessage] = useState(false);
-  const [greetingError, setGreetingError] = useState<string | null>(null);
-  const [messageError, setMessageError] = useState<string | null>(null);
   
   const greetingAudioRef = useRef<HTMLAudioElement | null>(null);
   const messageAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -47,15 +48,65 @@ export default function OnboardingPage() {
   const { userId, getToken } = useAuth();
 
   useEffect(() => {
-    // Set up audio event listeners
-    if (greetingAudioRef.current) {
-      greetingAudioRef.current.onended = () => setIsPlayingGreeting(false);
+    // Hidden audio elements for playback
+    if (greetingAudioUrl && !greetingAudioRef.current) {
+      const audio = new Audio(greetingAudioUrl);
+      audio.addEventListener('ended', () => {
+        setIsPlayingGreeting(false);
+      });
+      greetingAudioRef.current = audio;
+    }
+
+    if (messageAudioUrl && !messageAudioRef.current) {
+      const audio = new Audio(messageAudioUrl);
+      audio.addEventListener('ended', () => {
+        setIsPlayingMessage(false);
+      });
+      messageAudioRef.current = audio;
+    }
+
+    // Cleanup function
+    return () => {
+      if (greetingAudioRef.current) {
+        greetingAudioRef.current.pause();
+        greetingAudioRef.current.removeEventListener('ended', () => {
+          setIsPlayingGreeting(false);
+        });
+      }
+      
+      if (messageAudioRef.current) {
+        messageAudioRef.current.pause();
+        messageAudioRef.current.removeEventListener('ended', () => {
+          setIsPlayingMessage(false);
+        });
+      }
+    };
+  }, [greetingAudioUrl, messageAudioUrl]);
+
+  const handlePlaceSelect = (placeData: any) => {
+    console.log("Place data selected:", placeData);
+    
+    // Update the business name
+    setBusinessName(placeData.name || "");
+    
+    // Extract website if available
+    if (placeData.website) {
+      setBusinessWebsite(placeData.website);
     }
     
-    if (messageAudioRef.current) {
-      messageAudioRef.current.onended = () => setIsPlayingMessage(false);
+    // Extract address if available
+    if (placeData.formatted_address) {
+      setBusinessAddress(placeData.formatted_address);
     }
-  }, [greetingAudioUrl, messageAudioUrl]);
+    
+    // Extract phone if available
+    if (placeData.formatted_phone_number) {
+      setBusinessPhone(placeData.formatted_phone_number);
+    }
+    
+    // Could also extract and use business description if needed
+    // You could also extract and use business hours if needed
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,159 +121,105 @@ export default function OnboardingPage() {
         throw new Error("Authentication required");
       }
 
-      console.log("Submitting business information...");
+      console.log("Submitting business information for preview...");
       
-      // Submit business information
-      const response = await fetch(`${API_BASE_URL}/guided_setup/quick_setup`, {
+      // Submit business information for audio preview
+      const response = await fetch(`${API_BASE_URL}/guided_setup/onboarding_preview`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          trainingSources: {
-            businessWebsite: businessWebsite
-          },
-          businessInformation: {
-            businessName: businessName,
-            businessOverview: businessDescription,
-            primaryBusinessAddress: "",
-            primaryBusinessPhone: "",
-            coreServices: [],
-            businessHours: {}
-          }
+          businessName: businessName,
+          businessDescription: businessDescription,
+          businessWebsite: businessWebsite,
+          businessAddress: businessAddress,
+          businessPhone: businessPhone
         })
       });
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.error("Error submitting business info:", errorData);
-        throw new Error("Failed to submit business information");
+        console.error("Error generating audio preview:", errorData);
+        throw new Error("Failed to generate audio preview");
       }
 
       const data = await response.json();
       
-      console.log("Business information submitted successfully:", data);
-      setSuccessMessage("Business information saved successfully!");
+      console.log("Audio preview generated successfully:", data);
       
-      // Show audio test section instead of redirecting
+      // Show audio test section
       setShowAudioTest(true);
       
-      // Load audio samples
-      loadGreetingAudio();
-      loadMessageAudio();
+      // Set the audio URLs from the response
+      if (data.greeting_audio_url) {
+        setGreetingAudioUrl(data.greeting_audio_url);
+      }
+      
+      if (data.message_audio_url) {
+        setMessageAudioUrl(data.message_audio_url);
+      }
+      
+      setSuccessMessage("Audio preview generated successfully!");
       
     } catch (err: any) {
       console.error("Error in onboarding submission:", err);
-      setError(err.message || "Failed to submit business information");
+      setError(err.message || "Failed to generate audio preview");
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const loadGreetingAudio = async () => {
-    try {
-      setIsLoadingGreeting(true);
-      setGreetingError(null);
-      
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Authentication required");
-      }
-      
-      console.log("Fetching greeting audio sample...");
-      
-      // Example endpoint - replace with your actual endpoint
-      const response = await fetch(`${API_BASE_URL}/audio/generate_greeting`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to load greeting audio");
-      }
-      
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      setGreetingAudioUrl(audioUrl);
-      
-    } catch (err: any) {
-      console.error("Error loading greeting audio:", err);
-      setGreetingError(err.message || "Failed to load greeting audio");
-    } finally {
-      setIsLoadingGreeting(false);
-    }
-  };
-  
-  const loadMessageAudio = async () => {
-    try {
-      setIsLoadingMessage(true);
-      setMessageError(null);
-      
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Authentication required");
-      }
-      
-      console.log("Fetching message-taking audio sample...");
-      
-      // Example endpoint - replace with your actual endpoint
-      const response = await fetch(`${API_BASE_URL}/audio/generate_message`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to load message audio");
-      }
-      
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      setMessageAudioUrl(audioUrl);
-      
-    } catch (err: any) {
-      console.error("Error loading message audio:", err);
-      setMessageError(err.message || "Failed to load message audio");
-    } finally {
-      setIsLoadingMessage(false);
-    }
-  };
-  
   const playGreetingAudio = () => {
-    if (greetingAudioRef.current) {
-      if (isPlayingGreeting) {
-        greetingAudioRef.current.pause();
-        setIsPlayingGreeting(false);
-      } else {
-        // Pause message audio if playing
-        if (isPlayingMessage && messageAudioRef.current) {
-          messageAudioRef.current.pause();
-          setIsPlayingMessage(false);
-        }
-        
-        greetingAudioRef.current.play();
-        setIsPlayingGreeting(true);
+    if (!greetingAudioRef.current) return;
+    
+    if (isPlayingGreeting) {
+      // Pause if already playing
+      greetingAudioRef.current.pause();
+      setIsPlayingGreeting(false);
+    } else {
+      // Pause message audio if playing
+      if (isPlayingMessage && messageAudioRef.current) {
+        messageAudioRef.current.pause();
+        setIsPlayingMessage(false);
       }
+      
+      // Play greeting audio
+      greetingAudioRef.current.play()
+        .then(() => {
+          setIsPlayingGreeting(true);
+        })
+        .catch((err) => {
+          console.error("Error playing greeting audio:", err);
+          setError("Failed to play audio. Please try again.");
+        });
     }
   };
   
   const playMessageAudio = () => {
-    if (messageAudioRef.current) {
-      if (isPlayingMessage) {
-        messageAudioRef.current.pause();
-        setIsPlayingMessage(false);
-      } else {
-        // Pause greeting audio if playing
-        if (isPlayingGreeting && greetingAudioRef.current) {
-          greetingAudioRef.current.pause();
-          setIsPlayingGreeting(false);
-        }
-        
-        messageAudioRef.current.play();
-        setIsPlayingMessage(true);
+    if (!messageAudioRef.current) return;
+    
+    if (isPlayingMessage) {
+      // Pause if already playing
+      messageAudioRef.current.pause();
+      setIsPlayingMessage(false);
+    } else {
+      // Pause greeting audio if playing
+      if (isPlayingGreeting && greetingAudioRef.current) {
+        greetingAudioRef.current.pause();
+        setIsPlayingGreeting(false);
       }
+      
+      // Play message audio
+      messageAudioRef.current.play()
+        .then(() => {
+          setIsPlayingMessage(true);
+        })
+        .catch((err) => {
+          console.error("Error playing message audio:", err);
+          setError("Failed to play audio. Please try again.");
+        });
     }
   };
   
@@ -266,14 +263,13 @@ export default function OnboardingPage() {
                   </label>
                   <div className="flex items-center">
                     <Building2 className="w-5 h-5 text-gray-400 mr-2" />
-                    <Input
-                      id="businessName"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="Your Business Name"
-                      className="flex-1"
-                      required
-                    />
+                    <div className="flex-1">
+                      <AutoSearchPlacesInput
+                        value={businessName}
+                        onChange={setBusinessName}
+                        onPlaceSelect={handlePlaceSelect}
+                      />
+                    </div>
                   </div>
                 </div>
                 
@@ -295,21 +291,7 @@ export default function OnboardingPage() {
                     Your website will be used to train your AI on your business information.
                   </p>
                 </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="businessDescription" className="block text-sm font-medium text-gray-700">
-                    Business Description
-                  </label>
-                  <Textarea
-                    id="businessDescription"
-                    value={businessDescription}
-                    onChange={(e) => setBusinessDescription(e.target.value)}
-                    placeholder="Tell us about your business, products, services, and what makes you unique..."
-                    className="h-32"
-                    required
-                  />
-                </div>
-                
+
                 <div className="pt-4">
                   <Button
                     type="submit"
@@ -319,7 +301,7 @@ export default function OnboardingPage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        Generating Voice Preview...
                       </>
                     ) : (
                       <>
@@ -371,34 +353,21 @@ export default function OnboardingPage() {
                     </div>
                     
                     <div className="flex-shrink-0">
-                      {isLoadingGreeting ? (
-                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-                        </div>
-                      ) : greetingError ? (
-                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                          <VolumeX className="h-6 w-6 text-red-600" />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={playGreetingAudio}
-                          className={`w-12 h-12 rounded-full ${isPlayingGreeting ? 'bg-blue-600' : 'bg-blue-100'} flex items-center justify-center transition-colors`}
-                        >
-                          {isPlayingGreeting ? (
-                            <Pause className={`h-6 w-6 ${isPlayingGreeting ? 'text-white' : 'text-blue-600'}`} />
-                          ) : (
-                            <Play className="h-6 w-6 text-blue-600 ml-1" />
-                          )}
-                        </button>
-                      )}
+                      <button
+                        onClick={playGreetingAudio}
+                        disabled={!greetingAudioUrl || isPlayingGreeting}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          isPlayingGreeting ? 'bg-blue-100' : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                      >
+                        {isPlayingGreeting ? (
+                          <Pause className="h-6 w-6 text-blue-600" />
+                        ) : (
+                          <Play className="h-6 w-6 text-white" />
+                        )}
+                      </button>
                     </div>
                   </div>
-                  
-                  {greetingError && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertDescription>{greetingError}</AlertDescription>
-                    </Alert>
-                  )}
                   
                   <div className="bg-gray-100 p-4 rounded-md">
                     <p className="text-gray-700 italic">
@@ -418,34 +387,21 @@ export default function OnboardingPage() {
                     </div>
                     
                     <div className="flex-shrink-0">
-                      {isLoadingMessage ? (
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Loader2 className="h-6 w-6 text-purple-600 animate-spin" />
-                        </div>
-                      ) : messageError ? (
-                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                          <VolumeX className="h-6 w-6 text-red-600" />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={playMessageAudio}
-                          className={`w-12 h-12 rounded-full ${isPlayingMessage ? 'bg-purple-600' : 'bg-purple-100'} flex items-center justify-center transition-colors`}
-                        >
-                          {isPlayingMessage ? (
-                            <Pause className={`h-6 w-6 ${isPlayingMessage ? 'text-white' : 'text-purple-600'}`} />
-                          ) : (
-                            <Play className="h-6 w-6 text-purple-600 ml-1" />
-                          )}
-                        </button>
-                      )}
+                      <button
+                        onClick={playMessageAudio}
+                        disabled={!messageAudioUrl || isPlayingMessage}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          isPlayingMessage ? 'bg-purple-100' : 'bg-purple-600 hover:bg-purple-700'
+                        }`}
+                      >
+                        {isPlayingMessage ? (
+                          <Pause className="h-6 w-6 text-purple-600" />
+                        ) : (
+                          <Play className="h-6 w-6 text-white" />
+                        )}
+                      </button>
                     </div>
                   </div>
-                  
-                  {messageError && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertDescription>{messageError}</AlertDescription>
-                    </Alert>
-                  )}
                   
                   <div className="bg-gray-100 p-4 rounded-md">
                     <p className="text-gray-700 italic">

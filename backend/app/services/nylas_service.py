@@ -3,12 +3,15 @@ import os
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from nylas import Client # type: ignore
-from services.supabase.client import get_supabase
-from services.cache import get_all_agents
+
 import ast
 import html
 
+from app.clients.supabase_client import get_supabase
+from app.services.cache import get_all_agents
+
 load_dotenv()
+
 
 NYLAS_API_KEY = os.getenv("NYLAS_API_KEY")
 NYLAS_API_URI = os.getenv("NYLAS_API_URI")

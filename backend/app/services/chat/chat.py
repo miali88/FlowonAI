@@ -1,4 +1,3 @@
-from app.core.config import settings
 from dotenv import load_dotenv
 import logging
 import os
@@ -10,9 +9,11 @@ import re
 import json
 from requests.exceptions import Timeout, RequestException
 
-from services.supabase.client import get_supabase
 from openai import OpenAI
 from anthropic import AsyncAnthropic
+
+from app.clients.supabase_client import get_supabase
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 load_dotenv()

@@ -10,7 +10,7 @@ from livekit.api import (
     LiveKitAPI,
 )
 
-from services.voice.livekit_services import create_livekit_api
+from app.services.voice.livekit_services import create_livekit_api
 
 # Setup logger
 logger = logging.getLogger(__name__)

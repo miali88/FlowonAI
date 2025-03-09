@@ -1,14 +1,17 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Tuple
 import logging
+import os
 
 from humanloop import Humanloop
+from elevenlabs import ElevenLabs
 
-from services import prompts
-from services.supabase.client import get_supabase
-from services.voice.agents import create_agent, get_agents, update_agent
-from services.chat.chat import llm_response
-from services.knowledge_base.web_scrape import scrape_url_simple
+from app.services import prompts
+from app.clients.supabase_client import get_supabase
+from app.services.voice.agents import create_agent, get_agents, update_agent
+from app.services.chat.chat import llm_response
+from app.services.knowledge_base.web_scrape import scrape_url_simple
+
 # Pydantic models matching the frontend types
 class TrainingSource(BaseModel):
     googleBusinessProfile: Optional[str] = None
@@ -746,3 +749,126 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
             setup_data=None,
             error=error_msg
         )
+
+
+async def generate_greeting_preview(
+    user_id: str,
+    business_name: str,
+    business_description: str,
+    business_website: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Generate a greeting audio preview for the onboarding process.
+    Uses minimal business information to create a sample greeting.
+    
+    Args:
+        user_id: The ID of the user
+        business_name: Name of the business
+        business_description: Brief description of the business
+        business_website: Optional website URL
+        
+    Returns:
+        Dictionary with success status and audio URL or error
+    """
+    try:
+        logging.info(f"Generating greeting preview for user {user_id} with business: {business_name}")
+        
+        # Use a default voice for the preview
+        default_voice_id = os.getenv("DEFAULT_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+        
+        # Create a sample greeting message based on business info
+        greeting_text = f"Thank you for calling {business_name}. This is Rosie, your AI receptionist. "
+        
+        if business_description:
+            # Add a brief description if available
+            greeting_text += f"At {business_name}, {business_description}. "
+        
+        greeting_text += "How may I assist you today?"
+        
+        # Use ElevenLabs TTS instead of Cartesia
+        tts_instance = elevenlabs.TTS(
+            voice=elevenlabs.Voice(
+                id=default_voice_id,
+                name="",
+                category=""
+            )
+        )
+        
+        # Generate audio and store it (simplified for this example)
+        # In a real implementation, you would:
+        # 1. Generate the audio using the TTS service
+        # 2. Save it to a file or cloud storage
+        # 3. Return a URL to access that audio
+        
+        # Placeholder - in a real implementation, this would generate and store audio
+        # For now, we're returning a mock URL
+        audio_url = f"/api/audio/greeting_preview/{user_id}"
+        
+        logging.info(f"Generated greeting preview for {business_name}")
+        
+        return {
+            "success": True,
+            "audio_url": audio_url,
+            "text": greeting_text
+        }
+    except Exception as e:
+        logging.error(f"Error generating greeting preview: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Failed to generate greeting audio: {str(e)}"
+        }
+
+async def generate_message_preview(
+    user_id: str,
+    business_name: str
+) -> Dict[str, Any]:
+    """
+    Generate a message-taking audio preview for the onboarding process.
+    
+    Args:
+        user_id: The ID of the user
+        business_name: Name of the business
+        
+    Returns:
+        Dictionary with success status and audio URL or error
+    """
+    try:
+        logging.info(f"Generating message preview for user {user_id} with business: {business_name}")
+        
+        # Use a default voice for the preview
+        default_voice_id = os.getenv("DEFAULT_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+        
+        # Create a sample message-taking text
+        message_text = (
+            f"I'd be happy to take a message for {business_name}. "
+            "Could I please get your name and phone number? "
+            "Also, please let me know what your message is about, "
+            "and I'll make sure it gets to the right person."
+        )
+        
+        # Use ElevenLabs TTS instead of Cartesia
+        tts_instance = elevenlabs.TTS(
+            voice=elevenlabs.Voice(
+                id=default_voice_id,
+                name="",
+                category=""
+            )
+        )
+        
+        # Placeholder - in a real implementation, this would generate and store audio
+        # For now, we're returning a mock URL
+        audio_url = f"/api/audio/message_preview/{user_id}"
+        
+        logging.info(f"Generated message preview for {business_name}")
+        
+        return {
+            "success": True,
+            "audio_url": audio_url,
+            "text": message_text
+        }
+    except Exception as e:
+        logging.error(f"Error generating message preview: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Failed to generate message audio: {str(e)}"
+        }

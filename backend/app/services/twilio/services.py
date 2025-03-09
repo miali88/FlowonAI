@@ -11,12 +11,11 @@ import asyncio
 
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-
-from services.supabase.client import get_supabase
-from services.twilio.client import client
 from twilio.twiml.voice_response import VoiceResponse, Dial
 from twilio.base.exceptions import TwilioRestException
 
+from app.clients.supabase_client import get_supabase
+from app.services.twilio.client import client
 
 load_dotenv()
 

@@ -4,7 +4,8 @@ import json
 
 from fastapi import Request, APIRouter
 
-from services.cache import call_data
+from app.services.cache import call_data
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 

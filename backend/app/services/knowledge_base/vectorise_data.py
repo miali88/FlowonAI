@@ -8,7 +8,7 @@ import spacy
 from openai import AsyncOpenAI
 
 from app.core.config import settings
-from services.supabase.client import get_supabase
+from app.clients.supabase_client import get_supabase
 
 openai = AsyncOpenAI()
 
