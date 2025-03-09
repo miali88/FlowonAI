@@ -278,7 +278,7 @@ export default function BusinessInfoPage() {
             
             <div className="space-y-2">
               <label htmlFor="agentLanguage" className="block text-sm font-medium text-gray-700">
-                Agent Language
+                Default Agent Language
               </label>
               <div className="flex items-center">
                 <Languages className="w-5 h-5 text-gray-400 mr-2" />
@@ -300,6 +300,9 @@ export default function BusinessInfoPage() {
                   Automatically detected based on your business location ({countryCode}).
                 </p>
               )}
+              <p className="text-xs text-gray-500">
+                This is the default greeting language the agent will use. However, the agent can detect and adapt to the language of the caller during conversations.
+              </p>
             </div>
 
             <div className="pt-4">

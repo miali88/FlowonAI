@@ -26,6 +26,7 @@ class OnboardingPreviewRequest(BaseModel):
     businessWebsite: Optional[str] = None
     businessAddress: Optional[str] = None
     businessPhone: Optional[str] = None
+    agentLanguage: Optional[str] = "en"  # Default language is English
 
 class AudioPreviewResponse(BaseModel):
     """Response model for audio preview generation."""
@@ -183,13 +184,15 @@ async def generate_onboarding_preview(request: OnboardingPreviewRequest, current
             user_id=current_user,
             business_name=request.businessName,
             business_description=request.businessDescription,
-            business_website=request.businessWebsite
+            business_website=request.businessWebsite,
+            language=request.agentLanguage
         )
         
         # Generate message-taking audio
         message_result = await generate_message_preview(
             user_id=current_user,
-            business_name=request.businessName
+            business_name=request.businessName,
+            language=request.agentLanguage
         )
         
         if not greeting_result.get("success") or not message_result.get("success"):
