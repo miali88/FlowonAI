@@ -1,4 +1,3 @@
-from typing import List, Dict
 import logging
 
 from app.services.chat.chat import llm_response

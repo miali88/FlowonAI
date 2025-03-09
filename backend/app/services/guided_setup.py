@@ -4,8 +4,8 @@ import logging
 import os
 
 from humanloop import Humanloop
-from elevenlabs import ElevenLabs
 
+from app.clients.elevenlabs_client import elevenlabs_client
 from app.services import prompts
 from app.clients.supabase_client import get_supabase
 from app.services.voice.agents import create_agent, get_agents, update_agent
@@ -768,7 +768,7 @@ async def generate_greeting_preview(
         business_website: Optional website URL
         
     Returns:
-        Dictionary with success status and audio URL or error
+        Dictionary with success status and audio data or error
     """
     try:
         logging.info(f"Generating greeting preview for user {user_id} with business: {business_name}")
@@ -785,30 +785,27 @@ async def generate_greeting_preview(
         
         greeting_text += "How may I assist you today?"
         
-        # Use ElevenLabs TTS instead of Cartesia
-        tts_instance = elevenlabs.TTS(
-            voice=elevenlabs.Voice(
-                id=default_voice_id,
-                name="",
-                category=""
+        # Generate audio using ElevenLabs client
+        try:
+            # Generate the actual audio using our client
+            audio_data = elevenlabs_client.generate_audio(
+                text=greeting_text,
+                voice_id=default_voice_id
             )
-        )
-        
-        # Generate audio and store it (simplified for this example)
-        # In a real implementation, you would:
-        # 1. Generate the audio using the TTS service
-        # 2. Save it to a file or cloud storage
-        # 3. Return a URL to access that audio
-        
-        # Placeholder - in a real implementation, this would generate and store audio
-        # For now, we're returning a mock URL
-        audio_url = f"/api/audio/greeting_preview/{user_id}"
+            logging.info(f"Successfully generated audio for greeting preview")
+        except Exception as audio_error:
+            logging.error(f"Error generating audio: {str(audio_error)}")
+            return {
+                "success": False,
+                "error": f"Failed to generate audio: {str(audio_error)}"
+            }
         
         logging.info(f"Generated greeting preview for {business_name}")
         
+        # Return both the audio data and the text
         return {
             "success": True,
-            "audio_url": audio_url,
+            "audio_data": audio_data,  # Return the actual audio binary data
             "text": greeting_text
         }
     except Exception as e:
@@ -830,7 +827,7 @@ async def generate_message_preview(
         business_name: Name of the business
         
     Returns:
-        Dictionary with success status and audio URL or error
+        Dictionary with success status and audio data or error
     """
     try:
         logging.info(f"Generating message preview for user {user_id} with business: {business_name}")
@@ -846,24 +843,27 @@ async def generate_message_preview(
             "and I'll make sure it gets to the right person."
         )
         
-        # Use ElevenLabs TTS instead of Cartesia
-        tts_instance = elevenlabs.TTS(
-            voice=elevenlabs.Voice(
-                id=default_voice_id,
-                name="",
-                category=""
+        # Generate audio using ElevenLabs client
+        try:
+            # Generate the actual audio using our client
+            audio_data = elevenlabs_client.generate_audio(
+                text=message_text,
+                voice_id=default_voice_id
             )
-        )
-        
-        # Placeholder - in a real implementation, this would generate and store audio
-        # For now, we're returning a mock URL
-        audio_url = f"/api/audio/message_preview/{user_id}"
+            logging.info(f"Successfully generated audio for message preview")
+        except Exception as audio_error:
+            logging.error(f"Error generating audio: {str(audio_error)}")
+            return {
+                "success": False,
+                "error": f"Failed to generate audio: {str(audio_error)}"
+            }
         
         logging.info(f"Generated message preview for {business_name}")
         
+        # Return both the audio data and the text
         return {
             "success": True,
-            "audio_url": audio_url,
+            "audio_data": audio_data,  # Return the actual audio binary data
             "text": message_text
         }
     except Exception as e:

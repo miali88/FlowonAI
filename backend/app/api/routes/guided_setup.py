@@ -29,8 +29,12 @@ class OnboardingPreviewRequest(BaseModel):
 class AudioPreviewResponse(BaseModel):
     """Response model for audio preview generation."""
     success: bool
-    greeting_audio_url: Optional[str] = None
-    message_audio_url: Optional[str] = None
+    greeting_audio_data: Optional[bytes] = None  # Binary audio data for greeting
+    message_audio_data: Optional[bytes] = None   # Binary audio data for message
+    greeting_text: Optional[str] = None          # Text for greeting audio
+    message_text: Optional[str] = None           # Text for message audio
+    greeting_audio_url: Optional[str] = None     # Fallback URL if needed
+    message_audio_url: Optional[str] = None      # Fallback URL if needed
     error: Optional[str] = None
 
 @router.post("/quick_setup")
@@ -165,15 +169,15 @@ async def options_retrain_agent():
 @router.post("/onboarding_preview", response_model=AudioPreviewResponse)
 async def generate_onboarding_preview(request: OnboardingPreviewRequest, current_user: str = Depends(get_current_user)):
     """
-    Generate audio previews for the onboarding process using minimal business information.
-    Returns greeting and message-taking audio samples.
+    Generate audio previews for onboarding with minimal business information.
+    This returns both greeting and message-taking audio samples.
     """
     try:
         logging.info(f"Generating onboarding preview for user {current_user} with business name: {request.businessName}")
         
         # Use the business information to generate preview audio files
         # This is a simplified version that doesn't require the full guided setup data
-        from app.services.voice.livekit_services import generate_greeting_preview, generate_message_preview
+        from app.services.guided_setup import generate_greeting_preview, generate_message_preview
         
         # Generate greeting audio
         greeting_result = await generate_greeting_preview(
@@ -196,10 +200,13 @@ async def generate_onboarding_preview(request: OnboardingPreviewRequest, current
                 error=error_message
             )
         
+        # Return a response with the binary audio data and text
         return AudioPreviewResponse(
             success=True,
-            greeting_audio_url=greeting_result.get("audio_url"),
-            message_audio_url=message_result.get("audio_url")
+            greeting_audio_data=greeting_result.get("audio_data"),
+            message_audio_data=message_result.get("audio_data"),
+            greeting_text=greeting_result.get("text"),
+            message_text=message_result.get("text")
         )
     except Exception as e:
         logging.error(f"Error in generate_onboarding_preview endpoint: {str(e)}")

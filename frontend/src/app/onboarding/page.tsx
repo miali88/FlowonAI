@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Loader2, 
   ArrowRight, 
@@ -16,7 +15,6 @@ import {
   CheckCircle2, 
   Play, 
   Pause, 
-  VolumeX,
   Volume2
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";

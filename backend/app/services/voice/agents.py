@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from typing import Any, Dict, List, Union
 from uuid import UUID
 
-from app.clients.supabase_client import supabase
+from app.clients.supabase_client import get_supabase
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
@@ -200,7 +200,8 @@ async def create_agent(data: Dict[str, Any]) -> Dict[str, Any]:
     if "agentType" in data:
         data['agentPurpose'] = data.pop('agentType')
 
-    new_agent = supabase.table('agents').insert(data).execute()
+    supabase = await get_supabase()
+    new_agent = await supabase.table('agents').insert(data).execute()
     return new_agent
 
 async def get_agents(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
@@ -214,7 +215,8 @@ async def get_agents(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
         List of agents belonging to the user
     """
     logger.info(f"Fetching agents for user_id: {user_id}")
-    agents = supabase.table('agents').select('*').eq('userId', user_id).execute()
+    supabase = await get_supabase()
+    agents = await supabase.table('agents').select('*').eq('userId', user_id).execute()
     return agents
 
 async def delete_agent(agent_id: Union[int, str, UUID], user_id: str) -> Dict[str, Any]:
@@ -233,7 +235,8 @@ async def delete_agent(agent_id: Union[int, str, UUID], user_id: str) -> Dict[st
     """
     logger.info(f"Deleting agent with ID: {agent_id} for user: {user_id}")
     try:
-        response = supabase.table('agents').delete().eq('id', agent_id).execute()
+        supabase = await get_supabase()
+        response = await supabase.table('agents').delete().eq('id', agent_id).execute()
         return response
     except Exception as e:
         logger.error(f"Error deleting agent: {str(e)}")
@@ -265,7 +268,8 @@ async def update_agent(agent_id: Union[int, str, UUID], data: Dict[str, Any]) ->
                 }
             }
             
-        response = supabase.table('agents').update(data).eq('id', agent_id).execute()
+        supabase = await get_supabase()
+        response = await supabase.table('agents').update(data).eq('id', agent_id).execute()
         return response
     except Exception as e:
         logger.error(f"Error updating agent: {str(e)}")
@@ -286,7 +290,8 @@ async def get_agent_content(agent_id: Union[str, UUID]) -> Dict[str, Any]:
     """
     logger.info(f"Getting agent content for agent_id: {agent_id}")
     try:
-        content = supabase.table('agents').select('*').eq('id', agent_id).execute()
+        supabase = await get_supabase()
+        content = await supabase.table('agents').select('*').eq('id', agent_id).execute()
         return content
     except Exception as e:
         logger.error(f"Error getting agent content: {str(e)}")
