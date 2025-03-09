@@ -768,13 +768,13 @@ async def generate_greeting_preview(
         business_website: Optional website URL
         
     Returns:
-        Dictionary with success status and audio data or error
+        Dictionary with success status and audio binary data or error
     """
     try:
         logging.info(f"Generating greeting preview for user {user_id} with business: {business_name}")
         
         # Use a default voice for the preview
-        default_voice_id = os.getenv("DEFAULT_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+        default_voice_id = 'Ize3YDdGqJYYKQSDLORJ'
         
         # Create a sample greeting message based on business info
         greeting_text = f"Thank you for calling {business_name}. This is Rosie, your AI receptionist. "
@@ -787,10 +787,11 @@ async def generate_greeting_preview(
         
         # Generate audio using ElevenLabs client
         try:
-            # Generate the actual audio using our client
+            # Generate the audio using our client and get binary data
             audio_data = elevenlabs_client.generate_audio(
                 text=greeting_text,
-                voice_id=default_voice_id
+                voice_id=default_voice_id,
+                return_bytes=True
             )
             logging.info(f"Successfully generated audio for greeting preview")
         except Exception as audio_error:
@@ -805,7 +806,7 @@ async def generate_greeting_preview(
         # Return both the audio data and the text
         return {
             "success": True,
-            "audio_data": audio_data,  # Return the actual audio binary data
+            "audio_data": audio_data,  # Return the binary audio data
             "text": greeting_text
         }
     except Exception as e:
@@ -827,13 +828,13 @@ async def generate_message_preview(
         business_name: Name of the business
         
     Returns:
-        Dictionary with success status and audio data or error
+        Dictionary with success status and audio binary data or error
     """
     try:
         logging.info(f"Generating message preview for user {user_id} with business: {business_name}")
         
         # Use a default voice for the preview
-        default_voice_id = os.getenv("DEFAULT_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+        default_voice_id = 'Ize3YDdGqJYYKQSDLORJ'
         
         # Create a sample message-taking text
         message_text = (
@@ -845,10 +846,11 @@ async def generate_message_preview(
         
         # Generate audio using ElevenLabs client
         try:
-            # Generate the actual audio using our client
+            # Generate the audio using our client and get binary data
             audio_data = elevenlabs_client.generate_audio(
                 text=message_text,
-                voice_id=default_voice_id
+                voice_id=default_voice_id,
+                return_bytes=True
             )
             logging.info(f"Successfully generated audio for message preview")
         except Exception as audio_error:
@@ -863,7 +865,7 @@ async def generate_message_preview(
         # Return both the audio data and the text
         return {
             "success": True,
-            "audio_data": audio_data,  # Return the actual audio binary data
+            "audio_data": audio_data,  # Return the binary audio data
             "text": message_text
         }
     except Exception as e:

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 import logging
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List
+import base64
 
 from app.core.auth import get_current_user
 from app.services.guided_setup import (
@@ -29,12 +30,10 @@ class OnboardingPreviewRequest(BaseModel):
 class AudioPreviewResponse(BaseModel):
     """Response model for audio preview generation."""
     success: bool
-    greeting_audio_data: Optional[bytes] = None  # Binary audio data for greeting
-    message_audio_data: Optional[bytes] = None   # Binary audio data for message
-    greeting_text: Optional[str] = None          # Text for greeting audio
-    message_text: Optional[str] = None           # Text for message audio
-    greeting_audio_url: Optional[str] = None     # Fallback URL if needed
-    message_audio_url: Optional[str] = None      # Fallback URL if needed
+    greeting_audio_data_base64: Optional[str] = None  # Base64 encoded audio data for greeting
+    message_audio_data_base64: Optional[str] = None   # Base64 encoded audio data for message
+    greeting_text: Optional[str] = None               # Text for greeting audio
+    message_text: Optional[str] = None                # Text for message audio
     error: Optional[str] = None
 
 @router.post("/quick_setup")
@@ -200,11 +199,19 @@ async def generate_onboarding_preview(request: OnboardingPreviewRequest, current
                 error=error_message
             )
         
-        # Return a response with the binary audio data and text
+        # Convert binary audio data to base64 strings
+        greeting_audio_base64 = base64.b64encode(greeting_result.get("audio_data")).decode('utf-8')
+        message_audio_base64 = base64.b64encode(message_result.get("audio_data")).decode('utf-8')
+        
+        # Prepend the proper data URL prefix for audio data
+        greeting_audio_data = f"data:audio/mp3;base64,{greeting_audio_base64}"
+        message_audio_data = f"data:audio/mp3;base64,{message_audio_base64}"
+        
+        # Return a response with the properly formatted audio data and text
         return AudioPreviewResponse(
             success=True,
-            greeting_audio_data=greeting_result.get("audio_data"),
-            message_audio_data=message_result.get("audio_data"),
+            greeting_audio_data_base64=greeting_audio_data,
+            message_audio_data_base64=message_audio_data,
             greeting_text=greeting_result.get("text"),
             message_text=message_result.get("text")
         )

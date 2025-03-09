@@ -11,6 +11,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.main import api_router
 from app.clients.supabase_client import SupabaseConnection
@@ -48,6 +49,11 @@ app = FastAPI(
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",  # Disable docs in production
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
 )
+
+# Mount static files directory
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 origins = ["flowon.ai",
            "https://flowon.ai",

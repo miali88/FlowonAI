@@ -26,7 +26,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Bilingual agent - English + Spanish'
+      'Multilingual agent'
     ]
   },
   scale: {
@@ -39,7 +39,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Bilingual agent - English + Spanish',
+      'Multilingual agent',
       'Appointment Links',
       'Call Transfers'
     ],
@@ -48,14 +48,14 @@ const PRICING_CONFIG = {
   growth: {
     name: 'Growth',
     description: 'The ultimate plan with all features for industry leaders',
-    monthlyPrice: '199',
-    yearlyPrice: '1990',
+    monthlyPrice: 'Contact Us',
+    yearlyPrice: 'Contact Us',
     features: [
-      'Up to 1000 minutes',
+      'Unlimited minutes',
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Bilingual agent - English + Spanish',
+      'Multilingual agent',
       'Appointment Links',
       'Call Transfers',
       'Live Transfers (Coming Soon)',
@@ -208,8 +208,14 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.25, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.growth.yearlyPrice : PRICING_CONFIG.growth.monthlyPrice}</span>
-                <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
+                {((isAnnual ? PRICING_CONFIG.growth.yearlyPrice : PRICING_CONFIG.growth.monthlyPrice) === 'Contact Us') ? (
+                  <span className="text-4xl font-bold leading-7">Contact Us</span>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.growth.yearlyPrice : PRICING_CONFIG.growth.monthlyPrice}</span>
+                    <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
+                  </>
+                )}
               </motion.div>
               <Button 
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"

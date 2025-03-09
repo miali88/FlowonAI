@@ -20,6 +20,7 @@ const nextConfig = {
               "connect-src *",
               "style-src * 'self' 'unsafe-inline'",
               "img-src * data: blob: 'self'",
+              "media-src * data: blob: 'self'",
               "default-src * 'self'",
             ].join("; "),
           },
