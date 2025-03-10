@@ -60,6 +60,8 @@ const COUNTRY_TO_LANGUAGE = {
   'SA': 'ar', // Saudi Arabia
   'AE': 'ar', // United Arab Emirates
   'IL': 'he', // Israel
+  'IQ': 'ar', // Iraq
+
   // Latin America
   'MX': 'es', // Mexico
   'BR': 'pt', // Brazil

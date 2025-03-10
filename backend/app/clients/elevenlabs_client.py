@@ -35,7 +35,7 @@ class ElevenLabsClient:
         self, 
         text: str, 
         voice_id: str,
-        model_id: Optional[str] = None,
+        model_id: Optional[str] = 'eleven_multilingual_v2',
         output_format: str = "mp3_44100_96",
         save_path: Optional[str] = None,
         return_bytes: bool = True
@@ -64,11 +64,8 @@ class ElevenLabsClient:
                     save_path = os.path.join(self.audio_dir, filename)
             
             # Get the audio from ElevenLabs
-            if model_id:
-                audio_generator = self.client.text_to_speech.convert(voice_id=voice_id, text=text, model_id=model_id, output_format=output_format)
-            else:
-                audio_generator = self.client.text_to_speech.convert(voice_id=voice_id, text=text, output_format=output_format)
-            
+            audio_generator = self.client.text_to_speech.convert(voice_id=voice_id, text=text, model_id=model_id, output_format=output_format)
+
             # Convert generator to bytes
             audio_bytes = b"".join(list(audio_generator))
             

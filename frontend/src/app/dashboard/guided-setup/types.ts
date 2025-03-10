@@ -50,4 +50,4 @@ export interface QuickSetupData {
   callNotifications: CallNotifications;
 }
 
-export type SetupStep = "quick-setup" | "talk-to-rosie" | "launch";
+export type SetupStep = "trial-plan" | "quick-setup" | "talk-to-rosie" | "launch";

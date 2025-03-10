@@ -1,41 +1,27 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
-from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List
-import base64
 
 from app.core.auth import get_current_user
-from app.services.guided_setup import (
-    QuickSetupData, 
+from backend.app.models.guided_setup import QuickSetupData
+from app.api.schemas.guided_setup import (
     RetrainAgentRequest, 
     RetrainAgentResponse,
+    OnboardingPreviewRequest,
+    AudioPreviewResponse,
+    TrialPlanRequest
+)
+from app.services.guided_setup import (
     get_rosie_phone_number,
     submit_quick_setup as submit_quick_setup_service,
     check_setup_status,
     mark_setup_complete,
     get_formatted_setup_data,
-    retrain_agent_service
+    retrain_agent_service,
+    generate_onboarding_preview_service,
+    set_trial_plan_service
 )
 
 router = APIRouter()
-
-class OnboardingPreviewRequest(BaseModel):
-    """Request model for generating onboarding preview audio with minimal business information."""
-    businessName: str
-    businessDescription: str
-    businessWebsite: Optional[str] = None
-    businessAddress: Optional[str] = None
-    businessPhone: Optional[str] = None
-    agentLanguage: Optional[str] = "en"  # Default language is English
-
-class AudioPreviewResponse(BaseModel):
-    """Response model for audio preview generation."""
-    success: bool
-    greeting_audio_data_base64: Optional[str] = None  # Base64 encoded audio data for greeting
-    message_audio_data_base64: Optional[str] = None   # Base64 encoded audio data for message
-    greeting_text: Optional[str] = None               # Text for greeting audio
-    message_text: Optional[str] = None                # Text for message audio
-    error: Optional[str] = None
 
 @router.post("/quick_setup")
 async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(get_current_user)):
@@ -175,48 +161,28 @@ async def generate_onboarding_preview(request: OnboardingPreviewRequest, current
     try:
         logging.info(f"Generating onboarding preview for user {current_user} with business name: {request.businessName}")
         
-        # Use the business information to generate preview audio files
-        # This is a simplified version that doesn't require the full guided setup data
-        from app.services.guided_setup import generate_greeting_preview, generate_message_preview
-        
-        # Generate greeting audio
-        greeting_result = await generate_greeting_preview(
+        # Call the service function to generate the preview
+        result = await generate_onboarding_preview_service(
             user_id=current_user,
             business_name=request.businessName,
             business_description=request.businessDescription,
             business_website=request.businessWebsite,
-            language=request.agentLanguage
+            agent_language=request.agentLanguage
         )
         
-        # Generate message-taking audio
-        message_result = await generate_message_preview(
-            user_id=current_user,
-            business_name=request.businessName,
-            language=request.agentLanguage
-        )
-        
-        if not greeting_result.get("success") or not message_result.get("success"):
-            error_message = greeting_result.get("error") or message_result.get("error") or "Failed to generate audio previews"
+        if not result.get("success"):
             return AudioPreviewResponse(
                 success=False,
-                error=error_message
+                error=result.get("error", "Failed to generate audio previews")
             )
         
-        # Convert binary audio data to base64 strings
-        greeting_audio_base64 = base64.b64encode(greeting_result.get("audio_data")).decode('utf-8')
-        message_audio_base64 = base64.b64encode(message_result.get("audio_data")).decode('utf-8')
-        
-        # Prepend the proper data URL prefix for audio data
-        greeting_audio_data = f"data:audio/mp3;base64,{greeting_audio_base64}"
-        message_audio_data = f"data:audio/mp3;base64,{message_audio_base64}"
-        
-        # Return a response with the properly formatted audio data and text
+        # Return a response with the data from the service function
         return AudioPreviewResponse(
             success=True,
-            greeting_audio_data_base64=greeting_audio_data,
-            message_audio_data_base64=message_audio_data,
-            greeting_text=greeting_result.get("text"),
-            message_text=message_result.get("text")
+            greeting_audio_data_base64=result.get("greeting_audio_data_base64"),
+            message_audio_data_base64=result.get("message_audio_data_base64"),
+            greeting_text=result.get("greeting_text"),
+            message_text=result.get("message_text")
         )
     except Exception as e:
         logging.error(f"Error in generate_onboarding_preview endpoint: {str(e)}")
@@ -228,3 +194,30 @@ async def options_onboarding_preview():
     Handle OPTIONS requests for CORS preflight.
     """
     return {}
+
+@router.post("/set_trial_plan")
+async def set_trial_plan(
+    request: TrialPlanRequest,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Set up a trial plan for a user.
+    This will mark the user as being in a trial and set the appropriate trial parameters.
+    """
+    try:
+        logging.info(f"Setting up trial plan '{request.trial_plan_type}' for user {current_user}")
+        
+        # Call the service function to set up the trial plan
+        result = await set_trial_plan_service(
+            user_id=current_user,
+            trial_plan_type=request.trial_plan_type
+        )
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to set up trial plan"))
+        
+        return result
+    
+    except Exception as e:
+        logging.error(f"Error setting up trial plan: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error setting up trial plan: {str(e)}")

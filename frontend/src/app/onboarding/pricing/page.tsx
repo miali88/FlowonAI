@@ -155,7 +155,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("professional")}
                 >
-                  <span>{selectedPlan === "professional" ? "Selected" : "Select Plan"}</span>
+                  <span>{selectedPlan === "professional" ? "Start 14 day free trial" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>
@@ -195,7 +195,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("scale")}
                 >
-                  <span>{selectedPlan === "scale" ? "Selected" : "Select Plan"}</span>
+                  <span>{selectedPlan === "scale" ? "Start 14 day free trial" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>
@@ -236,7 +236,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("growth")}
                 >
-                  <span>{selectedPlan === "growth" ? "Selected" : "Select Plan"}</span>
+                  <span>{selectedPlan === "growth" ? "Start 14 day free trial" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>

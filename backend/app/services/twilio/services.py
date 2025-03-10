@@ -336,3 +336,54 @@ def cleanup() -> None:
     # response.append(dial)
     # return Response(content=str(response), media_type='text/xml')
 
+async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
+    """Purchase a phone number from Twilio and associate it with the given user"""
+    try:
+        # Check if user is on trial
+        supabase = await get_supabase()
+        user_result = await supabase.table('users').select('is_trial').eq('id', user_id).execute()
+        
+        is_trial = False
+        if user_result.data and len(user_result.data) > 0:
+            is_trial = user_result.data[0].get('is_trial', False)
+        
+        logger.info(f"Purchasing number {phone_number} for user {user_id} (is_trial: {is_trial})")
+        
+        # Purchase number through Twilio
+        number = client.incoming_phone_numbers.create(
+            phone_number=phone_number,
+            voice_url='https://flowon.ai/api/v1/twilio/add_to_conference'
+        )
+        
+        logger.info(f"Successfully purchased number {phone_number} with SID {number.sid}")
+        
+        # Store in database with current timestamp and trial flag
+        from datetime import datetime
+        now = datetime.now().isoformat()
+        
+        db_result = await supabase.table('twilio_numbers').insert({
+            'phone_number': phone_number,
+            'owner_user_id': user_id,
+            'number_sid': number.sid,
+            'account_sid': number.account_sid,
+            'status': 'active',
+            'created_at': now,
+            'is_trial_number': is_trial
+        }).execute()
+        
+        if not db_result.data:
+            logger.error(f"Failed to store number {phone_number} in database")
+            raise ValueError("Failed to store number in database")
+        
+        logger.info(f"Successfully stored number {phone_number} in database")
+        
+        return {
+            'success': True,
+            'phone_number': phone_number,
+            'number_sid': number.sid,
+            'is_trial_number': is_trial
+        }
+    except Exception as e:
+        logger.error(f"Error purchasing number {phone_number}: {str(e)}")
+        raise
+

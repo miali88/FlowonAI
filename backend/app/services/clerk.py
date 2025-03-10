@@ -95,7 +95,14 @@ async def post_user(payload):
             'account_settings': {},
             'user_plan': 'free',
             'telephony_numbers': {},
-            'stripe_customer_id': stripe_customer.id  # Add Stripe customer ID to user record
+            'stripe_customer_id': stripe_customer.id,  # Add Stripe customer ID to user record
+            # Initialize trial fields
+            'is_trial': False,  # Will be set to True when user selects trial plan
+            'trial_start_date': None,
+            'trial_end_date': None,
+            'trial_plan_type': None,
+            'trial_minutes_used': 0,
+            'trial_minutes_total': 25  # Default trial minutes
         }
 
         data, count = await supabase.table('users').insert(user_record).execute()

@@ -1,59 +1,54 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
+from typing import Dict, List, Optional, Any
 
+# Pydantic models for guided setup
+class TrainingSource(BaseModel):
+    googleBusinessProfile: Optional[str] = None
+    businessWebsite: Optional[str] = None
 
-class TradeInSource(BaseModel):
-    id: str
-    name: str
-    enabled: bool
-    description: str
-
+class BusinessHours(BaseModel):
+    open: str
+    close: str
 
 class BusinessInformation(BaseModel):
-    business_name: str
-    industry: str
-    website: str
-    description: str
+    businessName: str
+    businessOverview: str
+    primaryBusinessAddress: str
+    primaryBusinessPhone: str
+    coreServices: List[str]
+    businessHours: Dict[str, BusinessHours]
 
+class CallerName(BaseModel):
+    required: bool
+    alwaysRequested: bool
 
-class MessageTrackingChannels(BaseModel):
-    email: bool = False
-    sms: bool = False
-    whatsapp: bool = False
+class CallerPhoneNumber(BaseModel):
+    required: bool
+    automaticallyCaptured: bool
 
+class SpecificQuestion(BaseModel):
+    question: str
+    required: bool
 
-class MessageTracking(BaseModel):
-    enabled: bool = False
-    channels: MessageTrackingChannels
+class MessageTaking(BaseModel):
+    callerName: CallerName
+    callerPhoneNumber: CallerPhoneNumber
+    specificQuestions: List[SpecificQuestion]
 
+class EmailNotifications(BaseModel):
+    enabled: bool
+    email: Optional[str] = None
 
-class CallNotification(BaseModel):
-    enabled: bool = False
-    notify_email: str = ""
-    notify_sms: str = ""
+class SmsNotifications(BaseModel):
+    enabled: bool
+    phoneNumber: Optional[str] = None
 
+class CallNotifications(BaseModel):
+    emailNotifications: EmailNotifications
+    smsNotifications: SmsNotifications
 
-class CompletedSteps(BaseModel):
-    trade_in_sources: bool = False
-    business_information: bool = False
-    message_tracking: bool = False
-    call_notifications: bool = False
-
-
-class GuidedSetupData(BaseModel):
-    user_id: str
-    trade_in_sources: List[TradeInSource] = []
-    business_information: Optional[BusinessInformation] = None
-    message_tracking: MessageTracking = Field(default_factory=MessageTracking)
-    call_notifications: CallNotification = Field(default_factory=CallNotification)
-    completed_steps: CompletedSteps = Field(default_factory=CompletedSteps)
-    current_step: Literal["trade_in_sources", "business_information", "message_tracking", "call_notifications", "completed"] = "trade_in_sources"
-
-
-class GuidedSetupUpdate(BaseModel):
-    trade_in_sources: Optional[List[TradeInSource]] = None
-    business_information: Optional[BusinessInformation] = None
-    message_tracking: Optional[MessageTracking] = None
-    call_notifications: Optional[CallNotification] = None
-    completed_steps: Optional[CompletedSteps] = None
-    current_step: Optional[Literal["trade_in_sources", "business_information", "message_tracking", "call_notifications", "completed"]] = None
+class QuickSetupData(BaseModel):
+    trainingSources: TrainingSource
+    businessInformation: BusinessInformation
+    messageTaking: MessageTaking
+    callNotifications: CallNotifications
