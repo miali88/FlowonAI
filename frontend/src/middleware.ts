@@ -1,8 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
-import { NextRequest } from 'next/server';
-import { locales, defaultLocale, localePrefix } from './app/i18n/navigation';
+import { locales, defaultLocale, localePrefix } from './app/i18n/navigation.js';
 
 // Define protected routes
 const isProtectedRoute = createRouteMatcher([

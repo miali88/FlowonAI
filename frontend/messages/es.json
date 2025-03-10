@@ -22,5 +22,156 @@
     "callForwarding": "Desvío de llamadas",
     "connectingFrom": "Conectando desde",
     "allRightsReserved": "Todos los derechos reservados"
+  },
+  "painPoints": {
+    "sectionTitle": "Por qué tu negocio necesita Flowon",
+    "sectionSubtitle": "Resuelve tus desafíos de respuesta telefónica con un asistente de IA que nunca duerme",
+    "missedOpportunities": {
+      "title": "Oportunidades perdidas",
+      "problem": "Nunca pierdas una oportunidad porque no puedes contestar el teléfono.",
+      "solution": "Flowon está ahí siempre que no estés disponible, asegurando que cada llamada sea respondida profesionalmente."
+    },
+    "expensiveServices": {
+      "title": "Servicios costosos",
+      "problem": "Los servicios tradicionales de contestador son caros y a menudo impersonales.",
+      "solution": "Flowon es 10 veces más económico que un servicio de contestador mientras proporciona una experiencia más personalizada."
+    },
+    "noVoicemail": {
+      "title": "Adiós al buzón de voz",
+      "problem": "Nadie deja mensajes de voz hoy en día, lo que lleva a comunicaciones perdidas.",
+      "solution": "Todos hablan con Flowon. Contestará el teléfono, tomará un mensaje para ti y te lo enviará."
+    }
+  },
+  "howItWorks": {
+    "sectionTitle": "Cómo funciona Flowon",
+    "step1": {
+      "title": "Entrena a Flowon sobre tu negocio",
+      "description": "Usa tu perfil de Google Business, dirección web o información básica de tu negocio para comenzar."
+    },
+    "step2": {
+      "title": "Flowon responde tus llamadas",
+      "description": "Cuando no estás disponible, Flowon atiende la llamada e interactúa con tus clientes de manera natural y conversacional."
+    },
+    "step3": {
+      "title": "Calificación de leads",
+      "description": "Flowon califica a los potenciales clientes haciendo preguntas relevantes basadas en las necesidades de tu negocio."
+    },
+    "step4": {
+      "title": "Notificaciones instantáneas",
+      "description": "Recibes resúmenes detallados de cada llamada, con información importante y elementos de acción destacados."
+    }
+  },
+  "ctaSection": {
+    "title": "Haz que tus clientes amen interactuar con tu negocio.",
+    "buttonText": "Comenzar ahora"
+  },
+  "featuresAndBenefits": {
+    "sectionTitle": "Características y Beneficios",
+    "feature1": {
+      "title": "IA similar a humanos para contestar tu teléfono",
+      "item1": "Conversación natural similar a humanos",
+      "item2": "Respuestas inteligentes a consultas de clientes",
+      "item3": "Representación profesional de tu negocio"
+    },
+    "feature2": {
+      "title": "Recibe notificaciones de inmediato",
+      "item1": "Notificaciones instantáneas por correo electrónico",
+      "item2": "Alertas SMS para nuevas llamadas",
+      "item3": "Toma de decisiones rápida para seguimientos"
+    },
+    "feature3": {
+      "title": "Diseñado para pequeñas empresas",
+      "item1": "No se requieren habilidades técnicas",
+      "item2": "Precios asequibles",
+      "item3": "Escala a medida que tu negocio crece"
+    }
+  },
+  "valueProposition": {
+    "sectionTitle": "Por qué Flowon es adecuado para tu pequeña empresa",
+    "subtitle": "El poder de la última tecnología de IA, trabajando para ti 24/7",
+    "card1": {
+      "title": "No más colgadas en el buzón de voz",
+      "description": "Nadie deja mensajes de voz hoy en día. Pero todos hablan con Flowon. Contestará el teléfono, tomará un mensaje para ti y te lo enviará."
+    },
+    "card2": {
+      "title": "10 veces más barato que un servicio de contestador",
+      "description": "No hay necesidad de gastar mucho dinero en un servicio de contestador externo. Flowon puede hacerlo por ti por una fracción del costo."
+    },
+    "card3": {
+      "title": "Representación profesional de voz",
+      "description": "Flowon representa a tu negocio profesionalmente en cada llamada, asegurando que los que llaman reciban un excelente servicio incluso cuando no estás disponible."
+    }
+  },
+  "voiceSocialProof": {
+    "sectionTitle": "Confiado por negocios como el tuyo",
+    "subtitle": "Únete a estos negocios en transformar cómo manejas las llamadas de clientes",
+    "testimonial1": {
+      "quote": "Flowon ha sido un cambio de juego para nuestra pequeña práctica. ¡Ya no perdemos llamadas importantes!",
+      "author": "Dra. Sara Jiménez",
+      "company": "Clínica Dental Bienestar"
+    },
+    "testimonial2": {
+      "quote": "A nuestros clientes les encanta hablar con Flowon. Es profesional, eficiente y captura toda la información que necesitamos.",
+      "author": "Miguel Chávez",
+      "company": "Inmobiliaria Premier"
+    }
+  },
+  "pricing": {
+    "title": "Precios simples y transparentes",
+    "subtitle": "Elige el plan adecuado para tu negocio",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "yearlyDiscount": "(Ahorra 20%)",
+    "professional": {
+      "name": "Profesional",
+      "description": "Perfecto para pequeñas empresas que comienzan con la automatización",
+      "monthlyPrice": "49",
+      "yearlyPrice": "490",
+      "features": [
+        "Hasta 250 minutos",
+        "Luego $0.25 por minuto",
+        "Toma de mensajes con preguntas personalizadas",
+        "Detección inteligente de spam",
+        "Agente bilingüe - Inglés + Español"
+      ]
+    },
+    "scale": {
+      "name": "Escala",
+      "description": "Para negocios en crecimiento con mayor volumen de llamadas",
+      "monthlyPrice": "99",
+      "yearlyPrice": "990",
+      "features": [
+        "Hasta 600 minutos",
+        "Luego $0.20 por minuto",
+        "Todo en Profesional",
+        "Lógica de enrutamiento de llamadas personalizada",
+        "Soporte prioritario"
+      ]
+    },
+    "enterprise": {
+      "name": "Empresa",
+      "description": "Para negocios establecidos con necesidades complejas",
+      "monthlyPrice": "249",
+      "yearlyPrice": "2490",
+      "features": [
+        "Hasta 2000 minutos",
+        "Luego $0.15 por minuto",
+        "Todo en Escala",
+        "Gerente de cuenta dedicado",
+        "Integraciones personalizadas",
+        "Soporte para múltiples ubicaciones"
+      ]
+    },
+    "currentPlan": "Plan actual",
+    "popular": "Popular",
+    "getCurrentPlan": "Obtener este plan"
+  },
+  "guidedSetupSection": {
+    "sectionTitle": "Configura en minutos, sin necesidad de equipo de TI",
+    "subtitle": "Nuestro proceso de configuración guiada facilita comenzar",
+    "buttonText": "Ver cómo funciona"
+  },
+  "carouselTestimonials": {
+    "title": "Algunos de nuestros clientes satisfechos..."
   }
 } 

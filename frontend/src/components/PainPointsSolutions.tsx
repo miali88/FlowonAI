@@ -8,6 +8,7 @@ import {
   Clock,
 } from "lucide-react";
 import { SparklesCore } from "@/components/ui/sparkles";
+import { useTranslations } from 'next-intl';
 
 interface PainPointCardProps {
   icon: React.ReactNode;
@@ -42,24 +43,26 @@ const PainPointCard = ({ icon, title, problem, solution }: PainPointCardProps) =
 );
 
 export function PainPointsSolutions() {
+  const t = useTranslations('painPoints');
+  
   const painPoints = [
     {
       icon: <PhoneOff className="h-5 w-5 text-primary" />,
-      title: "Missed Opportunities",
-      problem: "Never miss an opportunity because you can't answer the phone.",
-      solution: "Flowon is there anytime you're not available, ensuring every call is answered professionally."
+      title: t('missedOpportunities.title'),
+      problem: t('missedOpportunities.problem'),
+      solution: t('missedOpportunities.solution')
     },
     {
       icon: <DollarSign className="h-5 w-5 text-primary" />,
-      title: "Expensive Services",
-      problem: "Traditional answering services are expensive and often impersonal.",
-      solution: "Flowon is 10x cheaper than an answering service while providing a more personalized experience."
+      title: t('expensiveServices.title'),
+      problem: t('expensiveServices.problem'),
+      solution: t('expensiveServices.solution')
     },
     {
       icon: <Clock className="h-5 w-5 text-primary" />,
-      title: "No More Voicemail",
-      problem: "No one leaves a voicemail anymore, leading to lost communication.",
-      solution: "Everyone talks to Flowon. It will answer the phone, take a message for you, and send it your way."
+      title: t('noVoicemail.title'),
+      problem: t('noVoicemail.problem'),
+      solution: t('noVoicemail.solution')
     }
   ];
   
@@ -81,10 +84,10 @@ export function PainPointsSolutions() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70">
-            Why Your Business Needs Flowon
+            {t('sectionTitle')}
           </h2>
           <p className="max-w-[85%] md:max-w-[65%] text-muted-foreground text-lg md:text-xl">
-            Solve your phone answering challenges with an AI assistant that never sleeps
+            {t('sectionSubtitle')}
           </p>
         </div>
 
