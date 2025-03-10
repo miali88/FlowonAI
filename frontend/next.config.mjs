@@ -1,4 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
+// Import next-intl as a default import
+import nextIntl from "next-intl/plugin";
+
+// Create the next-intl plugin with the standard location
+const withNextIntl = nextIntl();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -87,17 +92,5 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
-
-// Optional: Include Sentry configuration if needed
-// export default withSentryConfig(nextConfig, {
-//   org: process.env.SENTRY_ORG,
-//   project: process.env.SENTRY_PROJECT,
-//   silent: !process.env.CI,
-//   widenClientFileUpload: true,
-//   reactComponentAnnotation: { enabled: true },
-//   tunnelRoute: "/monitoring",
-//   hideSourceMaps: true,
-//   disableLogger: true,
-//   automaticVercelMonitors: true,
-// });
+// Apply the next-intl plugin
+export default withNextIntl(nextConfig); 

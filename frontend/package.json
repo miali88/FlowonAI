@@ -70,6 +70,7 @@
     "lucide-react": "^0.438.0",
     "mermaid": "^11.4.1",
     "next": "^14.2.18",
+    "next-intl": "^3.26.5",
     "next-themes": "^0.3.0",
     "posthog-js": "^1.203.2",
     "process": "^0.11.10",

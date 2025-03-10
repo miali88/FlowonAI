@@ -1,0 +1,177 @@
+{
+  "home": {
+    "title": "AI phone answering for your business",
+    "description": "Flowon answers calls when you cannot. Ready to qualify new leads, provide answers, take messages, set appointments, and notifies you all the while.",
+    "cta": "Sign up today for 20 minutes free",
+    "noCreditCard": "No credit card required",
+    "neverMissCall": "Never miss another call or opportunity",
+    "neverMissCallDesc": "Flowon is there anytime you're not available. You'll never miss another opportunity just because you can't answer the phone.",
+    "smartConversations": "Smart, natural conversations",
+    "smartConversationsDesc": "Our AI assistant engages with callers naturally, gathering information and handling basic tasks just like a human receptionist would."
+  },
+  "header": {
+    "logoAlt": "Flowon AI Logo",
+    "siteTitle": "Flowon AI"
+  },
+  "footer": {
+    "logoAlt": "Flowon AI Logo",
+    "legalTitle": "Legal",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "resourcesTitle": "Resources",
+    "callForwarding": "Call Forwarding",
+    "connectingFrom": "Connecting from",
+    "allRightsReserved": "All Rights Reserved"
+  },
+  "painPoints": {
+    "sectionTitle": "Why Your Business Needs Flowon",
+    "sectionSubtitle": "Solve your phone answering challenges with an AI assistant that never sleeps",
+    "missedOpportunities": {
+      "title": "Missed Opportunities",
+      "problem": "Never miss an opportunity because you can't answer the phone.",
+      "solution": "Flowon is there anytime you're not available, ensuring every call is answered professionally."
+    },
+    "expensiveServices": {
+      "title": "Expensive Services",
+      "problem": "Traditional answering services are expensive and often impersonal.",
+      "solution": "Flowon is 10x cheaper than an answering service while providing a more personalized experience."
+    },
+    "noVoicemail": {
+      "title": "No More Voicemail",
+      "problem": "No one leaves a voicemail anymore, leading to lost communication.",
+      "solution": "Everyone talks to Flowon. It will answer the phone, take a message for you, and send it your way."
+    }
+  },
+  "howItWorks": {
+    "sectionTitle": "How Flowon Works",
+    "step1": {
+      "title": "Train Flowon on your business",
+      "description": "Use your Google Business profile, website address or simple business information to get started."
+    },
+    "step2": {
+      "title": "Flowon answers your calls",
+      "description": "When you're unavailable, Flowon picks up the call and engages with your callers in a natural, conversational way."
+    },
+    "step3": {
+      "title": "Lead qualification",
+      "description": "Flowon qualifies potential leads by asking relevant questions based on your business needs."
+    },
+    "step4": {
+      "title": "Instant notifications",
+      "description": "You receive detailed summaries of each call, with important information and action items highlighted."
+    }
+  },
+  "ctaSection": {
+    "title": "Make customers love interacting with your business.",
+    "buttonText": "Get Started"
+  },
+  "featuresAndBenefits": {
+    "sectionTitle": "Features & Benefits",
+    "feature1": {
+      "title": "Amazing human-like AI to answer your phone",
+      "item1": "Natural, human-like conversation",
+      "item2": "Smart responses to customer inquiries",
+      "item3": "Professional representation of your business"
+    },
+    "feature2": {
+      "title": "Get notified right away",
+      "item1": "Instant email notifications",
+      "item2": "SMS text alerts for new calls",
+      "item3": "Quick decision making for follow-ups"
+    },
+    "feature3": {
+      "title": "Designed for small businesses",
+      "item1": "No tech skills required",
+      "item2": "Affordable pricing",
+      "item3": "Scales as your business grows"
+    }
+  },
+  "valueProposition": {
+    "sectionTitle": "Why Flowon is right for your small business",
+    "subtitle": "The power of the latest AI tech, working for you 24/7",
+    "card1": {
+      "title": "No more hangups on voicemail",
+      "description": "No one leaves a voicemail anymore. But everyone talks to Flowon. It will answer the phone, take a message for you, and send it your way."
+    },
+    "card2": {
+      "title": "10x cheaper than an answering service",
+      "description": "There's no need to spend a bunch of money on an outsourced answering service. Flowon can do it for you for a fraction of the cost."
+    },
+    "card3": {
+      "title": "Professional voice representation",
+      "description": "Flowon represents your business professionally on every call, ensuring callers receive excellent service even when you're unavailable."
+    }
+  },
+  "voiceSocialProof": {
+    "sectionTitle": "Trusted by businesses like yours",
+    "subtitle": "Join these businesses in transforming how you handle customer calls",
+    "testimonial1": {
+      "quote": "Flowon has been a game-changer for our small practice. We never miss important calls anymore!",
+      "author": "Dr. Sarah Johnson",
+      "company": "Wellness Dental Clinic"
+    },
+    "testimonial2": {
+      "quote": "Our clients love talking to Flowon. It's professional, efficient, and captures all the information we need.",
+      "author": "Michael Chen",
+      "company": "Premier Real Estate"
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that's right for your business",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "yearlyDiscount": "(Save 20%)",
+    "professional": {
+      "name": "Professional",
+      "description": "Perfect for small businesses starting with automation",
+      "monthlyPrice": "49",
+      "yearlyPrice": "490",
+      "features": [
+        "Up to 250 minutes",
+        "Then $0.25 per minute",
+        "Message taking with custom questions",
+        "Smart spam detection",
+        "Bilingual agent - English + Spanish"
+      ]
+    },
+    "scale": {
+      "name": "Scale",
+      "description": "For growing businesses with higher call volume",
+      "monthlyPrice": "99",
+      "yearlyPrice": "990",
+      "features": [
+        "Up to 600 minutes",
+        "Then $0.20 per minute",
+        "Everything in Professional",
+        "Custom call routing logic",
+        "Priority support"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "For established businesses with complex needs",
+      "monthlyPrice": "249",
+      "yearlyPrice": "2490",
+      "features": [
+        "Up to 2000 minutes",
+        "Then $0.15 per minute",
+        "Everything in Scale",
+        "Dedicated account manager",
+        "Custom integrations",
+        "Multi-location support"
+      ]
+    },
+    "currentPlan": "Current plan",
+    "popular": "Popular",
+    "getCurrentPlan": "Get this plan"
+  },
+  "guidedSetupSection": {
+    "sectionTitle": "Set up in minutes, no IT team needed",
+    "subtitle": "Our guided setup process makes it easy to get started",
+    "buttonText": "See how it works"
+  },
+  "carouselTestimonials": {
+    "title": "Some of our happy clients..."
+  }
+} 

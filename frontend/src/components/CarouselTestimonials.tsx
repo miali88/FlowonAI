@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image";
+import { useTranslations } from 'next-intl';
 
 // Array of provided image URLs
 const testimonialImages = [
@@ -23,11 +24,13 @@ const testimonialImages = [
 
 // CSS-based infinite marquee scroll component
 export function CarouselTestimonials() {
+  const t = useTranslations('carouselTestimonials');
+  
   return (
     <section className="w-full py-12 overflow-hidden bg-muted/30">
       <div className="container mb-6">
         <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl text-center">
-          Some of our happy clients...
+          {t('title')}
         </h2>
       </div>
 

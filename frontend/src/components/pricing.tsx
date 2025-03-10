@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import React from "react";
+import { useTranslations } from 'next-intl';
 
 interface PricingProps {
   currentPlan?: string;
@@ -31,7 +32,7 @@ const PRICING_CONFIG = {
   },
   scale: {
     name: 'Scale',
-    description: 'For growing businesses with moderate call volume',
+    description: 'For growing businesses with higher call volume',
     monthlyPrice: '99',
     yearlyPrice: '990',
     features: [
@@ -68,21 +69,20 @@ const PRICING_CONFIG = {
 // Memoized check icon component
 const FeatureCheck = memo(function FeatureCheck() {
   return (
-    <Check
-      size={16}
-      className="flex items-center gap-3 text-xs font-medium size-5 rounded-full bg-green-400 p-1"
-    />
+    <div className="flex-shrink-0">
+      <Check className="h-5 w-5 text-green-500" />
+    </div>
   );
 });
 
-// Memoized feature list component
+// Feature list component
 const FeatureList = memo(function FeatureList({ features }: { features: string[] }) {
   return (
-    <ul className="flex flex-col gap-2 font-normal">
-      {features.map((feature) => (
-        <li key={feature} className="flex items-center gap-3 text-xs font-medium">
+    <ul className="mt-6 space-y-4">
+      {features.map((feature, index) => (
+        <li key={index} className="flex items-start">
           <FeatureCheck />
-          <span className="flex">{feature}</span>
+          <span className="ml-3 text-sm text-muted-foreground">{feature}</span>
         </li>
       ))}
     </ul>
@@ -91,6 +91,7 @@ const FeatureList = memo(function FeatureList({ features }: { features: string[]
 
 export function Pricing({ currentPlan }: PricingProps) {
   const [isAnnual, setIsAnnual] = useState(false);
+  const t = useTranslations('pricing');
   
   // Memoize handlers
   const handlePlanClick = useCallback((planName: string) => {
@@ -99,21 +100,19 @@ export function Pricing({ currentPlan }: PricingProps) {
   }, [currentPlan]);
 
   const getButtonText = useCallback((planName: string) => {
-    if (currentPlan?.toLowerCase() === planName.toLowerCase()) return "Manage Plan";
-    return planName.toLowerCase() === "growth" ? "Subscribe" : "Subscribe";
-  }, [currentPlan]);
+    if (currentPlan?.toLowerCase() === planName.toLowerCase()) return t('currentPlan');
+    return t('getCurrentPlan');
+  }, [currentPlan, t]);
 
   return (
     <section className="mx-auto flex max-w-screen-xl flex-col gap-8 px-4 py-14 md:px-8">
       <div className="mx-auto max-w-screen-xl px-4 md:px-8">
         <div className="mx-auto max-w-5xl text-center">
-          <h4 className="text-xl font-bold tracking-tight">Pricing</h4>
-          {/* <h2 className="text-5xl font-bold tracking-tight sm:text-6xl font-heading">
-            Bring Extreme Efficiency To Your Business.
-          </h2> */}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight sm:text-6xl font-heading">
+            {t('title')}
+          </h2>
           <p className="mt-6 text-xl leading-8">
-            Packed with the best features for engaging your
-            audience, creating customer loyalty, and automating workflows.
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex w-full items-center justify-center space-x-2 mx-2 my-6">
@@ -122,18 +121,21 @@ export function Pricing({ currentPlan }: PricingProps) {
             checked={isAnnual}
             onCheckedChange={(checked) => setIsAnnual(checked)}
           />
-          <span>Annual</span>
-          <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
-            Get 2 months free ✨
-          </span>
+          <span>{isAnnual ? t('yearly') : t('monthly')}</span>
+          {isAnnual && (
+            <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
+              {t('yearlyDiscount')}
+            </span>
+          )}
         </div>
         <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-3 flex-col gap-4 place-items-center">
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
+            <PricingTierLabel currentPlan={currentPlan} tierName="professional" />
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Professional</h2>
+                <h2 className="text-base font-semibold leading-7">{t('professional.name')}</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  Perfect for small businesses starting with automation
+                  {t('professional.description')}
                 </p>
               </div>
               <motion.div
@@ -143,31 +145,28 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.professional.yearlyPrice : PRICING_CONFIG.professional.monthlyPrice}</span>
+                <span className="text-4xl font-bold leading-7">${isAnnual ? t('professional.yearlyPrice') : t('professional.monthlyPrice')}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
               <Button 
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
+                variant="outline"
                 onClick={() => handlePlanClick("professional")}
               >
-                <span>{getButtonText("professional")}</span>
-                <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Subscribe
-                </span>
+                {getButtonText("professional")}
               </Button>
-              <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.professional.features} />
+              <Separator className="my-4" />
+              <FeatureList features={t.raw('professional.features') as string[]} />
             </CardContent>
           </Card>
-          <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border bg-primary/5 border-primary">
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground rounded-full text-sm font-medium">
-              Most Popular
-            </div>
-            <CardContent className="flex flex-col gap-8 p-4 pt-12">
+
+          <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border border-primary">
+            <PricingTierLabel currentPlan={currentPlan} tierName="scale" />
+            <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Scale</h2>
+                <h2 className="text-base font-semibold leading-7">{t('scale.name')}</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  For growing businesses with moderate call volume
+                  {t('scale.description')}
                 </p>
               </div>
               <motion.div
@@ -177,35 +176,34 @@ export function Pricing({ currentPlan }: PricingProps) {
                 transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
-                <span className="text-4xl font-bold leading-7">${isAnnual ? PRICING_CONFIG.scale.yearlyPrice : PRICING_CONFIG.scale.monthlyPrice}</span>
+                <span className="text-4xl font-bold leading-7">${isAnnual ? t('scale.yearlyPrice') : t('scale.monthlyPrice')}</span>
                 <span className="text-xs mb-1">/{isAnnual ? 'year' : 'month'}</span>
               </motion.div>
-              <Button 
+              <Button
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                 onClick={() => handlePlanClick("scale")}
               >
-                <span>{getButtonText("scale")}</span>
-                <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Subscribe
-                </span>
+                {getButtonText("scale")}
               </Button>
-              <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.scale.features} />
+              <Separator className="my-4" />
+              <FeatureList features={t.raw('scale.features') as string[]} />
             </CardContent>
           </Card>
+
           <Card className="relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border">
+            <PricingTierLabel currentPlan={currentPlan} tierName="enterprise" />
             <CardContent className="flex flex-col gap-8 p-4">
               <div className="flex flex-col pl-4">
-                <h2 className="text-base font-semibold leading-7">Growth</h2>
+                <h2 className="text-base font-semibold leading-7">{t('enterprise.name')}</h2>
                 <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
-                  The ultimate plan with all features for industry leaders
+                  {t('enterprise.description')}
                 </p>
               </div>
               <motion.div
                 animate="animate"
                 initial="initial"
                 variants={{ animate: { y: 0, opacity: 1 }, initial: { y: 12, opacity: 0 } }}
-                transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.25, duration: 0.4 }}
+                transition={{ ease: [0.21, 0.47, 0.32, 0.98], delay: 0.1, duration: 0.4 }}
                 className="flex flex-row gap-1 justify-start items-end"
               >
                 {((isAnnual ? PRICING_CONFIG.growth.yearlyPrice : PRICING_CONFIG.growth.monthlyPrice) === 'Contact Us') ? (
@@ -217,17 +215,15 @@ export function Pricing({ currentPlan }: PricingProps) {
                   </>
                 )}
               </motion.div>
-              <Button 
+              <Button
                 className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
-                onClick={() => handlePlanClick("growth")}
+                variant="outline"
+                onClick={() => handlePlanClick("enterprise")}
               >
-                <span>{getButtonText("growth")}</span>
-                <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
-                  Subscribe
-                </span>
+                {getButtonText("enterprise")}
               </Button>
-              <Separator className="m-0 h-px w-full border-none bg-gradient-to-r from-neutral-200/0 via-neutral-500/30 to-neutral-200/0" />
-              <FeatureList features={PRICING_CONFIG.growth.features} />
+              <Separator className="my-4" />
+              <FeatureList features={t.raw('enterprise.features') as string[]} />
             </CardContent>
           </Card>
         </div>

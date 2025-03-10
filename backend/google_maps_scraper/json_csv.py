@@ -44,9 +44,10 @@ def clean_data(data):
                         cleaned_value = re.sub(r'[^\+\d\s\-]', '', cleaned_value)
                         cleaned_value = cleaned_value.strip()
                     
-                    # Wrap the cleaned phone number in double quotes
-                    cleaned_value = '""' + cleaned_value + '""'
-                    logger.debug(f"Phone wrapped in quotes: '{cleaned_value}'")
+                    # Add a quotation mark at the beginning of the phone number
+                    # The CSV writer will handle the closing quote automatically
+                    cleaned_value = f'"{cleaned_value}'
+                    logger.debug(f"Cleaned phone number with added quote: {cleaned_value}")
                 # Special handling for address
                 elif key == 'address':
                     # Remove control characters and normalize whitespace
@@ -162,25 +163,86 @@ def process_directory(input_dir, output_dir=None, pattern="*.json"):
     
     return csv_files
 
+def find_latest_json_file(directory, pattern="*.json"):
+    """
+    Find the most recently modified JSON file in a directory
+    
+    Args:
+        directory (str): Directory containing JSON files
+        pattern (str, optional): Glob pattern for JSON files
+    
+    Returns:
+        str: Path to the most recent JSON file, or None if no files found
+    """
+    logger.info(f"Finding latest JSON file in {directory} with pattern {pattern}")
+    
+    json_files = glob.glob(os.path.join(directory, pattern))
+    
+    if not json_files:
+        logger.warning(f"No JSON files found in {directory}")
+        return None
+    
+    # Find the most recently modified file
+    latest_file = max(json_files, key=os.path.getmtime)
+    logger.info(f"Found latest JSON file: {latest_file}")
+    
+    return latest_file
+
 def main():
-    # Hardcoded parameters - replace with your actual paths
-    # Use relative paths from the project root
-    input_path = "backend/data/roofers/roofers_data_20250226_051821.json"  # Processing just one file to ensure it works
-    output_dir = "backend/data/roofers"  # Same directory for simplicity
+    # Get the project root directory
+    # Assuming the script is in backend/google_maps_scraper/json_csv.py
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, "../.."))
     
-    logger.info(f"Using hardcoded parameters - Input: {input_path}, Output: {output_dir}")
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert JSON files to CSV format')
+    parser.add_argument('--input', help='Path to JSON file or directory (relative to project root)')
+    parser.add_argument('--output', help='Output directory (relative to project root)')
+    parser.add_argument('--latest', action='store_true', help='Use latest JSON file in input directory')
+    args = parser.parse_args()
     
-    if os.path.isdir(input_path):
-        logger.info(f"Input is a directory: {input_path}")
-        csv_files = process_directory(input_path, output_dir)
-        logger.info(f"Created {len(csv_files)} CSV files")
-    elif os.path.isfile(input_path):
-        logger.info(f"Input is a file: {input_path}")
-        csv_file = json_to_csv(input_path, output_dir)
+    # Set up default paths if not provided
+    if args.input:
+        input_path = args.input
+    else:
+        input_path = "backend/data/roofers"  # Default directory
+    
+    if args.output:
+        output_dir = args.output
+    else:
+        output_dir = "backend/data/roofers"  # Same directory for simplicity
+    
+    # Convert to absolute paths
+    input_path_abs = os.path.join(project_root, input_path)
+    output_dir_abs = os.path.join(project_root, output_dir)
+    
+    logger.info(f"Project root: {project_root}")
+    
+    if os.path.isdir(input_path_abs):
+        logger.info(f"Input is a directory: {input_path_abs}")
+        
+        if args.latest:
+            # Find and process only the latest JSON file
+            latest_file = find_latest_json_file(input_path_abs)
+            if latest_file:
+                logger.info(f"Processing latest file: {latest_file}")
+                csv_file = json_to_csv(latest_file, output_dir_abs)
+                logger.info(f"Created CSV file: {csv_file}")
+            else:
+                logger.error(f"No JSON files found in {input_path_abs}")
+                raise FileNotFoundError(f"No JSON files found in {input_path_abs}")
+        else:
+            # Process all JSON files in the directory
+            csv_files = process_directory(input_path_abs, output_dir_abs)
+            logger.info(f"Created {len(csv_files)} CSV files")
+            
+    elif os.path.isfile(input_path_abs):
+        logger.info(f"Input is a file: {input_path_abs}")
+        csv_file = json_to_csv(input_path_abs, output_dir_abs)
         logger.info(f"Created CSV file: {csv_file}")
     else:
-        logger.error(f"Input does not exist: {input_path}")
-        raise FileNotFoundError(f"Input not found: {input_path}")
+        logger.error(f"Input does not exist: {input_path_abs}")
+        raise FileNotFoundError(f"Input not found: {input_path_abs}")
 
 if __name__ == "__main__":
     start_time = datetime.now()

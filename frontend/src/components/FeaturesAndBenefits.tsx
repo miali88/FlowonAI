@@ -4,24 +4,27 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   MessageSquareText, 
-  Bell,
-  FileEdit,
-  FileText
+  Bell, 
+  Building2 
 } from "lucide-react";
-import { GridPattern } from "@/components/ui/animated-grid-pattern";
+import { useTranslations } from 'next-intl';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
-  features: string[];
+  itemOne: string;
+  itemTwo: string;
+  itemThree: string;
 }
 
-const FeatureCard = ({ icon, title, features }: FeatureCardProps) => (
-  <Card className="relative overflow-hidden bg-black/10 backdrop-blur-sm border border-white/10 h-full">
-    <div className="absolute inset-0 -z-10">
-      <GridPattern 
-        duration={25000}
-        className="opacity-30"
+const FeatureCard = ({ icon, title, itemOne, itemTwo, itemThree }: FeatureCardProps) => (
+  <Card className="relative overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 group hover:border-primary/50 transition-all duration-300">
+    <div className="absolute -inset-px bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500">
+    </div>
+    <div className="absolute top-0 left-0 right-0 h-[7rem] bg-gradient-to-br from-primary/30 via-primary/10 to-transparent opacity-30 group-hover:opacity-50 transition-all duration-300">
+      <div 
+        className="absolute inset-0 bg-grid-white/5 opacity-30"
+        style={{ maskImage: 'linear-gradient(to bottom, white, transparent)' }}
       />
     </div>
     <CardContent className="p-6 flex flex-col h-full">
@@ -30,78 +33,57 @@ const FeatureCard = ({ icon, title, features }: FeatureCardProps) => (
       </div>
       <h3 className="text-xl font-semibold mb-3">{title}</h3>
       <ul className="space-y-2 mt-auto">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <span className="text-primary mr-2 text-lg">•</span>
-            <span className="text-muted-foreground text-sm">{feature}</span>
-          </li>
-        ))}
+        <li className="flex items-start">
+          <span className="text-primary mr-2 text-lg">•</span>
+          <span className="text-muted-foreground text-sm">{itemOne}</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-primary mr-2 text-lg">•</span>
+          <span className="text-muted-foreground text-sm">{itemTwo}</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-primary mr-2 text-lg">•</span>
+          <span className="text-muted-foreground text-sm">{itemThree}</span>
+        </li>
       </ul>
     </CardContent>
   </Card>
 );
 
 export function FeaturesAndBenefits() {
-  const features = [
-    {
-      icon: <MessageSquareText className="h-6 w-6 text-primary" />,
-      title: "Amazing human-like AI to answer your phone",
-      features: [
-        "Natural, human-like conversation",
-        "Smart responses to customer inquiries",
-        "Professional representation of your business"
-      ]
-    },
-    {
-      icon: <Bell className="h-6 w-6 text-primary" />,
-      title: "Get notified right away",
-      features: [
-        "Instant email notifications",
-        "SMS text alerts for new calls",
-        "Quick decision making for follow-ups"
-      ]
-    },
-    {
-      icon: <FileEdit className="h-6 w-6 text-primary" />,
-      title: "Custom message taking",
-      features: [
-        "Collect information specific to your business",
-        "Capture essential customer details",
-        "Structured message format for easy review"
-      ]
-    },
-    {
-      icon: <FileText className="h-6 w-6 text-primary" />,
-      title: "Recordings, transcripts, call management",
-      features: [
-        "Full call recordings saved",
-        "Complete conversation transcripts",
-        "Organized call management in your inbox"
-      ]
-    }
-  ];
+  const t = useTranslations('featuresAndBenefits');
   
   return (
-    <section className="w-full py-12 md:py-24 bg-gradient-to-b from-background to-background/80">
+    <section className="w-full py-12 md:py-24 bg-gradient-to-b from-background/50 to-background">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70">
-            The power of the latest AI tech, working for you 24/7
+            {t('sectionTitle')}
           </h2>
-          <p className="max-w-[85%] md:max-w-[65%] text-muted-foreground text-lg md:text-xl">
-            Powerful features that make Flowon the perfect answering service for your business
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-          {features.map((feature, index) => (
-            <FeatureCard 
-              key={index}
-              icon={feature.icon}
-              title={feature.title}
-              features={feature.features}
-            />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <FeatureCard 
+            icon={<MessageSquareText className="h-6 w-6 text-primary" />}
+            title={t('feature1.title')}
+            itemOne={t('feature1.item1')}
+            itemTwo={t('feature1.item2')}
+            itemThree={t('feature1.item3')}
+          />
+          <FeatureCard 
+            icon={<Bell className="h-6 w-6 text-primary" />}
+            title={t('feature2.title')}
+            itemOne={t('feature2.item1')}
+            itemTwo={t('feature2.item2')}
+            itemThree={t('feature2.item3')}
+          />
+          <FeatureCard 
+            icon={<Building2 className="h-6 w-6 text-primary" />}
+            title={t('feature3.title')}
+            itemOne={t('feature3.item1')}
+            itemTwo={t('feature3.item2')}
+            itemThree={t('feature3.item3')}
+          />
         </div>
       </div>
     </section>
