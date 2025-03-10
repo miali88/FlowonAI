@@ -117,11 +117,11 @@
     }
   },
   "pricing": {
-    "title": "Simple, transparent pricing",
-    "subtitle": "Choose the plan that's right for your business",
+    "title": "Pricing",
+    "subtitle": "Packed with the best features for engaging your audience, creating customer loyalty, and automating workflows.",
     "monthly": "Monthly",
-    "yearly": "Yearly",
-    "yearlyDiscount": "(Save 20%)",
+    "yearly": "Annual",
+    "yearlyDiscount": "Get 2 months free ✨",
     "professional": {
       "name": "Professional",
       "description": "Perfect for small businesses starting with automation",
@@ -132,39 +132,46 @@
         "Then $0.25 per minute",
         "Message taking with custom questions",
         "Smart spam detection",
-        "Bilingual agent - English + Spanish"
+        "Multilingual agent"
       ]
     },
     "scale": {
       "name": "Scale",
-      "description": "For growing businesses with higher call volume",
+      "description": "For growing businesses with moderate call volume",
       "monthlyPrice": "99",
       "yearlyPrice": "990",
       "features": [
-        "Up to 600 minutes",
-        "Then $0.20 per minute",
-        "Everything in Professional",
-        "Custom call routing logic",
-        "Priority support"
-      ]
+        "Up to 500 minutes",
+        "Then $0.25 per minute",
+        "Message taking with custom questions",
+        "Smart spam detection",
+        "Multilingual agent",
+        "Appointment Links",
+        "Call Transfers"
+      ],
+      "popular": "Most Popular"
     },
-    "enterprise": {
-      "name": "Enterprise",
-      "description": "For established businesses with complex needs",
-      "monthlyPrice": "249",
-      "yearlyPrice": "2490",
+    "growth": {
+      "name": "Growth",
+      "description": "The ultimate plan with all features for industry leaders",
+      "monthlyPrice": "Contact Us",
+      "yearlyPrice": "Contact Us",
       "features": [
-        "Up to 2000 minutes",
-        "Then $0.15 per minute",
-        "Everything in Scale",
-        "Dedicated account manager",
-        "Custom integrations",
-        "Multi-location support"
+        "Unlimited minutes",
+        "Then $0.25 per minute",
+        "Message taking with custom questions",
+        "Smart spam detection",
+        "Multilingual agent",
+        "Appointment Links",
+        "Call Transfers",
+        "Live Transfers (Coming Soon)",
+        "Training Files",
+        "Custom Agent Training"
       ]
     },
-    "currentPlan": "Current plan",
-    "popular": "Popular",
-    "getCurrentPlan": "Get this plan"
+    "currentPlan": "Manage Plan",
+    "popular": "Most Popular",
+    "getCurrentPlan": "Subscribe"
   },
   "guidedSetupSection": {
     "sectionTitle": "Set up in minutes, no IT team needed",

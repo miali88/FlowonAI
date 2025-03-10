@@ -51,7 +51,7 @@
     "@tsparticles/engine": "^3.7.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.7.1",
-    "@unified-api/react-directory": "^1.1.17",
+    "@unified-api/react-directory": "1.1.17",
     "@vapi-ai/web": "^2.1.1",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
