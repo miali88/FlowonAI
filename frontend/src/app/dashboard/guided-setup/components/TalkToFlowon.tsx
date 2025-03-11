@@ -59,6 +59,32 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           throw new Error("Authentication required");
         }
 
+        // Fetch user's Twilio numbers first
+        const twilioResponse = await fetch(
+          `${API_BASE_URL}/twilio/user_numbers`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        if (twilioResponse.ok) {
+          const twilioData = await twilioResponse.json();
+          console.log("User's Twilio number:", twilioData);
+
+          // Check if user has a Twilio number
+          if (twilioData.number) {
+            // Set the returned phone number
+            setPhoneNumber(twilioData.number);
+            setHasPhoneNumber(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Fallback to guided setup phone number if no Twilio numbers found
         const response = await fetch(
           `${API_BASE_URL}/guided_setup/phone_number`,
           {
@@ -76,7 +102,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         }
 
         const data = await response.json();
-        console.log("Phone number response:", data);
+        console.log("Guided setup phone number response:", data);
 
         if (data.success && data.phoneNumber && data.phoneNumber !== "(814) 261-0317") {
           setPhoneNumber(data.phoneNumber);
@@ -153,7 +179,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          {hasPhoneNumber ? "Call Flowon to test out your agent" : "Claim your free trial phone number"}
+          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Claim your free trial phone number"}
         </h2>
       </div>
 
@@ -161,7 +187,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         <Info className="h-4 w-4 text-blue-500" />
         <AlertDescription>
           {hasPhoneNumber ? (
-            "Call your Flowon number listed below to test out your agent for yourself. When you are ready for Flowon to start answering your calls, your customers won't need to call your Flowon number; instead you can forward calls from your existing business phone number to ensure a seamless customer experience. We'll walk you through that in the next step."
+            "This is your dedicated Flowon agent phone number. You can call this number directly to test your agent, and all call forwarding should be directed to this number. In the next step, we'll show you how to set up call forwarding from your business number to ensure your agent can answer calls seamlessly."
           ) : (
             "To get started with Flowon, you'll need a dedicated phone number for your agent. You can claim a free trial number now and use it for 14 days. After the trial period, you can choose to keep the number for a monthly fee."
           )}
@@ -184,11 +210,11 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="font-medium text-blue-500">
-            {hasPhoneNumber ? "Give Flowon a call" : "Claim your free 14-day trial number"}
+            {hasPhoneNumber ? "Your Assigned Agent Number" : "Claim your free 14-day trial number"}
           </h3>
           <p className="text-sm text-gray-400">
             {hasPhoneNumber ? (
-              "Experience how Flowon handles a call and takes a message."
+              "This is the number your agent uses. All calls and call forwarding should be directed to this number."
             ) : (
               "Select a phone number to use for free during your 14-day trial period. After the trial, you can choose to keep the number for $5/month."
             )}
@@ -196,15 +222,17 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         </div>
 
         {hasPhoneNumber ? (
-          <div className="bg-card rounded-xl p-6 flex justify-center items-center min-h-[80px] border">
+          <div className="bg-card rounded-xl p-6 border">
             {isLoading ? (
             <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
-              <div className="flex items-center gap-3">
-                <div className="text-3xl font-bold">
-                  {phoneNumber}
+              <div>
+                <div className="flex items-center gap-3 justify-center mb-4">
+                  <div className="text-3xl font-bold">
+                    {phoneNumber}
+                  </div>
+                  <CopyToClipboardButton text={phoneNumber || ""} />
                 </div>
-                <CopyToClipboardButton text={phoneNumber || ""} />
               </div>
             )}
           </div>

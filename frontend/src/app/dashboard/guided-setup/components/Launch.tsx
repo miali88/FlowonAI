@@ -146,10 +146,10 @@ export default function Launch({ onNext }: LaunchProps) {
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Phone className="h-5 w-5 text-blue-500" />
-              Your Flowon Phone Number
+              Your Flowon Agent Number
             </h3>
             <p className="text-gray-600 mt-1">
-              Forward your business calls to this Flowon number:
+              This is your dedicated agent number. Forward all business calls to this number:
             </p>
           </div>
 

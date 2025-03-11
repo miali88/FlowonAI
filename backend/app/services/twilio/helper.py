@@ -87,21 +87,26 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
     print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: found {total_numbers} numbers across {len(available_numbers)} types")
     return available_numbers
 
-async def fetch_twilio_numbers(user_id: str) -> List[Dict]:
+async def fetch_twilio_numbers(user_id: str) -> str:
     try:
         supabase = await get_supabase()
         logger.info(f"Fetching Twilio numbers for user: {user_id}")
-        numbers = await supabase.table('twilio_numbers').select('*').eq('owner_user_id', user_id).execute()
-        logger.debug(f"Retrieved {len(numbers.data)} numbers for user {user_id}")
-        return numbers.data
+        user = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
+        
+        if not user.data or not user.data[0].get('telephony_numbers'):
+            logger.debug(f"No telephony numbers found for user {user_id}")
+            return None
+            
+        telephony_numbers = user.data[0]['telephony_numbers']
+        twilio_numbers = telephony_numbers.get('twilio', [])
+        
+        if not twilio_numbers:
+            logger.debug(f"No Twilio numbers found for user {user_id}")
+            return None
+            
+        first_number = twilio_numbers[0]
+        logger.debug(f"Retrieved first Twilio number for user {user_id}: {first_number}")
+        return first_number
     except Exception as e:
-        logger.error(f"Error fetching Twilio numbers for user {user_id}: {str(e)}")
-        raise
-
-""" TESTING PURCHASE OF NUMBER """
-def purchase_twilio_number(number: str):
-    try:
-        client.incoming_phone_numbers.create(phone_number=number)
-    except Exception as e:
-        logger.error(f"Error purchasing Twilio number: {str(e)}")
+        logger.error(f"Error fetching Twilio number for user {user_id}: {str(e)}")
         raise

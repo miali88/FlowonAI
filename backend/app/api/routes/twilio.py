@@ -53,14 +53,20 @@ async def get_available_numbers_handler(country_code: str) -> AvailableNumbersRe
 async def get_user_numbers_handler(
     current_user = Depends(get_current_user)
 ) -> JSONResponse:
-    """Get list of Twilio numbers for the current user from database"""
-    logger.info(f"Fetching Twilio numbers for user: {current_user}")
+    """Get primary Twilio number for the current user from database"""
+    logger.info(f"Fetching primary Twilio number for user: {current_user}")
     if not current_user:
         logger.warning("Unauthorized attempt to fetch user numbers - no current user")
         raise HTTPException(status_code=401, detail="User not authenticated")
-    numbers = await helper.fetch_twilio_numbers(user_id=current_user)
-    logger.debug(f"Retrieved {len(numbers)} numbers for user {current_user}")
-    return JSONResponse(content={"numbers": numbers})
+    
+    number: str = await helper.fetch_twilio_numbers(user_id=current_user)
+    
+    if number is None:
+        logger.debug(f"No Twilio number found for user {current_user}")
+        return JSONResponse(content={"number": None})
+    
+    logger.debug(f"Retrieved primary Twilio number for user {current_user}")
+    return JSONResponse(content={"number": number})
 
 """ WEBHOOK FUNCTIONS """
 @router.api_route("/", methods=["GET", "POST"])

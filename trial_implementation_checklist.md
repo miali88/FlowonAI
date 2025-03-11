@@ -29,11 +29,14 @@
     - [X] Set `trial_minutes_used = 0`
 
   - [ ] The business profile selected on the onboarding page isn't showing in the quick set-up
+  - [ ] The guided_setup agent to be duplicate in agents table 
+
 
 - [ ] **Phone Number Management:**
   - [ ] Review the current implementation for phone number purchase, how is the current flow? 
   - [ ] Ensure new number purchase does not run if user has been assigned a number already. 
-  - [ ] Number purchase should be based on the user's country. 
+  - [ ] New number purchase should be assigned to agent's guided_setup table column. 
+  - [X] Number purchase should be based on the user's country. 
   - [ ] Record acquisition date when a trial user gets a number
   - [ ] Implement daily job to check if numbers held > 14 days for trial users
   - [ ] Create automated system to release numbers that exceed 14-day limit
