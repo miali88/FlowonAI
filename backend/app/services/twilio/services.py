@@ -339,28 +339,40 @@ def cleanup() -> None:
 async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
     """Purchase a phone number from Twilio and associate it with the given user"""
     try:
+        print(f"[TWILIO SERVICE] 🔄 Starting purchase_number service function")
         # Check if user is on trial
         supabase = await get_supabase()
-        user_result = await supabase.table('users').select('is_trial').eq('id', user_id).execute()
+        print(f"[TWILIO SERVICE] 🔍 Checking if user {user_id} is on trial")
+        user_result = await supabase.table('users').select('is_trial, twilio').eq('id', user_id).execute()
         
         is_trial = False
         if user_result.data and len(user_result.data) > 0:
             is_trial = user_result.data[0].get('is_trial', False)
         
-        logger.info(f"Purchasing number {phone_number} for user {user_id} (is_trial: {is_trial})")
+        print(f"[TWILIO SERVICE] ℹ️ User {user_id} trial status: {is_trial}")
         
-        # Purchase number through Twilio
+        # Get API base URL for webhooks
+        api_base_url = 'https://flowon.ai/api/v1'
+        print(f"[TWILIO SERVICE] 🌐 Using API base URL: {api_base_url}")
+        
+        # Purchase number through Twilio with proper webhook configuration
+        print(f"[TWILIO SERVICE] 📱 Creating number with Twilio: {phone_number}")
         number = client.incoming_phone_numbers.create(
             phone_number=phone_number,
-            voice_url='https://flowon.ai/api/v1/twilio/add_to_conference'
+            friendly_name=f"FlowonAI Number - {user_id}",
+            voice_url=f"{api_base_url}/twilio/add_to_conference",
+            voice_method="POST",
+            status_callback=f"{api_base_url}/twilio/call_completed",
+            status_callback_method="POST"
         )
         
-        logger.info(f"Successfully purchased number {phone_number} with SID {number.sid}")
+        print(f"[TWILIO SERVICE] ✅ Successfully purchased number {phone_number} with SID {number.sid}")
         
         # Store in database with current timestamp and trial flag
         from datetime import datetime
         now = datetime.now().isoformat()
         
+        print(f"[TWILIO SERVICE] 💾 Storing number in database for user {user_id}")
         db_result = await supabase.table('twilio_numbers').insert({
             'phone_number': phone_number,
             'owner_user_id': user_id,
@@ -372,10 +384,33 @@ async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
         }).execute()
         
         if not db_result.data:
-            logger.error(f"Failed to store number {phone_number} in database")
+            print(f"[TWILIO SERVICE] ❌ Failed to store number {phone_number} in database")
             raise ValueError("Failed to store number in database")
         
-        logger.info(f"Successfully stored number {phone_number} in database")
+        print(f"[TWILIO SERVICE] ✅ Successfully stored number {phone_number} in database")
+        
+        # Update user's record with the new Twilio number
+        print(f"[TWILIO SERVICE] 🔄 Updating user record with new Twilio number")
+        # Get existing twilio numbers from user record
+        twilio_numbers = []
+        if user_result.data and len(user_result.data) > 0 and user_result.data[0].get('twilio'):
+            twilio_numbers = user_result.data[0].get('twilio', [])
+        
+        # Add the new number if it's not already in the list
+        if phone_number not in twilio_numbers:
+            twilio_numbers.append(phone_number)
+            
+        # Update the user record
+        user_update_result = await supabase.table('users').update({
+            'twilio': twilio_numbers
+        }).eq('id', user_id).execute()
+        
+        if not user_update_result.data:
+            print(f"[TWILIO SERVICE] ⚠️ Warning: Failed to update user's twilio numbers list")
+        else:
+            print(f"[TWILIO SERVICE] ✅ Successfully updated user's twilio numbers list")
+        
+        print(f"[TWILIO SERVICE] 🏁 purchase_number completed successfully")
         
         return {
             'success': True,
@@ -384,6 +419,6 @@ async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
             'is_trial_number': is_trial
         }
     except Exception as e:
-        logger.error(f"Error purchasing number {phone_number}: {str(e)}")
+        print(f"[TWILIO SERVICE] ❌ Error in purchase_number: {str(e)}")
         raise
 

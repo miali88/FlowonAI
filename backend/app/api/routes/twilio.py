@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import logging
 import os
 
-from app.services.twilio import call_handle, helper
+from app.services.twilio import call_handle, helper, purchase_number
 from app.core.auth import get_current_user
 from app.clients.supabase_client import get_supabase
 
@@ -256,17 +256,19 @@ async def purchase_phone_number(
 ) -> JSONResponse:
     """Purchase a Twilio phone number for the user"""
     try:
-        logger.info(f"Purchasing phone number for user {current_user}: country_code={country_code}, type={number_type}")
+        print(f"[TWILIO] 📞 Starting purchase phone number flow...")
+        print(f"[TWILIO] 📋 Parameters: user={current_user}, country_code={country_code}, number_type={number_type}")
         
         if not current_user:
-            logger.warning("Unauthorized attempt to purchase phone number - no current user")
+            print(f"[TWILIO] ⚠️ Unauthorized attempt to purchase phone number - no current user")
             raise HTTPException(status_code=401, detail="User not authenticated")
         
         # Get an available number from the specified country and type
+        print(f"[TWILIO] 🔍 Fetching available numbers for country_code={country_code}, type={number_type}")
         available_numbers = helper.get_available_numbers(country_code)
         
         if not available_numbers or number_type not in available_numbers:
-            logger.error(f"No available {number_type} numbers found for country code {country_code}")
+            print(f"[TWILIO] ❌ No available {number_type} numbers found for country code {country_code}")
             raise HTTPException(
                 status_code=404, 
                 detail=f"No available {number_type} numbers found for country code {country_code}"
@@ -274,54 +276,37 @@ async def purchase_phone_number(
         
         # Get the first available number of the requested type
         phone_number = available_numbers[number_type]["numbers"][0]
-        
-        logger.info(f"Selected phone number {phone_number} for user {current_user}")
-        
-        # Purchase the number using Twilio client
-        from app.services.twilio.client import client
+        print(f"[TWILIO] ✅ Selected phone number {phone_number} for user {current_user}")
         
         try:
-            purchased_number = client.incoming_phone_numbers.create(
-                phone_number=phone_number,
-                friendly_name=f"FlowonAI Number - {current_user}",
-                voice_url=f"{os.getenv('API_BASE_URL')}/twilio/add_to_conference",
-                voice_method="POST",
-                status_callback=f"{os.getenv('API_BASE_URL')}/twilio/call_completed",
-                status_callback_method="POST"
+            # Use the purchase_number function from services instead of duplicating the logic
+            print(f"[TWILIO] 💰 Initiating purchase of number {phone_number} for user {current_user}")
+            purchase_result = await purchase_number(
+                phone_number=phone_number, 
+                user_id=current_user
             )
             
-            logger.info(f"Successfully purchased number {phone_number} with SID: {purchased_number.sid}")
+            # Add additional info to the response
+            purchase_result["number_type"] = number_type
+            purchase_result["country_code"] = country_code
             
-            # Save the number in the database associated with the user
-            supabase = await get_supabase()
-            supabase_result = await supabase.table("twilio_numbers").insert({
-                "phone_number": phone_number,
-                "owner_user_id": current_user,
-                "number_type": number_type,
-                "country_code": country_code,
-                "twilio_sid": purchased_number.sid,
-                "active": True,
-                "monthly_cost": available_numbers[number_type]["monthly_cost"]
-            }).execute()
+            # Also add monthly cost if available
+            if "monthly_cost" in available_numbers[number_type]:
+                purchase_result["monthly_cost"] = available_numbers[number_type]["monthly_cost"]
+                print(f"[TWILIO] 💲 Monthly cost for number: {available_numbers[number_type]['monthly_cost']}")
             
-            logger.info(f"Saved phone number {phone_number} to database for user {current_user}")
-            
-            return JSONResponse(content={
-                "success": True,
-                "phone_number": phone_number,
-                "twilio_sid": purchased_number.sid,
-                "number_type": number_type,
-                "monthly_cost": available_numbers[number_type]["monthly_cost"]
-            })
+            print(f"[TWILIO] ✅ Successfully purchased and stored number {phone_number} for user {current_user}")
+            print(f"[TWILIO] 📊 Purchase result: {purchase_result}")
+            return JSONResponse(content=purchase_result)
             
         except Exception as e:
-            logger.error(f"Failed to purchase number from Twilio: {str(e)}")
+            print(f"[TWILIO] ❌ Failed to purchase number from Twilio: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to purchase number: {str(e)}")
         
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        logger.error(f"Error purchasing phone number: {str(e)}", exc_info=True)
+        print(f"[TWILIO] ❌ Error in purchase_phone_number: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error purchasing phone number: {str(e)}")
         

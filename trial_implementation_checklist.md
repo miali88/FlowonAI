@@ -32,6 +32,7 @@
 
 - [ ] **Phone Number Management:**
   - [ ] Review the current implementation for phone number purchase, how is the current flow? 
+  - [ ] Ensure new number purchase does not run if user has been assigned a number already. 
   - [ ] Number purchase should be based on the user's country. 
   - [ ] Record acquisition date when a trial user gets a number
   - [ ] Implement daily job to check if numbers held > 14 days for trial users

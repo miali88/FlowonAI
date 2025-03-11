@@ -219,7 +219,8 @@ export default function BusinessInfoPage() {
         businessDescription,
         businessAddress,
         businessPhone,
-        agentLanguage
+        agentLanguage,
+        countryCode
       }));
       
       // Store audio data in localStorage

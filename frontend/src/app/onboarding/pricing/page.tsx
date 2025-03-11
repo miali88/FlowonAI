@@ -130,6 +130,37 @@ export default function PricingPage() {
       // Purchase a phone number for the user
       try {
         console.log('Purchasing phone number...');
+        
+        // Get the business info from localStorage to determine the country code
+        let countryCode = 'US'; // Default to US as fallback
+        const businessInfoString = localStorage.getItem('flowonAI_businessInfo');
+        
+        // Common Twilio-supported country codes
+        const supportedCountryCodes = [
+          'US', 'CA', 'GB', 'AU', 'NZ', 'IE', 'DE', 'FR', 'ES', 'IT', 
+          'NL', 'SE', 'DK', 'NO', 'FI', 'BE', 'CH', 'AT', 'PT', 'PL'
+        ];
+        
+        if (businessInfoString) {
+          try {
+            const businessInfo = JSON.parse(businessInfoString);
+            // Use the stored country code if available
+            if (businessInfo.countryCode) {
+              // Check if the country code is supported by Twilio
+              if (supportedCountryCodes.includes(businessInfo.countryCode)) {
+                countryCode = businessInfo.countryCode;
+                console.log(`Using country code ${countryCode} from business information`);
+              } else {
+                console.log(`Country code ${businessInfo.countryCode} may not be supported by Twilio, using default: ${countryCode}`);
+              }
+            } else {
+              console.log(`No country code found in business info, using default: ${countryCode}`);
+            }
+          } catch (parseError) {
+            console.error('Error parsing business info:', parseError);
+          }
+        }
+        
         const phoneResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/purchase_phone_number`, {
           method: 'POST',
           headers: {
@@ -137,7 +168,7 @@ export default function PricingPage() {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            country_code: 'US', // Default to US numbers
+            country_code: countryCode, // Use the detected country code
             number_type: 'local' // Default to local numbers
           })
         });
