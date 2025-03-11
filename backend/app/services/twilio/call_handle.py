@@ -1,6 +1,8 @@
 import logging
 import os
 import asyncio
+import math
+from typing import Dict, Any
 
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -8,6 +10,7 @@ from twilio.twiml.voice_response import VoiceResponse, Dial
 from twilio.base.exceptions import TwilioRestException
 
 from app.services.twilio.client import client
+from app.clients.supabase_client import get_supabase
 
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
 
@@ -138,4 +141,83 @@ def cleanup() -> None:
     except Exception as e:
         logger.error(f"Unexpected error during cleanup: {str(e)}")
         raise
+
+
+async def process_call_completed(
+    call_sid: str,
+    call_duration: str,
+    call_status: str,
+    from_number: str
+) -> Dict[str, Any]:
+    """
+    Process call completion data and update trial minutes for users
+    
+    Args:
+        call_sid: The Twilio call SID
+        call_duration: Duration of the call in seconds
+        call_status: Status of the call (completed, etc.)
+        from_number: The Twilio number the call was made from
+        
+    Returns:
+        Dict with success status and message
+    """
+    logger.info(f"Call completed: SID={call_sid}, Duration={call_duration}s, Status={call_status}")
+    
+    if not call_sid or not call_duration or call_status != "completed":
+        logger.warning(f"Invalid call completion data: SID={call_sid}, Duration={call_duration}, Status={call_status}")
+        return {"success": False, "message": "Invalid call data"}
+    
+    # Convert duration to minutes (round up to nearest minute)
+    duration_minutes = math.ceil(int(call_duration) / 60)
+    logger.info(f"Call duration in minutes: {duration_minutes}")
+    
+    # Find the user associated with this Twilio number
+    supabase = await get_supabase()
+    number_result = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", from_number).execute()
+    
+    if not number_result.data:
+        logger.warning(f"No owner found for number {from_number}")
+        return {"success": False, "message": "Number not found"}
+    
+    user_id = number_result.data[0].get("owner_user_id")
+    if not user_id:
+        logger.warning(f"Number {from_number} has no owner")
+        return {"success": False, "message": "Number has no owner"}
+    
+    # Check if user is on trial
+    user_result = await supabase.table("users").select("is_trial, trial_minutes_used, trial_minutes_total").eq("id", user_id).execute()
+    
+    if not user_result.data:
+        logger.warning(f"User {user_id} not found")
+        return {"success": False, "message": "User not found"}
+    
+    user_data = user_result.data[0]
+    is_trial = user_data.get("is_trial", False)
+    
+    if is_trial:
+        # Update trial minutes used
+        trial_minutes_used = user_data.get("trial_minutes_used", 0) + duration_minutes
+        trial_minutes_total = user_data.get("trial_minutes_total", 25)
+        
+        logger.info(f"Updating trial minutes for user {user_id}: {trial_minutes_used}/{trial_minutes_total}")
+        
+        # Update user record
+        await supabase.table("users").update({
+            "trial_minutes_used": trial_minutes_used
+        }).eq("id", user_id).execute()
+        
+        # Log milestone reached if applicable (50%, 80%, 100%)
+        percentage_used = (trial_minutes_used / trial_minutes_total) * 100
+        if percentage_used >= 80 and (percentage_used - duration_minutes / trial_minutes_total * 100) < 80:
+            logger.info(f"User {user_id} has reached 80% of trial minutes")
+            # TODO: Send notification about reaching 80% of trial minutes
+        elif percentage_used >= 50 and (percentage_used - duration_minutes / trial_minutes_total * 100) < 50:
+            logger.info(f"User {user_id} has reached 50% of trial minutes")
+            # TODO: Send notification about reaching 50% of trial minutes
+        
+        if trial_minutes_used >= trial_minutes_total:
+            logger.info(f"User {user_id} has exhausted trial minutes")
+            # TODO: Send notification about trial minutes exhausted
+    
+    return {"success": True, "message": "Call data processed successfully"}
 

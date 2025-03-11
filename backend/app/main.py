@@ -174,7 +174,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    from services.twilio.call_handle import cleanup
+    from app.services.twilio.call_handle import cleanup
     global livekit_process
 
     await SupabaseConnection.close()

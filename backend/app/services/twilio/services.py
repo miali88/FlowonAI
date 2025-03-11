@@ -1,424 +1,339 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
-import logging
-import math 
-from enum import Enum
-import os
-import time
-from dotenv import load_dotenv
-from dataclasses import dataclass
-import asyncio
+""" NOT IN SERVICE IGNORE THIS FILE """
 
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
-from twilio.twiml.voice_response import VoiceResponse, Dial
-from twilio.base.exceptions import TwilioRestException
+# from pydantic import BaseModel, Field
+# from typing import Optional, Dict, Any, List
+# import logging
+# import math 
+# from enum import Enum
+# import os
+# import time
+# from dotenv import load_dotenv
+# from dataclasses import dataclass
+# import asyncio
 
-from app.clients.supabase_client import get_supabase
-from app.services.twilio.client import client
+# from fastapi import Request, HTTPException
+# from fastapi.responses import JSONResponse
+# from twilio.twiml.voice_response import VoiceResponse, Dial
+# from twilio.base.exceptions import TwilioRestException
 
-load_dotenv()
+# from app.clients.supabase_client import get_supabase
+# from app.services.twilio.client import client
 
-livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
+# load_dotenv()
 
-# Add this near the top of the file, after imports
-logger = logging.getLogger(__name__)
+# livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
 
-class Event(BaseModel):
-    name: str
-    args: Optional[Dict[str, Any]] = None
+# # Add this near the top of the file, after imports
+# logger = logging.getLogger(__name__)
 
-class NumberType(str, Enum):
-    LOCAL = "local"
-    TOLL_FREE = "toll_free"
-    MOBILE = "mobile"
-    NATIONAL = "national"
+# class Event(BaseModel):
+#     name: str
+#     args: Optional[Dict[str, Any]] = None
 
-class NumberGroup(BaseModel):
-    monthly_cost: float = Field(ge=0.0)  # ensure cost is non-negative
-    numbers: List[str] 
+# class NumberType(str, Enum):
+#     LOCAL = "local"
+#     TOLL_FREE = "toll_free"
+#     MOBILE = "mobile"
+#     NATIONAL = "national"
 
-class PhoneNumberSchema(BaseModel):
-    local: NumberGroup | None = None
-    toll_free: NumberGroup | None = None
-    mobile: NumberGroup | None = None
-    national: NumberGroup | None = None
+# class NumberGroup(BaseModel):
+#     monthly_cost: float = Field(ge=0.0)  # ensure cost is non-negative
+#     numbers: List[str] 
 
-@dataclass
-class SIPConfig:
-    sip_trunk_number: str
-    sip_host: str = livekit_sip_host  # Using the existing livekit_sip_host from env
-    username: str = "flowon"
-    password: str = "very_secret"
-    webhook_url: str = f"{os.getenv('DEV_SERVER')}/twilio/conference-events"
+# class PhoneNumberSchema(BaseModel):
+#     local: NumberGroup | None = None
+#     toll_free: NumberGroup | None = None
+#     mobile: NumberGroup | None = None
+#     national: NumberGroup | None = None
 
-async def get_sip_config(twilio_number: str) -> SIPConfig:
-    """
-    Create SIP configuration for a given Twilio number
+# @dataclass
+# class SIPConfig:
+#     sip_trunk_number: str
+#     sip_host: str = livekit_sip_host  # Using the existing livekit_sip_host from env
+#     username: str = "flowon"
+#     password: str = "very_secret"
+#     webhook_url: str = f"{os.getenv('DEV_SERVER')}/twilio/conference-events"
+
+# async def get_sip_config(twilio_number: str) -> SIPConfig:
+#     """
+#     Create SIP configuration for a given Twilio number
     
-    Args:
-        twilio_number: The Twilio number from the form data
+#     Args:
+#         twilio_number: The Twilio number from the form data
         
-    Returns:
-        SIPConfig: Configuration object with SIP settings
-    """
-    return SIPConfig(
-        sip_trunk_number=twilio_number
-    )
+#     Returns:
+#         SIPConfig: Configuration object with SIP settings
+#     """
+#     return SIPConfig(
+#         sip_trunk_number=twilio_number
+#     )
 
-def get_country_codes() -> List[str]:
-    countries = client.available_phone_numbers.list()
-    return [country.country_code for country in countries]
+# def get_country_codes() -> List[str]:
+#     countries = client.available_phone_numbers.list()
+#     return [country.country_code for country in countries]
 
-def get_available_numbers(country_code: str) -> Dict[str, Dict]:
-    # Map our internal types to Twilio's pricing types
-    number_type_mapping = {
-        'local': 'local',
-        'toll_free': 'toll free',
-        'mobile': 'mobile',
-        'national': 'national'
-    }
-    number_types = list(number_type_mapping.keys())
-    available_numbers: Dict[str, Dict] = {}
-    monthly_cost: Dict[str, float] = {}
+# def get_available_numbers(country_code: str) -> Dict[str, Dict]:
+#     # Map our internal types to Twilio's pricing types
+#     number_type_mapping = {
+#         'local': 'local',
+#         'toll_free': 'toll free',
+#         'mobile': 'mobile',
+#         'national': 'national'
+#     }
+#     number_types = list(number_type_mapping.keys())
+#     available_numbers: Dict[str, Dict] = {}
+#     monthly_cost: Dict[str, float] = {}
 
-    for number_type in number_types:
-        try:
-            # Try to list up to 5 numbers of each type
-            numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
-            numbers_list = [number.phone_number for number in numbers]
+#     for number_type in number_types:
+#         try:
+#             # Try to list up to 5 numbers of each type
+#             numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
+#             numbers_list = [number.phone_number for number in numbers]
 
-            country_pricing = client.pricing.v1.phone_numbers.countries(country_code).fetch()
-            country_pricing = country_pricing.phone_number_prices
+#             country_pricing = client.pricing.v1.phone_numbers.countries(country_code).fetch()
+#             country_pricing = country_pricing.phone_number_prices
 
-            # Calculate highest price for each number type
-            for price_info in country_pricing:
-                base = math.ceil(float(price_info['base_price']))
-                current = math.ceil(float(price_info['current_price']))
-                pricing_type = price_info['number_type']
+#             # Calculate highest price for each number type
+#             for price_info in country_pricing:
+#                 base = math.ceil(float(price_info['base_price']))
+#                 current = math.ceil(float(price_info['current_price']))
+#                 pricing_type = price_info['number_type']
                 
-                # Match Twilio's pricing type to our internal type
-                for our_type, twilio_type in number_type_mapping.items():
-                    if twilio_type == pricing_type:
-                        monthly_cost[our_type] = round(max(base, current) * 1.2, 1)
+#                 # Match Twilio's pricing type to our internal type
+#                 for our_type, twilio_type in number_type_mapping.items():
+#                     if twilio_type == pricing_type:
+#                         monthly_cost[our_type] = round(max(base, current) * 1.2, 1)
 
-            # Only add to dictionary if numbers were found
-            if numbers_list:
-                available_numbers[number_type] = {
-                    "monthly_cost": monthly_cost.get(number_type),
-                    "numbers": numbers_list
-                }
+#             # Only add to dictionary if numbers were found
+#             if numbers_list:
+#                 available_numbers[number_type] = {
+#                     "monthly_cost": monthly_cost.get(number_type),
+#                     "numbers": numbers_list
+#                 }
                 
-        except Exception as e:
-            continue
+#         except Exception as e:
+#             continue
             
-    return available_numbers
+#     return available_numbers
 
 
-async def fetch_twilio_numbers(user_id: str) -> list:
-    supabase = await get_supabase()
+# async def fetch_twilio_numbers(user_id: str) -> list:
+#     supabase = await get_supabase()
 
-    # Select only the telephony_numbers column for the specific user
-    result = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
-    if not result.data or not result.data[0].get('telephony_numbers'):
-        return []
-    return result.data[0]['telephony_numbers']
+#     # Select only the telephony_numbers column for the specific user
+#     result = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
+#     if not result.data or not result.data[0].get('telephony_numbers'):
+#         return []
+#     return result.data[0]['telephony_numbers']
 
 
-# async def call_admin(call_sid: str) -> None:
+# # async def call_admin(call_sid: str) -> None:
+# #     try:
+# #         print('\ncall admin function...')
+# #         print("settings.BASE_URL", settings.BASE_URL)
+# #         hold_url = f'{settings.BASE_URL}/twilio/add_to_conference'
+# #         print('hold_url', hold_url)     
+# #         print('call_sid', call_sid)
+        
+# #         # Validate call_sid format
+# #         if not call_sid or not call_sid.startswith('CA'):
+# #             raise ValueError(f"Invalid call SID format: {call_sid}")
+            
+# #         # Try update directly without fetching first
+# #         client.calls(call_sid).update(
+# #             url=hold_url,
+# #             method='POST'
+# #         )
+        
+# #         print(f"Successfully updated call {call_sid} to URL {hold_url}")
+        
+# #     except TwilioRestException as e:
+# #         print(f"Twilio error: {e.code} - {e.msg}")
+# #         print(f"More error details: {e.details}")
+# #         # Log the full error for debugging
+# #         print(f"Full error: {vars(e)}")
+# #         raise
+# #     except Exception as e:
+# #         print(f"Unexpected error: {str(e)}")
+# #         raise
+
+# # async def create_outbound_call(to_number: str, from_number: str):
+# #     """
+# #     Initiate an outbound call using Twilio
+# #     """
+# #     # The url parameter should point to your webhook endpoint that will handle the call
+# #     call = client.calls.create(
+# #         to=to_number,
+# #         from_=from_number,
+# #         url='https://internally-wise-spaniel.eu.ngrok.io/api/v1/twilio/'  # Replace with your webhook URL
+# #     )
+# #     return call
+
+
+# """ CALL HANDLING """
+# # 1st agent places IC on hold
+# async def add_to_conference(request: Request) -> JSONResponse:
 #     try:
-#         print('\ncall admin function...')
-#         print("settings.BASE_URL", settings.BASE_URL)
-#         hold_url = f'{settings.BASE_URL}/twilio/add_to_conference'
-#         print('hold_url', hold_url)     
-#         print('call_sid', call_sid)
+#         logger.info('Starting add_to_conference')
+#         form_data = await request.form()
+#         logger.debug(f'Received form data: {form_data}')
         
-#         # Validate call_sid format
-#         if not call_sid or not call_sid.startswith('CA'):
-#             raise ValueError(f"Invalid call SID format: {call_sid}")
+#         call_sid = str(form_data['CallSid'])
+#         twilio_number = str(form_data['To'])
+#         from_number = str(form_data['From'])
+#         logger.info(f'Processing call SID: {call_sid}') 
+        
+#         conference_name = f"conf_{call_sid}_{int(time.time())}"
+#         sip_config = await get_sip_config(twilio_number)
+        
+#         if not sip_config:
+#             logger.error(f'No SIP configuration found for number: {twilio_number}')
+#             raise HTTPException(status_code=400, detail='Invalid SIP configuration')
+
+#         call = client.calls(call_sid).fetch()
+#         logger.debug(f'Current call status: {call.status}')
+        
+#         if call.status not in ['in-progress', 'ringing']:
+#             logger.error(f'Call is in invalid state: {call.status}')
+#             raise HTTPException(status_code=400, detail=f'Call is in invalid state: {call.status}')
+
+#         logger.debug(f'Moving caller to conference: {conference_name}')
+#         response = VoiceResponse()
+#         dial = Dial()
+#         dial.conference(
+#             conference_name,
+#             startConferenceOnEnter=False,
+#             endConferenceOnExit=True,
+#             waitUrl='http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical',
+#             statusCallbackEvent=['start', 'end', 'join', 'leave'],
+#             statusCallback=sip_config.webhook_url
+#         )
+#         response.append(dial)
+#         client.calls(call_sid).update(twiml=str(response))
+#         logger.info('Successfully moved caller to conference')
+
+#         # Improved polling logic: wait until the conference has at least one participant
+#         max_retries = 8
+#         retry_delay = 2  # seconds
+#         conference_sid = None
+#         for attempt in range(max_retries):
+#             logger.info(f"Attempting to find conference (attempt {attempt + 1}/{max_retries})")
+#             await asyncio.sleep(retry_delay)
             
-#         # Try update directly without fetching first
-#         client.calls(call_sid).update(
-#             url=hold_url,
-#             method='POST'
+#             conferences = client.conferences.list(
+#                 friendly_name=conference_name,
+#                 status='in-progress'
+#             )
+#             if conferences:
+#                 conference = conferences[0]
+#                 participant_list = client.conferences(conference.sid).participants.list()
+#                 if participant_list and len(participant_list) > 0:
+#                     conference_sid = conference.sid
+#                     logger.info(f"Conference {conference_name} is ready with {len(participant_list)} participant(s)")
+#                     break
+#                 else:
+#                     logger.warning("Conference exists but no participants found yet")
+#             else:
+#                 logger.warning(f"Conference not found on attempt {attempt + 1}")
+#             if attempt == max_retries - 1:
+#                 logger.error("Max retries reached waiting for conference to be ready")
+#                 raise HTTPException(status_code=500, detail="Conference setup timeout")
+
+#         if conference_sid:
+#             await bridge_conference_to_livekit(
+#                 conference_name=conference_name,
+#                 conference_sid=conference_sid,
+#                 from_number=from_number,
+#                 sip_config=sip_config
+#             )
+#         else:
+#             logger.error(f"Conference {conference_name} not found after all retries")
+#             raise HTTPException(status_code=500, detail="Conference not found")
+        
+#         return JSONResponse(content={
+#             'message': 'Call moved to conference and agent added',
+#             'conference_name': conference_name
+#         })
+#     except TwilioRestException as e:
+#         logger.error(f"Twilio error in add_to_conference: {e.code} - {e.msg}", exc_info=True)
+#         raise HTTPException(status_code=e.code, detail=e.msg)
+#     except Exception as e:
+#         logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
+#         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+# async def bridge_conference_to_livekit(
+#     conference_name: str,
+#     conference_sid: str, 
+#     from_number: str, 
+#     sip_config: SIPConfig
+# ) -> None:
+#     """
+#     Bridges a Twilio conference to LiveKit via dynamic SIP configuration
+    
+#     Args:
+#         conference_name: Unique conference identifier
+#         conference_sid: The Twilio conference SID to bridge
+#         from_number: The phone number or identifier that initiated the call
+#         sip_config: SIPConfig object containing trunk and authentication details
+#     """
+#     try:
+#         # Construct SIP address with authentication
+#         auth_params = f";username={sip_config.username};password={sip_config.password}"
+#         sip_address = f"sip:{sip_config.sip_trunk_number}@{sip_config.sip_host};transport=tcp{auth_params}"
+        
+#         # Add LiveKit as a participant to the conference
+#         participant = client.conferences(conference_sid).participants.create(
+#             from_=from_number,
+#             to=sip_address,
+#             caller_id=from_number,
+#             status_callback=sip_config.webhook_url,
+#             status_callback_event=['initiated', 'ringing', 'answered', 'completed']
 #         )
         
-#         print(f"Successfully updated call {call_sid} to URL {hold_url}")
+#         logger.info(f"Successfully bridged conference {conference_name} to LiveKit at {sip_address}")
+#         return participant
         
 #     except TwilioRestException as e:
-#         print(f"Twilio error: {e.code} - {e.msg}")
-#         print(f"More error details: {e.details}")
-#         # Log the full error for debugging
-#         print(f"Full error: {vars(e)}")
+#         logger.error(f"Twilio error while bridging conference: {e.code} - {e.msg}")
 #         raise
 #     except Exception as e:
-#         print(f"Unexpected error: {str(e)}")
+#         logger.error(f"Unexpected error while bridging conference: {str(e)}")
 #         raise
 
-# async def create_outbound_call(to_number: str, from_number: str):
-#     """
-#     Initiate an outbound call using Twilio
-#     """
-#     # The url parameter should point to your webhook endpoint that will handle the call
-#     call = client.calls.create(
-#         to=to_number,
-#         from_=from_number,
-#         url='https://internally-wise-spaniel.eu.ngrok.io/api/v1/twilio/'  # Replace with your webhook URL
-#     )
-#     return call
 
 
-""" CALL HANDLING """
-# 1st agent places IC on hold
-async def add_to_conference(request: Request) -> JSONResponse:
-    try:
-        logger.info('Starting add_to_conference')
-        form_data = await request.form()
-        logger.debug(f'Received form data: {form_data}')
-        
-        call_sid = str(form_data['CallSid'])
-        twilio_number = str(form_data['To'])
-        from_number = str(form_data['From'])
-        logger.info(f'Processing call SID: {call_sid}') 
-        
-        conference_name = f"conf_{call_sid}_{int(time.time())}"
-        sip_config = await get_sip_config(twilio_number)
-        
-        if not sip_config:
-            logger.error(f'No SIP configuration found for number: {twilio_number}')
-            raise HTTPException(status_code=400, detail='Invalid SIP configuration')
-
-        call = client.calls(call_sid).fetch()
-        logger.debug(f'Current call status: {call.status}')
-        
-        if call.status not in ['in-progress', 'ringing']:
-            logger.error(f'Call is in invalid state: {call.status}')
-            raise HTTPException(status_code=400, detail=f'Call is in invalid state: {call.status}')
-
-        logger.debug(f'Moving caller to conference: {conference_name}')
-        response = VoiceResponse()
-        dial = Dial()
-        dial.conference(
-            conference_name,
-            startConferenceOnEnter=False,
-            endConferenceOnExit=True,
-            waitUrl='http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical',
-            statusCallbackEvent=['start', 'end', 'join', 'leave'],
-            statusCallback=sip_config.webhook_url
-        )
-        response.append(dial)
-        client.calls(call_sid).update(twiml=str(response))
-        logger.info('Successfully moved caller to conference')
-
-        # Improved polling logic: wait until the conference has at least one participant
-        max_retries = 8
-        retry_delay = 2  # seconds
-        conference_sid = None
-        for attempt in range(max_retries):
-            logger.info(f"Attempting to find conference (attempt {attempt + 1}/{max_retries})")
-            await asyncio.sleep(retry_delay)
-            
-            conferences = client.conferences.list(
-                friendly_name=conference_name,
-                status='in-progress'
-            )
-            if conferences:
-                conference = conferences[0]
-                participant_list = client.conferences(conference.sid).participants.list()
-                if participant_list and len(participant_list) > 0:
-                    conference_sid = conference.sid
-                    logger.info(f"Conference {conference_name} is ready with {len(participant_list)} participant(s)")
-                    break
-                else:
-                    logger.warning("Conference exists but no participants found yet")
-            else:
-                logger.warning(f"Conference not found on attempt {attempt + 1}")
-            if attempt == max_retries - 1:
-                logger.error("Max retries reached waiting for conference to be ready")
-                raise HTTPException(status_code=500, detail="Conference setup timeout")
-
-        if conference_sid:
-            await bridge_conference_to_livekit(
-                conference_name=conference_name,
-                conference_sid=conference_sid,
-                from_number=from_number,
-                sip_config=sip_config
-            )
-        else:
-            logger.error(f"Conference {conference_name} not found after all retries")
-            raise HTTPException(status_code=500, detail="Conference not found")
-        
-        return JSONResponse(content={
-            'message': 'Call moved to conference and agent added',
-            'conference_name': conference_name
-        })
-    except TwilioRestException as e:
-        logger.error(f"Twilio error in add_to_conference: {e.code} - {e.msg}", exc_info=True)
-        raise HTTPException(status_code=e.code, detail=e.msg)
-    except Exception as e:
-        logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-    
-
-
-async def bridge_conference_to_livekit(
-    conference_name: str,
-    conference_sid: str, 
-    from_number: str, 
-    sip_config: SIPConfig
-) -> None:
-    """
-    Bridges a Twilio conference to LiveKit via dynamic SIP configuration
-    
-    Args:
-        conference_name: Unique conference identifier
-        conference_sid: The Twilio conference SID to bridge
-        from_number: The phone number or identifier that initiated the call
-        sip_config: SIPConfig object containing trunk and authentication details
-    """
-    try:
-        # Construct SIP address with authentication
-        auth_params = f";username={sip_config.username};password={sip_config.password}"
-        sip_address = f"sip:{sip_config.sip_trunk_number}@{sip_config.sip_host};transport=tcp{auth_params}"
-        
-        # Add LiveKit as a participant to the conference
-        participant = client.conferences(conference_sid).participants.create(
-            from_=from_number,
-            to=sip_address,
-            caller_id=from_number,
-            status_callback=sip_config.webhook_url,
-            status_callback_event=['initiated', 'ringing', 'answered', 'completed']
-        )
-        
-        logger.info(f"Successfully bridged conference {conference_name} to LiveKit at {sip_address}")
-        return participant
-        
-    except TwilioRestException as e:
-        logger.error(f"Twilio error while bridging conference: {e.code} - {e.msg}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error while bridging conference: {str(e)}")
-        raise
+# # # 2nd agent to admin
+# # async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> None:
+# #     try:
+# #         print('calling 2nd agent')
+# #         client.calls.create(
+# #             url=f"{settings.BASE_URL}/twilio/twilio-voice-webhook/{agent_id}",
+# #             to=to_number, from_=from_number
+# #         )
+# #         print(f"Call from: {from_number} to: {to_number}")
+# #     except Exception as err:
+# #         print(f"Error in agent_outbound: {err}")
 
 
 
-# # 2nd agent to admin
-# async def agent_outbound(from_number: str, to_number: str, agent_id: str) -> None:
-#     try:
-#         print('calling 2nd agent')
-#         client.calls.create(
-#             url=f"{settings.BASE_URL}/twilio/twilio-voice-webhook/{agent_id}",
-#             to=to_number, from_=from_number
-#         )
-#         print(f"Call from: {from_number} to: {to_number}")
-#     except Exception as err:
-#         print(f"Error in agent_outbound: {err}")
+# def cleanup() -> None:
+#     print("\nCleaning up before exit...")
+#     ## Ensuring all prior calls are ended
+#     calls = client.calls.list(status='in-progress')
+#     # Print and end each ongoing call
+#     if calls:
+#         for call in calls:
+#             print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
+#             call = client.calls(call.sid).update(status='completed')
+#             print(f"Ended call SID: {call.sid}")
+#     else:
+#         print('No calls in progress')
 
-
-
-def cleanup() -> None:
-    print("\nCleaning up before exit...")
-    ## Ensuring all prior calls are ended
-    calls = client.calls.list(status='in-progress')
-    # Print and end each ongoing call
-    if calls:
-        for call in calls:
-            print(f"Ending call SID: {call.sid}, From: {call.from_formatted}, To: {call.to}, Duration: {call.duration}, Status: {call.status}")
-            call = client.calls(call.sid).update(status='completed')
-            print(f"Ended call SID: {call.sid}")
-    else:
-        print('No calls in progress')
-
-# def generate_twiml() -> Response:
-    # response = VoiceResponse()
-    # dial = Dial()
-    # dial.conference('MyConferenceRoom')
-    # response.append(dial)
-    # return Response(content=str(response), media_type='text/xml')
-
-async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
-    """Purchase a phone number from Twilio and associate it with the given user"""
-    try:
-        print(f"[TWILIO SERVICE] 🔄 Starting purchase_number service function")
-        # Check if user is on trial
-        supabase = await get_supabase()
-        print(f"[TWILIO SERVICE] 🔍 Checking if user {user_id} is on trial")
-        user_result = await supabase.table('users').select('is_trial, twilio').eq('id', user_id).execute()
-        
-        is_trial = False
-        if user_result.data and len(user_result.data) > 0:
-            is_trial = user_result.data[0].get('is_trial', False)
-        
-        print(f"[TWILIO SERVICE] ℹ️ User {user_id} trial status: {is_trial}")
-        
-        # Get API base URL for webhooks
-        api_base_url = 'https://flowon.ai/api/v1'
-        print(f"[TWILIO SERVICE] 🌐 Using API base URL: {api_base_url}")
-        
-        # Purchase number through Twilio with proper webhook configuration
-        print(f"[TWILIO SERVICE] 📱 Creating number with Twilio: {phone_number}")
-        number = client.incoming_phone_numbers.create(
-            phone_number=phone_number,
-            friendly_name=f"FlowonAI Number - {user_id}",
-            voice_url=f"{api_base_url}/twilio/add_to_conference",
-            voice_method="POST",
-            status_callback=f"{api_base_url}/twilio/call_completed",
-            status_callback_method="POST"
-        )
-        
-        print(f"[TWILIO SERVICE] ✅ Successfully purchased number {phone_number} with SID {number.sid}")
-        
-        # Store in database with current timestamp and trial flag
-        from datetime import datetime
-        now = datetime.now().isoformat()
-        
-        print(f"[TWILIO SERVICE] 💾 Storing number in database for user {user_id}")
-        db_result = await supabase.table('twilio_numbers').insert({
-            'phone_number': phone_number,
-            'owner_user_id': user_id,
-            'number_sid': number.sid,
-            'account_sid': number.account_sid,
-            'status': 'active',
-            'created_at': now,
-            'is_trial_number': is_trial
-        }).execute()
-        
-        if not db_result.data:
-            print(f"[TWILIO SERVICE] ❌ Failed to store number {phone_number} in database")
-            raise ValueError("Failed to store number in database")
-        
-        print(f"[TWILIO SERVICE] ✅ Successfully stored number {phone_number} in database")
-        
-        # Update user's record with the new Twilio number
-        print(f"[TWILIO SERVICE] 🔄 Updating user record with new Twilio number")
-        # Get existing twilio numbers from user record
-        twilio_numbers = []
-        if user_result.data and len(user_result.data) > 0 and user_result.data[0].get('twilio'):
-            twilio_numbers = user_result.data[0].get('twilio', [])
-        
-        # Add the new number if it's not already in the list
-        if phone_number not in twilio_numbers:
-            twilio_numbers.append(phone_number)
-            
-        # Update the user record
-        user_update_result = await supabase.table('users').update({
-            'twilio': twilio_numbers
-        }).eq('id', user_id).execute()
-        
-        if not user_update_result.data:
-            print(f"[TWILIO SERVICE] ⚠️ Warning: Failed to update user's twilio numbers list")
-        else:
-            print(f"[TWILIO SERVICE] ✅ Successfully updated user's twilio numbers list")
-        
-        print(f"[TWILIO SERVICE] 🏁 purchase_number completed successfully")
-        
-        return {
-            'success': True,
-            'phone_number': phone_number,
-            'number_sid': number.sid,
-            'is_trial_number': is_trial
-        }
-    except Exception as e:
-        print(f"[TWILIO SERVICE] ❌ Error in purchase_number: {str(e)}")
-        raise
-
+# # def generate_twiml() -> Response:
+#     # response = VoiceResponse()
+#     # dial = Dial()
+#     # dial.conference('MyConferenceRoom')
+#     # response.append(dial)
+#     # return Response(content=str(response), media_type='text/xml')

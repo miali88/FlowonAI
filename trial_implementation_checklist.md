@@ -30,6 +30,7 @@
 
   - [ ] The business profile selected on the onboarding page isn't showing in the quick set-up
   - [ ] The guided_setup agent to be duplicate in agents table 
+  - [ ] Flow: Number is purchase on backend -> run livekit sip_trunking -> new call room, func detect_call_type_and_get_agent_id does the agent id matching with the telephone number
 
 
 - [ ] **Phone Number Management:**
