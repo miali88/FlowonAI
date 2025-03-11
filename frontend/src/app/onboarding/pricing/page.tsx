@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,18 +89,53 @@ const FeatureList = memo(function FeatureList({ features }: { features: string[]
 export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>("professional");
   const [isAnnual, setIsAnnual] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { getToken } = useAuth();
   
   const handleSelectPlan = (planId: string) => {
     setSelectedPlan(planId);
   };
   
-  const handleContinueToSetup = () => {
-    // Store selected plan in localStorage
-    localStorage.setItem('flowonAI_selectedPlan', selectedPlan);
-    
-    // Navigate to the final setup
-    router.push("/dashboard/guided-setup");
+  const handleContinueToSetup = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Store selected plan in localStorage
+      localStorage.setItem('flowonAI_selectedPlan', selectedPlan);
+      
+      // Get the authentication token
+      const token = await getToken();
+      
+      // Call the backend API to activate the trial plan
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/guided_setup/set_trial_plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          trial_plan_type: selectedPlan
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to activate trial plan', await response.json());
+        throw new Error('Failed to activate trial plan');
+      }
+      
+      const result = await response.json();
+      console.log('Trial plan activated:', result);
+      
+      // Navigate to the guided setup
+      router.push("/dashboard/guided-setup");
+    } catch (error) {
+      console.error('Error activating trial plan:', error);
+      // Still navigate to guided setup even if there's an error
+      router.push("/dashboard/guided-setup");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -251,9 +287,18 @@ export default function PricingPage() {
             <Button 
               onClick={handleContinueToSetup} 
               className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg"
-              disabled={!selectedPlan}
+              disabled={!selectedPlan || isLoading}
             >
-              Continue with {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan <ArrowRight className="ml-2 h-5 w-5" />
+              {isLoading ? (
+                <>
+                  <span className="mr-2">Activating Trial...</span>
+                  <span className="animate-spin">⏳</span>
+                </>
+              ) : (
+                <>
+                  Continue with {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
             </Button>
           </div>
         </div>

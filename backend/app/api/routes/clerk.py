@@ -5,6 +5,7 @@ from fastapi import Request, APIRouter, Header, HTTPException
 from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.services.clerk import post_user, get_clerk_private_metadata
+from app.models.users import UserMetadataResponse
 
 logger = logging.getLogger(__name__)
 
@@ -13,52 +14,80 @@ router = APIRouter()
 @router.post('')
 async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
                              svix_timestamp: str = Header(None), svix_signature: str = Header(None)):
-    print("\n\nclerk endpoint:\n\n")
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("Clerk webhook event received")
+    logger.info(f"Headers: svix_id={svix_id}, svix_timestamp={svix_timestamp}, signature_present={bool(svix_signature)}")
 
     # Validate the webhook
     payload = await request.body()
+    logger.debug(f"Received payload size: {len(payload)} bytes")
+    
     headers = {
         "svix-id": svix_id,
         "svix-timestamp": svix_timestamp,
         "svix-signature": svix_signature
     }
+    
     secret = os.getenv("CLERK_SIGNING_SECRET")
     if not secret:
+        logger.error("CLERK_SIGNING_SECRET environment variable not set")
         raise HTTPException(status_code=500, detail="CLERK_SIGNING_SECRET not set")
+    logger.debug("CLERK_SIGNING_SECRET found in environment")
 
     webhook = Webhook(secret)
 
     try:
+        logger.debug("Attempting to verify webhook signature...")
         event = webhook.verify(payload, headers)
-    except WebhookVerificationError:
+        logger.info("Webhook signature successfully verified")
+    except WebhookVerificationError as e:
+        logger.error(f"Webhook verification failed: {str(e)}")
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     event_type = event.get('type')
     logger.info(f"Received event type: {event_type}")
-    print("\n\nEVENT TYPE\n\n")
-    print(event_type)
 
-    if event_type == "user.created":
-        print("user created")
-        await post_user(event)
+    # Check if this is a test webhook
+    is_test_event = event.get('data', {}).get('webhook_test')
+    if is_test_event:
+        logger.info("Detected test webhook event")
+        user_id = event.get('data', {}).get('id')
+        if user_id:
+            logger.info(f"Detected test webhook event with user_id: {user_id}")
+        return {"status": "success", "is_test": True}
+    
+    # Process the webhook based on event type
+    if event_type == 'user.created':
+        logger.info("Processing user.created event")
+        user_id = event.get('data', {}).get('id')
+        logger.info(f"User ID from event: {user_id}")
         
-    elif event_type == "session.created":
-        print("session created")
-        # await post_session(payload)
-
-    # Process the event as needed
-    return {"status": "success"}
-
-
+        # Check if this is a test webhook
+        is_test_webhook = event.get('data', {}).get('webhook_test', False)
+        logger.info(f"Processing user.created event, is_test_event: {is_test_webhook}")
+        
+        try:
+            await post_user(event)
+            logger.info(f"Successfully processed user creation for {user_id}")
+            return {"status": "success"}
+        except Exception as e:
+            logger.error(f"Error processing user.created event: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+    else:
+        logger.info(f"Unhandled event type: {event_type}, no action taken")
+        return {"status": "success", "message": f"Unhandled event type: {event_type}"}
+    
 @router.get('/get-customer-id')
 async def get_user_metadata(clerk_user_id: str):
     """Endpoint to fetch a user's Clerk private metadata."""
-    print("get_user_metadata")
+    logger.info(f"Fetching customer ID for clerk_user_id: {clerk_user_id}")
     try:
         metadata = await get_clerk_private_metadata(clerk_user_id)
-        customer_id = metadata['stripe_customer_id']
-        return {"customer_id": customer_id}
+        customer_id = metadata.get('stripe_customer_id')
+        logger.info(f"Retrieved customer_id: {customer_id} for clerk_user_id: {clerk_user_id}")
+        return UserMetadataResponse(customer_id=customer_id)
     except HTTPException as he:
+        logger.error(f"HTTP Exception while fetching user metadata: {str(he)}")
         raise he
     except Exception as e:
         logger.error(f"Error fetching user metadata: {str(e)}")

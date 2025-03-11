@@ -17,9 +17,10 @@
 ## Business Logic Implementation
 
 - [ ] **User Registration Flow:**
-  - [ ] Create onboarding page, that mimics the guided set-up, then asks the user to pick their trial plan. Then load /guided_setup
+  - [X] Create onboarding page, that mimics the guided set-up, then asks the user to pick their trial plan. Then load /guided_setup
 
-  - [ ] When user signs up and selects a plan with trial:
+  - [ ] The user first signs up using clerk, the backend posts the user to our supabase.
+  - [ ] then are routed to /onboarding. At the final stage, they will be asked to select a given plan to trial. We should update the users table of the given user. :
     - [ ] Set `is_trial = true`
     - [ ] Set `trial_start_date` to current time
     - [ ] Set `trial_end_date` to current time + 14 days
@@ -28,6 +29,8 @@
     - [ ] Set `trial_minutes_used = 0`
 
 - [ ] **Phone Number Management:**
+  - [ ] Review the current implementation for phone number purchase, how is the current flow? 
+  - [ ] Number purchase should be based on the user's country. 
   - [ ] Record acquisition date when a trial user gets a number
   - [ ] Implement daily job to check if numbers held > 14 days for trial users
   - [ ] Create automated system to release numbers that exceed 14-day limit
@@ -51,7 +54,7 @@
 ## User Interface Updates
 
 - [ ] **Dashboard Modifications:**
-  - [ ] Add trial status indicator in the dashboard
+  - [ ] Add trial status indicator in the side panel at the bottom
   - [ ] Display remaining trial days counter
   - [ ] Show minutes used/remaining visualization
   - [ ] Provide clear CTA for upgrading to paid plan

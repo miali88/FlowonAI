@@ -137,11 +137,19 @@ async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
     if not setup_data:
         return {"success": False, "error": "No setup data found for user"}
     
+    # Convert snake_case to camelCase for frontend compatibility
+    formatted_data = {
+        "trainingSources": setup_data.get("training_sources", {}),
+        "businessInformation": setup_data.get("business_information", {}),
+        "messageTaking": setup_data.get("message_taking", {}),
+        "callNotifications": setup_data.get("call_notifications", {})
+    }
+    
     # Format and return the setup data
     return {
         "success": True,
-        "setup_data": setup_data,
-        "setup_completed": setup_data.get("setup_completed", False)
+        "setupData": formatted_data,
+        "setupCompleted": setup_data.get("setup_completed", False)
     }
 
 async def get_rosie_phone_number(user_id: str) -> Dict[str, Any]:

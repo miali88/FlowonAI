@@ -7,7 +7,7 @@ import logging
 import stripe
 from fastapi import APIRouter, HTTPException, Request, Header
 
-from services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
+from app.services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
 
 load_dotenv()
 router = APIRouter()
@@ -43,36 +43,50 @@ and invoke the twilio number purchase function, update user's database with the 
  """
 @router.post("/webhook")
 async def webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
+    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info("Stripe webhook event received")
+    logger.info(f"Stripe-Signature header present: {bool(stripe_signature)}")
     try:
         payload = await request.body()
+        logger.debug(f"Received payload size: {len(payload)} bytes")
         
         if not stripe_signature or not endpoint_secret:
             logger.error("Missing Stripe signature or endpoint secret")
             raise HTTPException(status_code=400, detail="Invalid configuration")
             
         try:
+            logger.debug("Attempting to verify Stripe webhook signature...")
             event = stripe.Webhook.construct_event(
                 payload,
                 stripe_signature,
                 endpoint_secret
             )
+            logger.info("Stripe webhook signature successfully verified")
         except stripe.error.SignatureVerificationError as e:
             logger.error(f"Signature verification failed: {str(e)}")
             raise HTTPException(status_code=400, detail="Invalid signature")
+        
+        logger.info(f"Received Stripe event type: {event.type}")
         
         if event.type == 'checkout.session.completed':
             session = event.data.object
             # Add detailed logging of the session metadata
             logger.info(f"Session metadata received: {session.metadata}")
-            logger.info(f"Full session object: {session}")
+            logger.info(f"Session mode: {session.mode}")
             
             if session.mode == 'subscription':
+                logger.info("Processing subscription completion")
                 await handle_subscription_completed(session)
+                logger.info("Subscription processing completed successfully")
                 
         elif event.type == 'payment_intent.succeeded':
             payment_intent = event.data.object
             logger.info(f"Payment succeeded for payment_intent_id: {payment_intent.id}")
+        else:
+            logger.info(f"Unhandled Stripe event type: {event.type}, no action taken")
             
+        logger.info("Stripe webhook processing completed")
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         return {"status": "success"}
         
     except ValueError as e:
@@ -80,6 +94,7 @@ async def webhook(request: Request, stripe_signature: str = Header(None, alias="
         raise HTTPException(status_code=400, detail=f"Invalid payload: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error in webhook: {str(e)}", exc_info=True)
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         raise HTTPException(status_code=400, detail=str(e))
     
 

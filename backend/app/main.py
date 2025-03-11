@@ -10,13 +10,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+import sentry_sdk
 
 from app.core.config import settings
 from app.api.main import api_router
 from app.clients.supabase_client import SupabaseConnection
-
-from app.core.config import settings
 
 load_dotenv()
 
@@ -49,11 +47,6 @@ app = FastAPI(
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",  # Disable docs in production
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
 )
-
-# Mount static files directory
-static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-os.makedirs(static_dir, exist_ok=True)
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 origins = ["flowon.ai",
            "https://flowon.ai",
@@ -181,7 +174,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    from app.services.twilio.call_handle import cleanup
+    from services.twilio.call_handle import cleanup
     global livekit_process
 
     await SupabaseConnection.close()
