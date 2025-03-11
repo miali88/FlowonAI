@@ -9,7 +9,7 @@ class OnboardingPreviewRequest(BaseModel):
     businessWebsite: Optional[str] = None
     businessAddress: Optional[str] = None
     businessPhone: Optional[str] = None
-    agentLanguage: Optional[str] = "en"  # Default language is English
+    agentLanguage: Optional[str] = "en-US"  # Default language is English (US)
 
 class OnboardingSaveRequest(BaseModel):
     """Request model for saving onboarding data."""
@@ -18,7 +18,7 @@ class OnboardingSaveRequest(BaseModel):
     businessDescription: str
     businessAddress: Optional[str] = None
     businessPhone: Optional[str] = None
-    agentLanguage: Optional[str] = "en"
+    agentLanguage: Optional[str] = "en-US"
 
 class AudioPreviewResponse(BaseModel):
     """Response model for audio preview generation."""

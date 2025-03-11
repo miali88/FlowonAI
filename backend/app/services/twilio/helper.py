@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 from enum import Enum
 import math
 import logging
@@ -14,7 +14,7 @@ class NumberType(str, Enum):
     TOLL_FREE = "toll_free"
     MOBILE = "mobile"
     NATIONAL = "national"
-
+    
 class NumberGroup(BaseModel):
     monthly_cost: float = Field(ge=0.0)  # ensure cost is non-negative
     numbers: List[str] 
@@ -111,9 +111,6 @@ async def fetch_twilio_numbers(user_id: str) -> str:
         logger.error(f"Error fetching Twilio number for user {user_id}: {str(e)}")
         raise
 
-
-
-
 async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
     """Purchase a phone number from Twilio and associate it with the given user"""
     try:
@@ -199,4 +196,3 @@ async def purchase_number(phone_number: str, user_id: str) -> Dict[str, Any]:
     except Exception as e:
         print(f"[TWILIO SERVICE] ❌ Error in purchase_number: {str(e)}")
         raise
-

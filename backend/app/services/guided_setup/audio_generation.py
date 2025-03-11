@@ -8,7 +8,7 @@ async def generate_greeting_preview(
     business_name: str,
     business_description: str,
     business_website: Optional[str] = None,
-    language: str = "en"
+    language: str = "en-us"
 ) -> Dict[str, Any]:
     """
     Generate a greeting audio preview for the onboarding process.
@@ -19,7 +19,7 @@ async def generate_greeting_preview(
         business_name: Name of the business
         business_description: Brief description of the business
         business_website: Optional website URL
-        language: Language code for the greeting (ISO 639-1, e.g., "en", "es", "fr")
+        language: Language code for the greeting (e.g., "en-us", "en-gb", "es", "fr")
         
     Returns:
         Dictionary with success status and audio binary data or error
@@ -34,7 +34,8 @@ async def generate_greeting_preview(
         greeting_text = ""
         
         # Generate greeting text based on language
-        if language == "en":  # English
+        # Handle the specific en-us and en-gb variants
+        if language.startswith("en"):  # Any English variant
             greeting_text = f"Hello, thank you for calling {business_name}. This is Jess. How can I help you today?"
         elif language == "es":  # Spanish
             greeting_text = f"Hola, gracias por llamar a {business_name}. Soy Jess. ¿Cómo puedo ayudarle hoy?"
@@ -83,7 +84,7 @@ async def generate_greeting_preview(
 async def generate_message_preview(
     user_id: str,
     business_name: str,
-    language: str = "en"
+    language: str = "en-us"
 ) -> Dict[str, Any]:
     """
     Generate a message-taking audio preview for the onboarding process.
@@ -91,7 +92,7 @@ async def generate_message_preview(
     Args:
         user_id: The ID of the user
         business_name: Name of the business
-        language: Language code for the message (ISO 639-1, e.g., "en", "es", "fr")
+        language: Language code for the message (e.g., "en-us", "en-gb", "es", "fr")
         
     Returns:
         Dictionary with success status and audio binary data or error
@@ -106,7 +107,8 @@ async def generate_message_preview(
         message_text = ""
         
         # Generate message text based on language
-        if language == "en":  # English
+        # Handle the specific en-us and en-gb variants
+        if language.startswith("en"):  # Any English variant
             message_text = (
                 f"I'd be happy to take a message for {business_name}. "
                 "Could I please get your name and phone number? "

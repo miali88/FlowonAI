@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple
 
 from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
@@ -62,7 +62,7 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             "instructions": prompts.answering_service.format(company_name=business_name, business_overview=business_overview),  # Include both variables
             "dataSource": "guided_setup",  # Mark this agent as created from guided setup
             "openingLine": f"Hello! Thank you for calling {business_name}. Our call may be recorded for quality control purposes, my name is Fiona. How can I help you today?",
-            "language": "en-US",  # Default to English
+            "language": "en-US",  # Default to English (US)
             "voice": "Ize3YDdGqJYYKQSDLORJ", # jessica
             "features" : features,
             "assigned_telephone" : phone_number,  # Use the phone number from guided setup

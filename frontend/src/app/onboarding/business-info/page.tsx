@@ -12,22 +12,23 @@ import {
   Building2, 
   Globe, 
   CheckCircle2,
-  Languages
+  // Languages - commented out as we're hiding language selection UI
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AutoSearchPlacesInput from "@/app/dashboard/guided-setup/components/AutoSearchPlacesInput";
 import BlobAnimation from "@/app/onboarding/components/BlobAnimation";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Import Select components but comment them out as we're hiding language selection UI
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Map of country codes to languages
 const COUNTRY_TO_LANGUAGE = {
   // Europe
-  'GB': 'en', // United Kingdom
+  'GB': 'en-gb', // United Kingdom
   'IE': 'en', // Ireland
-  'US': 'en', // United States
-  'CA': 'en', // Canada (could also be 'fr' in Quebec)
+  'US': 'en-us', // United States
+  'CA': 'en-us', // Canada (could also be 'fr' in Quebec)
   'AU': 'en', // Australia
   'NZ': 'en', // New Zealand
   'FR': 'fr', // France
@@ -70,9 +71,10 @@ const COUNTRY_TO_LANGUAGE = {
   'PE': 'es', // Peru
 };
 
-// List of supported languages
+// List of supported languages - keep for future use but not currently displayed in UI
 const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English' },
+  { code: 'en-us', name: 'English (US)' },
+  { code: 'en-gb', name: 'English (UK)' },
   { code: 'es', name: 'Spanish' },
   { code: 'fr', name: 'French' },
   { code: 'de', name: 'German' },
@@ -81,8 +83,8 @@ const SUPPORTED_LANGUAGES = [
   { code: 'ar', name: 'Arabic' },
 ];
 
-// Default to English if no match is found
-const DEFAULT_LANGUAGE = 'en';
+// Default to English (US) if no match is found
+const DEFAULT_LANGUAGE = 'en-us';
 
 export default function BusinessInfoPage() {
   const [businessName, setBusinessName] = useState("");
@@ -90,6 +92,7 @@ export default function BusinessInfoPage() {
   const [businessDescription, setBusinessDescription] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
+  // Keep agentLanguage state for internal use, even though UI is hidden
   const [agentLanguage, setAgentLanguage] = useState(DEFAULT_LANGUAGE);
   const [countryCode, setCountryCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -305,6 +308,7 @@ export default function BusinessInfoPage() {
               </p>
             </div>
             
+            {/* Agent language selection UI - commented out per roadmap plan
             <div className="space-y-2">
               <label htmlFor="agentLanguage" className="block text-sm font-medium text-gray-700">
                 Default Agent Language
@@ -333,6 +337,7 @@ export default function BusinessInfoPage() {
                 This is the default greeting language the agent will use. However, the agent can detect and adapt to the language of the caller during conversations.
               </p>
             </div>
+            */}
 
             <div className="pt-4">
               <Button

@@ -134,7 +134,6 @@ async def retrain_agent(request: RetrainAgentRequest, current_user: str = Depend
         A response with the updated agent data or an error message
     """
     try:
-        # Call the service function that contains all the business logic
         result = await retrain_agent_service(current_user, request)
         return result
     except Exception as e:

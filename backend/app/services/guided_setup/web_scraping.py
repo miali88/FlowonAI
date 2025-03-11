@@ -76,7 +76,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         setup_data = {}
         if request.setup_data:
             logging.info(f"Using provided setup data for update")
-            setup_data = request.setup_data.dict()
+            setup_data = request.setup_data.model_dump()
         elif existing_setup:
             # Convert database format to frontend format
             setup_data = {
@@ -119,8 +119,8 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         quick_setup_data = QuickSetupData(**setup_data)
         # Save the updated or new data
         try:
-            # Default to English if agent language is not specified
-            agent_language = "en"
+            # Default to English (US) if agent language is not specified
+            agent_language = "en-us"
             
             # Try to extract language from the scraping result or existing setup
             if "businessInformation" in setup_data and "language" in setup_data["businessInformation"]:

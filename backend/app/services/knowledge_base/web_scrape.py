@@ -1,18 +1,16 @@
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
-import asyncio
 from datetime import datetime, timedelta
-import logging
-import aiohttp
-from tenacity import retry, stop_after_attempt, wait_exponential
 from requests.exceptions import RequestException
-import os
+import asyncio, logging, aiohttp, os
+from dotenv import load_dotenv
+
+from tenacity import retry, stop_after_attempt, wait_exponential
+from fastapi import HTTPException
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, SemaphoreDispatcher, RateLimiter, BrowserConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from tiktoken import encoding_for_model
 from supabase import create_client, Client
-from dotenv import load_dotenv
-from fastapi import HTTPException
 
 load_dotenv()
 
@@ -21,7 +19,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
 
 async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     logger.debug("Counting tokens with model gpt-4o")

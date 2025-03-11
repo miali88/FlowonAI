@@ -4,7 +4,7 @@ from typing import Dict, Any
 from app.clients.supabase_client import get_supabase
 from app.models.guided_setup import QuickSetupData
 
-async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phone_number: str = "(814) 261-0317", agent_language: str = "en"):
+async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, agent_language: str = None):
     """Save the guided setup data to Supabase."""
     
     # Check if the user already has setup data
@@ -13,11 +13,10 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
     # Convert Pydantic models to dictionaries for JSONB columns
     setup_data = {
         "user_id": user_id,
-        "training_sources": quick_setup_data.trainingSources.dict(),
-        "business_information": quick_setup_data.businessInformation.dict(),
-        "message_taking": quick_setup_data.messageTaking.dict(),
-        "call_notifications": quick_setup_data.callNotifications.dict(),
-        "phone_number": phone_number,
+        "training_sources": quick_setup_data.trainingSources.model_dump(),
+        "business_information": quick_setup_data.businessInformation.model_dump(),
+        "message_taking": quick_setup_data.messageTaking.model_dump(),
+        "call_notifications": quick_setup_data.callNotifications.model_dump(),
         "agent_language": agent_language,
     }
     

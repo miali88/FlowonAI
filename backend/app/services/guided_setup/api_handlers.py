@@ -4,7 +4,9 @@ import base64
 from datetime import datetime, timedelta
 
 from app.clients.supabase_client import get_supabase
-from app.models.guided_setup import QuickSetupData, TrainingSource, BusinessInformation, MessageTaking, CallNotifications, EmailNotifications, SmsNotifications, CallerName, CallerPhoneNumber
+from app.models.guided_setup import (QuickSetupData, TrainingSource, BusinessInformation, 
+                                     MessageTaking, CallNotifications, EmailNotifications, 
+                                     SmsNotifications, CallerName, CallerPhoneNumber)
 from app.services.guided_setup.setup_crud import get_guided_setup, save_guided_setup
 from app.services.guided_setup.agent_operations import create_or_update_agent_from_setup
 from app.services.guided_setup.audio_generation import generate_greeting_preview, generate_message_preview
@@ -12,9 +14,7 @@ from app.services.guided_setup.audio_generation import generate_greeting_preview
 async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[str, Any]:
     """Process quick setup data submission."""
     try:
-        # Mock phone number - in production this would be dynamically assigned
-        phone_number = "(814) 261-0317"
-        
+
         # Log the specific questions for debugging
         specific_questions = setup_data.messageTaking.specificQuestions if setup_data.messageTaking else []
         question_count = len(specific_questions)
@@ -24,19 +24,19 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
                 logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
         # Get agent language from business information if available
-        agent_language = "en"  # Default to English
+        agent_language = "en-US"  # Default to English (US)
         
         # Save the setup data to Supabase
-        await save_guided_setup(user_id, setup_data, phone_number, agent_language)
+        await save_guided_setup(user_id, setup_data, agent_language)
         
         logging.info(f"Quick setup completed for user {user_id}")
         
         # Convert the Pydantic model to dict for the agent creation function
         setup_data_dict = {
-            "trainingSources": setup_data.trainingSources.dict(),
-            "businessInformation": setup_data.businessInformation.dict(),
-            "messageTaking": setup_data.messageTaking.dict(),
-            "callNotifications": setup_data.callNotifications.dict()
+            "trainingSources": setup_data.trainingSources.model_dump(),
+            "businessInformation": setup_data.businessInformation.model_dump(),
+            "messageTaking": setup_data.messageTaking.model_dump(),
+            "callNotifications": setup_data.callNotifications.model_dump()
         }
         
         # Create or update the agent using the centralized function
@@ -46,7 +46,6 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
         
         return {
             "success": True,
-            "phoneNumber": phone_number,
             "message": "Quick setup data received successfully"
         }
     except Exception as e:
@@ -83,7 +82,7 @@ async def generate_onboarding_preview_service(
     business_name: str,
     business_description: str,
     business_website: str,
-    agent_language: str
+    agent_language: str = "en-US"
 ) -> Dict[str, Any]:
     """
     Service function to generate audio previews for onboarding with minimal business information.
@@ -94,7 +93,7 @@ async def generate_onboarding_preview_service(
         business_name: Name of the business
         business_description: Brief description of the business
         business_website: Website URL of the business
-        agent_language: Language code for the agent
+        agent_language: Language code for the agent (default: en-US)
         
     Returns:
         Dictionary with success status, audio data, and text
@@ -152,7 +151,7 @@ async def save_onboarding_data_service(
     business_website: Optional[str] = None,
     business_address: Optional[str] = None,
     business_phone: Optional[str] = None,
-    agent_language: str = "en"
+    agent_language: str = "en-US"
 ) -> Dict[str, Any]:
     """
     Service function to save onboarding data with minimal required information.
@@ -162,13 +161,13 @@ async def save_onboarding_data_service(
         user_id: The ID of the user
         business_name: Name of the business
         business_description: Brief description of the business
-        business_website: Website URL of the business
-        business_address: Business address
-        business_phone: Business phone number
-        agent_language: Language code for the agent
+        business_website: Optional website URL
+        business_address: Optional business address
+        business_phone: Optional business phone number
+        agent_language: Language code for the agent (default: en-US)
         
     Returns:
-        Dictionary with success status and message
+        Dictionary with success status and message or error
     """
     try:
         logging.info(f"Saving onboarding data for user {user_id} with business name: {business_name}")
