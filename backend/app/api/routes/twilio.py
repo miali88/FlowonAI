@@ -7,7 +7,7 @@ import os
 
 from app.services.twilio import (
     call_handle, helper, process_call_completed, check_user_trial_status, 
-    purchase_user_phone_number
+    provision_user_phone_number
 )
 from app.core.auth import get_current_user
 
@@ -132,7 +132,7 @@ async def purchase_phone_number(
 ) -> JSONResponse:
     """Purchase a Twilio phone number for the user"""
     try:
-        purchase_result = await purchase_user_phone_number(
+        purchase_result = await provision_user_phone_number(
             country_code=country_code,
             number_type=number_type,
             area_code=area_code,
@@ -146,5 +146,5 @@ async def purchase_phone_number(
         raise
     except Exception as e:
         logger.error(f"Error in purchase_phone_number: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error purchasing phone number: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error provisioning phone number: {str(e)}")
         

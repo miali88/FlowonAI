@@ -8,7 +8,6 @@ import logging
 import stripe
 
 from app.clients.supabase_client import get_supabase
-from app.services.livekit.inbound_trunk import number_purchased
 
 """ TODO: create the twilio number purchase function, also add new numb metadata """
 
@@ -52,7 +51,6 @@ async def create_payment_link(request: PaymentLinkRequest):
         return payment_link.url
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))    
-
 
 async def add_new_number_to_db(
     customer_id: str,
@@ -101,7 +99,6 @@ async def add_new_number_to_db(
             detail=f"Failed to update user features: {str(e)}"
         )
     
-    
 async def payment_result(session_id: str):
     try:
         checkout_session = stripe.checkout.Session.retrieve(session_id)
@@ -123,8 +120,7 @@ async def payment_result(session_id: str):
     except Exception as e:
         logger.error(f"Error getting payment result for session_id: {session_id}. Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get payment result: {str(e)}")
-    
-    
+      
 async def handle_subscription_completed(session):
     """
     Handles the checkout.session.completed event for subscriptions.

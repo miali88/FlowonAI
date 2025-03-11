@@ -52,3 +52,4 @@ class QuickSetupData(BaseModel):
     businessInformation: BusinessInformation
     messageTaking: MessageTaking
     callNotifications: CallNotifications
+    agentLanguage: str = "en-US"

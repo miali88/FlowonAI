@@ -4,20 +4,28 @@ from typing import Dict, Any, Tuple
 from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
 from .setup_crud import get_guided_setup, update_guided_setup_agent_id
+from app.models.guided_setup import QuickSetupData
 
-async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, Any]) -> Tuple[bool, str, Any]:
+async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Any]:
     """
     Helper function to create or update an agent based on guided setup data.
     
     Args:
         user_id: The user ID
-        setup_data: The setup data in frontend format (not database format)
+        setup_data: The setup data as a QuickSetupData Pydantic model
         
     Returns:
         Tuple of (success, message, agent_data)
     """
     try:
         logging.info(f"Checking for existing agents for user {user_id}")
+        
+        # Access data directly from the Pydantic model
+        business_info = setup_data.businessInformation
+        business_name = business_info.businessName
+        business_overview = business_info.businessOverview
+        agent_language = setup_data.agentLanguage
+        specific_questions = setup_data.messageTaking.specificQuestions if setup_data.messageTaking else []
         
         # Get the user's guided setup data to retrieve the phone number and agent_id
         guided_setup_data = await get_guided_setup(user_id)
@@ -36,11 +44,6 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
         else:
             logging.warning(f"No guided_setup_id found for user {user_id}")
         
-        # Extract business information for agent creation/update
-        business_info = setup_data.get("businessInformation", {})
-        business_name = business_info.get("businessName", "My Business")
-        business_overview = business_info.get("businessOverview", "")
-        
         logging.info(f"Preparing agent data for business: {business_name}")
 
         features = {
@@ -52,7 +55,8 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
                     },
                     "notifyOnInterest": {
                         "enabled": True
-                    },}
+                    },
+                }
 
         # Prepare agent data
         agent_data = {
@@ -62,7 +66,7 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             "instructions": prompts.answering_service.format(company_name=business_name, business_overview=business_overview),  # Include both variables
             "dataSource": "guided_setup",  # Mark this agent as created from guided setup
             "openingLine": f"Hello! Thank you for calling {business_name}. Our call may be recorded for quality control purposes, my name is Fiona. How can I help you today?",
-            "language": "en-US",  # Default to English (US)
+            "language": agent_language,
             "voice": "Ize3YDdGqJYYKQSDLORJ", # jessica
             "features" : features,
             "assigned_telephone" : phone_number,  # Use the phone number from guided setup
@@ -76,21 +80,14 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: Dict[str, 
             logging.info(f"Added guided_setup_id {guided_setup_id} to agent data")
         
         # Add specific questions as form fields if available
-        specific_questions = setup_data.get("messageTaking", {}).get("specificQuestions", [])
         if specific_questions:
             form_fields = []
             for q in specific_questions:
-                # Handle both dict and SpecificQuestion object types
-                if isinstance(q, dict) and "question" in q:
-                    form_fields.append({
-                        "name": q["question"],
-                        "required": q.get("required", False)
-                    })
-                elif hasattr(q, "question") and hasattr(q, "required"):
-                    form_fields.append({
-                        "name": q.question,
-                        "required": q.required
-                    })
+                # Since we're only using Pydantic models, the questions will be Pydantic objects
+                form_fields.append({
+                    "name": q.question,
+                    "required": q.required
+                })
             if form_fields:
                 agent_data["form_fields"] = form_fields
                 logging.info(f"Added {len(form_fields)} form fields to agent data")

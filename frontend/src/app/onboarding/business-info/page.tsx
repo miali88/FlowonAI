@@ -25,10 +25,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Map of country codes to languages
 const COUNTRY_TO_LANGUAGE = {
   // Europe
-  'GB': 'en-gb', // United Kingdom
+  'GB': 'en-GB', // United Kingdom
   'IE': 'en', // Ireland
-  'US': 'en-us', // United States
-  'CA': 'en-us', // Canada (could also be 'fr' in Quebec)
+  'US': 'en-US', // United States
+  'CA': 'en-US', // Canada (could also be 'fr' in Quebec)
   'AU': 'en', // Australia
   'NZ': 'en', // New Zealand
   'FR': 'fr', // France
@@ -73,18 +73,18 @@ const COUNTRY_TO_LANGUAGE = {
 
 // List of supported languages - keep for future use but not currently displayed in UI
 const SUPPORTED_LANGUAGES = [
-  { code: 'en-us', name: 'English (US)' },
-  { code: 'en-gb', name: 'English (UK)' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'it', name: 'Italian' },
-  { code: 'ar', name: 'Arabic' },
+  { code: 'en-US', name: 'English (US)' },
+  { code: 'en-GB', name: 'English (UK)' },
+  // { code: 'es', name: 'Spanish' },
+  // { code: 'fr', name: 'French' },
+  // { code: 'de', name: 'German' },
+  // { code: 'pt', name: 'Portuguese' },
+  // { code: 'it', name: 'Italian' },
+  // { code: 'ar', name: 'Arabic' },
 ];
 
 // Default to English (US) if no match is found
-const DEFAULT_LANGUAGE = 'en-us';
+const DEFAULT_LANGUAGE = 'en-US';
 
 export default function BusinessInfoPage() {
   const [businessName, setBusinessName] = useState("");

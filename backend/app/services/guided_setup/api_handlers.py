@@ -23,24 +23,14 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
             for i, q in enumerate(specific_questions):
                 logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
-        # Get agent language from business information if available
-        agent_language = "en-US"  # Default to English (US)
-        
+ 
         # Save the setup data to Supabase
-        await save_guided_setup(user_id, setup_data, agent_language)
+        await save_guided_setup(user_id, setup_data)
         
         logging.info(f"Quick setup completed for user {user_id}")
         
-        # Convert the Pydantic model to dict for the agent creation function
-        setup_data_dict = {
-            "trainingSources": setup_data.trainingSources.model_dump(),
-            "businessInformation": setup_data.businessInformation.model_dump(),
-            "messageTaking": setup_data.messageTaking.model_dump(),
-            "callNotifications": setup_data.callNotifications.model_dump()
-        }
-        
         # Create or update the agent using the centralized function
-        success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data_dict)
+        success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
         if not success:
             logging.warning(f"Agent creation/update during quick setup: {message}")
         
@@ -197,14 +187,22 @@ async def save_onboarding_data_service(
             callNotifications=CallNotifications(
                 emailNotifications=EmailNotifications(enabled=False),
                 smsNotifications=SmsNotifications(enabled=False)
-            )
+            ),
+            agentLanguage=agent_language
         )
         
         # Save the setup data
-        await save_guided_setup(user_id, setup_data, agent_language=agent_language)
+        await save_guided_setup(user_id, setup_data)
         
         logging.info(f"Onboarding data saved successfully for user {user_id}")
         logging.info(f"Agent language set to: {agent_language}")
+        
+        # Create or update the agent using the centralized function
+        success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
+        if not success:
+            logging.warning(f"Agent creation/update during onboarding: {message}")
+        else:
+            logging.info(f"Agent successfully created/updated during onboarding for user {user_id}")
         
         return {
             "success": True,
