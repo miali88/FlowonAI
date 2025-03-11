@@ -57,6 +57,13 @@ const AutoSearchPlacesInput = ({
     searchBoxRef.current = ref;
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent form submission on Enter key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div>
       {isLoaded && (
@@ -68,6 +75,7 @@ const AutoSearchPlacesInput = ({
             placeholder="Search for your business"
             value={value || ""}
             onChange={(e) => onChange && onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </StandaloneSearchBox>
       )}

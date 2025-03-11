@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -79,10 +78,6 @@ const SUPPORTED_LANGUAGES = [
   { code: 'de', name: 'German' },
   { code: 'pt', name: 'Portuguese' },
   { code: 'it', name: 'Italian' },
-  { code: 'nl', name: 'Dutch' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
   { code: 'ar', name: 'Arabic' },
 ];
 
@@ -102,7 +97,7 @@ export default function BusinessInfoPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const router = useRouter();
-  const { userId, getToken } = useAuth();
+  const { getToken } = useAuth();
 
   const handlePlaceSelect = (placeData: any) => {
     console.log("Place data selected:", placeData);
@@ -142,6 +137,10 @@ export default function BusinessInfoPage() {
         setAgentLanguage(detectedLanguage);
       }
     }
+
+    // Set a success message
+    setSuccessMessage("Business information populated! Please review and make any adjustments before continuing.");
+    
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,6 +184,33 @@ export default function BusinessInfoPage() {
 
       const data = await response.json();
       console.log("Audio preview generated successfully:", data);
+      
+      // Save the onboarding data to the backend
+      console.log("Saving onboarding data to the backend...");
+      const saveResponse = await fetch(`${API_BASE_URL}/guided_setup/save_onboarding_data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          businessName: businessName,
+          businessDescription: businessDescription,
+          businessWebsite: businessWebsite,
+          businessAddress: businessAddress,
+          businessPhone: businessPhone,
+          agentLanguage: agentLanguage
+        })
+      });
+      
+      if (!saveResponse.ok) {
+        const saveErrorData = await saveResponse.text();
+        console.error("Error saving onboarding data:", saveErrorData);
+        // Continue anyway since this is not critical for the audio test
+        console.warn("Continuing to next step despite error saving onboarding data");
+      } else {
+        console.log("Onboarding data saved successfully");
+      }
       
       // Store data in localStorage for the next step
       localStorage.setItem('flowonAI_businessInfo', JSON.stringify({

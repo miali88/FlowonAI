@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 from typing import Optional
 from backend.app.models.guided_setup import QuickSetupData
@@ -11,6 +10,15 @@ class OnboardingPreviewRequest(BaseModel):
     businessAddress: Optional[str] = None
     businessPhone: Optional[str] = None
     agentLanguage: Optional[str] = "en"  # Default language is English
+
+class OnboardingSaveRequest(BaseModel):
+    """Request model for saving onboarding data."""
+    businessWebsite: Optional[str] = None
+    businessName: str
+    businessDescription: str
+    businessAddress: Optional[str] = None
+    businessPhone: Optional[str] = None
+    agentLanguage: Optional[str] = "en"
 
 class AudioPreviewResponse(BaseModel):
     """Response model for audio preview generation."""

@@ -4,7 +4,7 @@ from typing import Dict, Any
 from app.clients.supabase_client import get_supabase
 from app.models.guided_setup import QuickSetupData
 
-async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phone_number: str = "(814) 261-0317"):
+async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phone_number: str = "(814) 261-0317", agent_language: str = "en"):
     """Save the guided setup data to Supabase."""
     
     # Check if the user already has setup data
@@ -18,6 +18,7 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData, phon
         "message_taking": quick_setup_data.messageTaking.dict(),
         "call_notifications": quick_setup_data.callNotifications.dict(),
         "phone_number": phone_number,
+        "agent_language": agent_language,
     }
     
     # If record exists, preserve the setup_completed value and agent_id

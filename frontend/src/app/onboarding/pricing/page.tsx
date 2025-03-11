@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Gift } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import BlobAnimation from "@/app/onboarding/components/BlobAnimation";
@@ -127,6 +127,38 @@ export default function PricingPage() {
       const result = await response.json();
       console.log('Trial plan activated:', result);
       
+      // Purchase a phone number for the user
+      try {
+        console.log('Purchasing phone number...');
+        const phoneResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/purchase_phone_number`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            country_code: 'US', // Default to US numbers
+            number_type: 'local' // Default to local numbers
+          })
+        });
+        
+        if (!phoneResponse.ok) {
+          console.error('Failed to purchase phone number', await phoneResponse.json());
+          // Continue even if phone number purchase fails - we'll handle this in guided setup
+        } else {
+          const phoneResult = await phoneResponse.json();
+          console.log('Phone number purchased:', phoneResult);
+          
+          // Store the phone number in localStorage for use in guided setup
+          if (phoneResult.phone_number) {
+            localStorage.setItem('flowonAI_phoneNumber', phoneResult.phone_number);
+          }
+        }
+      } catch (phoneError) {
+        console.error('Error purchasing phone number:', phoneError);
+        // Continue even if there's an error - we'll handle this in guided setup
+      }
+      
       // Navigate to the guided setup
       router.push("/dashboard/guided-setup");
     } catch (error) {
@@ -145,10 +177,22 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-10 text-center">
             <h1 className="text-3xl font-bold tracking-tight mb-3">Choose Your Plan</h1>
-            <div className="mt-8 text-center text-sm text-gray-500">
-              <p>All plans come with a 14-day free trial, with 20 minutes free. No credit card required.</p>
-              <p className="mt-2">Need help choosing? Contact our sales team at support@flowon.ai</p>
+            
+            {/* Enhanced free trial highlight */}
+            <div className="mt-8 flex justify-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md shadow-sm">
+                <div className="flex items-center justify-center">
+                  <Gift className="h-6 w-6 text-blue-500 mr-2" />
+                  <h3 className="text-lg font-semibold text-blue-700">Free Trial Included</h3>
+                </div>
+                <p className="mt-2 text-blue-700 font-medium">
+                  All plans come with a 14-day free trial, with 20 minutes free.
+                </p>
+                <p className="text-sm text-blue-600 font-medium mt-1">No credit card required.</p>
+              </div>
             </div>
+            
+            <p className="mt-4 text-sm text-gray-500">Need help choosing? Contact our sales team at support@flowon.ai</p>
           </div>
           
           {/* Billing toggle */}

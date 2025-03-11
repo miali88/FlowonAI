@@ -3,9 +3,11 @@ from fastapi.responses import JSONResponse
 from typing import Dict, List
 from pydantic import BaseModel
 import logging
+import os
 
 from app.services.twilio import call_handle, helper
 from app.core.auth import get_current_user
+from app.clients.supabase_client import get_supabase
 
 # Add logger configuration at the top after imports
 logger = logging.getLogger(__name__)
@@ -244,4 +246,82 @@ async def check_trial_status(user_id: str, current_user: str = Depends(get_curre
     except Exception as e:
         logger.error(f"Error checking trial status: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error checking trial status: {str(e)}")
+
+@router.post("/purchase_phone_number")
+async def purchase_phone_number(
+    country_code: str,
+    number_type: str = "local",
+    area_code: str = None,
+    current_user: str = Depends(get_current_user)
+) -> JSONResponse:
+    """Purchase a Twilio phone number for the user"""
+    try:
+        logger.info(f"Purchasing phone number for user {current_user}: country_code={country_code}, type={number_type}")
+        
+        if not current_user:
+            logger.warning("Unauthorized attempt to purchase phone number - no current user")
+            raise HTTPException(status_code=401, detail="User not authenticated")
+        
+        # Get an available number from the specified country and type
+        available_numbers = helper.get_available_numbers(country_code)
+        
+        if not available_numbers or number_type not in available_numbers:
+            logger.error(f"No available {number_type} numbers found for country code {country_code}")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No available {number_type} numbers found for country code {country_code}"
+            )
+        
+        # Get the first available number of the requested type
+        phone_number = available_numbers[number_type]["numbers"][0]
+        
+        logger.info(f"Selected phone number {phone_number} for user {current_user}")
+        
+        # Purchase the number using Twilio client
+        from app.services.twilio.client import client
+        
+        try:
+            purchased_number = client.incoming_phone_numbers.create(
+                phone_number=phone_number,
+                friendly_name=f"FlowonAI Number - {current_user}",
+                voice_url=f"{os.getenv('API_BASE_URL')}/twilio/add_to_conference",
+                voice_method="POST",
+                status_callback=f"{os.getenv('API_BASE_URL')}/twilio/call_completed",
+                status_callback_method="POST"
+            )
+            
+            logger.info(f"Successfully purchased number {phone_number} with SID: {purchased_number.sid}")
+            
+            # Save the number in the database associated with the user
+            supabase = await get_supabase()
+            supabase_result = await supabase.table("twilio_numbers").insert({
+                "phone_number": phone_number,
+                "owner_user_id": current_user,
+                "number_type": number_type,
+                "country_code": country_code,
+                "twilio_sid": purchased_number.sid,
+                "active": True,
+                "monthly_cost": available_numbers[number_type]["monthly_cost"]
+            }).execute()
+            
+            logger.info(f"Saved phone number {phone_number} to database for user {current_user}")
+            
+            return JSONResponse(content={
+                "success": True,
+                "phone_number": phone_number,
+                "twilio_sid": purchased_number.sid,
+                "number_type": number_type,
+                "monthly_cost": available_numbers[number_type]["monthly_cost"]
+            })
+            
+        except Exception as e:
+            logger.error(f"Failed to purchase number from Twilio: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to purchase number: {str(e)}")
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error purchasing phone number: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error purchasing phone number: {str(e)}")
         

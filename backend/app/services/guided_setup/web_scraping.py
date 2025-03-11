@@ -119,8 +119,18 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         quick_setup_data = QuickSetupData(**setup_data)
         # Save the updated or new data
         try:
-            await save_guided_setup(user_id, quick_setup_data)
+            # Default to English if agent language is not specified
+            agent_language = "en"
+            
+            # Try to extract language from the scraping result or existing setup
+            if "businessInformation" in setup_data and "language" in setup_data["businessInformation"]:
+                agent_language = setup_data["businessInformation"]["language"]
+            elif existing_setup and "agent_language" in existing_setup:
+                agent_language = existing_setup["agent_language"]
+                
+            await save_guided_setup(user_id, quick_setup_data, agent_language=agent_language)
             logging.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
+            logging.info(f"Agent language set to: {agent_language}")
         except Exception as save_error:
             logging.error(f"Error saving guided setup data: {str(save_error)}")
             return RetrainAgentResponse(

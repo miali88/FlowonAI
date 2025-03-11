@@ -40,7 +40,8 @@ from .api_handlers import (
     submit_quick_setup,
     check_setup_status,
     generate_onboarding_preview_service,
-    set_trial_plan_service
+    set_trial_plan_service,
+    save_onboarding_data_service
 )
 
 # Export all the functions and models from the original guided_setup.py
@@ -82,5 +83,6 @@ __all__ = [
     'submit_quick_setup',
     'check_setup_status',
     'generate_onboarding_preview_service',
-    'set_trial_plan_service'
+    'set_trial_plan_service',
+    'save_onboarding_data_service'
 ] 

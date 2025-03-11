@@ -8,7 +8,8 @@ from app.api.schemas.guided_setup import (
     RetrainAgentResponse,
     OnboardingPreviewRequest,
     AudioPreviewResponse,
-    TrialPlanRequest
+    TrialPlanRequest,
+    OnboardingSaveRequest
 )
 from app.services.guided_setup import (
     get_rosie_phone_number,
@@ -18,7 +19,8 @@ from app.services.guided_setup import (
     get_formatted_setup_data,
     retrain_agent_service,
     generate_onboarding_preview_service,
-    set_trial_plan_service
+    set_trial_plan_service,
+    save_onboarding_data_service
 )
 
 router = APIRouter()
@@ -221,3 +223,37 @@ async def set_trial_plan(
     except Exception as e:
         logging.error(f"Error setting up trial plan: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error setting up trial plan: {str(e)}")
+
+@router.post("/save_onboarding_data")
+async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str = Depends(get_current_user)):
+    """
+    Save onboarding data including website and business information from Google Maps places API.
+    """
+    try:
+        logging.info(f"Saving onboarding data for user {current_user} with business name: {request.businessName}")
+        
+        # Call the service function to save the onboarding data
+        result = await save_onboarding_data_service(
+            user_id=current_user,
+            business_name=request.businessName,
+            business_description=request.businessDescription,
+            business_website=request.businessWebsite,
+            business_address=request.businessAddress,
+            business_phone=request.businessPhone,
+            agent_language=request.agentLanguage
+        )
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+        
+        return result
+    except Exception as e:
+        logging.error(f"Error in save_onboarding_data endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.options("/save_onboarding_data")
+async def options_save_onboarding_data():
+    """
+    Handle OPTIONS requests for CORS preflight.
+    """
+    return {}

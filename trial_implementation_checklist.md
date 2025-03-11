@@ -16,17 +16,19 @@
 
 ## Business Logic Implementation
 
-- [ ] **User Registration Flow:**
+- [X] **User Registration Flow:**
   - [X] Create onboarding page, that mimics the guided set-up, then asks the user to pick their trial plan. Then load /guided_setup
 
-  - [ ] The user first signs up using clerk, the backend posts the user to our supabase.
-  - [ ] then are routed to /onboarding. At the final stage, they will be asked to select a given plan to trial. We should update the users table of the given user. :
-    - [ ] Set `is_trial = true`
-    - [ ] Set `trial_start_date` to current time
-    - [ ] Set `trial_end_date` to current time + 14 days
-    - [ ] Set `trial_plan_type` to their selected plan
-    - [ ] Set `trial_minutes_total = 25`
-    - [ ] Set `trial_minutes_used = 0`
+  - [X] The user first signs up using clerk, the backend posts the user to our supabase.
+  - [X] then are routed to /onboarding. At the final stage, they will be asked to select a given plan to trial. We should update the users table of the given user. :
+    - [X] Set `is_trial = true`
+    - [X] Set `trial_start_date` to current time
+    - [X] Set `trial_end_date` to current time + 14 days
+    - [X] Set `trial_plan_type` to their selected plan
+    - [X] Set `trial_minutes_total = 25`
+    - [X] Set `trial_minutes_used = 0`
+
+  - [ ] The business profile selected on the onboarding page isn't showing in the quick set-up
 
 - [ ] **Phone Number Management:**
   - [ ] Review the current implementation for phone number purchase, how is the current flow? 
@@ -36,12 +38,14 @@
   - [ ] Create automated system to release numbers that exceed 14-day limit
   - [ ] Add warning notifications before number release
 
+@gabriel
 - [ ] **Call Duration Tracking:**
   - [ ] Calculate call duration in minutes for each call
   - [ ] For trial users, increment `trial_minutes_used` after each call
   - [ ] Block further calls if `trial_minutes_used >= trial_minutes_total`
   - [ ] Add warning when approaching minute limit (80% usage)
 
+@gabriel
 - [ ] **Trial Expiration Handling:**
   - [ ] Create scheduled job to check for expired trials daily
   - [ ] When trial expires:
@@ -71,6 +75,7 @@
   - [ ] Add endpoint for handling trial expiration
   - [ ] Create endpoint for manual trial extension (admin only)
 
+@gabriel
 ## Notifications System
 
 - [ ] **Email notifications:**
@@ -79,10 +84,6 @@
   - [ ] Trial expiration warnings (7 days, 3 days, 1 day before)
   - [ ] Trial expired notification with upgrade options
 
-- [ ] **In-app notifications:**
-  - [ ] Trial status alerts
-  - [ ] Usage milestone notifications
-  - [ ] Expiration warnings
 
 ## Testing Plan
 

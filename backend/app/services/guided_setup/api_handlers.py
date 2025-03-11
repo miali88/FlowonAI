@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import base64
 from datetime import datetime, timedelta
 
 from app.clients.supabase_client import get_supabase
-from app.models.guided_setup import QuickSetupData
+from app.models.guided_setup import QuickSetupData, TrainingSource, BusinessInformation, MessageTaking, CallNotifications, EmailNotifications, SmsNotifications, CallerName, CallerPhoneNumber
 from app.services.guided_setup.setup_crud import get_guided_setup, save_guided_setup
 from app.services.guided_setup.agent_operations import create_or_update_agent_from_setup
 from app.services.guided_setup.audio_generation import generate_greeting_preview, generate_message_preview
@@ -23,8 +23,11 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
             for i, q in enumerate(specific_questions):
                 logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
+        # Get agent language from business information if available
+        agent_language = "en"  # Default to English
+        
         # Save the setup data to Supabase
-        await save_guided_setup(user_id, setup_data, phone_number)
+        await save_guided_setup(user_id, setup_data, phone_number, agent_language)
         
         logging.info(f"Quick setup completed for user {user_id}")
         
@@ -140,6 +143,76 @@ async def generate_onboarding_preview_service(
         }
     except Exception as e:
         logging.error(f"Error in generate_onboarding_preview_service: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+async def save_onboarding_data_service(
+    user_id: str,
+    business_name: str,
+    business_description: str,
+    business_website: Optional[str] = None,
+    business_address: Optional[str] = None,
+    business_phone: Optional[str] = None,
+    agent_language: str = "en"
+) -> Dict[str, Any]:
+    """
+    Service function to save onboarding data with minimal required information.
+    Stores the website data from the place selection.
+    
+    Args:
+        user_id: The ID of the user
+        business_name: Name of the business
+        business_description: Brief description of the business
+        business_website: Website URL of the business
+        business_address: Business address
+        business_phone: Business phone number
+        agent_language: Language code for the agent
+        
+    Returns:
+        Dictionary with success status and message
+    """
+    try:
+        logging.info(f"Saving onboarding data for user {user_id} with business name: {business_name}")
+        
+        # Check if the user already has setup data
+        existing_setup = await get_guided_setup(user_id)
+        
+        # Create a minimal QuickSetupData structure with just the website
+        setup_data = QuickSetupData(
+            trainingSources=TrainingSource(
+                businessWebsite=business_website,
+                googleBusinessProfile=None  # We're not collecting this separately now
+            ),
+            businessInformation=BusinessInformation(
+                businessName=business_name,
+                businessOverview=business_description,
+                primaryBusinessAddress=business_address or "",
+                primaryBusinessPhone=business_phone or "",
+                coreServices=[],
+                businessHours={}
+            ),
+            messageTaking=MessageTaking(
+                callerName=CallerName(required=True, alwaysRequested=True),
+                callerPhoneNumber=CallerPhoneNumber(required=True, automaticallyCaptured=True),
+                specificQuestions=[]
+            ),
+            callNotifications=CallNotifications(
+                emailNotifications=EmailNotifications(enabled=False),
+                smsNotifications=SmsNotifications(enabled=False)
+            )
+        )
+        
+        # Save the setup data
+        await save_guided_setup(user_id, setup_data, agent_language=agent_language)
+        
+        logging.info(f"Onboarding data saved successfully for user {user_id}")
+        logging.info(f"Agent language set to: {agent_language}")
+        
+        return {
+            "success": True,
+            "message": "Onboarding data saved successfully"
+        }
+    except Exception as e:
+        logging.error(f"Error in save_onboarding_data_service: {str(e)}")
         return {"success": False, "error": str(e)}
 
 async def set_trial_plan_service(
