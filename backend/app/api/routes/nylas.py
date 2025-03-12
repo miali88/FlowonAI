@@ -81,3 +81,4 @@ async def oauth_exchange(code: str) -> HTMLResponse:
             status_code=500,
             detail="Failed to exchange authorization code for token"
         )
+

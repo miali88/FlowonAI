@@ -120,6 +120,7 @@ class Settings(BaseSettings):
     NYLAS_CLIENT_ID: str = ""
     NYLAS_API_URI: str = ""
     NYLAS_CALLBACK_URI: str = ""
+    NYLAS_GRANT_ID: str = os.getenv("NYLAS_GRANT_ID", "")
     
     # AI/ML Services
     OPENAI_API_KEY: str = ""

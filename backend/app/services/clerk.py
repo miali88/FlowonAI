@@ -7,6 +7,7 @@ import stripe
 
 from app.clients.supabase_client import get_supabase
 from app.models.users import UserInDB
+from app.services.email_service import send_notification_email
 
 load_dotenv()
 
@@ -138,6 +139,33 @@ async def post_user(payload):
         data, count = await supabase.table('users').insert(user_dict).execute()
         
         logger.info(f"User data saved successfully. Affected rows: {count}")
+
+        # Send email notification
+        try:
+            # Create email content
+            subject = f"New User Signup: {first_name} {last_name}"
+            body = f"""
+            <h2>New User Registration</h2>
+            <p>A new user has signed up for Flowon AI:</p>
+            <ul>
+                <li><strong>User ID:</strong> {clerk_user_id}</li>
+                <li><strong>Name:</strong> {full_name or 'Not provided'}</li>
+                <li><strong>Email:</strong> {primary_email or 'Not provided'}</li>
+                <li><strong>Signup Time:</strong> {created_at.isoformat() if created_at else 'Unknown'}</li>
+            </ul>
+            <p>You can view this user in the admin dashboard.</p>
+            """
+            
+            # Send the notification email using the correct function
+            email_sent = await send_notification_email(subject, body)
+            if email_sent:
+                logger.info(f"Notification email sent for new user {clerk_user_id}")
+            else:
+                logger.warning(f"Failed to send notification email for new user {clerk_user_id}")
+        except Exception as e:
+            logger.error(f"Error sending signup notification email: {str(e)}")
+            # Don't raise an exception here - we don't want to fail user creation if email fails
+
         return data
     except Exception as e:
         logger.error(f"Error saving user data to database: {str(e)}")

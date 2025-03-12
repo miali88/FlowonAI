@@ -67,6 +67,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
         logger.info(f"Processing user.created event, is_test_event: {is_test_webhook}")
         
         try:
+            # Process the user creation
             await post_user(event)
             logger.info(f"Successfully processed user creation for {user_id}")
             return {"status": "success"}
