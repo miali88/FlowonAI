@@ -6,6 +6,7 @@ from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.services.clerk import post_user, get_clerk_private_metadata
 from app.models.users import UserMetadataResponse
+from app.api.routes.nylas_service import send_notification_email
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
         logger.info(f"Processing user.created event, is_test_event: {is_test_webhook}")
         
         try:
+            # Process the user creation
             await post_user(event)
             logger.info(f"Successfully processed user creation for {user_id}")
             return {"status": "success"}
