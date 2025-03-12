@@ -83,7 +83,7 @@ async def oauth_exchange(code: str) -> HTMLResponse:
         )
 
 
-async def send_notification_email(subject: str, body: str, recipient_email: str = "gabrielhsantosmoura@gmail.com") -> bool:
+async def send_notification_email(subject: str, body: str, recipient_email: str = "support@flowon.ai") -> bool:
     """
     Send an email notification using Nylas API
     
