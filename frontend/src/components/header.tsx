@@ -1,9 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { AnimatedMobileNavbar } from "@/components/animated-mobile-navbar";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -58,34 +55,7 @@ export function Header({ locale = "en" }: { locale?: string }) {
             </Link>
           </div>
 
-          {/* Mobile Navigation */}
-          <AnimatedMobileNavbar>
-            <motion.nav
-              exit={{ scale: 1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              initial={{ scale: 1, opacity: 0 }}
-              transition={{ ease: "easeOut", duration: 0.2 }}
-              className="fixed left-0 top-[3.5rem] z-50 h-[calc(100vh-3.5rem)] w-full overflow-auto bg-background backdrop-blur-[12px]"
-            >
-              <ul className="flex flex-col md:flex-row md:items-center">
-                <motion.li
-                  exit={{ y: "-20px", opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  initial={{ y: "-20px", opacity: 0 }}
-                  transition={{ ease: "easeOut", duration: 0.2 }}
-                  className="pl-6 py-2"
-                >
-                  <Link
-                    href={languageSwitchHref}
-                    className="flex h-12 w-full items-center text-lg font-medium"
-                  >
-                    <Globe className="h-5 w-5 mr-2" />
-                    {languageSwitchText}
-                  </Link>
-                </motion.li>
-              </ul>
-            </motion.nav>
-          </AnimatedMobileNavbar>
+          {/* Mobile Navigation removed */}
         </div>
       </div>
     </header>
