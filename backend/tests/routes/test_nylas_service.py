@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from app.api.routes.nylas_service import send_notification_email, get_active_grant_id
+from backend.app.api.routes.nylas import send_notification_email, get_active_grant_id
 
 @pytest.mark.asyncio
 @patch('app.api.routes.nylas_service.get_active_grant_id')

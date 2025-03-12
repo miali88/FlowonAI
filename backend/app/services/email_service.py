@@ -1,44 +1,54 @@
 import logging
-from app.api.routes.nylas_service import send_notification_email
+from backend.app.api.routes.nylas import nylas
+from backend.app.api.routes.nylas import settings
 
 logger = logging.getLogger(__name__)
 
-async def send_user_signup_notification(user_data: dict) -> bool:
+async def send_notification_email(subject: str, body: str, recipient_email: str = "support@flowon.ai") -> bool:
     """
-    Send a notification email when a new user signs up
+    Send an email notification using Nylas API
     
     Args:
-        user_data: User data from Clerk webhook
+        subject: Email subject
+        body: Email body (HTML format)
+        recipient_email: Email recipient
         
     Returns:
-        bool: True if email was sent successfully
+        bool: True if email was sent successfully, False otherwise
     """
     try:
-        # Extract user information
-        user_id = user_data.get('id', 'Unknown ID')
-        email_addresses = user_data.get('email_addresses', [])
-        email = email_addresses[0].get('email_address', 'No email provided') if email_addresses else 'No email provided'
+        # Create the email request body
+        email_data = {
+            "subject": subject,
+            "body": body,
+            "to": [{"email": recipient_email, "name": "Flowon Admin"}],
+        }
         
-        first_name = user_data.get('first_name', '')
-        last_name = user_data.get('last_name', '')
-        full_name = f"{first_name} {last_name}".strip() or "Unknown User"
+        # Get the grant ID from settings
+        grant_id = settings.NYLAS_GRANT_ID
         
-        # Create email content
-        subject = f"New User Signup: {full_name}"
-        body = f"""
-        <h2>New User Registration</h2>
-        <p>A new user has signed up for Flowon AI:</p>
-        <ul>
-            <li><strong>User ID:</strong> {user_id}</li>
-            <li><strong>Name:</strong> {full_name}</li>
-            <li><strong>Email:</strong> {email}</li>
-            <li><strong>Signup Time:</strong> {user_data.get('created_at', 'Unknown')}</li>
-        </ul>
-        <p>You can view this user in the admin dashboard.</p>
-        """
+        if not grant_id:
+            logging.error("NYLAS_GRANT_ID is not set in environment variables")
+            return False
+            
+        logging.info(f"Attempting to send email via Nylas with grant_id: {grant_id}")
         
-        # Send the notification email
-        return await send_notification_email(subject, body)
+        # Send the email using the Nylas v3 API format
+        try:
+            response = nylas.messages.send(
+                identifier=grant_id,
+                request_body=email_data
+            )
+            
+            return True
+        except Exception as api_error:
+            logging.error(f"Nylas API error: {str(api_error)}")
+            logging.error(f"API error type: {type(api_error)}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Error sending user signup notification: {str(e)}")
-        return False 
+        logging.error(f"Failed to send notification email: {str(e)}")
+        logging.error(f"Error type: {type(e)}")
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
+        return False

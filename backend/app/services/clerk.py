@@ -7,7 +7,7 @@ import stripe
 
 from app.clients.supabase_client import get_supabase
 from app.models.users import UserInDB
-from app.api.routes.nylas_service import send_notification_email
+from app.services.email_service import send_notification_email
 
 load_dotenv()
 
