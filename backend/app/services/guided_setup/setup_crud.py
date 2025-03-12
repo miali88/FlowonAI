@@ -1,11 +1,39 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Optional
+from datetime import datetime
 
 from app.clients.supabase_client import get_supabase
 from app.models.guided_setup import QuickSetupData
 
-async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData):
-    """Save the guided setup data to Supabase."""
+async def check_user_exists(user_id: str) -> bool:
+    """Check if a user exists in the users table."""
+    try:
+        supabase = await get_supabase()
+        result = await supabase.table("users").select("id").eq("id", user_id).execute()
+        return result.data and len(result.data) > 0
+    except Exception as e:
+        logging.error(f"Error checking if user exists: {str(e)}")
+        return False
+
+async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> Tuple[bool, Dict[str, Any], Optional[str]]:
+    """
+    Save the guided setup data to Supabase.
+    
+    Args:
+        user_id: The ID of the user
+        quick_setup_data: The QuickSetupData Pydantic model
+        
+    Returns:
+        Tuple of (success, data_dict, error_message)
+    """
+    # First check if the user exists
+    user_exists = await check_user_exists(user_id)
+    
+    if not user_exists:
+        error_message = f"User with ID {user_id} does not exist in the users table"
+        logging.error(error_message)
+        # Continue anyway, since we want to allow setup creation even if user record doesn't exist yet
+        logging.warning(f"Proceeding with guided setup creation despite missing user record")
     
     # Check if the user already has setup data
     existing_setup = await get_guided_setup(user_id)
@@ -45,17 +73,24 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData):
         if existing_setup:
             # Update existing record
             result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
+            if hasattr(result, 'error') and result.error:
+                error_message = f"Database error updating guided setup: {result.error}"
+                logging.error(error_message)
+                return False, {}, error_message
             logging.info(f"Successfully updated guided setup data for user {user_id}")
         else:
             # Insert new record
             result = await supabase.table("guided_setup").insert(setup_data).execute()
+            if hasattr(result, 'error') and result.error:
+                error_message = f"Database error inserting guided setup: {result.error}"
+                logging.error(error_message)
+                return False, {}, error_message
             logging.info(f"Successfully created guided setup data for user {user_id}")
         
-        # Supabase client might return different response object types
-        if hasattr(result, 'error') and result.error:
-            logging.error(f"Database error with guided setup: {result.error}")
     except Exception as e:
-        logging.error(f"Exception during guided setup save: {str(e)}")
+        error_message = f"Exception during guided setup save: {str(e)}"
+        logging.error(error_message)
+        return False, {}, error_message
     
     # Verify the data was saved correctly
     updated_setup = await get_guided_setup(user_id)
@@ -66,10 +101,11 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData):
                 logging.info(f"Verified agent_id was correctly preserved: {setup_data['agent_id']}")
             else:
                 logging.warning(f"agent_id was not correctly preserved. Expected: {setup_data['agent_id']}, Got: {updated_setup.get('agent_id')}")
+        return True, setup_data, None
     else:
-        logging.error(f"Failed to verify guided setup data save for user {user_id}")
-    
-    return setup_data
+        error_message = f"Failed to verify guided setup data save for user {user_id}"
+        logging.error(error_message)
+        return False, {}, error_message
 
 async def get_guided_setup(user_id: str):
     """Retrieve the guided setup data for a user from Supabase."""
@@ -163,5 +199,59 @@ async def get_rosie_phone_number(user_id: str) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "phone_number": "phone_number"
-    } 
+        "phone_number": phone_number
+    }
+
+async def diagnose_and_repair_database_issues(user_id: str) -> Dict[str, Any]:
+    """
+    Diagnostic and repair function to check for issues in the database related to a user's setup.
+    This can be used to troubleshoot foreign key constraint issues.
+    
+    Args:
+        user_id: The user ID to diagnose
+        
+    Returns:
+        Dictionary with diagnostic results and any repairs made
+    """
+    results = {
+        "diagnosis": [],
+        "repairs": [],
+        "success": True
+    }
+    
+    try:
+        # Check if user exists
+        user_exists = await check_user_exists(user_id)
+        results["diagnosis"].append({"user_exists": user_exists})
+        
+        if not user_exists:
+            results["diagnosis"].append({"note": "User does not exist in database. This could cause foreign key constraint issues."})
+        
+        # Check guided setup
+        setup_data = await get_guided_setup(user_id)
+        if setup_data:
+            results["diagnosis"].append({"guided_setup_exists": True})
+            
+            # Check if agent exists
+            if "agent_id" in setup_data and setup_data["agent_id"]:
+                # Verify the agent exists
+                supabase = await get_supabase()
+                agent_result = await supabase.table("agents").select("id").eq("id", setup_data["agent_id"]).execute()
+                
+                agent_exists = agent_result.data and len(agent_result.data) > 0
+                results["diagnosis"].append({"agent_exists": agent_exists})
+                
+                if not agent_exists:
+                    # The agent referenced in guided_setup doesn't exist - clear the reference
+                    fix_result = await supabase.table("guided_setup").update({"agent_id": None}).eq("user_id", user_id).execute()
+                    results["repairs"].append("Cleared invalid agent_id reference in guided_setup")
+            else:
+                results["diagnosis"].append({"agent_exists": "No agent_id in guided_setup"})
+        else:
+            results["diagnosis"].append({"guided_setup_exists": False})
+        
+        return results
+    except Exception as e:
+        results["success"] = False
+        results["error"] = str(e)
+        return results 

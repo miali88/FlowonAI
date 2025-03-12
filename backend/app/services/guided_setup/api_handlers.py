@@ -14,7 +14,6 @@ from app.services.guided_setup.audio_generation import generate_greeting_preview
 async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[str, Any]:
     """Process quick setup data submission."""
     try:
-
         # Log the specific questions for debugging
         specific_questions = setup_data.messageTaking.specificQuestions if setup_data.messageTaking else []
         question_count = len(specific_questions)
@@ -23,16 +22,30 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
             for i, q in enumerate(specific_questions):
                 logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
- 
-        # Save the setup data to Supabase
-        await save_guided_setup(user_id, setup_data)
+        # Save the setup data to Supabase with improved error handling
+        success, setup_data_dict, error_msg = await save_guided_setup(user_id, setup_data)
+        
+        if not success:
+            logging.error(f"Failed to save guided setup during quick setup: {error_msg}")
+            return {
+                "success": False,
+                "error": f"Failed to save setup data: {error_msg}"
+            }
         
         logging.info(f"Quick setup completed for user {user_id}")
         
         # Create or update the agent using the centralized function
-        success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
-        if not success:
+        # Only proceed with agent creation if guided setup was saved successfully
+        agent_success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
+        if not agent_success:
             logging.warning(f"Agent creation/update during quick setup: {message}")
+            # Note: We don't consider agent creation failure as a failure of the entire process
+            # as the guided setup data was saved successfully
+            return {
+                "success": True,
+                "message": "Quick setup data saved successfully, but agent creation failed",
+                "warning": message
+            }
         
         return {
             "success": True,
@@ -162,9 +175,6 @@ async def save_onboarding_data_service(
     try:
         logging.info(f"Saving onboarding data for user {user_id} with business name: {business_name}")
         
-        # Check if the user already has setup data
-        existing_setup = await get_guided_setup(user_id)
-        
         # Create a minimal QuickSetupData structure with just the website
         setup_data = QuickSetupData(
             trainingSources=TrainingSource(
@@ -191,16 +201,31 @@ async def save_onboarding_data_service(
             agentLanguage=agent_language
         )
         
-        # Save the setup data
-        await save_guided_setup(user_id, setup_data)
+        # Save the setup data with improved error handling
+        success, setup_data_dict, error_msg = await save_guided_setup(user_id, setup_data)
+        
+        if not success:
+            logging.error(f"Failed to save guided setup: {error_msg}")
+            return {
+                "success": False,
+                "error": f"Failed to save onboarding data: {error_msg}"
+            }
         
         logging.info(f"Onboarding data saved successfully for user {user_id}")
         logging.info(f"Agent language set to: {agent_language}")
         
         # Create or update the agent using the centralized function
+        # Only proceed with agent creation if guided setup was saved successfully
         success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
         if not success:
             logging.warning(f"Agent creation/update during onboarding: {message}")
+            # Note: We don't consider agent creation failure as a failure of the entire process
+            # as the guided setup data was saved successfully
+            return {
+                "success": True,
+                "message": "Onboarding data saved successfully, but agent creation failed",
+                "warning": message
+            }
         else:
             logging.info(f"Agent successfully created/updated during onboarding for user {user_id}")
         

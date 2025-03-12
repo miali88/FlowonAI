@@ -130,15 +130,30 @@ export default function BusinessInfoPage() {
       );
       
       if (countryComponent) {
-        const countryCode = countryComponent.short_name;
-        console.log("Detected country code:", countryCode);
-        setCountryCode(countryCode);
+        const detectedCountryCode = countryComponent.short_name;
+        console.log("Detected country code:", detectedCountryCode);
         
-        // Set default language based on country
-        const detectedLanguage = COUNTRY_TO_LANGUAGE[countryCode as keyof typeof COUNTRY_TO_LANGUAGE] || DEFAULT_LANGUAGE;
-        console.log(`Setting default language to ${detectedLanguage} based on country ${countryCode}`);
-        setAgentLanguage(detectedLanguage);
+        // Validate country code format (should be 2 letters)
+        if (detectedCountryCode && /^[A-Z]{2}$/.test(detectedCountryCode)) {
+          setCountryCode(detectedCountryCode);
+          console.log(`Set valid country code: ${detectedCountryCode}`);
+          
+          // Set default language based on country
+          const detectedLanguage = COUNTRY_TO_LANGUAGE[detectedCountryCode as keyof typeof COUNTRY_TO_LANGUAGE] || DEFAULT_LANGUAGE;
+          console.log(`Setting default language to ${detectedLanguage} based on country ${detectedCountryCode}`);
+          setAgentLanguage(detectedLanguage);
+        } else {
+          console.warn(`Invalid country code format detected: ${detectedCountryCode}, using default`);
+          setCountryCode("US");
+          setAgentLanguage(DEFAULT_LANGUAGE);
+        }
+      } else {
+        console.warn("No country component found in address data");
+        setCountryCode("US");
+        setAgentLanguage(DEFAULT_LANGUAGE);
       }
+    } else {
+      console.warn("No address components found in place data");
     }
 
     // Set a success message
@@ -216,15 +231,18 @@ export default function BusinessInfoPage() {
       }
       
       // Store data in localStorage for the next step
-      localStorage.setItem('flowonAI_businessInfo', JSON.stringify({
+      const businessInfoData = {
         businessName,
         businessWebsite,
         businessDescription,
         businessAddress,
         businessPhone,
         agentLanguage,
-        countryCode
-      }));
+        countryCode: countryCode || 'US' // Ensure countryCode is never empty
+      };
+      
+      console.log('Storing business info in localStorage:', JSON.stringify(businessInfoData, null, 2));
+      localStorage.setItem('flowonAI_businessInfo', JSON.stringify(businessInfoData));
       
       // Store audio data in localStorage
       if (data.greeting_audio_data_base64) {

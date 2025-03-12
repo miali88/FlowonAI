@@ -19,7 +19,9 @@ from .setup_crud import (
     update_guided_setup_agent_id,
     mark_setup_complete,
     get_formatted_setup_data,
-    get_rosie_phone_number
+    get_rosie_phone_number,
+    check_user_exists,
+    diagnose_and_repair_database_issues
 )
 
 from .agent_operations import (
@@ -67,6 +69,8 @@ __all__ = [
     'mark_setup_complete',
     'get_formatted_setup_data',
     'get_rosie_phone_number',
+    'check_user_exists',
+    'diagnose_and_repair_database_issues',
     
     # Agent operations
     'create_or_update_agent_from_setup',

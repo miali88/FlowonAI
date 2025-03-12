@@ -146,9 +146,13 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetup
                 logging.info(f"Creating new agent for user {user_id}")
                 result = await create_agent(agent_data)
                 
+                # Debug log to show the full structure of the result
+                logging.debug(f"Agent creation result type: {type(result)}")
+                
                 # Store the created agent_id in the guided_setup table
-                if result and "id" in result:
-                    new_agent_id = result["id"]
+                if result and hasattr(result, 'data') and result.data and len(result.data) > 0:
+                    new_agent_id = result.data[0]["id"]
+                    logging.info(f"Retrieved agent ID {new_agent_id} from result.data[0]")
                     update_success = await update_guided_setup_agent_id(user_id, new_agent_id)
                     if update_success:
                         logging.info(f"Successfully stored new agent_id {new_agent_id} in guided_setup table")

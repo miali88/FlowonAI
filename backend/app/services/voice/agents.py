@@ -188,7 +188,8 @@ async def create_agent(data: Dict[str, Any]) -> Dict[str, Any]:
         data: Dictionary containing agent data
         
     Returns:
-        The newly created agent data from Supabase
+        Supabase response object with newly created agent data in the 'data' attribute
+        as a list of records. Access the first record with response.data[0]
     """
     if data.get('dataSource') == 'tagged' and 'tag' in data:
         data['dataSource'] = data['tag']

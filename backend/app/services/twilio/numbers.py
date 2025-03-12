@@ -54,15 +54,24 @@ async def store_phone_number(
         is_trial: Whether the user is on a trial
         
     Returns:
-        Dict with storage result information
+        Dict with storage result information including success status of each operation
     """
     logger.info(f"Storing phone number {phone_number} for user {user_id}")
     supabase = await get_supabase()
     now = datetime.now().isoformat()
     
+    # Track results of each operation
+    results = {
+        'twilio_numbers_success': False,
+        'guided_setup_success': False,
+        'users_success': False,
+        'overall_success': False,
+        'error_messages': []
+    }
+    
+    # 1. Store in twilio_numbers table
+    logger.info(f"Storing number in twilio_numbers table")
     try:
-        # 1. Store in twilio_numbers table
-        logger.info(f"Storing number in twilio_numbers table")
         db_result = await supabase.table('twilio_numbers').insert({
             'phone_number': phone_number,
             'owner_user_id': user_id,
@@ -75,56 +84,94 @@ async def store_phone_number(
         
         if not db_result.data:
             logger.error(f"Failed to store number {phone_number} in twilio_numbers table")
-            raise ValueError("Failed to store number in twilio_numbers table")
-        
-        logger.info(f"Successfully stored number in twilio_numbers table")
-        
-        # 2. Update the guided_setup table
-        logger.info(f"Updating guided_setup table with number {phone_number}")
+            results['error_messages'].append("Failed to store number in twilio_numbers table")
+        else:
+            logger.info(f"Successfully stored number in twilio_numbers table")
+            results['twilio_numbers_success'] = True
+    except Exception as e:
+        error_msg = f"Error storing in twilio_numbers table: {str(e)}"
+        logger.error(error_msg)
+        results['error_messages'].append(error_msg)
+    
+    # 2. Update the guided_setup table
+    logger.info(f"Updating guided_setup table with number {phone_number}")
+    try:
         guided_setup_result = await supabase.table('guided_setup').update({
             'phone_number': phone_number
         }).eq('user_id', user_id).execute()
         
         if not guided_setup_result.data:
             logger.warning(f"Failed to update guided_setup table - record may not exist for user {user_id}")
+            results['error_messages'].append("Failed to update guided_setup table - record may not exist")
         else:
             logger.info(f"Successfully updated guided_setup table")
+            results['guided_setup_success'] = True
+    except Exception as e:
+        error_msg = f"Error updating guided_setup table: {str(e)}"
+        logger.error(error_msg)
+        results['error_messages'].append(error_msg)
+    
+    # 3. Update user's record with the new Twilio number
+    logger.info(f"Updating user record with new Twilio number")
+    try:
+        # Get existing telephony_numbers from user record
+        user_result = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
         
-        # 3. Update user's record with the new Twilio number
-        logger.info(f"Updating user record with new Twilio number")
-        
-        # Get existing twilio numbers from user record
-        user_result = await supabase.table('users').select('twilio').eq('id', user_id).execute()
+        # Initialize the telephony_numbers structure if needed
+        telephony_numbers = {}
         twilio_numbers = []
         
-        if user_result.data and len(user_result.data) > 0 and user_result.data[0].get('twilio'):
-            twilio_numbers = user_result.data[0].get('twilio', [])
+        if user_result.data and len(user_result.data) > 0:
+            # Extract the existing telephony_numbers JSONB
+            telephony_numbers = user_result.data[0].get('telephony_numbers', {}) or {}
+            
+            # Extract the existing Twilio numbers array or create it
+            if isinstance(telephony_numbers, dict):
+                twilio_numbers = telephony_numbers.get('twilio', []) or []
+            else:
+                logger.warning(f"telephony_numbers is not a dictionary: {telephony_numbers}")
+                telephony_numbers = {}
+                twilio_numbers = []
         
         # Add the new number if it's not already in the list
         if phone_number not in twilio_numbers:
             twilio_numbers.append(phone_number)
-            
-        # Update the user record
+        
+        # Update the telephony_numbers structure
+        telephony_numbers['twilio'] = twilio_numbers
+        
+        # Update the user record with the modified telephony_numbers JSONB
+        logger.info(f"Updating users table with new telephony_numbers: {telephony_numbers}")
         user_update_result = await supabase.table('users').update({
-            'twilio': twilio_numbers
+            'telephony_numbers': telephony_numbers
         }).eq('id', user_id).execute()
         
         if not user_update_result.data:
-            logger.warning(f"Failed to update user's twilio numbers list")
+            logger.warning(f"Failed to update user's telephony_numbers")
+            results['error_messages'].append("Failed to update user's telephony_numbers")
         else:
-            logger.info(f"Successfully updated user's twilio numbers list")
-        
-        logger.info(f"Completed storing phone number {phone_number} for user {user_id}")
-        
-        return {
-            'success': True,
-            'phone_number': phone_number,
-            'number_sid': number_sid,
-            'is_trial_number': is_trial
-        }
+            logger.info(f"Successfully updated user's telephony_numbers with Twilio number: {phone_number}")
+            results['users_success'] = True
     except Exception as e:
-        logger.error(f"Error storing phone number: {str(e)}")
-        raise
+        error_msg = f"Error updating users table: {str(e)}"
+        logger.error(error_msg)
+        results['error_messages'].append(error_msg)
+    
+    # Determine overall success - consider successful if at least the twilio_numbers entry was created
+    # since that's the most critical piece
+    results['overall_success'] = results['twilio_numbers_success']
+    
+    logger.info(f"Completed storing phone number {phone_number} for user {user_id}")
+    logger.info(f"Operation results: {results}")
+    
+    return {
+        'success': results['overall_success'],
+        'phone_number': phone_number,
+        'number_sid': number_sid,
+        'is_trial_number': is_trial,
+        'operation_results': results
+    }
+
 
 async def provision_user_phone_number(
     country_code: str,

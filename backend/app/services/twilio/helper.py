@@ -45,7 +45,14 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
         'mobile': 'mobile',
         'national': 'national'
     }
-    number_types = list(number_type_mapping.keys())
+    
+    # For GB (United Kingdom), prioritize toll-free numbers to avoid regulatory issues
+    if country_code == "GB":
+        print(f"[TWILIO HELPER] 🇬🇧 UK detected - prioritizing toll-free numbers to avoid regulatory complications")
+        number_types = ['toll_free', 'mobile', 'local', 'national']  # Prioritize toll-free for GB
+    else:
+        number_types = list(number_type_mapping.keys())
+        
     available_numbers: Dict[str, Dict] = {}
     monthly_cost: Dict[str, float] = {}
 
@@ -78,6 +85,15 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
                     "numbers": numbers_list
                 }
                 print(f"[TWILIO HELPER] ✅ Found {len(numbers_list)} {number_type} numbers for {country_code}")
+                
+                # For GB, immediately return if we found toll_free numbers
+                if country_code == "GB" and number_type == "toll_free" and numbers_list:
+                    print(f"[TWILIO HELPER] 🎯 Found GB toll-free numbers, prioritizing these to avoid regulatory issues")
+                    # Create a new dictionary with only toll_free numbers at the top
+                    prioritized_numbers = {"toll_free": available_numbers["toll_free"]}
+                    total_numbers = len(numbers_list)
+                    print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: returning {total_numbers} toll-free numbers")
+                    return prioritized_numbers
                 
         except Exception as e:
             print(f"[TWILIO HELPER] ❌ Error processing {number_type} numbers for {country_code}: {str(e)}")
@@ -127,16 +143,45 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         api_base_url = 'https://flowon.ai/api/v1'
         print(f"[TWILIO SERVICE] 🌐 Using API base URL: {api_base_url}")
         
+        # Identify UK numbers and toll-free numbers
+        is_uk_number = phone_number.startswith('+44')
+        is_toll_free = False
+        
+        # In the UK, toll-free numbers typically start with 0800 or 0808
+        # In the E.164 format from Twilio, they'll be +44800... or +44808...
+        if is_uk_number and (phone_number.startswith('+44800') or phone_number.startswith('+44808')):
+            is_toll_free = True
+            print(f"[TWILIO SERVICE] 🇬🇧 Detected UK toll-free number: {phone_number}")
+        
+        # Base parameters for number purchase
+        purchase_params = {
+            'phone_number': phone_number,
+            'friendly_name': f"FlowonAI Number",
+            'voice_url': f"{api_base_url}/twilio/add_to_conference",
+            'voice_method': "POST",
+            'status_callback': f"{api_base_url}/twilio/call_completed",
+            'status_callback_method': "POST"
+        }
+        
+        """ will need to change bundle id once approved"""
+        # For UK non-toll-free numbers, we need to provide address and potentially a bundle
+        if is_uk_number and not is_toll_free:
+            print(f"[TWILIO SERVICE] 🇬🇧 UK local/mobile number requires address and regulatory bundle")
+            purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
+            purchase_params['bundle_sid'] = 'BU333186766f9d5756e0f38a29d97835c0'
+        # For UK toll-free, we only need address in most cases
+        elif is_uk_number and is_toll_free:
+            print(f"[TWILIO SERVICE] 🇬🇧 UK toll-free number requires address but typically not a bundle")
+            purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
+        # For non-UK numbers, just use address
+        else:
+            print(f"[TWILIO SERVICE] 🌎 Non-UK number, using standard purchase parameters")
+            purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
+        
         # Purchase number through Twilio with proper webhook configuration
         print(f"[TWILIO SERVICE] 📱 Creating number with Twilio: {phone_number}")
-        number = client.incoming_phone_numbers.create(
-            phone_number=phone_number,
-            friendly_name=f"FlowonAI Number",
-            voice_url=f"{api_base_url}/twilio/add_to_conference",
-            voice_method="POST",
-            status_callback=f"{api_base_url}/twilio/call_completed",
-            status_callback_method="POST"
-        )
+        print(f"[TWILIO SERVICE] 🔧 Purchase parameters: {purchase_params}")
+        number = client.incoming_phone_numbers.create(**purchase_params)
         
         print(f"[TWILIO SERVICE] ✅ Successfully purchased number {phone_number} with SID {number.sid}")
         

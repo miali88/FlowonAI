@@ -61,9 +61,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           throw new Error("Authentication required");
         }
 
-        // Fetch user's Twilio numbers first
-        const twilioResponse = await fetch(
-          `${API_BASE_URL}/twilio/user_numbers`,
+        // Fetch user's phone number
+        const phoneNumberResponse = await fetch(
+          `${API_BASE_URL}/guided_setup/phone_number`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -72,21 +72,22 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           }
         );
 
-        if (twilioResponse.ok) {
-          const twilioData = await twilioResponse.json();
-          console.log("User's Twilio number:", twilioData);
+        if (phoneNumberResponse.ok) {
+          const phoneNumberData = await phoneNumberResponse.json();
+          console.log("User's phone number:", phoneNumberData);
 
-          // Check if user has a Twilio number
-          if (twilioData.number) {
+          // Check if user has a phone number
+          if (phoneNumberData.success && phoneNumberData.phone_number) {
             // Set the returned phone number
-            setPhoneNumber(twilioData.number);
+            setPhoneNumber(phoneNumberData.phone_number);
             setHasPhoneNumber(true);
             setIsLoading(false);
             return;
           }
         }
 
-        // Fallback to guided setup phone number if no Twilio numbers found
+        // If the first request didn't succeed, try again to ensure we've exhausted options
+        // This is kept for backwards compatibility, though it's the same endpoint
         const response = await fetch(
           `${API_BASE_URL}/guided_setup/phone_number`,
           {
@@ -106,8 +107,8 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         const data = await response.json();
         console.log("Guided setup phone number response:", data);
 
-        if (data.success && data.phoneNumber && data.phoneNumber !== "(814) 261-0317") {
-          setPhoneNumber(data.phoneNumber);
+        if (data.success && data.phone_number && data.phone_number !== "(814) 261-0317") {
+          setPhoneNumber(data.phone_number);
           setHasPhoneNumber(true);
         } else {
           // No real phone number assigned - show support message instead of claim UI

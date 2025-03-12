@@ -143,13 +143,17 @@ export default function PricingPage() {
         
         if (businessInfoString) {
           try {
+            console.log('Found business info in localStorage');
             const businessInfo = JSON.parse(businessInfoString);
+            console.log('Parsed business info:', JSON.stringify(businessInfo, null, 2));
+            
             // Use the stored country code if available
             if (businessInfo.countryCode) {
+              console.log(`Found country code in business info: ${businessInfo.countryCode}`);
               // Check if the country code is supported by Twilio
               if (supportedCountryCodes.includes(businessInfo.countryCode)) {
                 countryCode = businessInfo.countryCode;
-                console.log(`Using country code ${countryCode} from business information`);
+                console.log(`Using country code ${countryCode} from business information for phone purchase`);
               } else {
                 console.log(`Country code ${businessInfo.countryCode} may not be supported by Twilio, using default: ${countryCode}`);
               }
@@ -158,23 +162,34 @@ export default function PricingPage() {
             }
           } catch (parseError) {
             console.error('Error parsing business info:', parseError);
+            console.log('Raw business info string:', businessInfoString);
           }
+        } else {
+          console.log('No business info found in localStorage, using default country code:', countryCode);
         }
         
-        const phoneResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/purchase_phone_number`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            country_code: countryCode, // Use the detected country code
-            number_type: 'local' // Default to local numbers
-          })
-        });
+        // Validate country code one more time before making API call
+        if (!supportedCountryCodes.includes(countryCode)) {
+          console.warn(`Invalid country code ${countryCode}, falling back to US`);
+          countryCode = 'US';
+        }
+        
+        console.log(`Making API request to purchase phone number with country code: ${countryCode}`);
+        const phoneResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/purchase_phone_number?country_code=${encodeURIComponent(countryCode)}&number_type=${encodeURIComponent('local')}`, 
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
         
         if (!phoneResponse.ok) {
-          console.error('Failed to purchase phone number', await phoneResponse.json());
+          const errorData = await phoneResponse.json().catch(e => ({ error: `Failed to parse error response: ${e.message}` }));
+          console.error('Failed to purchase phone number - Status:', phoneResponse.status);
+          console.error('Error details:', errorData);
           // Continue even if phone number purchase fails - we'll handle this in guided setup
         } else {
           const phoneResult = await phoneResponse.json();
