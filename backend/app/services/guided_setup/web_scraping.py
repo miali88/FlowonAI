@@ -128,7 +128,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
             elif existing_setup and "agent_language" in existing_setup:
                 agent_language = existing_setup["agent_language"]
                 
-            await save_guided_setup(user_id, quick_setup_data, agent_language=agent_language)
+            await save_guided_setup(user_id, quick_setup_data)
             logging.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
             logging.info(f"Agent language set to: {agent_language}")
         except Exception as save_error:

@@ -41,6 +41,8 @@ export function Footer() {
                 src="/flowon_circle.png" 
                 width={32}
                 height={32}
+                className="h-8 w-auto"
+                style={{ objectFit: 'contain' }}
               />
             </Link>
             <p className="max-w-xs"> </p>

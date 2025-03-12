@@ -163,5 +163,5 @@ async def get_rosie_phone_number(user_id: str) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "phone_number": phone_number
+        "phone_number": "phone_number"
     } 
