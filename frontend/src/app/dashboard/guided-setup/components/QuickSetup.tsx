@@ -79,7 +79,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         },
       },
     },
-    mode: "onChange",
+    mode: "onBlur",
   });
 
   const {
@@ -179,6 +179,21 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const onSubmit = async (data: FormValues) => {
     try {
       setSuccessMessage(null);
+      
+      // Extra validation for notification fields
+      if (data.callNotifications.emailNotifications.enabled) {
+        if (data.callNotifications.emailNotifications.email === null) {
+          data.callNotifications.emailNotifications.email = "";
+          console.log("Fixed null email value before submission");
+        }
+      }
+      
+      if (data.callNotifications.smsNotifications.enabled) {
+        if (data.callNotifications.smsNotifications.phoneNumber === null) {
+          data.callNotifications.smsNotifications.phoneNumber = "";
+          console.log("Fixed null phone number value before submission");
+        }
+      }
 
       // Get the authentication token
       const token = await getToken();
@@ -552,6 +567,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         <CallNotifications 
           control={control}
           errors={errors}
+          setValue={setValue}
         />
 
         {/* Form validation error */}

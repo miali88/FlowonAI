@@ -10,6 +10,7 @@ import {
   Loader2,
   Copy,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -43,6 +44,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
   const { userId, getToken } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean>(true);
+  const [showSupportMessage, setShowSupportMessage] = useState<boolean>(false);
   
   // For phone number selection
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
@@ -108,21 +110,20 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           setPhoneNumber(data.phoneNumber);
           setHasPhoneNumber(true);
         } else {
-          // No real phone number assigned - show claim UI
-          console.log("No dedicated phone number assigned, showing claim UI");
+          // No real phone number assigned - show support message instead of claim UI
+          console.log("No dedicated phone number assigned, showing support contact message");
           setHasPhoneNumber(false);
+          setShowSupportMessage(true);
           // Still set the fallback number for display
           setPhoneNumber("(814) 261-0317");
-          
-          // Fetch country codes for number selection UI
-          fetchCountryCodes();
         }
       } catch (err) {
         console.error("Error fetching Flowon phone number:", err);
-        setError("Could not load Flowon phone number. Using fallback number.");
+        setError("Could not load Flowon phone number. Please contact support.");
         // Fallback to a constant if the API fails
         setPhoneNumber("(814) 261-0317");
         setHasPhoneNumber(false);
+        setShowSupportMessage(true);
       } finally {
         setIsLoading(false);
       }
@@ -179,7 +180,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Claim your free trial phone number"}
+          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Phone Number Required"}
         </h2>
       </div>
 
@@ -189,7 +190,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           {hasPhoneNumber ? (
             "This is your dedicated Flowon agent phone number. You can call this number directly to test your agent, and all call forwarding should be directed to this number. In the next step, we'll show you how to set up call forwarding from your business number to ensure your agent can answer calls seamlessly."
           ) : (
-            "To get started with Flowon, you'll need a dedicated phone number for your agent. You can claim a free trial number now and use it for 14 days. After the trial period, you can choose to keep the number for a monthly fee."
+            "A dedicated phone number is required for your Flowon agent to function properly. This number is used for all call interactions with your agent."
           )}
         </AlertDescription>
       </Alert>
@@ -210,13 +211,13 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="font-medium text-blue-500">
-            {hasPhoneNumber ? "Your Assigned Agent Number" : "Claim your free 14-day trial number"}
+            {hasPhoneNumber ? "Your Assigned Agent Number" : "Phone Number Not Assigned"}
           </h3>
           <p className="text-sm text-gray-400">
             {hasPhoneNumber ? (
               "This is the number your agent uses. All calls and call forwarding should be directed to this number."
             ) : (
-              "Select a phone number to use for free during your 14-day trial period. After the trial, you can choose to keep the number for $5/month."
+              "You currently don't have a phone number assigned to your Flowon account."
             )}
           </p>
         </div>
@@ -236,18 +237,22 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
               </div>
             )}
           </div>
-        ) : (
+        ) : showSupportMessage ? (
           <div className="bg-card rounded-xl p-6 border">
-            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-              <p><strong>Free Trial:</strong> Select and claim a phone number to use free for 14 days.</p>
-              <p className="mt-1">After your trial period ends, you can keep this number for $5/month.</p>
-            </div>
-            <PurchaseNumber 
-              countries={countryCodes} 
-              onNumberPurchased={handleNumberClaimed} 
-            />
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                You don't have a phone number assigned to your account.
+              </AlertDescription>
+            </Alert>
+            <p className="text-center mb-4">
+              Please contact <a href="mailto:support@flowon.ai" className="text-blue-500 font-medium">support@flowon.ai</a> to get a phone number assigned to your account.
+            </p>
+            <p className="text-sm text-gray-500 text-center">
+              Our support team will help you set up your dedicated Flowon agent phone number.
+            </p>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="flex justify-between pt-8">

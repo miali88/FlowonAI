@@ -51,11 +51,18 @@ export const quickSetupSchema = z.object({
         .string()
         .email("Invalid email address")
         .optional()
-        .or(z.literal("")),
+        .or(z.literal(""))
+        .or(z.null())
+        .transform(val => val === null ? "" : val),
     }),
     smsNotifications: z.object({
       enabled: z.boolean(),
-      phoneNumber: z.string().optional().or(z.literal("")),
+      phoneNumber: z
+        .string()
+        .optional()
+        .or(z.literal(""))
+        .or(z.null())
+        .transform(val => val === null ? "" : val),
     }),
   }),
 });

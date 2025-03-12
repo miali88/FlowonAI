@@ -4,18 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { useEffect, useState } from "react";
 
 import { FormValues } from "../schema";
 
 interface CallNotificationsProps {
   control: Control<FormValues>;
   errors: any;
+  setValue?: (name: any, value: any, options?: any) => void;
 }
 
 export default function CallNotifications({
   control,
   errors,
+  setValue,
 }: CallNotificationsProps) {
+  // State to track if fields have been touched (for hiding validation errors during initial typing)
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  
   // Watch values for conditional rendering
   const emailNotificationsEnabled = useWatch({
     control,
@@ -26,6 +33,35 @@ export default function CallNotifications({
     control,
     name: "callNotifications.smsNotifications.enabled",
   });
+
+  // Reset touched state when toggles change
+  useEffect(() => {
+    if (!emailNotificationsEnabled) {
+      setEmailTouched(false);
+    }
+  }, [emailNotificationsEnabled]);
+
+  useEffect(() => {
+    if (!smsNotificationsEnabled) {
+      setPhoneTouched(false);
+    }
+  }, [smsNotificationsEnabled]);
+
+  // Initialize email field with empty string when enabled
+  useEffect(() => {
+    if (emailNotificationsEnabled && setValue) {
+      setValue("callNotifications.emailNotifications.email", "", { shouldValidate: false });
+      console.log("Email notifications enabled, initialized email field with empty string");
+    }
+  }, [emailNotificationsEnabled, setValue]);
+
+  // Initialize phone number field with empty string when enabled
+  useEffect(() => {
+    if (smsNotificationsEnabled && setValue) {
+      setValue("callNotifications.smsNotifications.phoneNumber", "", { shouldValidate: false });
+      console.log("SMS notifications enabled, initialized phone field with empty string");
+    }
+  }, [smsNotificationsEnabled, setValue]);
 
   return (
     <Card>
@@ -69,15 +105,19 @@ export default function CallNotifications({
                         type="email"
                         placeholder="Enter your email"
                         {...field}
+                        value={field.value || ""}
+                        onBlur={(e) => {
+                          field.onBlur();
+                          setEmailTouched(true);
+                        }}
                         className={
-                          errors.callNotifications?.emailNotifications
-                            ?.email
+                          emailTouched && errors.callNotifications?.emailNotifications?.email
                             ? "border-red-500"
                             : ""
                         }
                       />
                     </FormControl>
-                    <FormMessage />
+                    {emailTouched && <FormMessage />}
                   </FormItem>
                 )}
               />
@@ -115,9 +155,14 @@ export default function CallNotifications({
                         type="tel"
                         placeholder="Add your phone number..."
                         {...field}
+                        value={field.value || ""}
+                        onBlur={(e) => {
+                          field.onBlur();
+                          setPhoneTouched(true);
+                        }}
                       />
                     </FormControl>
-                    <FormMessage />
+                    {phoneTouched && <FormMessage />}
                   </FormItem>
                 )}
               />
