@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.services.twilio.helper import get_available_numbers, purchase_number
 from app.clients.supabase_client import get_supabase
-from app.services.livekit.sip_trunk import number_purchased
+from app.services.vapi.utils import register_phone_number_with_vapi
 
 logger = logging.getLogger(__name__)
 
@@ -267,16 +267,20 @@ async def provision_user_phone_number(
             is_trial=is_trial
         )
         
-        # Register the number with LiveKit SIP trunk system
-        logger.info(f"Registering number {phone_number} with LiveKit SIP")
+        # Register the number with Vapi instead of LiveKit
+        logger.info(f"Registering number {phone_number} with Vapi")
         try:
-            await number_purchased(phone_number)
-            logger.info(f"Successfully registered number {phone_number} with LiveKit")
-        except Exception as sip_error:
-            # Log the error but don't fail the entire process if LiveKit registration fails
-            logger.error(f"Failed to register number with LiveKit: {str(sip_error)}")
-            # We'll continue with the process even if this fails - the number is still usable,
-            # but might require manual LiveKit setup later
+            vapi_result = await register_phone_number_with_vapi(
+                phone_number=phone_number,
+                twilio_account_sid=purchase_result['account_sid'],
+                twilio_auth_token=None  # Will be fetched from environment variables
+            )
+            logger.info(f"Successfully registered number {phone_number} with Vapi")
+            logger.debug(f"Vapi registration result: {vapi_result}")
+        except Exception as vapi_error:
+            # Log the error but don't fail the entire process if Vapi registration fails
+            logger.error(f"Failed to register number with Vapi: {str(vapi_error)}")
+            # We'll continue with the process even if this fails - the number can be registered manually later
         
         # Add additional info to the response
         result = {
