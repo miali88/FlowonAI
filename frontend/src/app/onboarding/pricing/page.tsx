@@ -174,6 +174,14 @@ export default function PricingPage() {
           countryCode = 'US';
         }
         
+        // Console log about country code for future reference
+        console.log(`Country code for future phone number purchase: ${countryCode}`);
+
+        // ===================================================
+        // PHONE NUMBER PURCHASE CODE - TEMPORARILY DISABLED
+        // To re-enable: Remove the comments from the code below
+        // ===================================================
+        /*
         console.log(`Making API request to purchase phone number with country code: ${countryCode}`);
         const phoneResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/twilio/purchase_phone_number?country_code=${encodeURIComponent(countryCode)}&number_type=${encodeURIComponent('local')}`, 
@@ -200,8 +208,10 @@ export default function PricingPage() {
             localStorage.setItem('flowonAI_phoneNumber', phoneResult.phone_number);
           }
         }
+        */
+
       } catch (phoneError) {
-        console.error('Error purchasing phone number:', phoneError);
+        console.error('Error in phone number preparation:', phoneError);
         // Continue even if there's an error - we'll handle this in guided setup
       }
       

@@ -76,11 +76,22 @@ async def check_user_trial_status(user_id: str, current_user: str) -> Dict[str, 
         days_elapsed = (now - trial_start).days
         remaining_days = max(0, trial_total_days - days_elapsed)
     
+    # Calculate remaining minutes
+    remaining_minutes = max(0, trial_minutes_total - trial_minutes_used)
+    
+    # Calculate percentage used
+    percentage_used = (trial_minutes_used / trial_minutes_total * 100) if trial_minutes_total > 0 else 100
+    percentage_used = min(100, percentage_used)  # Cap at 100%
+    
+    logger.info(f"User {user_id} trial status: {remaining_minutes}/{trial_minutes_total} minutes remaining, {remaining_days} days left")
+    
     return {
         "is_trial": True,
         "minutes_used": trial_minutes_used,
         "minutes_total": trial_minutes_total,
+        "minutes_remaining": remaining_minutes,
         "minutes_exceeded": minutes_exceeded,
+        "percentage_used": round(percentage_used, 1),
         "remaining_days": remaining_days,
         "trial_end_date": trial_end_date
     } 

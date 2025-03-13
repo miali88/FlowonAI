@@ -1,22 +1,13 @@
 "use client";
 
-import { useUser, useAuth, useClerk } from "@clerk/nextjs";
+import { useUser, useAuth, useClerk, UserButton, SignedIn } from "@clerk/nextjs";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ChevronRight, LogOut, Menu, Search, Settings } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardLoading from "./loading";
@@ -38,22 +29,6 @@ const ROUTE_TITLES = [
   { href: "/dashboard/analytics", title: "Analytics" },
   { href: "/dashboard/contactfounders", title: "Contact Founders" },
 ];
-
-function LogoutMenuItem() {
-  const { signOut } = useClerk();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    signOut(() => router.push("/"));
-  };
-
-  return (
-    <DropdownMenuItem onClick={handleLogout}>
-      <LogOut className="mr-2 h-4 w-4" />
-      Log out
-    </DropdownMenuItem>
-  );
-}
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -88,37 +63,14 @@ function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8 w-64" />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-2">
-              {/* <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src="/flowon_circle.png"
-                  alt="Flowon AI Logo"
-                />
-                <AvatarFallback>FA</AvatarFallback>
-              </Avatar> */}
-              <span>{user?.fullName || "User"}</span>
-              <Badge variant="outline" className="ml-2">
-                {userPlan}
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                window.location.href = "/settings";
-              }}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <LogoutMenuItem />
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="mr-1">
+            {userPlan}
+          </Badge>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
+        </div>
       </div>
     </header>
   );

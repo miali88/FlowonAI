@@ -8,11 +8,15 @@ from app.core.auth import get_current_user
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-@router.get("/check_trial_status/{user_id}")
-async def check_trial_status(user_id: str, current_user: str = Depends(get_current_user)):
+
+@router.get("/check_trial_status")
+async def check_trial_status(current_user: str = Depends(get_current_user)):
     """Check if a user has exceeded their trial limits"""
     try:
-        return await check_user_trial_status(user_id=user_id, current_user=current_user)
+        # Use the current authenticated user's ID directly
+        user_id = current_user
+        logger.info(f"Checking trial status for authenticated user: {user_id}")
+        return await check_user_trial_status(user_id=user_id, current_user=user_id)
     except HTTPException:
         # Re-raise HTTP exceptions
         raise

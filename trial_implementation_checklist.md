@@ -1,41 +1,6 @@
 # Trial Implementation Checklist
 
-## Database Schema Updates
-
-- [X] **Add fields to `users` table:**
-  - [X] `trial_start_date`: timestamp - When the trial began
-  - [X] `trial_end_date`: timestamp - When the trial will expire (14 days after start)
-  - [X] `is_trial`: boolean - Flag to indicate if user is in trial
-  - [X] `trial_plan_type`: text - The plan type they're trialing (Pro, Scale, etc.)
-  - [X] `trial_minutes_used`: integer - Track minutes used during trial (out of 25)
-  - [X] `trial_minutes_total`: integer - Total minutes allocated for trial (25)
-
-- [X] **Update `twilio_numbers` table:**
-  - [X] Add `created_at`: timestamp - When the number was acquired
-  - [X] Add `is_trial_number`: boolean - Flag to identify numbers associated with trial accounts
-
-## Business Logic Implementation
-
-- [X] **User Registration Flow:**
-  - [X] Create onboarding page, that mimics the guided set-up, then asks the user to pick their trial plan. Then load /guided_setup
-
-  - [X] The user first signs up using clerk, the backend posts the user to our supabase.
-  - [X] then are routed to /onboarding. At the final stage, they will be asked to select a given plan to trial. We should update the users table of the given user. :
-    - [X] Set `is_trial = true`
-    - [X] Set `trial_start_date` to current time
-    - [X] Set `trial_end_date` to current time + 14 days
-    - [X] Set `trial_plan_type` to their selected plan
-    - [X] Set `trial_minutes_total = 25`
-    - [X] Set `trial_minutes_used = 0`
-
-  - [ ] The business profile selected on the onboarding page isn't showing in the quick set-up
-  - [ ] The guided_setup agent to be duplicate in agents table 
-  - [ ] Flow: Number is purchase on backend -> run livekit sip_trunking -> new call room, func detect_call_type_and_get_agent_id does the agent id matching with the telephone number
-
-
 - [ ] **Phone Number Management:**
-  - [ ] Review the current implementation for phone number purchase, how is the current flow? 
-  - [ ] Ensure new number purchase does not run if user has been assigned a number already. 
   - [ ] New number purchase should be assigned to agent's guided_setup table column. 
   - [X] Number purchase should be based on the user's country. 
   - [ ] Record acquisition date when a trial user gets a number
@@ -45,7 +10,6 @@
 
 @gabriel
 - [ ] **Call Duration Tracking:**
-  - [ ] Calculate call duration in minutes for each call
   - [ ] For trial users, increment `trial_minutes_used` after each call
   - [ ] Block further calls if `trial_minutes_used >= trial_minutes_total`
   - [ ] Add warning when approaching minute limit (80% usage)
