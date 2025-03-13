@@ -1,7 +1,7 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict
 import logging
-from fastapi import HTTPException
-from app.clients.supabase_client import get_supabase
+
+from backend.app.services.vapi.helper import store_call_data
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -19,53 +19,25 @@ class VapiService:
         Returns:
             Dict containing the response to be sent back to VAPI
         """
-        # Log the event type
-        event_type = event_data.get("type", "unknown")
+        # Extract event type from the message object
+        message = event_data.get("message", {})
+        event_type = message.get("type", "unknown")
+        
         logger.info(f"Processing VAPI webhook event: {event_type}")
-        
-        # Check if this is a messageResponse type event
-        if "messageResponse" in event_data:
-            return await self.handle_message_response(event_data["messageResponse"])
-        
+          
         # Route the event to the appropriate handler based on type
         handlers = {
             "end-of-call-report": self.handle_end_of_call,
             "function-call": self.handle_function_call,
             "tool-calls": self.handle_tool_calls,
-            "conversation-update": self.handle_conversation_update,
-            "status-update": self.handle_status_update,
-            "hang": self.handle_hang_up,
-            "transfer-destination-request": self.handle_transfer_request,
-            "user-interrupted": self.handle_user_interrupted
+            "transfer-request": self.handle_transfer_request,
         }
         
         # Get the appropriate handler or use a default handler
         handler = handlers.get(event_type, self.handle_unknown_event)
-        
+    
         # Call the handler with the event data
         return await handler(event_data)
-    
-    async def handle_message_response(self, message_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process a message response from VAPI.
-        
-        Args:
-            message_data: The message response data
-            
-        Returns:
-            Dict containing the response to be sent back to VAPI
-        """
-        logger.info(f"Handling VAPI message response with assistant ID: {message_data.get('assistantId', 'unknown')}")
-        
-        # Extract relevant data
-        assistant_id = message_data.get("assistantId")
-        destination = message_data.get("destination")
-        
-        # Here you would implement business logic based on the message type
-        # For example, storing conversations, triggering actions, etc.
-        
-        # Default response for most message types
-        return {"status": "success"}
     
     async def handle_end_of_call(self, call_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -78,40 +50,23 @@ class VapiService:
         Returns:
             Dict containing the response to be sent back to VAPI
         """
-        logger.info(f"Handling VAPI end-of-call report for call ID: {call_data.get('callId', 'unknown')}")
+        # The actual data is in the message field
+        message = call_data.get("message", {})
+        call_id = message.get("call", {}).get("id", "unknown")
+        
+        logger.info(f"Handling VAPI end-of-call report for call ID: {call_id}")
         
         try:
-            # Extract important call data
-            call_id = call_data.get("callId")
-            assistant_id = call_data.get("assistantId")
-            start_time = call_data.get("startTime")
-            end_time = call_data.get("endTime")
-            duration = call_data.get("durationSeconds")
-            transcript = call_data.get("transcript", [])
-            
-            # Get metrics if available
-            metrics = call_data.get("metrics", {})
+            # Extract important data for logging
+            assistant_id = message.get("assistant", {}).get("id", "")
+            duration = message.get("durationSeconds", 0)
             
             # Log detailed call info
             logger.info(f"Call {call_id} ended. Duration: {duration}s, Assistant: {assistant_id}")
             
-            # Prepare data for Supabase
-            call_record = {
-                "call_id": call_id,
-                "assistant_id": assistant_id,
-                "start_time": start_time,
-                "end_time": end_time,
-                "duration_seconds": duration,
-                "transcript": transcript,
-                "metrics": metrics,
-                "raw_data": call_data  # Store the complete raw data
-            }
-            
-            # Initialize Supabase client
-            supabase = await get_supabase()
-            
-            # Save to Supabase
-            result = await supabase.table("vapi_calls").insert(call_record).execute()
+            # Store the summarized call data using the helper function
+            # This will save to vapi_calls_summary table
+            await store_call_data(call_data)
             
             logger.info(f"Saved call {call_id} to Supabase successfully")
             
@@ -203,61 +158,6 @@ class VapiService:
             "results": results
         }
     
-    async def handle_conversation_update(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Handle conversation update events from VAPI.
-        
-        Args:
-            event_data: Conversation update data
-            
-        Returns:
-            Response to be sent back to VAPI
-        """
-        logger.info(f"Handling VAPI conversation update for call ID: {event_data.get('callId', 'unknown')}")
-        
-        # Implement your conversation update logic here
-        # This could include storing conversation state, updating UI, etc.
-        
-        return {"status": "success"}
-    
-    async def handle_status_update(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Handle status update events from VAPI.
-        
-        Args:
-            event_data: Status update data
-            
-        Returns:
-            Response to be sent back to VAPI
-        """
-        status = event_data.get("status", "unknown")
-        call_id = event_data.get("callId", "unknown")
-        logger.info(f"Handling VAPI status update: {status} for call ID: {call_id}")
-        
-        # Implement your status update logic here
-        # This could include updating call status in your database, notifying users, etc.
-        
-        return {"status": "success"}
-    
-    async def handle_hang_up(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Handle hang up events from VAPI.
-        
-        Args:
-            event_data: Hang up event data
-            
-        Returns:
-            Response to be sent back to VAPI
-        """
-        call_id = event_data.get("callId", "unknown")
-        reason = event_data.get("reason", "unknown")
-        logger.info(f"Handling VAPI hang up for call ID: {call_id}, reason: {reason}")
-        
-        # Implement your hang up logic here
-        # This could include updating call status, cleanup tasks, etc.
-        
-        return {"status": "success"}
-    
     async def handle_transfer_request(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle transfer destination request events from VAPI.
@@ -284,24 +184,6 @@ class VapiService:
             }
         }
     
-    async def handle_user_interrupted(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Handle user interrupted events from VAPI.
-        
-        Args:
-            event_data: User interrupted event data
-            
-        Returns:
-            Response to be sent back to VAPI
-        """
-        call_id = event_data.get("callId", "unknown")
-        logger.info(f"Handling VAPI user interrupted for call ID: {call_id}")
-        
-        # Implement your user interrupted logic here
-        # This could include updating conversation state, etc.
-        
-        return {"status": "success"}
-    
     async def handle_unknown_event(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle unknown event types from VAPI.
@@ -310,13 +192,15 @@ class VapiService:
             event_data: Unknown event data
             
         Returns:
-            Response to be sent back to VAPI
+            Response to be sent back to VAPI with an error message
         """
-        event_type = event_data.get("type", "unknown")
-        logger.warning(f"Received unknown VAPI event type: {event_type}")
+        # Extract message and type for accurate logging
+        message = event_data.get("message", {})
+        event_type = message.get("type", "unknown")
         
-        # Log the full event data for debugging
-        logger.debug(f"Unknown event data: {event_data}")
-        
-        # Return a success response to acknowledge receipt
-        return {"status": "success"}
+        logger.warning(f"Unknown event type: {event_type}")
+        return {
+            "status": "error",
+            "message": f"Unknown event type: {event_type}"
+        }
+

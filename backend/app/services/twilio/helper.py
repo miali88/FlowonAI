@@ -168,7 +168,7 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         if is_uk_number and not is_toll_free:
             print(f"[TWILIO SERVICE] 🇬🇧 UK local/mobile number requires address and regulatory bundle")
             purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
-            purchase_params['bundle_sid'] = 'BU333186766f9d5756e0f38a29d97835c0'
+            purchase_params['bundle_sid'] = 'BU6314d3ab1e13315e17641a3fcd796cd3'
         # For UK toll-free, we only need address in most cases
         elif is_uk_number and is_toll_free:
             print(f"[TWILIO SERVICE] 🇬🇧 UK toll-free number requires address but typically not a bundle")

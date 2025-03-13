@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import json
 import logging
-from backend.app.services.vapi import VapiService
+from app.services.vapi.api_handlers import VapiService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -155,7 +155,6 @@ async def vapi_webhook(request: Request):
         event_data = await request.json()
         # Log the full event for debugging
         logger.info(f"Webhook payload: {json.dumps(event_data, indent=2)}")
-        print("event", event_data)
         
         # Process the event using the service
         response = await vapi_service.process_webhook_event(event_data)
