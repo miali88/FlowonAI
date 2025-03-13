@@ -108,66 +108,67 @@ async def startup_event():
     try:
         logger.debug("Attempting to start LiveKit server...")
         
-        # Kill any existing processes on LiveKit's port (8081)
-        kill_processes_on_port(8081)
-        time.sleep(2)  # Increased delay to ensure cleanup
+        # # Kill any existing processes on LiveKit's port (8081)
+        # kill_processes_on_port(8081)
+        # time.sleep(2)  # Increased delay to ensure cleanup
         
-        MAX_RETRIES = 3
-        RETRY_DELAY = 5  # Increased delay between retries
+        # MAX_RETRIES = 3
+        # RETRY_DELAY = 5  # Increased delay between retries
 
-        # Get the absolute path to the project root
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-        python_executable = sys.executable
-        env = os.environ.copy()
+        # # Get the absolute path to the project root
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+        # python_executable = sys.executable
+        # env = os.environ.copy()
         
-        # Ensure PYTHONPATH includes project root and site-packages
-        site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
-        python_path = [
-            project_root,
-            site_packages,
-            env.get('PYTHONPATH', '')
-        ]
-        env['PYTHONPATH'] = os.pathsep.join(filter(None, python_path))
+        # # Ensure PYTHONPATH includes project root and site-packages
+        # site_packages = os.path.join(os.path.dirname(python_executable), 'Lib', 'site-packages')
+        # python_path = [
+        #     project_root,
+        #     site_packages,
+        #     env.get('PYTHONPATH', '')
+        # ]
+        # env['PYTHONPATH'] = os.pathsep.join(filter(None, python_path))
         
-        # Add DEBUG logging for LiveKit
-        env['LIVEKIT_LOG_LEVEL'] = 'DEBUG'
+        # # Add DEBUG logging for LiveKit
+        # env['LIVEKIT_LOG_LEVEL'] = 'DEBUG'
 
-        for attempt in range(MAX_RETRIES):
-            try:
-                # Kill any existing LiveKit processes before starting new one
-                if livekit_process:
-                    try:
-                        parent = psutil.Process(livekit_process.pid)
-                        for child in parent.children(recursive=True):
-                            child.terminate()
-                        parent.terminate()
-                        time.sleep(1)  # Wait for termination
-                    except (psutil.NoSuchProcess, Exception) as e:
-                        logger.warning(f"Error cleaning up old LiveKit process: {e}")
+        # for attempt in range(MAX_RETRIES):
+        #     try:
+        #         # Kill any existing LiveKit processes before starting new one
+        #         if livekit_process:
+        #             try:
+        #                 parent = psutil.Process(livekit_process.pid)
+        #                 for child in parent.children(recursive=True):
+        #                     child.terminate()
+        #                 parent.terminate()
+        #                 time.sleep(1)  # Wait for termination
+        #             except (psutil.NoSuchProcess, Exception) as e:
+        #                 logger.warning(f"Error cleaning up old LiveKit process: {e}")
                 
-                livekit_process = subprocess.Popen(
-                    [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
-                    env=env,
-                    cwd=project_root
-                )
+        #         livekit_process = subprocess.Popen(
+        #             [python_executable, os.path.join(project_root, 'backend', 'livekit_server.py'), 'start'],
+        #             env=env,
+        #             cwd=project_root
+        #         )
                 
-                # Wait a moment to check if process is still running
-                time.sleep(3)
-                if livekit_process.poll() is None:  # None means process is still running
-                    logger.info("LiveKit server started successfully")
-                    break
-                else:
-                    output, error = livekit_process.communicate()
-                    logger.error(f"LiveKit server failed to start. Output: {output}, Error: {error}")
+        #         # Wait a moment to check if process is still running
+        #         time.sleep(3)
+        #         if livekit_process.poll() is None:  # None means process is still running
+        #             logger.info("LiveKit server started successfully")
+        #             break
+        #         else:
+        #             output, error = livekit_process.communicate()
+        #             logger.error(f"LiveKit server failed to start. Output: {output}, Error: {error}")
                     
-            except subprocess.SubprocessError as e:
-                logger.error(f"Attempt {attempt + 1} failed: {e}")
-                if attempt < MAX_RETRIES - 1:
-                    logger.info(f"Retrying in {RETRY_DELAY} seconds...")
-                    time.sleep(RETRY_DELAY)
-                else:
-                    logger.error("Failed to start LiveKit server after maximum retries")
-                    raise
+        #     except subprocess.SubprocessError as e:
+        #         logger.error(f"Attempt {attempt + 1} failed: {e}")
+        #         if attempt < MAX_RETRIES - 1:
+        #             logger.info(f"Retrying in {RETRY_DELAY} seconds...")
+        #             time.sleep(RETRY_DELAY)
+        #         else:
+        #             logger.error("Failed to start LiveKit server after maximum retries")
+        #             raise
+        logger.info("LiveKit server startup code has been commented out")
     except Exception as e:
         logger.error(f"Error in startup_event: {e}")
         raise
