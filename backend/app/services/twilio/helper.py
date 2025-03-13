@@ -36,6 +36,31 @@ def get_country_codes() -> List[str]:
         print(f"[TWILIO HELPER] ❌ Error fetching country codes: {str(e)}")
         raise
 
+async def fetch_twilio_numbers(user_id: str) -> str:
+    try:
+        supabase = await get_supabase()
+        logger.info(f"Fetching Twilio numbers for user: {user_id}")
+        user = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
+        
+        if not user.data or not user.data[0].get('telephony_numbers'):
+            logger.debug(f"No telephony numbers found for user {user_id}")
+            return None
+            
+        telephony_numbers = user.data[0]['telephony_numbers']
+        twilio_numbers = telephony_numbers.get('twilio', [])
+        
+        if not twilio_numbers:
+            logger.debug(f"No Twilio numbers found for user {user_id}")
+            return None
+            
+        first_number = twilio_numbers[0]
+        logger.debug(f"Retrieved first Twilio number for user {user_id}: {first_number}")
+        return first_number
+    except Exception as e:
+        logger.error(f"Error fetching Twilio number for user {user_id}: {str(e)}")
+        raise
+
+
 def get_available_numbers(country_code: str) -> Dict[str, Dict]:
     print(f"[TWILIO HELPER] 🔍 Fetching available numbers for country code: {country_code}")
     # Map our internal types to Twilio's pricing types
@@ -86,13 +111,13 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
                 }
                 print(f"[TWILIO HELPER] ✅ Found {len(numbers_list)} {number_type} numbers for {country_code}")
                 
-                # For GB, immediately return if we found toll_free numbers
-                if country_code == "GB" and number_type == "toll_free" and numbers_list:
-                    print(f"[TWILIO HELPER] 🎯 Found GB toll-free numbers, prioritizing these to avoid regulatory issues")
-                    # Create a new dictionary with only toll_free numbers at the top
-                    prioritized_numbers = {"toll_free": available_numbers["toll_free"]}
+                # For GB, immediately return if we found mobile numbers
+                if country_code == "GB" and number_type == "mobile" and numbers_list:
+                    print(f"[TWILIO HELPER] 🎯 Found GB mobile numbers, prioritizing these to avoid regulatory issues")
+                    # Create a new dictionary with only mobile numbers at the top
+                    prioritized_numbers = {"mobile": available_numbers["mobile"]}
                     total_numbers = len(numbers_list)
-                    print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: returning {total_numbers} toll-free numbers")
+                    print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: returning {total_numbers} mobile numbers")
                     return prioritized_numbers
                 
         except Exception as e:
@@ -102,30 +127,6 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
     total_numbers = sum(len(group["numbers"]) for group in available_numbers.values())
     print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: found {total_numbers} numbers across {len(available_numbers)} types")
     return available_numbers
-
-async def fetch_twilio_numbers(user_id: str) -> str:
-    try:
-        supabase = await get_supabase()
-        logger.info(f"Fetching Twilio numbers for user: {user_id}")
-        user = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
-        
-        if not user.data or not user.data[0].get('telephony_numbers'):
-            logger.debug(f"No telephony numbers found for user {user_id}")
-            return None
-            
-        telephony_numbers = user.data[0]['telephony_numbers']
-        twilio_numbers = telephony_numbers.get('twilio', [])
-        
-        if not twilio_numbers:
-            logger.debug(f"No Twilio numbers found for user {user_id}")
-            return None
-            
-        first_number = twilio_numbers[0]
-        logger.debug(f"Retrieved first Twilio number for user {user_id}: {first_number}")
-        return first_number
-    except Exception as e:
-        logger.error(f"Error fetching Twilio number for user {user_id}: {str(e)}")
-        raise
 
 async def purchase_number(phone_number: str) -> Dict[str, Any]:
     """Purchase a phone number from Twilio
@@ -140,42 +141,37 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         print(f"[TWILIO SERVICE] 🔄 Starting purchase_number function")
         
         # Get API base URL for webhooks
-        api_base_url = 'https://flowon.ai/api/v1'
-        print(f"[TWILIO SERVICE] 🌐 Using API base URL: {api_base_url}")
+        vapi_base_url = 'https://api.vapi.ai/twilio/inbound_call'
+        print(f"[TWILIO SERVICE] 🌐 Using API base URL: {vapi_base_url}")
+        api_base_url = 'https://internally-wise-spaniel.eu.ngrok.io/api/v1'
         
-        # Identify UK numbers and toll-free numbers
+        # Identify UK numbers
         is_uk_number = phone_number.startswith('+44')
-        is_toll_free = False
+        is_mobile = False
         
-        # In the UK, toll-free numbers typically start with 0800 or 0808
-        # In the E.164 format from Twilio, they'll be +44800... or +44808...
-        if is_uk_number and (phone_number.startswith('+44800') or phone_number.startswith('+44808')):
-            is_toll_free = True
-            print(f"[TWILIO SERVICE] 🇬🇧 Detected UK toll-free number: {phone_number}")
+        # UK mobile numbers start with +447
+        if is_uk_number and phone_number.startswith('+447'):
+            is_mobile = True
+            print(f"[TWILIO SERVICE] 🇬🇧 Detected UK mobile number: {phone_number}")
         
         # Base parameters for number purchase
         purchase_params = {
             'phone_number': phone_number,
             'friendly_name': f"FlowonAI Number",
-            'voice_url': f"{api_base_url}/twilio/add_to_conference",
+            'voice_url': vapi_base_url,
             'voice_method': "POST",
             'status_callback': f"{api_base_url}/twilio/call_completed",
             'status_callback_method': "POST"
         }
         
-        """ will need to change bundle id once approved"""
-        # For UK non-toll-free numbers, we need to provide address and potentially a bundle
-        if is_uk_number and not is_toll_free:
-            print(f"[TWILIO SERVICE] 🇬🇧 UK local/mobile number requires address and regulatory bundle")
-            purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
-            purchase_params['bundle_sid'] = 'BU6314d3ab1e13315e17641a3fcd796cd3'
-        # For UK toll-free, we only need address in most cases
-        elif is_uk_number and is_toll_free:
-            print(f"[TWILIO SERVICE] 🇬🇧 UK toll-free number requires address but typically not a bundle")
-            purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
+        # UK mobile numbers need specific address and bundle SID
+        if is_uk_number and is_mobile:
+            print(f"[TWILIO SERVICE] 🇬🇧 UK mobile number requires address and specific bundle")
+            purchase_params['address_sid'] = 'ADc0fef05afa186248e701be32efc66b02'
+            purchase_params['bundle_sid'] = 'BU7c5bf3064734bb52c444977d725e2661'
         # For non-UK numbers, just use address
         else:
-            print(f"[TWILIO SERVICE] 🌎 Non-UK number, using standard purchase parameters")
+            print(f"[TWILIO SERVICE] 🌎 Non-UK or non-mobile UK number, using standard purchase parameters")
             purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
         
         # Purchase number through Twilio with proper webhook configuration
