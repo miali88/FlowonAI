@@ -11,6 +11,7 @@ from twilio.base.exceptions import TwilioRestException
 
 from app.services.twilio.client import client
 from app.clients.supabase_client import get_supabase
+from app.services.user.usage import update_call_duration
 
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
 
@@ -106,7 +107,6 @@ async def bridge_conference_to_livekit(conference_name: str, from_number: str, s
         raise
 
 
-
 def cleanup() -> None:
     logger.info("Starting cleanup process...")
     try:
@@ -163,13 +163,14 @@ async def process_call_completed(
     """
     logger.info(f"Call completed: SID={call_sid}, Duration={call_duration}s, Status={call_status}")
     
-    if not call_sid or not call_duration or call_status != "completed":
-        logger.warning(f"Invalid call completion data: SID={call_sid}, Duration={call_duration}, Status={call_status}")
+    if not call_sid or call_status != "completed":
+        logger.warning(f"Invalid call completion data: SID={call_sid}, Status={call_status}")
         return {"success": False, "message": "Invalid call data"}
     
-    # Convert duration to minutes (round up to nearest minute)
-    duration_minutes = math.ceil(int(call_duration) / 60)
-    logger.info(f"Call duration in minutes: {duration_minutes}")
+    # Ensure call_duration is not None or empty
+    if not call_duration:
+        logger.warning(f"Missing call duration, defaulting to 60 seconds")
+        call_duration = "60"
     
     # Find the user associated with this Twilio number
     supabase = await get_supabase()
@@ -184,40 +185,17 @@ async def process_call_completed(
         logger.warning(f"Number {from_number} has no owner")
         return {"success": False, "message": "Number has no owner"}
     
-    # Check if user is on trial
-    user_result = await supabase.table("users").select("is_trial, trial_minutes_used, trial_minutes_total").eq("id", user_id).execute()
+    # Use the user service to update call duration
+    call_data = {
+        "user_id": user_id,
+        "duration_seconds": call_duration
+    }
     
-    if not user_result.data:
-        logger.warning(f"User {user_id} not found")
-        return {"success": False, "message": "User not found"}
+    result = await update_call_duration(call_data, source="twilio")
     
-    user_data = user_result.data[0]
-    is_trial = user_data.get("is_trial", False)
-    
-    if is_trial:
-        # Update trial minutes used
-        trial_minutes_used = user_data.get("trial_minutes_used", 0) + duration_minutes
-        trial_minutes_total = user_data.get("trial_minutes_total", 25)
-        
-        logger.info(f"Updating trial minutes for user {user_id}: {trial_minutes_used}/{trial_minutes_total}")
-        
-        # Update user record
-        await supabase.table("users").update({
-            "trial_minutes_used": trial_minutes_used
-        }).eq("id", user_id).execute()
-        
-        # Log milestone reached if applicable (50%, 80%, 100%)
-        percentage_used = (trial_minutes_used / trial_minutes_total) * 100
-        if percentage_used >= 80 and (percentage_used - duration_minutes / trial_minutes_total * 100) < 80:
-            logger.info(f"User {user_id} has reached 80% of trial minutes")
-            # TODO: Send notification about reaching 80% of trial minutes
-        elif percentage_used >= 50 and (percentage_used - duration_minutes / trial_minutes_total * 100) < 50:
-            logger.info(f"User {user_id} has reached 50% of trial minutes")
-            # TODO: Send notification about reaching 50% of trial minutes
-        
-        if trial_minutes_used >= trial_minutes_total:
-            logger.info(f"User {user_id} has exhausted trial minutes")
-            # TODO: Send notification about trial minutes exhausted
+    if not result.get("success", False):
+        logger.warning(f"Failed to update call duration: {result.get('message')}")
+        return {"success": False, "message": result.get("message")}
     
     return {"success": True, "message": "Call data processed successfully"}
 

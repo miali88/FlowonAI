@@ -2,8 +2,48 @@ import logging
 import os
 import requests
 from typing import Dict, Any, Optional
-
+from app.clients.supabase_client import get_supabase
 logger = logging.getLogger(__name__)
+
+
+async def get_user_id(phone_number: str) -> Optional[str]:
+    """
+    Query the Twilio numbers table to get the user ID associated with a phone number.
+    
+    Args:
+        phone_number: The phone number to lookup
+        
+    Returns:
+        The user ID if found, None otherwise
+    """
+    try:
+        if not phone_number:
+            logger.warning("Empty phone number provided to getUserID")
+            return None
+            
+        logger.info(f"Looking up user ID for phone number: {phone_number}")
+        
+        # Get Supabase client
+        supabase = await get_supabase()
+        
+        # Query the twilio_numbers table for this phone number
+        response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", phone_number).execute()
+        
+        # Check if we got results
+        data = response.data
+        if not data or len(data) == 0:
+            logger.warning(f"No user found for phone number: {phone_number}")
+            return None
+            
+        # Return the user ID from the first matching record
+        user_id = data[0].get("owner_user_id")
+        logger.info(f"Found user ID {user_id} for phone number: {phone_number}")
+        return user_id
+        
+    except Exception as e:
+        logger.error(f"Error looking up user ID for phone number {phone_number}: {str(e)}")
+        return None
+
 
 async def register_phone_number_with_vapi(
     phone_number: str,

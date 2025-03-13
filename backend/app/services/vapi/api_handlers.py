@@ -1,7 +1,9 @@
 from typing import Any, Dict
 import logging
+import math
 
 from backend.app.services.vapi.helper import store_call_data
+from app.services.user.usage import update_call_duration
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -59,14 +61,27 @@ class VapiService:
         try:
             # Extract important data for logging
             assistant_id = message.get("assistant", {}).get("id", "")
-            duration = message.get("durationSeconds", 0)
+            duration_seconds = message.get("durationSeconds", 0)
             
             # Log detailed call info
-            logger.info(f"Call {call_id} ended. Duration: {duration}s, Assistant: {assistant_id}")
+            logger.info(f"Call {call_id} ended. Duration: {duration_seconds}s, Assistant: {assistant_id}")
             
             # Store the summarized call data using the helper function
             # This will save to vapi_calls_summary table
-            await store_call_data(call_data)
+            call_summary = await store_call_data(call_data)
+            
+            if call_summary and call_summary.get("user_id"):
+                # Update the user's usage statistics
+                user_id = call_summary.get("user_id")
+                logger.info(f"Updating usage for user {user_id}, call duration: {duration_seconds}s")
+                
+                # Use the unified call duration update function with seconds
+                await update_call_duration({
+                    "user_id": user_id,
+                    "duration_seconds": duration_seconds
+                }, source="vapi")
+            else:
+                logger.warning(f"Could not update user usage: user_id not found in call summary for call {call_id}")
             
             logger.info(f"Saved call {call_id} to Supabase successfully")
             

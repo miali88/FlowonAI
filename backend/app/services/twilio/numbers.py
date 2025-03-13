@@ -172,7 +172,6 @@ async def store_phone_number(
         'operation_results': results
     }
 
-
 async def provision_user_phone_number(
     country_code: str,
     number_type: str,

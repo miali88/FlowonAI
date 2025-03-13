@@ -1,14 +1,10 @@
-from fastapi import APIRouter, Request, Response, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import Dict, List
 from pydantic import BaseModel
 import logging
-import os
 
-from app.services.twilio import (
-    call_handle, helper, process_call_completed, check_user_trial_status, 
-    provision_user_phone_number
-)
+from app.services.twilio import helper, provision_user_phone_number
 from app.core.auth import get_current_user
 
 # Add logger configuration at the top after imports
@@ -27,7 +23,6 @@ class NumberGroup(BaseModel):
 class AvailableNumbersResponse(BaseModel):
     numbers: Dict[str, NumberGroup]
 
-""" FUNCTIONS FOR FRONTEND """
 @router.get("/country_codes", response_model=dict)
 async def get_country_codes_handler() -> JSONResponse:
     """Get list of available country codes from Twilio"""
@@ -70,59 +65,6 @@ async def get_user_numbers_handler(
     logger.debug(f"Retrieved primary Twilio number for user {current_user}")
     return JSONResponse(content={"number": number})
 
-""" WEBHOOK FUNCTIONS """
-@router.api_route("/", methods=["GET", "POST"])
-async def twilio_status_update(request: Request) -> Response:
-    """Handle Twilio status callback webhooks"""
-    data = await request.form() if request.method == "POST" else request.query_params
-    logger.info(f"Received Twilio status update - Method: {request.method}")
-    logger.debug(f"Status update data: {dict(data)}")
-    return Response(status_code=200)
-
-@router.post('/add_to_conference')
-async def add_to_conference_route(request: Request) -> Response:
-    logger.info("Processing add to conference request")
-    try:
-        return await call_handle.add_to_conference(request)
-    except Exception as e:
-        logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/call_completed")
-async def call_completed(request: Request):
-    """Handle call completion webhook from Twilio to update call duration for trial users"""
-    try:
-        form_data = await request.form()
-        call_sid = form_data.get("CallSid")
-        call_duration = form_data.get("CallDuration")  # Duration in seconds
-        call_status = form_data.get("CallStatus")
-        from_number = form_data.get("From")
-        
-        result = await process_call_completed(
-            call_sid=call_sid,
-            call_duration=call_duration,
-            call_status=call_status,
-            from_number=from_number
-        )
-        
-        return result
-    
-    except Exception as e:
-        logger.error(f"Error processing call completion: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing call completion: {str(e)}")
-
-@router.get("/check_trial_status/{user_id}")
-async def check_trial_status(user_id: str, current_user: str = Depends(get_current_user)):
-    """Check if a user has exceeded their trial limits"""
-    try:
-        return await check_user_trial_status(user_id=user_id, current_user=current_user)
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    except Exception as e:
-        logger.error(f"Error checking trial status: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error checking trial status: {str(e)}")
-
 @router.post("/purchase_phone_number")
 async def purchase_phone_number(
     country_code: str,
@@ -148,3 +90,23 @@ async def purchase_phone_number(
         logger.error(f"Error in purchase_phone_number: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error provisioning phone number: {str(e)}")
         
+
+        
+
+# """ VAPI Handles calls, Only needed for livekit implementation """
+# @router.api_route("/", methods=["GET", "POST"])
+# async def twilio_status_update(request: Request) -> Response:
+#     """Handle Twilio status callback webhooks"""
+#     data = await request.form() if request.method == "POST" else request.query_params
+#     logger.info(f"Received Twilio status update - Method: {request.method}")
+#     logger.debug(f"Status update data: {dict(data)}")
+#     return Response(status_code=200)
+
+# @router.post('/add_to_conference')
+# async def add_to_conference_route(request: Request) -> Response:
+#     logger.info("Processing add to conference request")
+#     try:
+#         return await call_handle.add_to_conference(request)
+#     except Exception as e:
+#         logger.error(f"Error in add_to_conference: {str(e)}", exc_info=True)
+#         raise HTTPException(status_code=500, detail=str(e))

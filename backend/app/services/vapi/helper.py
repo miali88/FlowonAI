@@ -1,50 +1,12 @@
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
-from app.clients.supabase_client import get_supabase
 import logging
 
+from app.clients.supabase_client import get_supabase
+from app.services.vapi.utils import get_user_id
+
 logger = logging.getLogger(__name__)
-
-
-async def get_user_id(phone_number: str) -> Optional[str]:
-    """
-    Query the Twilio numbers table to get the user ID associated with a phone number.
-    
-    Args:
-        phone_number: The phone number to lookup
-        
-    Returns:
-        The user ID if found, None otherwise
-    """
-    try:
-        if not phone_number:
-            logger.warning("Empty phone number provided to getUserID")
-            return None
-            
-        logger.info(f"Looking up user ID for phone number: {phone_number}")
-        
-        # Get Supabase client
-        supabase = await get_supabase()
-        
-        # Query the twilio_numbers table for this phone number
-        response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", phone_number).execute()
-        
-        # Check if we got results
-        data = response.data
-        if not data or len(data) == 0:
-            logger.warning(f"No user found for phone number: {phone_number}")
-            return None
-            
-        # Return the user ID from the first matching record
-        user_id = data[0].get("owner_user_id")
-        logger.info(f"Found user ID {user_id} for phone number: {phone_number}")
-        return user_id
-        
-    except Exception as e:
-        logger.error(f"Error looking up user ID for phone number {phone_number}: {str(e)}")
-        return None
-
 
 class VapiEndOfCallReport:
     """Data model for storing summarized VAPI call data."""
@@ -135,9 +97,9 @@ class VapiEndOfCallReport:
         duration_minutes = message.get("durationMinutes", 0.0)
         logger.debug(f"Extracted duration_minutes: {duration_minutes}")
         
-        # Get the user ID associated with the customer's phone number
-        user_id = await get_user_id(customer_number)
-        logger.debug(f"Retrieved user_id for customer: {user_id}")
+        # Get the user ID associated with the phone number
+        user_id = await get_user_id(phone_number)
+        logger.debug(f"Retrieved user_id for phone number: {user_id}")
         
         return cls(
             call_id=call_id,
@@ -179,16 +141,18 @@ class VapiEndOfCallReport:
             "created_at": self.created_at,
         }
 
-
-async def store_call_data(webhook_data: Dict[str, Any]) -> None:
+async def store_call_data(webhook_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Store summarized call data in Supabase.
     
     Args:
         webhook_data: The webhook payload containing VAPI call data
+        
+    Returns:
+        Dict containing the stored call data, including user_id
     """
     try:
-        logger.info("Processing call data for storage in vapi_calls_summary")
+        logger.info("Processing call data for storage in vapi_calls table")
         
         # Create structured data object from webhook
         call_data = await VapiEndOfCallReport.from_webhook(webhook_data)
@@ -199,14 +163,18 @@ async def store_call_data(webhook_data: Dict[str, Any]) -> None:
         # Get Supabase client
         supabase = await get_supabase()
         
-        # Store in the vapi_calls_summary table
-        logger.info(f"Storing summarized call data for call ID: {call_data.call_id}")
+        # Store in the vapi_calls table
+        logger.info(f"Storing call data for call ID: {call_data.call_id}")
         result = await supabase.table("vapi_calls").insert(data_dict).execute()
         
-        logger.info(f"Successfully stored call summary for call ID: {call_data.call_id}, user ID: {call_data.user_id}")
+        logger.info(f"Successfully stored call data for call ID: {call_data.call_id}, user ID: {call_data.user_id}")
+        
+        # Return the data for further processing
+        return data_dict
     except Exception as e:
-        logger.error(f"Error storing summarized call data: {str(e)}")
-        # We don't re-raise the exception to prevent webhook failures
+        logger.error(f"Error storing call data: {str(e)}")
+        # Return None if there was an error
+        return None
 
 
 if __name__ == "__main__":
