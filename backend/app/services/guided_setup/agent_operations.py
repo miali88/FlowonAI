@@ -3,6 +3,9 @@ from typing import Dict, Any, Tuple
 
 from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
+from app.services.vapi.assistants import create_assistant, update_assistant, SYS_PROMPT_TEMPLATE
+from app.services.vapi.voice_ids import voice_ids
+from app.clients.supabase_client import get_supabase
 from .setup_crud import get_guided_setup, update_guided_setup_agent_id
 from app.models.guided_setup import QuickSetupData
 
@@ -166,3 +169,73 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetup
     except Exception as e:
         logging.error(f"Error creating/updating agent from setup: {str(e)}")
         return False, f"Error creating/updating agent: {str(e)}", None 
+    
+async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Dict[str, Any]]:
+    """
+    Create or update a VAPI assistant based on guided setup data.
+    
+    Args:
+        user_id: The user ID
+        setup_data: The setup data as a QuickSetupData Pydantic model
+        
+    Returns:
+        Tuple of (success, message, assistant_data)
+    """
+    try:
+        logging.info(f"Creating or updating VAPI assistant for user {user_id}")
+        
+        # Get business information
+        business_name = setup_data.businessInformation.businessName if setup_data.businessInformation else "Your Business"
+        
+        # Get guided setup data to check for existing assistant
+        guided_setup_data = await get_guided_setup(user_id)
+        vapi_assistant_id = guided_setup_data.get("vapi_assistant_id") if guided_setup_data else None
+        
+        # Format system prompt with business information
+        sys_prompt = SYS_PROMPT_TEMPLATE.format(business_name=business_name)
+        
+        # Create or update the VAPI assistant
+        if vapi_assistant_id:
+            logging.info(f"Updating existing VAPI assistant with ID: {vapi_assistant_id}")
+            assistant_result = await update_assistant(
+                assistant_id=vapi_assistant_id,
+                business_name=business_name,
+                sys_prompt=sys_prompt
+            )
+            logging.info(f"VAPI assistant updated successfully: {assistant_result.get('id')}")
+            return True, f"Updated existing VAPI assistant with ID: {vapi_assistant_id}", assistant_result
+        else:
+            logging.info(f"Creating new VAPI assistant for {business_name}")
+            assistant_result = await create_assistant(
+                business_name=business_name,
+                sys_prompt=sys_prompt,
+                voice_id=voice_ids["british_male"]  # Default voice
+            )
+            
+            # Save the new assistant ID to the guided setup data
+            new_assistant_id = assistant_result.get('id')
+            if new_assistant_id:
+                # Update the Supabase record with the new assistant ID
+                supabase = await get_supabase()
+                
+                update_result = await supabase.table("guided_setup").update({
+                    "vapi_assistant_id": new_assistant_id
+                }).eq("user_id", user_id).execute()
+                
+                if not update_result.data:
+                    logging.warning(f"Failed to update guided_setup with VAPI assistant ID for user {user_id}")
+                    return True, f"Created VAPI assistant but failed to update guided_setup", assistant_result
+                else:
+                    logging.info(f"Saved VAPI assistant ID {new_assistant_id} to guided_setup for user {user_id}")
+                    return True, f"Created new VAPI assistant with ID: {new_assistant_id}", assistant_result
+            else:
+                logging.warning(f"Created VAPI assistant result does not contain an ID")
+                return False, "Failed to retrieve VAPI assistant ID from creation result", assistant_result
+            
+    except Exception as e:
+        logging.error(f"Error creating/updating VAPI assistant: {str(e)}")
+        return False, f"Error creating/updating VAPI assistant: {str(e)}", {}
+    
+
+
+    

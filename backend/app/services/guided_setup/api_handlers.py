@@ -8,7 +8,7 @@ from app.models.guided_setup import (QuickSetupData, TrainingSource, BusinessInf
                                      MessageTaking, CallNotifications, EmailNotifications, 
                                      SmsNotifications, CallerName, CallerPhoneNumber)
 from app.services.guided_setup.setup_crud import get_guided_setup, save_guided_setup
-from app.services.guided_setup.agent_operations import create_or_update_agent_from_setup
+from app.services.guided_setup.agent_operations import create_or_update_agent_from_setup, create_or_update_vapi_assistant
 from app.services.guided_setup.audio_generation import generate_greeting_preview, generate_message_preview
 
 async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[str, Any]:
@@ -34,23 +34,35 @@ async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[s
         
         logging.info(f"Quick setup completed for user {user_id}")
         
-        # Create or update the agent using the centralized function
-        # Only proceed with agent creation if guided setup was saved successfully
-        agent_success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
-        if not agent_success:
-            logging.warning(f"Agent creation/update during quick setup: {message}")
-            # Note: We don't consider agent creation failure as a failure of the entire process
-            # as the guided setup data was saved successfully
+        # Create or update the VAPI assistant using the refactored function
+        try:
+            vapi_success, vapi_message, vapi_result = await create_or_update_vapi_assistant(user_id, setup_data)
+            
+            # Extract the VAPI assistant ID from the result
+            vapi_assistant_id = vapi_result.get('id') if vapi_success and vapi_result else None
+            
+            if vapi_success:
+                logging.info(f"VAPI assistant operation successful: {vapi_message}")
+                return {
+                    "success": True,
+                    "message": "Quick setup data processed successfully",
+                    "vapi_assistant_id": vapi_assistant_id
+                }
+            else:
+                logging.warning(f"VAPI assistant operation issue: {vapi_message}")
+                return {
+                    "success": True,  # Still consider overall successful since data was saved
+                    "message": "Quick setup data saved, but assistant creation/update had issues",
+                    "warning": vapi_message
+                }
+        except Exception as e:
+            logging.error(f"Error with VAPI assistant: {str(e)}")
             return {
-                "success": True,
-                "message": "Quick setup data saved successfully, but agent creation failed",
-                "warning": message
+                "success": True,  # Still consider overall successful since data was saved
+                "message": "Quick setup data saved, but assistant creation failed",
+                "warning": str(e)
             }
-        
-        return {
-            "success": True,
-            "message": "Quick setup data received successfully"
-        }
+            
     except Exception as e:
         logging.error(f"Error in quick-setup: {str(e)}")
         return {
@@ -214,20 +226,26 @@ async def save_onboarding_data_service(
         logging.info(f"Onboarding data saved successfully for user {user_id}")
         logging.info(f"Agent language set to: {agent_language}")
         
-        # Create or update the agent using the centralized function
-        # Only proceed with agent creation if guided setup was saved successfully
-        success, message, _ = await create_or_update_agent_from_setup(user_id, setup_data)
-        if not success:
-            logging.warning(f"Agent creation/update during onboarding: {message}")
-            # Note: We don't consider agent creation failure as a failure of the entire process
-            # as the guided setup data was saved successfully
+        # Create or update the VAPI assistant using the centralized function
+        vapi_warning = None
+        try:
+            vapi_success, vapi_message, vapi_result = await create_or_update_vapi_assistant(user_id, setup_data)
+            
+            if vapi_success:
+                logging.info(f"VAPI assistant operation successful: {vapi_message}")
+            else:
+                logging.warning(f"VAPI assistant operation issue: {vapi_message}")
+                vapi_warning = vapi_message
+        except Exception as e:
+            logging.error(f"Error with VAPI assistant during onboarding: {str(e)}")
+            vapi_warning = str(e)
+        
+        if vapi_warning:
             return {
                 "success": True,
-                "message": "Onboarding data saved successfully, but agent creation failed",
-                "warning": message
+                "message": "Onboarding data saved successfully, but VAPI assistant creation failed",
+                "warning": vapi_warning
             }
-        else:
-            logging.info(f"Agent successfully created/updated during onboarding for user {user_id}")
         
         return {
             "success": True,

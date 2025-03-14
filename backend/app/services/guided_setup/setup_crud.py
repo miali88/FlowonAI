@@ -48,18 +48,18 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         "agent_language": quick_setup_data.agentLanguage,
     }
     
-    # If record exists, preserve the setup_completed value and agent_id
+    # If record exists, preserve the setup_completed value and vapi_assistant_id
     # If it's a new record, set setup_completed to False by default
     if existing_setup:
         # Preserve the existing setup_completed status 
         setup_data["setup_completed"] = existing_setup.get("setup_completed", False)
         
-        # Preserve the existing agent_id if it exists
-        if "agent_id" in existing_setup and existing_setup["agent_id"]:
-            setup_data["agent_id"] = existing_setup["agent_id"]
-            logging.info(f"Preserving existing agent_id: {existing_setup['agent_id']} for user {user_id}")
+        # Preserve the existing vapi_assistant_id if it exists
+        if "vapi_assistant_id" in existing_setup and existing_setup["vapi_assistant_id"]:
+            setup_data["vapi_assistant_id"] = existing_setup["vapi_assistant_id"]
+            logging.info(f"Preserving existing vapi_assistant_id: {existing_setup['vapi_assistant_id']} for user {user_id}")
         else:
-            logging.info(f"No agent_id to preserve for user {user_id}")
+            logging.info(f"No vapi_assistant_id to preserve for user {user_id}")
             
         logging.info(f"Updating existing guided setup data for user {user_id}")
     else:
@@ -95,17 +95,19 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
     # Verify the data was saved correctly
     updated_setup = await get_guided_setup(user_id)
     if updated_setup:
-        # Check if agent_id was preserved
-        if "agent_id" in setup_data and setup_data["agent_id"]:
-            if updated_setup.get("agent_id") == setup_data["agent_id"]:
-                logging.info(f"Verified agent_id was correctly preserved: {setup_data['agent_id']}")
+        # Check if vapi_assistant_id was preserved
+        if "vapi_assistant_id" in setup_data and setup_data["vapi_assistant_id"]:
+            if updated_setup.get("vapi_assistant_id") == setup_data["vapi_assistant_id"]:
+                logging.info(f"Verified vapi_assistant_id was correctly preserved: {setup_data['vapi_assistant_id']}")
             else:
-                logging.warning(f"agent_id was not correctly preserved. Expected: {setup_data['agent_id']}, Got: {updated_setup.get('agent_id')}")
-        return True, setup_data, None
+                logging.warning(f"vapi_assistant_id was not correctly preserved. Expected: {setup_data['vapi_assistant_id']}, Got: {updated_setup.get('vapi_assistant_id')}")
+        return True, updated_setup, None  # Return the updated setup from the database
     else:
         error_message = f"Failed to verify guided setup data save for user {user_id}"
         logging.error(error_message)
         return False, {}, error_message
+
+
 
 async def get_guided_setup(user_id: str):
     """Retrieve the guided setup data for a user from Supabase."""
