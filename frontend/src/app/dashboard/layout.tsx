@@ -80,9 +80,18 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isProgressBarLoading, setIsProgressBarLoading] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      console.log("User not authenticated, redirecting to sign-in");
+      router.replace("/sign-in");
+      return;
+    }
+    setIsLoading(false);
+  }, [isLoaded, userId, router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -97,65 +106,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (isLoaded && !userId) {
-      router.push("/sign-in");
-    }
-  }, [isLoaded, userId, router]);
-
-  useEffect(() => {
-    if (isLoading) {
-      const timeout = setTimeout(() => {
-        setIsLoading(false);
-      }, 500); // Minimum loading time
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    if (isProgressBarLoading) {
-      const timeout = setTimeout(() => {
-        setIsProgressBarLoading(false);
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [isProgressBarLoading]);
-
+  // Show loading state while checking authentication or during initial load
   if (!isLoaded || isLoading) {
-    return (
-      <div className={layoutStyles.wrapper}>
-        <div className="absolute inset-0"></div>
-        <div className={layoutStyles.mainContainer}>
-          <div className={layoutStyles.sidebar}>
-            <div className="p-4">
-              <div className="h-6 w-24 bg-muted rounded animate-pulse mb-4" />
-              <div className="space-y-2">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-10 bg-muted rounded animate-pulse"
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+    return <DashboardLoading />;
+  }
 
-          <div className={layoutStyles.mainContent}>
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="h-8 w-32 bg-muted rounded animate-pulse" />
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-64 bg-muted rounded animate-pulse" />
-                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
-              </div>
-            </div>
-
-            <div className="flex-1 p-6">
-              <div className="h-32 w-full bg-muted rounded animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  // If we're loaded but there's no user, don't render anything
+  if (isLoaded && !userId) {
+    return null;
   }
 
   return (

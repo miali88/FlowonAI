@@ -76,6 +76,10 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
         
         const data = await response.json();
         console.log('Trial status loaded:', data);
+        // Log specific fields to help debug
+        console.log('Minutes used:', data.minutes_used);
+        console.log('Minutes total:', data.minutes_total);
+        console.log('Is trial expired:', !data.remaining_days);
         setStatus(data);
       } catch (err) {
         console.error('Error fetching trial status:', err);
@@ -94,10 +98,13 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
     router.push('/dashboard/pricing');
   };
 
-  // Format minutes remaining for display
-  const formatMinutesRemaining = () => {
-    if (status.minutes_exceeded) return '0 mins';
-    return `${status.minutes_remaining} mins`;
+  // Format minutes used for display with null/undefined check
+  const formatMinutesUsed = () => {
+    // Check if minutes_used is defined
+    if (status.minutes_used === undefined || status.minutes_used === null) {
+      return ''; // Fallback value when minutes_used is not available
+    }
+    return `${status.minutes_used} mins remaining`;
   };
 
   // Format days remaining for display
@@ -143,13 +150,13 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
                 <div className="space-y-1.5">
                   <Progress 
                     value={status.percentage_used} 
-                    className="h-2 bg-blue-100 [&>[role=progressbar]]:bg-gradient-to-r [&>[role=progressbar]]:from-blue-400 [&>[role=progressbar]]:to-blue-600" 
+                    className="h-2 bg-neutral-100 [&>div]:!bg-green-500" 
                   />
                   {!isCollapsed && (
                     <div className="flex justify-between text-xs">
-                      <span className="flex items-center text-blue-700">
-                        <Clock className="inline h-3 w-3 mr-1 text-blue-500" />
-                        {formatMinutesRemaining()}
+                      <span className="flex items-center text-green-700">
+                        <Clock className="inline h-3 w-3 mr-1 text-green-500" />
+                        {formatMinutesUsed()}
                       </span>
                       <span className="text-blue-500">{status.minutes_total} mins total</span>
                     </div>
@@ -157,7 +164,7 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
                 </div>
               </TooltipTrigger>
               <TooltipContent className="bg-blue-900 text-white border-blue-700">
-                <p className="text-sm">{status.minutes_remaining} minutes remaining of {status.minutes_total} minutes total</p>
+                <p className="text-sm">{status.minutes_used} minutes used of {status.minutes_total} minutes total</p>
                 <p className="text-xs text-blue-200">{formatDaysRemaining()}</p>
               </TooltipContent>
             </Tooltip>

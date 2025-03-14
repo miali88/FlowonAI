@@ -28,7 +28,7 @@ async def check_user_trial_status(user_id: str, current_user: str) -> Dict[str, 
     
     supabase = await get_supabase()
     result = await supabase.table("users").select(
-        "is_trial, trial_minutes_used, trial_minutes_total, trial_start_date, trial_end_date"
+        "is_trial, trial_minutes_used, trial_minutes_total, trial_start_date, trial_end_date, total_call_time"
     ).eq("id", user_id).execute()
     
     if not result.data:
@@ -57,9 +57,30 @@ async def check_user_trial_status(user_id: str, current_user: str) -> Dict[str, 
                 "message": "Trial period has expired"
             }
     
-    # Check minutes usage
-    trial_minutes_used = user_data.get("trial_minutes_used", 0)
+    # Get total call time (in seconds) and convert to minutes
+    total_call_time_seconds = user_data.get("total_call_time", 0)
+    
+    # Handle None values
+    if total_call_time_seconds is None:
+        total_call_time_seconds = 0
+        logger.info(f"Found NULL value for total_call_time for user {user_id}, defaulting to 0")
+    
+    # Convert seconds to minutes (round up to nearest minute)
+    total_call_time_minutes = math.ceil(total_call_time_seconds / 60)
+    logger.info(f"User {user_id} call time: {total_call_time_seconds} seconds ({total_call_time_minutes} minutes)")
+    
+    # Update user's trial minutes based on call time
+    trial_minutes_used = total_call_time_minutes
     trial_minutes_total = user_data.get("trial_minutes_total", 25)
+    
+    # Update the database with the calculated minutes
+    try:
+        await supabase.table("users").update({
+            "trial_minutes_used": trial_minutes_used
+        }).eq("id", user_id).execute()
+        logger.info(f"Updated trial_minutes_used for user {user_id} to {trial_minutes_used} based on call time")
+    except Exception as e:
+        logger.error(f"Error updating trial_minutes_used: {str(e)}")
     
     minutes_exceeded = trial_minutes_used >= trial_minutes_total
     
