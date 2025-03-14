@@ -2,9 +2,10 @@ from typing import Any, Dict
 import logging
 import math
 
-from backend.app.services.vapi.helper import store_call_data
+from app.services.vapi.helper import store_call_data
 from app.services.user.usage import update_call_duration
-
+from app.services.email_service import send_notification_email
+from app.services.vapi.utils import get_user_notification_settings
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,53 @@ class VapiService:
                     "user_id": user_id,
                     "duration_seconds": duration_seconds
                 }, source="vapi")
+                
+                # Check if email notifications are enabled for this user and send email
+                try:
+                    # Get user notification settings
+                    notification_settings = await get_user_notification_settings(user_id)
+                    
+                    # Check if email notifications are enabled
+                    email_settings = notification_settings.get("emailNotifications", {})
+                    if email_settings.get("enabled", False):
+                        # Get recipient email
+                        recipient_email = email_settings.get("email")
+                        if recipient_email:
+                            # Create email content
+                            subject = f"Flowon AI: New Call Summary - {message.get('call', {}).get('id', 'unknown')}"
+                            
+                            # Format the email body
+                            customer_number = message.get("customer", {}).get("number", "Unknown")
+                            call_date = message.get("endedAt", "Unknown")
+                            call_duration = f"{duration_seconds} seconds"
+                            summary = message.get("summary", "No summary available")
+                            
+                            body = f"""
+                            <h2>Call Summary</h2>
+                            <p><strong>Customer Number:</strong> {customer_number}</p>
+                            <p><strong>End Time:</strong> {call_date}</p>
+                            <p><strong>Duration:</strong> {call_duration}</p>
+                            <h3>Call Summary:</h3>
+                            <p>{summary}</p>
+                            <p>View more details in your Flowon AI dashboard.</p>
+                            """
+                            
+                            # Send the email
+                            logger.info(f"Sending call summary email to {recipient_email}")
+                            email_sent = await send_notification_email(subject, body, recipient_email)
+                            
+                            if email_sent:
+                                logger.info(f"Email notification sent to {recipient_email} for call {call_id}")
+                            else:
+                                logger.warning(f"Failed to send email notification to {recipient_email} for call {call_id}")
+                        else:
+                            logger.warning(f"Email notifications enabled but no email address found for user {user_id}")
+                    else:
+                        logger.info(f"Email notifications not enabled for user {user_id}")
+                
+                except Exception as email_error:
+                    logger.error(f"Error sending email notification: {str(email_error)}")
+                    # Continue execution - email failure shouldn't stop the rest of the processing
             else:
                 logger.warning(f"Could not update user usage: user_id not found in call summary for call {call_id}")
             

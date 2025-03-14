@@ -21,7 +21,6 @@ from .setup_crud import (
     get_formatted_setup_data,
     get_rosie_phone_number,
     check_user_exists,
-    diagnose_and_repair_database_issues
 )
 
 from .agent_operations import (

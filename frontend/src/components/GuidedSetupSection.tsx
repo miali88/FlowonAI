@@ -32,7 +32,7 @@ export function GuidedSetupSection() {
         </div>
         
         <div className="mt-12 text-center">
-          <Link href="/guide/setup">
+          <Link href="https://calendly.com/michael-flowon/catch-up?month=2025-03">
             <Button variant="outline" className="group">
               {t('buttonText')}
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

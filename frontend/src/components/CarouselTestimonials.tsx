@@ -28,8 +28,8 @@ export function CarouselTestimonials() {
   
   return (
     <section className="w-full py-12 overflow-hidden bg-muted/30">
-      <div className="container mb-6">
-        <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl text-center">
+      <div className="container mx-auto px-4 mb-6 text-center">
+        <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
           {t('title')}
         </h2>
       </div>

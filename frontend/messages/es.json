@@ -173,5 +173,21 @@
   },
   "carouselTestimonials": {
     "title": "Algunos de nuestros clientes satisfechos..."
+  },
+  "emailNotifications": {
+    "sectionTitle": "Notificaciones instantáneas por correo",
+    "sectionSubtitle": "No pierdas oportunidades importantes con nuestras notificaciones en tiempo real",
+    "gmail": {
+      "sender": "Flowon AI",
+      "time": "hace 2 min",
+      "subject": "Nueva Llamada: Cliente potencial valioso, ¡necesita presupuesto!",
+      "message": "Esta es una consulta importante de un cliente potencial interesado en tus servicios. Por favor, responde lo antes posible."
+    },
+    "outlook": {
+      "sender": "Flowon AI",
+      "time": "hace 5 min",
+      "subject": "Nueva Llamada: Necesita servicios de reparación urgentes",
+      "message": "Hola, tenemos una situación de emergencia y necesitamos a tu equipo de reparación lo antes posible. ¿Puedes..."
+    }
   }
 } 

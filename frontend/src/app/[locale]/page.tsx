@@ -17,6 +17,11 @@ const DynamicFeaturesAndBenefits = dynamic(() => import('@/components/FeaturesAn
   ssr: true
 });
 
+const DynamicEmailNotifications = dynamic(() => import('@/components/EmailNotifications').then(mod => mod.EmailNotifications), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
+});
+
 const DynamicPainPointsSolutions = dynamic(() => import('@/components/PainPointsSolutions').then(mod => mod.PainPointsSolutions), {
   loading: () => <div className="h-[600px]" />,
   ssr: true
@@ -65,6 +70,7 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         <DynamicGuidedSetupSection />
         <DynamicCarouselTestimonials />
         <DynamicFeaturesAndBenefits />
+        <DynamicEmailNotifications />
         <DynamicHowItWorks />
         <DynamicVoiceSocialProof />
         <DynamicPricing />  

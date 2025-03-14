@@ -5,7 +5,6 @@ from typing import Dict, Any, Optional
 from app.clients.supabase_client import get_supabase
 logger = logging.getLogger(__name__)
 
-
 async def get_user_id(phone_number: str) -> Optional[str]:
     """
     Query the Twilio numbers table to get the user ID associated with a phone number.
@@ -44,7 +43,38 @@ async def get_user_id(phone_number: str) -> Optional[str]:
         logger.error(f"Error looking up user ID for phone number {phone_number}: {str(e)}")
         return None
 
-
+# New function to get user notification settings
+async def get_user_notification_settings(user_id: str) -> Dict[str, Any]:
+    """
+    Get user's notification settings from guided_setup table.
+    
+    Args:
+        user_id: The user ID to lookup
+        
+    Returns:
+        Dict containing notification settings
+    """
+    from app.clients.supabase_client import get_supabase
+    
+    try:
+        logger.info(f"Getting notification settings for user: {user_id}")
+        supabase = await get_supabase()
+        
+        response = await supabase.table("guided_setup").select("call_notifications").eq("user_id", user_id).execute()
+        
+        data = response.data
+        if not data or len(data) == 0:
+            logger.warning(f"No guided setup found for user: {user_id}")
+            return {}
+            
+        call_notifications = data[0].get("call_notifications", {})
+        logger.info(f"Found notification settings for user {user_id}: {call_notifications}")
+        return call_notifications
+        
+    except Exception as e:
+        logger.error(f"Error getting notification settings for user {user_id}: {str(e)}")
+        return {}
+    
 async def register_phone_number_with_vapi(
     phone_number: str,
     twilio_account_sid: Optional[str] = None,

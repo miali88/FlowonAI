@@ -21,7 +21,6 @@ from app.services.guided_setup import (
     generate_onboarding_preview_service,
     set_trial_plan_service,
     save_onboarding_data_service,
-    diagnose_and_repair_database_issues
 )
 
 router = APIRouter()
@@ -224,7 +223,6 @@ async def set_trial_plan(
         logging.error(f"Error setting up trial plan: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error setting up trial plan: {str(e)}")
 
-
 @router.post("/save_onboarding_data")
 async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str = Depends(get_current_user)):
     """
@@ -252,27 +250,9 @@ async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str
         logging.error(f"Error in save_onboarding_data endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.options("/save_onboarding_data")
 async def options_save_onboarding_data():
     """
     Handle OPTIONS requests for CORS preflight.
     """
     return {}
-
-@router.post("/diagnose_database_issues")
-async def diagnose_database_issues(current_user: str = Depends(get_current_user)):
-    """
-    Diagnostic endpoint to check and repair database issues for the current user.
-    This is useful for troubleshooting foreign key constraint errors during onboarding.
-    """
-    try:
-        logging.info(f"Running database diagnostic for user {current_user}")
-        
-        # Run the diagnostic function
-        results = await diagnose_and_repair_database_issues(current_user)
-        
-        return results
-    except Exception as e:
-        logging.error(f"Error in database diagnostic: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))

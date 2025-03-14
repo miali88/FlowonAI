@@ -18,8 +18,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Flowon AI - Create Your Own Chatbot Agents',
-  description: 'Create your own chatbot agents with Flowon AI. Our platform allows you to create, train, and deploy your own chatbot agents with ease.',
+  title: 'Flowon AI - Helping you always be there for your customers',
+  description: 'Flowon answers calls when you cannot. Ready to qualify new leads, provide answers, take messages, set appointments, and notifies you all the while.',
   icons: {
     icon: '/favicon.ico',
   },

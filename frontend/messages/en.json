@@ -180,5 +180,21 @@
   },
   "carouselTestimonials": {
     "title": "Some of our happy clients..."
+  },
+  "emailNotifications": {
+    "sectionTitle": "Instant Email Notifications",
+    "sectionSubtitle": "Never miss an important business opportunity with our real-time notifications",
+    "gmail": {
+      "sender": "Flowon AI",
+      "time": "2 min ago",
+      "subject": "New Call: High valued prospect, needs quote!",
+      "message": "This is an important inquiry from a potential client looking for your services. Please respond ASAP."
+    },
+    "outlook": {
+      "sender": "Flowon AI",
+      "time": "5 min ago",
+      "subject": "New Call: Needs urgent repair services",
+      "message": "Hi, We have an emergency situation and need your repair team as soon as possible. Can you..."
+    }
   }
 } 
