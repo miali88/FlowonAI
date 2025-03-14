@@ -76,6 +76,7 @@ function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isProgressBarLoading, setIsProgressBarLoading] = useState(false);
@@ -89,6 +90,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(false);
   }, [isLoaded, userId, router]);
+
+  // Add effect to reset loading state when navigation completes
+  useEffect(() => {
+    // When pathname changes, it means navigation has completed
+    if (isProgressBarLoading) {
+      console.log("Navigation completed, resetting loading state");
+      setIsProgressBarLoading(false);
+    }
+  }, [pathname, isProgressBarLoading]);
 
   useEffect(() => {
     const handleResize = () => {

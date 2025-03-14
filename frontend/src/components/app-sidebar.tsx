@@ -225,7 +225,17 @@ export function AppSidebar({
   const handleNavigation = (href: string, e: React.MouseEvent) => {
     e.preventDefault();
     setIsProgressBarLoading(true);
+    
+    // Add a safety timeout to reset the loading state if navigation takes too long
+    const safetyTimeout = setTimeout(() => {
+      setIsProgressBarLoading(false);
+      console.log("Safety timeout triggered to reset loading state");
+    }, 3000); // 3 seconds should be plenty for navigation to complete
+    
     router.push(href);
+    
+    // The useEffect in layout.tsx will handle normal completion,
+    // this is just a safety mechanism
   };
 
   return (
