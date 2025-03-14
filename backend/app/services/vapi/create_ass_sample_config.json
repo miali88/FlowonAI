@@ -1,0 +1,97 @@
+{
+  "name": "Custom Assistant Name",
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "2mltbVQP21Fq8XgIfRQJ",
+    "model": "eleven_multilingual_v2",
+    "speed": 0.9,
+    "stability": 0.5,
+    "similarityBoost": 0.75
+  },
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "temperature": 0.3,
+    "maxTokens": 8000,
+    "emotionRecognitionEnabled": true
+  },
+  "firstMessage": "Hello! Thank you for calling. How can I help you today?",
+  "firstMessageMode": "assistant-speaks-first",
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "en",
+    "numerals": true,
+    "endUtteranceSilenceThreshold": 0.8
+  },
+  "silenceTimeoutSeconds": 30,
+  "maxDurationSeconds": 600,
+  "backgroundSound": "office",
+  "backgroundDenoisingEnabled": true,
+  "messagePlan": {
+    "idleMessages": [
+      "Are you still there?",
+      "I'm still here if you'd like to continue our conversation.",
+      "Please let me know if you need any assistance."
+    ],
+    "idleMessageMaxSpokenCount": 3,
+    "idleTimeoutSeconds": 20,
+    "silenceTimeoutMessage": "I haven't heard from you in a while. Please let me know if you're still there."
+  },
+  "startSpeakingPlan": {
+    "waitSeconds": 0.4,
+    "smartEndpointingEnabled": true
+  },
+  "stopSpeakingPlan": {
+    "numWords": 5,
+    "voiceSeconds": 0.2,
+    "backoffSeconds": 1
+  },
+  "analysisPlan": {
+    "summaryPlan": {
+      "enabled": true,
+      "timeoutSeconds": 60
+    },
+    "structuredDataPlan": {
+      "enabled": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "caller_name": {
+            "type": "string",
+            "description": "The name of the caller"
+          },
+          "caller_issue": {
+            "type": "string",
+            "description": "A brief description of the caller's issue"
+          },
+          "call_resolved": {
+            "type": "boolean",
+            "description": "Whether the caller's issue was resolved"
+          }
+        },
+        "required": ["caller_name", "caller_issue", "call_resolved"]
+      },
+      "timeoutSeconds": 60
+    }
+  },
+  "artifactPlan": {
+    "recordingEnabled": true,
+    "transcriptPlan": {
+      "enabled": true,
+      "assistantName": "AI Assistant",
+      "userName": "Caller"
+    }
+  },
+  "compliancePlan": {
+    "hipaaEnabled": false,
+    "pciEnabled": false
+  },
+  "transportConfigurations": [
+    {
+      "provider": "twilio",
+      "timeout": 60,
+      "record": false
+    }
+  ]
+} 
