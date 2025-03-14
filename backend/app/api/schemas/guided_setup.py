@@ -48,3 +48,9 @@ class RetrainAgentResponse(BaseModel):
     business_overview: Optional[str] = None
     error: Optional[str] = None
     setup_data: Optional[dict] = None 
+
+class WebsiteScrapeRequest(BaseModel):
+    """
+    Request schema for website scraping during guided setup.
+    """
+    website_url: str

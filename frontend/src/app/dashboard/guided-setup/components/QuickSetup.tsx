@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { toast } from "sonner";
 
 // Import schema and modular components
 import { quickSetupSchema, FormValues } from "./schema";
@@ -442,6 +443,31 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         setSuccessMessage("AI training completed successfully!");
       } else {
         throw new Error(result.error || "Training failed");
+      }
+
+      // Add the new call to scrape_for_setup
+      try {
+        const scrapeResponse = await fetch(`${API_BASE_URL}/knowledge_base/scrape_for_setup`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            website_url: websiteUrl 
+          }),
+        });
+        
+        if (scrapeResponse.ok) {
+          const scrapeData = await scrapeResponse.json();
+          console.log("Website scraping started:", scrapeData);
+          toast.success("Website scraping started in the background");
+        } else {
+          console.warn("Website scraping failed, but continuing with setup");
+        }
+      } catch (scrapeError) {
+        console.error("Error scraping website:", scrapeError);
+        // Continue with setup even if scraping fails
       }
     } catch (error) {
       console.error("Error training AI:", error);
