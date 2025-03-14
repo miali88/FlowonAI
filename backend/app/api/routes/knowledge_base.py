@@ -328,6 +328,55 @@ async def user_info(current_user: str = Depends(get_current_user)):
         logger.error(f"Error fetching user info: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error fetching user info: {str(e)}")
 
+@router.post("/scrape_for_setup", response_model=MessageResponse)
+async def scrape_for_setup_handler(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Scrape a website for guided setup and agent training.
+    This endpoint is specifically designed for the guided setup flow.
+    """
+    try:
+        request_data = await request.json()
+        website_url = request_data.get('website_url')
+        
+        if not website_url:
+            raise HTTPException(status_code=400, detail="website_url is required")
+        
+        # Use the existing scrape_url function which already handles
+        # crawling, saving to database, and vectorization
+        urls = await map_url(website_url)
+        
+        # Remove duplicates from the URL list
+        unique_urls = list(dict.fromkeys(urls))
+        logger.info(f"Found {len(urls)} URLs, {len(unique_urls)} unique URLs")
+        
+        # Limit to 200 unique URLs
+        urls_to_scrape = unique_urls[:200]
+        
+        # Process URLs in batches of 10 to optimize memory usage
+        batch_size = 10
+        for i in range(0, len(urls_to_scrape), batch_size):
+            batch = urls_to_scrape[i:i+batch_size]
+            # Schedule each batch to run in the background
+            background_tasks.add_task(scrape_url, batch, current_user)
+        
+        return MessageResponse(
+            message="Website scraping started in background", 
+            data={
+                "website_url": website_url,
+                "urls_found": len(urls),
+                "unique_urls": len(unique_urls),
+                "urls_to_scrape": len(urls_to_scrape),
+                "batches": (len(urls_to_scrape) + batch_size - 1) // batch_size
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error in scrape_for_setup: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error scraping website: {str(e)}")
+
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.get_encoding(encoding_name)
