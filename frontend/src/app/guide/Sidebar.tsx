@@ -9,26 +9,27 @@ export default function Sidebar() {
   const [isConfigurationOpen, setConfigurationOpen] = useState(false);
 
   return (
-    <div className="w-64 bg-gray-800 text-white h-full p-4">
-      <h2 className="text-lg font-bold mb-4">Reference</h2>
+    <div className="w-56 bg-gray-900 text-gray-200 h-full p-4">
+      <h2 className="text-base font-bold mb-4">Reference</h2>
       
       {/* Building an Agent Dropdown */}
-      <div>
+      <div className="mb-3">
         <button
           onClick={() => setAgentOpen(!isAgentOpen)}
-          className="w-full text-left font-semibold mb-2"
+          className="w-full text-left font-semibold mb-1 text-sm flex items-center justify-between"
         >
-          Building an Agent
+          <span>Building an Agent</span>
+          <span className="text-xs">{isAgentOpen ? '−' : '+'}</span>
         </button>
         {isAgentOpen && (
-          <ul className="ml-4 mb-4">
+          <ul className="ml-3 mb-2 space-y-1">
             <li>
-              <Link href="/agent/overview" className="hover:text-blue-300">
+              <Link href="/agent/overview" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Overview
               </Link>
             </li>
             <li>
-              <Link href="/agent/setup" className="hover:text-blue-300">
+              <Link href="/agent/setup" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Setup
               </Link>
             </li>
@@ -38,17 +39,18 @@ export default function Sidebar() {
       </div>
 
       {/* Configuration Dropdown */}
-      <div>
+      <div className="mb-3">
         <button
           onClick={() => setConfigurationOpen(!isConfigurationOpen)}
-          className="w-full text-left font-semibold mb-2"
+          className="w-full text-left font-semibold mb-1 text-sm flex items-center justify-between"
         >
-          Configuration
+          <span>Configuration</span>
+          <span className="text-xs">{isConfigurationOpen ? '−' : '+'}</span>
         </button>
         {isConfigurationOpen && (
-          <ul className="ml-4 mb-4">
+          <ul className="ml-3 mb-2 space-y-1">
             <li>
-              <Link href="/guide/call_forwarding" className="hover:text-blue-300">
+              <Link href="/guide/call_forwarding" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Call Forwarding
               </Link>
             </li>
@@ -58,27 +60,28 @@ export default function Sidebar() {
       </div>
 
       {/* Integrations Dropdown */}
-      <div>
+      <div className="mb-3">
         <button
           onClick={() => setIntegrationsOpen(!isIntegrationsOpen)}
-          className="w-full text-left font-semibold mb-2"
+          className="w-full text-left font-semibold mb-1 text-sm flex items-center justify-between"
         >
-          Integrations
+          <span>Integrations</span>
+          <span className="text-xs">{isIntegrationsOpen ? '−' : '+'}</span>
         </button>
         {isIntegrationsOpen && (
-          <ul className="ml-4">
+          <ul className="ml-3 space-y-1">
             <li>
-              <Link href="/guide/bubble" className="hover:text-blue-300">
+              <Link href="/guide/bubble" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Bubble
               </Link>
             </li>
             {/* <li>
-              <Link href="/guide/whatsapp" className="hover:text-blue-300">
+              <Link href="/guide/whatsapp" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Whatsapp
               </Link>
             </li>
             <li>
-              <Link href="/guide/zapier" className="hover:text-blue-300">
+              <Link href="/guide/zapier" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
                 Zapier
               </Link>
             </li> */}

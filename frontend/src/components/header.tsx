@@ -28,8 +28,8 @@ export function Header({ locale = "en" }: { locale?: string }) {
   const languageSwitchText = locale === "es" ? "English" : "Español";
 
   return (
-    <header className={`fixed left-0 top-0 z-50 w-full translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms] backdrop-blur-[12px] transition-all duration-150 
-      ${scrolled ? "border-b" : "border-b-0"}`}>
+    <header className={`fixed left-0 top-0 z-50 w-full translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms] backdrop-blur-[12px] transition-all duration-150 bg-black
+      ${scrolled ? "border-b border-gray-800" : "border-b-0"}`}>
       <div className="mx-auto max-w-7xl px-6 sm:px-6 lg:px-8">
         <div className="flex h-[4.5rem] items-center justify-between pt-2">
           {/* Left side - Logo + Name */}
@@ -41,14 +41,14 @@ export function Header({ locale = "en" }: { locale?: string }) {
               height={32}
               priority
             />
-            <span className="ml-2 text-xl font-medium">{t('siteTitle')}</span>
+            <span className="ml-2 text-xl font-medium text-white">{t('siteTitle')}</span>
           </Link>
 
           {/* Language switcher */}
           <div className="ml-auto flex items-center gap-4">
             <Link 
               href={languageSwitchHref}
-              className="flex items-center text-sm font-medium hover:text-gray-900"
+              className="flex items-center text-sm font-medium text-gray-300 hover:text-white"
             >
               <Globe className="h-4 w-4 mr-1" />
               {languageSwitchText}

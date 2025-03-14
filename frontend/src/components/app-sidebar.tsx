@@ -123,7 +123,8 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
       "shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1),0_0_4px_-1px_rgba(0,0,0,0.06)]",
       "rounded-xl backdrop-blur-sm",
       "transition-all duration-200 ease-in-out",
-      "hover:shadow-[0_4px_12px_-3px_rgba(0,0,0,0.15),0_0_6px_-1px_rgba(0,0,0,0.1)]"
+      "hover:shadow-[0_4px_12px_-3px_rgba(0,0,0,0.15),0_0_6px_-1px_rgba(0,0,0,0.1)]",
+      "-mt-4"
     )}>
       {/* Add subtle background pattern */}
       <div className="absolute inset-0 bg-grid-white/[0.1] -z-10" />
@@ -295,8 +296,13 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      {/* Move TrialStatus outside of SidebarFooter to position it higher */}
+      <div className="px-2 mb-4 mt-6">
         <TrialStatus isCollapsed={isCollapsed} />
+      </div>
+
+      <SidebarFooter className="pt-8 mt-auto">
+        {/* TrialStatus component moved out */}
       </SidebarFooter>
     </Sidebar>
   );

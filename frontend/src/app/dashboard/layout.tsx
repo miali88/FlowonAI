@@ -1,11 +1,9 @@
 "use client";
 
-import { useUser, useAuth, useClerk, UserButton, SignedIn } from "@clerk/nextjs";
+import { useUser, useAuth, UserButton, SignedIn } from "@clerk/nextjs";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Menu, Search } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -37,7 +35,6 @@ interface HeaderProps {
 
 function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
   const { user } = useUser();
-  const [userPlan] = useState("Pro");
   const pathname = usePathname();
 
   const renderTitle = () => {
@@ -59,16 +56,16 @@ function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
         <h2 className="text-2xl font-bold">{renderTitle()}</h2>
       </div>
       <div className="flex items-center space-x-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-8 w-64" />
-        </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="mr-1">
-            {userPlan}
-          </Badge>
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton 
+              afterSignOutUrl="/" 
+              appearance={{
+                elements: {
+                  avatarBox: "w-10 h-10"
+                }
+              }}
+            />
           </SignedIn>
         </div>
       </div>

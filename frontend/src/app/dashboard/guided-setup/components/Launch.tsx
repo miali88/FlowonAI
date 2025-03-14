@@ -266,25 +266,6 @@ export default function Launch({ onNext }: LaunchProps) {
           </div>
         </Card>
       </div>
-
-      <div className="flex justify-end pt-8">
-        <Button
-          onClick={handleCompleteSetup}
-          className="bg-black hover:bg-gray-800 text-white"
-          disabled={!isForwarding || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Completing Setup...
-            </>
-          ) : (
-            <>
-              Complete Setup <ArrowRight className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </div>
     </div>
   );
 }
