@@ -9,6 +9,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 
+// Import our updated utilities
+import { 
+  extractPlaceData, 
+  mapPlaceDataToComponent, 
+  componentMappings 
+} from "@/utils/placeDataUtils";
+
+// Import shared interfaces
+import { SetupData, OnboardingData, convertOnboardingToSetupData } from "@/types/businessSetup";
+
+// Import setup data utilities
+import { saveSetupDataToBackend } from "@/utils/setupDataUtils";
+
 // Import schema and modular components
 import { quickSetupSchema, FormValues } from "./schema";
 import TrainingSources from "./form-sections/TrainingSources";
@@ -104,44 +117,97 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           throw new Error("Authentication required");
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/guided_setup/setup_data`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+        // First try loading data from the backend
+        let setupDataFound = false;
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/guided_setup/setup_data`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+
+            if (data.success && data.setupData) {
+              console.log("Loaded existing setup data from API:", data.setupData);
+              
+              // Use reset to update all form values at once
+              reset({
+                trainingSources: data.setupData.trainingSources,
+                businessInformation: {
+                  ...data.setupData.businessInformation,
+                  businessOverview: data.setupData.businessInformation.businessOverview || "",
+                },
+                messageTaking: data.setupData.messageTaking,
+                callNotifications: data.setupData.callNotifications,
+              });
+              
+              setupDataFound = true;
+            }
+          } else if (response.status !== 404) {
+            // Only throw if it's not a 404 (404 means no data found, which is not an error)
+            throw new Error(`Failed to fetch existing setup data: ${response.status}`);
+          }
+        } catch (apiError) {
+          console.error("Error fetching setup data from API:", apiError);
+          // Continue to try localStorage if API fails
+        }
+
+        // If no data from backend, check localStorage
+        if (!setupDataFound) {
+          console.log("No setup data found from API, checking localStorage...");
+          
+          // First check for the structured setup data
+          const storedSetupData = localStorage.getItem('flowonAI_setupData');
+          if (storedSetupData) {
+            try {
+              const parsedSetupData: SetupData = JSON.parse(storedSetupData);
+              console.log("Using structured setup data from localStorage:", parsedSetupData);
+              
+              reset({
+                trainingSources: parsedSetupData.trainingSources,
+                businessInformation: parsedSetupData.businessInformation,
+                messageTaking: parsedSetupData.messageTaking,
+                callNotifications: parsedSetupData.callNotifications,
+              });
+              
+              setupDataFound = true;
+            } catch (parseError) {
+              console.error("Error parsing setup data from localStorage:", parseError);
             }
           }
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            // No data found is not an error, just means this is the first time
-            setIsLoadingData(false);
-            return;
+          
+          // If no structured data, try the flat onboarding data
+          if (!setupDataFound) {
+            const storedBusinessInfo = localStorage.getItem('flowonAI_businessInfo');
+            if (storedBusinessInfo) {
+              try {
+                const parsedBusinessInfo: OnboardingData = JSON.parse(storedBusinessInfo);
+                console.log("Using flat business info from localStorage:", parsedBusinessInfo);
+                
+                // Convert to structured format
+                const convertedSetupData = convertOnboardingToSetupData(parsedBusinessInfo);
+                console.log("Converted to setup data:", convertedSetupData);
+                
+                reset(convertedSetupData);
+                
+                setupDataFound = true;
+              } catch (parseError) {
+                console.error("Error parsing business info from localStorage:", parseError);
+              }
+            }
           }
-
-          const errorData = await response.text();
-          console.error("Error fetching setup data:", errorData);
-          throw new Error("Failed to fetch existing setup data");
         }
-
-        const data = await response.json();
-
-        if (data.success && data.setupData) {
-          console.log("Loaded existing setup data:", data.setupData);
-
-          // Use reset to update all form values at once
-          reset({
-            trainingSources: data.setupData.trainingSources,
-            businessInformation: {
-              ...data.setupData.businessInformation,
-              businessOverview: data.setupData.businessInformation.businessOverview || "",
-            },
-            messageTaking: data.setupData.messageTaking,
-            callNotifications: data.setupData.callNotifications,
-          });
+        
+        if (!setupDataFound) {
+          console.log("No setup data found - starting with default values");
         }
+        
       } catch (error) {
         console.error("Error loading setup data:", error);
         setLoadError(
@@ -201,43 +267,18 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         throw new Error("Authentication required");
       }
 
-      // Log the data before sending to check the format
+      // Log the data before sending
       console.log("Form data to be sent:", data);
+      
+      // Use our utility to save data to all backend endpoints
+      const setupData = data as unknown as SetupData; // Cast to SetupData type
+      const saveResult = await saveSetupDataToBackend(setupData, token);
 
-      const response = await fetch(
-        `${API_BASE_URL}/guided_setup/quick_setup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => response.text());
-        console.error("Error submitting setup data:", errorData);
-        
-        // Provide more detailed error message
-        if (typeof errorData === 'object' && errorData.detail) {
-          // Format validation errors in a more readable way
-          if (Array.isArray(errorData.detail)) {
-            const errors = errorData.detail.map((err: any) => 
-              `Field ${err.loc.join('.')} is ${err.type}: ${err.msg}`
-            ).join('\n');
-            throw new Error(`Validation errors:\n${errors}`);
-          } else {
-            throw new Error(`API Error: ${JSON.stringify(errorData.detail)}`);
-          }
-        } else {
-          throw new Error("Failed to submit quick setup data");
-        }
+      if (!saveResult.success) {
+        throw new Error(saveResult.error || "Failed to save setup data");
       }
 
-      const result = await response.json();
-      console.log("Setup data saved successfully:", result);
+      console.log("Setup data saved successfully:", saveResult.data);
 
       // Set success message
       setSuccessMessage("Your setup data has been saved successfully!");
@@ -282,113 +323,28 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       });
     }
 
-    // Update fields with place data
-    if (placeData.name) {
-      setValue("businessInformation.businessName", placeData.name);
-    }
+    try {
+      // Use our mapPlaceDataToComponent utility with the QuickSetup mapping
+      const mappedData = mapPlaceDataToComponent(placeData, componentMappings.quickSetupMapping);
+      console.log("Mapped place data for QuickSetup:", mappedData);
 
-    if (placeData.formatted_address) {
-      setValue(
-        "businessInformation.primaryBusinessAddress",
-        placeData.formatted_address
-      );
-    }
-
-    if (placeData.formatted_phone_number) {
-      setValue(
-        "businessInformation.primaryBusinessPhone",
-        placeData.formatted_phone_number
-      );
-    }
-
-    if (placeData.website) {
-      setValue("trainingSources.businessWebsite", placeData.website);
-    }
-
-    if (placeData.editorial_summary?.overview) {
-      setValue(
-        "businessInformation.businessOverview",
-        placeData.editorial_summary.overview
-      );
-    }
-
-    // Update business hours if available
-    if (placeData.opening_hours?.periods) {
-      const daysOfWeek = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-
-      // Start with current hours or empty structure with all days
-      const businessHours: Record<string, { open: string; close: string }> =
-        forceUpdate
-          ? {
-              Monday: { open: "", close: "" },
-              Tuesday: { open: "", close: "" },
-              Wednesday: { open: "", close: "" },
-              Thursday: { open: "", close: "" },
-              Friday: { open: "", close: "" },
-              Saturday: { open: "", close: "" },
-              Sunday: { open: "", close: "" },
-            }
-          : { ...getValues("businessInformation.businessHours") };
-
-      placeData.opening_hours.periods.forEach((period: any) => {
-        if (period.open && period.close) {
-          const dayName = daysOfWeek[period.open.day];
-
-          // Format time from 0000 to HH:MM format
-          const formatTime = (time: string) => {
-            if (!time) return "";
-            const hours = time.substring(0, 2);
-            const minutes = time.substring(2);
-            return `${hours}:${minutes}`;
-          };
-
-          const openTime = formatTime(period.open.time);
-          const closeTime = formatTime(period.close.time);
-
-          if (dayName && openTime && closeTime) {
-            businessHours[dayName] = {
-              open: openTime,
-              close: closeTime,
-            };
-          }
-        }
-      });
-
-      // Always set hours to ensure the structure is maintained
-      setValue("businessInformation.businessHours", businessHours);
-    }
-
-    // Extract and add core services/types if available
-    if (placeData.types && placeData.types.length > 0) {
-      // Filter out generic types and format them to be more readable
-      const relevantTypes = placeData.types
-        .filter(
-          (type: string) =>
-            ![
-              "point_of_interest",
-              "establishment",
-              "place",
-              "business",
-            ].includes(type)
-        )
-        .map((type: string) =>
-          type
-            .split("_")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ")
-        );
-
-      if (relevantTypes.length > 0) {
-        setValue("businessInformation.coreServices", relevantTypes);
+      // Update businessInformation fields
+      setValue("businessInformation.businessName", mappedData.businessInformation.businessName);
+      setValue("businessInformation.businessOverview", mappedData.businessInformation.businessOverview);
+      setValue("businessInformation.primaryBusinessAddress", mappedData.businessInformation.primaryBusinessAddress);
+      setValue("businessInformation.primaryBusinessPhone", mappedData.businessInformation.primaryBusinessPhone);
+      setValue("businessInformation.businessHours", mappedData.businessInformation.businessHours);
+      
+      // Update trainingSources fields
+      setValue("trainingSources.businessWebsite", mappedData.trainingSources.businessWebsite);
+      setValue("trainingSources.googleBusinessProfile", mappedData.trainingSources.googleBusinessProfile);
+      
+      // Update core services
+      if (mappedData.businessInformation.coreServices.length > 0) {
+        setValue("businessInformation.coreServices", mappedData.businessInformation.coreServices);
       }
+    } catch (error) {
+      console.error("Error mapping place data:", error);
     }
   };
 

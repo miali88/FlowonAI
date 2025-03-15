@@ -17,6 +17,12 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AutoSearchPlacesInput from "@/app/dashboard/guided-setup/components/AutoSearchPlacesInput";
 import BlobAnimation from "@/app/onboarding/components/BlobAnimation";
+// Import our updated utilities
+import { mapPlaceDataToComponent, componentMappings } from "@/utils/placeDataUtils";
+// Import shared interfaces
+import { OnboardingData, SetupData, convertOnboardingToSetupData, BusinessHours } from "@/types/businessSetup";
+// Import setup data utilities
+import { saveSetupDataToBackend } from "@/utils/setupDataUtils";
 // Import Select components but comment them out as we're hiding language selection UI
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -92,6 +98,8 @@ export default function BusinessInfoPage() {
   const [businessDescription, setBusinessDescription] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
+  // Add state for business hours
+  const [businessHours, setBusinessHours] = useState<BusinessHours | undefined>(undefined);
   // Keep agentLanguage state for internal use, even though UI is hidden
   const [agentLanguage, setAgentLanguage] = useState(DEFAULT_LANGUAGE);
   const [countryCode, setCountryCode] = useState("");
@@ -105,60 +113,51 @@ export default function BusinessInfoPage() {
   const handlePlaceSelect = (placeData: any) => {
     console.log("Place data selected:", placeData);
     
-    // Update the business name
-    setBusinessName(placeData.name || "");
-    
-    // Extract website if available
-    if (placeData.website) {
-      setBusinessWebsite(placeData.website);
-    }
-    
-    // Extract address if available
-    if (placeData.formatted_address) {
-      setBusinessAddress(placeData.formatted_address);
-    }
-    
-    // Extract phone if available
-    if (placeData.formatted_phone_number) {
-      setBusinessPhone(placeData.formatted_phone_number);
-    }
-    
-    // Detect country from address components
-    if (placeData.address_components) {
-      const countryComponent = placeData.address_components.find(
-        (component: any) => component.types.includes('country')
-      );
+    try {
+      // Use our mapPlaceDataToComponent utility with the BusinessInfo mapping
+      const mappedData = mapPlaceDataToComponent(placeData, componentMappings.businessInfoMapping);
+      console.log("Mapped place data for BusinessInfo:", mappedData);
       
-      if (countryComponent) {
-        const detectedCountryCode = countryComponent.short_name;
-        console.log("Detected country code:", detectedCountryCode);
-        
-        // Validate country code format (should be 2 letters)
-        if (detectedCountryCode && /^[A-Z]{2}$/.test(detectedCountryCode)) {
-          setCountryCode(detectedCountryCode);
-          console.log(`Set valid country code: ${detectedCountryCode}`);
-          
-          // Set default language based on country
-          const detectedLanguage = COUNTRY_TO_LANGUAGE[detectedCountryCode as keyof typeof COUNTRY_TO_LANGUAGE] || DEFAULT_LANGUAGE;
-          console.log(`Setting default language to ${detectedLanguage} based on country ${detectedCountryCode}`);
-          setAgentLanguage(detectedLanguage);
-        } else {
-          console.warn(`Invalid country code format detected: ${detectedCountryCode}, using default`);
-          setCountryCode("US");
-          setAgentLanguage(DEFAULT_LANGUAGE);
-        }
+      // Update the business information from mapped data
+      setBusinessName(mappedData.businessName);
+      setBusinessWebsite(mappedData.businessWebsite);
+      setBusinessAddress(mappedData.businessAddress);
+      setBusinessPhone(mappedData.businessPhone);
+      setBusinessDescription(mappedData.businessDescription || "");
+      
+      // CRITICAL FIX: Store business hours in state
+      if (mappedData.businessHours) {
+        console.log("Business hours extracted and storing in state:", mappedData.businessHours);
+        setBusinessHours(mappedData.businessHours);
       } else {
-        console.warn("No country component found in address data");
+        console.warn("No business hours found in place data");
+        setBusinessHours(undefined);
+      }
+      
+      // Set country code and detect language
+      if (mappedData.countryCode) {
+        setCountryCode(mappedData.countryCode);
+        
+        // Set default language based on country
+        const detectedLanguage = 
+          COUNTRY_TO_LANGUAGE[mappedData.countryCode as keyof typeof COUNTRY_TO_LANGUAGE] || DEFAULT_LANGUAGE;
+        
+        console.log(`Setting default language to ${detectedLanguage} based on country ${mappedData.countryCode}`);
+        setAgentLanguage(detectedLanguage);
+      } else {
+        console.warn("No country code detected, using default");
         setCountryCode("US");
         setAgentLanguage(DEFAULT_LANGUAGE);
       }
-    } else {
-      console.warn("No address components found in place data");
+      
+      // Set a success message
+      setSuccessMessage("Business information populated! Please review and make any adjustments before continuing.");
+    } catch (error) {
+      console.error("Error mapping place data:", error);
+      // Still set default values if extraction fails
+      setCountryCode("US");
+      setAgentLanguage(DEFAULT_LANGUAGE);
     }
-
-    // Set a success message
-    setSuccessMessage("Business information populated! Please review and make any adjustments before continuing.");
-    
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,21 +176,33 @@ export default function BusinessInfoPage() {
       console.log("Submitting business information for preview...");
       console.log("Agent language:", agentLanguage);
       
-      // Submit business information for audio preview
+      // Create onboarding data object
+      const onboardingData: OnboardingData = {
+        businessName,
+        businessDescription,
+        businessWebsite,
+        businessAddress,
+        businessPhone,
+        agentLanguage,
+        countryCode: countryCode || 'US',
+        businessHours
+      };
+      
+      // Log for verification
+      console.log("Including business hours in onboardingData:", businessHours ? "Yes (hours found)" : "No (missing hours)");
+      
+      // Convert to structured setup data
+      const setupData: SetupData = convertOnboardingToSetupData(onboardingData);
+      console.log("Converted to setup data:", setupData);
+      
+      // Submit business information for audio preview - keep using flat structure for compatibility
       const response = await fetch(`${API_BASE_URL}/guided_setup/onboarding_preview`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({
-          businessName: businessName,
-          businessDescription: businessDescription,
-          businessWebsite: businessWebsite,
-          businessAddress: businessAddress,
-          businessPhone: businessPhone,
-          agentLanguage: agentLanguage
-        })
+        body: JSON.stringify(onboardingData)
       });
 
       if (!response.ok) {
@@ -203,46 +214,16 @@ export default function BusinessInfoPage() {
       const data = await response.json();
       console.log("Audio preview generated successfully:", data);
       
-      // Save the onboarding data to the backend
-      console.log("Saving onboarding data to the backend...");
-      const saveResponse = await fetch(`${API_BASE_URL}/guided_setup/save_onboarding_data`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          businessName: businessName,
-          businessDescription: businessDescription,
-          businessWebsite: businessWebsite,
-          businessAddress: businessAddress,
-          businessPhone: businessPhone,
-          agentLanguage: agentLanguage
-        })
-      });
+      // Save the setup data to the backend using our utility
+      const saveResult = await saveSetupDataToBackend(setupData, token, onboardingData);
       
-      if (!saveResponse.ok) {
-        const saveErrorData = await saveResponse.text();
-        console.error("Error saving onboarding data:", saveErrorData);
+      if (!saveResult.success) {
+        console.error("Error saving setup data:", saveResult.error);
         // Continue anyway since this is not critical for the audio test
-        console.warn("Continuing to next step despite error saving onboarding data");
+        console.warn("Continuing to next step despite error saving setup data");
       } else {
-        console.log("Onboarding data saved successfully");
+        console.log("Setup data saved successfully");
       }
-      
-      // Store data in localStorage for the next step
-      const businessInfoData = {
-        businessName,
-        businessWebsite,
-        businessDescription,
-        businessAddress,
-        businessPhone,
-        agentLanguage,
-        countryCode: countryCode || 'US' // Ensure countryCode is never empty
-      };
-      
-      console.log('Storing business info in localStorage:', JSON.stringify(businessInfoData, null, 2));
-      localStorage.setItem('flowonAI_businessInfo', JSON.stringify(businessInfoData));
       
       // Store audio data in localStorage
       if (data.greeting_audio_data_base64) {

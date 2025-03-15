@@ -8,7 +8,7 @@ from app.models.guided_setup import (QuickSetupData, TrainingSource, BusinessInf
                                      MessageTaking, CallNotifications, EmailNotifications, 
                                      SmsNotifications, CallerName, CallerPhoneNumber)
 from app.services.guided_setup.setup_crud import get_guided_setup, save_guided_setup
-from app.services.guided_setup.agent_operations import create_or_update_agent_from_setup, create_or_update_vapi_assistant
+from app.services.guided_setup.agent_operations import create_or_update_vapi_assistant
 from app.services.guided_setup.audio_generation import generate_greeting_preview, generate_message_preview
 
 async def submit_quick_setup(user_id: str, setup_data: QuickSetupData) -> Dict[str, Any]:

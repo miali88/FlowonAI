@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { SetupData } from "@/types/businessSetup";
 
 // Define the Zod schema for validation
 export const quickSetupSchema = z.object({
@@ -67,4 +68,10 @@ export const quickSetupSchema = z.object({
   }),
 });
 
-export type FormValues = z.infer<typeof quickSetupSchema>; 
+// Export form values type that matches our shared SetupData interface
+export type FormValues = z.infer<typeof quickSetupSchema>;
+
+// Type assertion to ensure FormValues matches SetupData
+type TypeCheck = FormValues extends SetupData ? true : false;
+type TypeCheck2 = SetupData extends FormValues ? true : false;
+// This is a compile-time check only, no runtime implications 

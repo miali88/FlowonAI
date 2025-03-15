@@ -250,6 +250,7 @@ async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str
         logging.error(f"Error in save_onboarding_data endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.options("/save_onboarding_data")
 async def options_save_onboarding_data():
     """
