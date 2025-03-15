@@ -91,10 +91,12 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedCall }) => {
   }, [selectedCall]);
 
   const toggleAudio = () => {
-    if (!selectedCall?.stereo_recording_url) return;
+    if (!selectedCall?.recording_url && !selectedCall?.stereo_recording_url) return;
+    
+    const audioUrl = selectedCall.recording_url || selectedCall.stereo_recording_url;
     
     if (!audioRef) {
-      const audio = new Audio(selectedCall.stereo_recording_url);
+      const audio = new Audio(audioUrl);
       audio.onended = () => setAudioPlaying(false);
       audio.onpause = () => setAudioPlaying(false);
       audio.onplay = () => setAudioPlaying(true);
@@ -123,16 +125,12 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedCall }) => {
               <CardTitle>Call Information</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 text-sm">
-              <div><strong>Call ID:</strong> {selectedCall.call_id}</div>
               <div><strong>Duration:</strong> {formatDuration(selectedCall.duration_seconds)}</div>
-              <div><strong>Started At:</strong> {formatTimestamp(selectedCall.started_at)}</div>
-              <div><strong>Ended At:</strong> {formatTimestamp(selectedCall.ended_at)}</div>
-              <div><strong>Phone Number:</strong> {selectedCall.phone_number || "—"}</div>
               <div><strong>Customer Number:</strong> {selectedCall.customer_number || "—"}</div>
               <div><strong>End Reason:</strong> {selectedCall.ended_reason}</div>
-              <div><strong>Cost:</strong> ${selectedCall.cost.toFixed(4)}</div>
+              <div><strong>Created At:</strong> {formatTimestamp(selectedCall.created_at)}</div>
             </CardContent>
-            {selectedCall.stereo_recording_url && (
+            {(selectedCall.recording_url || selectedCall.stereo_recording_url) && (
               <CardFooter>
                 <Button 
                   variant="outline" 

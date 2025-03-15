@@ -18,6 +18,7 @@ class VapiEndOfCallReport:
         summary: str,
         transcript: str,
         recording_url: str,
+        stereo_recording_url: str,
         phone_number: str,
         customer_number: str,
         cost: float,
@@ -35,6 +36,7 @@ class VapiEndOfCallReport:
         self.summary = summary
         self.transcript = transcript
         self.recording_url = recording_url
+        self.stereo_recording_url = stereo_recording_url
         self.phone_number = phone_number
         self.customer_number = customer_number
         self.cost = cost
@@ -70,6 +72,9 @@ class VapiEndOfCallReport:
         
         recording_url = message.get("recordingUrl", "")
         logger.debug(f"Extracted recording url: {recording_url}")
+        
+        stereo_recording_url = message.get("stereoRecordingUrl", "")
+        logger.debug(f"Extracted stereo recording url: {stereo_recording_url}")
         
         phone_number = message.get("phoneNumber", {}).get("number", "")
         logger.debug(f"Extracted phone_number: {phone_number}")
@@ -107,6 +112,7 @@ class VapiEndOfCallReport:
             summary=summary,
             transcript=transcript,
             recording_url=recording_url,
+            stereo_recording_url=stereo_recording_url,
             phone_number=phone_number,
             customer_number=customer_number,
             cost=cost,
@@ -128,6 +134,7 @@ class VapiEndOfCallReport:
             "summary": self.summary,
             "transcript": self.transcript,
             "recording_url": self.recording_url,
+            "stereo_recording_url": self.stereo_recording_url,
             "phone_number": self.phone_number,
             "customer_number": self.customer_number,
             "cost": self.cost,

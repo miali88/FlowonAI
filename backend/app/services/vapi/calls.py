@@ -49,7 +49,7 @@ async def get_calls(user_id: Optional[str] = None, limit: int = 1000, offset: in
         offset: Number of records to skip for pagination (default: 0)
         
     Returns:
-        List of call log records
+        List of call log records with limited fields
     """
     try:
         logger.info(f"Retrieving call logs from vapi_calls table{' for user: ' + user_id if user_id else ''}")
@@ -57,12 +57,16 @@ async def get_calls(user_id: Optional[str] = None, limit: int = 1000, offset: in
         # Get Supabase client
         supabase = await get_supabase()
         
-        # Start building the query
-        result = await supabase.table("vapi_calls").select("*").eq("user_id", user_id).execute()
+        # Define specific fields to fetch, excluding call_id, started_at, ended_at, phone_number, and cost
+        fields = "id, created_at, type, summary, transcript, stereo_recording_url, recording_url, ended_reason, duration_seconds, duration_minutes, customer_number, user_id"
+        
+        # Start building the query with specific fields instead of "*"
+        result = await supabase.table("vapi_calls").select(fields).eq("user_id", user_id).execute()
+        
         # Extract the data from the result
         calls = result.data
         
-        logger.info(f"Successfully retrieved {len(calls)} call logs")
+        logger.info(f"Successfully retrieved {len(calls)} call logs with limited fields")
         
         return calls
     except Exception as e:
@@ -70,6 +74,36 @@ async def get_calls(user_id: Optional[str] = None, limit: int = 1000, offset: in
         # Return empty list if there was an error
         return []
 
+async def get_call_by_id(call_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve a single call log by its ID from the vapi_calls table in Supabase.
+    
+    Args:
+        call_id: The ID of the call to retrieve
+        
+    Returns:
+        Dictionary containing the call data or None if not found
+    """
+    try:
+        logger.info(f"Retrieving call log with ID: {call_id}")
+        
+        # Get Supabase client
+        supabase = await get_supabase()
+        
+        # Query the vapi_calls table for the specific call ID
+        result = await supabase.table("vapi_calls").select("*").eq("id", call_id).execute()
+        
+        # Check if any data was returned
+        if len(result.data) > 0:
+            logger.info(f"Successfully retrieved call log with ID: {call_id}")
+            return result.data[0]
+        else:
+            logger.info(f"No call log found with ID: {call_id}")
+            return None
+        
+    except Exception as e:
+        logger.error(f"Error retrieving call log with ID {call_id}: {str(e)}")
+        return None
 
 async def delete_call(call_id: str) -> bool:
     """

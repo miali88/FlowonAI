@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 from app.services.vapi.api_handlers import VapiService
-from app.services.vapi.calls import get_calls, delete_call
+from app.services.vapi.calls import get_calls, delete_call, get_call_by_id
 from app.core.auth import get_current_user
 
 # Configure logging

@@ -104,7 +104,7 @@ function TrialStatus({ isCollapsed }: { isCollapsed: boolean }) {
     if (status.minutes_used === undefined || status.minutes_used === null) {
       return ''; // Fallback value when minutes_used is not available
     }
-    return `${status.minutes_used} mins remaining`;
+    return `${status.minutes_used} mins used`;
   };
 
   // Format days remaining for display

@@ -44,17 +44,18 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Updated type definition based on vapi_calls table
 export type CallLog = {
   id: string;
-  call_id: string;
+  call_id?: string;
   timestamp: string;
   type: string;
   summary: string;
   transcript: string;
   stereo_recording_url: string;
-  phone_number: string;
-  cost: number;
+  recording_url: string;
+  phone_number?: string;
+  cost?: number;
   ended_reason: string;
-  started_at: string;
-  ended_at: string;
+  started_at?: string;
+  ended_at?: string;
   duration_seconds: number;
   duration_minutes: number;
   created_at: string;
@@ -181,8 +182,9 @@ export function DataTableDemo({ setSelectedCall }: CallLogTableProps) {
               <DropdownMenuItem
                 onClick={() => {
                   // Open audio recording in a new tab
-                  if (row.original.stereo_recording_url) {
-                    window.open(row.original.stereo_recording_url, '_blank');
+                  const audioUrl = row.original.recording_url || row.original.stereo_recording_url;
+                  if (audioUrl) {
+                    window.open(audioUrl, '_blank');
                   }
                 }}
               >
