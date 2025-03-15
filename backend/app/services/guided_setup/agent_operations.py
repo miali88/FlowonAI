@@ -3,11 +3,131 @@ from typing import Dict, Any, Tuple
 
 from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
-from app.services.vapi.assistants import create_assistant, update_assistant, SYS_PROMPT_TEMPLATE
-from app.services.vapi.voice_ids import voice_ids
+from app.services.vapi.assistants import create_assistant, update_assistant
+from app.services.vapi.constants.voice_ids import voice_ids
+from app.services.vapi.constants.sys_prompt import SYS_PROMPT_TEMPLATE
 from app.clients.supabase_client import get_supabase
 from .setup_crud import get_guided_setup, update_guided_setup_agent_id
 from app.models.guided_setup import QuickSetupData
+
+async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, str]:
+    """
+    Format the system prompt for a VAPI assistant based on guided setup data.
+    
+    Args:
+        setup_data: The setup data as a QuickSetupData Pydantic model
+        
+    Returns:
+        Tuple of (formatted system prompt string, business name)
+    """
+    logging.info("Formatting system prompt from guided setup data")
+    
+    # Get business information with proper None checks
+    if setup_data.businessInformation:
+        business_name = setup_data.businessInformation.businessName
+        business_overview = getattr(setup_data.businessInformation, 'businessOverview', '')
+        business_address = getattr(setup_data.businessInformation, 'primaryBusinessAddress', '')
+        business_phone = getattr(setup_data.businessInformation, 'primaryBusinessPhone', '')
+        core_services = getattr(setup_data.businessInformation, 'coreServices', [])
+        business_hours = getattr(setup_data.businessInformation, 'businessHours', {})
+    else:
+        business_name = "Your Business"
+        business_overview = ""
+        business_address = ""
+        business_phone = ""
+        core_services = []
+        business_hours = {}
+    print(f"\n\nBusiness information: {setup_data.businessInformation}")
+
+    # Format comprehensive business information with markdown headings if they exist
+    business_info_lines = []
+    if business_overview and business_overview.strip():
+        business_info_lines.append("## Business Information")
+        business_info_lines.append(f"{business_overview}\n")
+    
+    if business_address or business_phone or core_services:
+        if not business_info_lines:
+            business_info_lines.append("## Business Information")
+        
+        if business_address:
+            business_info_lines.append(f"**Address:** {business_address}")
+        
+        if business_phone:
+            business_info_lines.append(f"**Phone:** {business_phone}")
+        
+        if core_services and len(core_services) > 0:
+            business_info_lines.append("**Core Services:**")
+            for service in core_services:
+                business_info_lines.append(f"- {service}")
+    
+    # Add business hours to business information
+    if business_hours:
+        if business_info_lines:
+            business_info_lines.append("")  # Add a blank line for separation
+        
+        business_info_lines.append("## Business Hours")
+        for day, hours in business_hours.items():
+            business_info_lines.append(f"- {day}: {hours.open} - {hours.close}")
+        
+        logging.info("Added business hours to business information")
+    
+    formatted_business_information = "\n".join(business_info_lines) if business_info_lines else ""
+    logging.info(f"Formatted business information (with hours):\n{formatted_business_information}")
+    
+    # We'll still format business hours separately for logging purposes
+    if business_hours:
+        hours_lines = ["## Business Hours"]
+        for day, hours in business_hours.items():
+            hours_lines.append(f"- {day}: {hours.open} - {hours.close}")
+        standalone_hours = "\n".join(hours_lines)
+        logging.info(f"Formatted business hours (standalone):\n{standalone_hours}")
+    else:
+        logging.info("No business hours to format")
+    
+    # Format message taking information if it exists
+    formatted_message_taking = ""
+    if setup_data.messageTaking:
+        message_taking_info = []
+        message_taking_info.append("## Message Taking Instructions")
+        
+        # Caller name requirements
+        caller_name = setup_data.messageTaking.callerName
+        if caller_name:
+            name_required = "Required" if caller_name.required else "Optional"
+            always_asked = "Always ask" if caller_name.alwaysRequested else "Ask only if needed"
+            message_taking_info.append(f"- Caller Name: {name_required}, {always_asked}")
+        
+        # Caller phone number requirements
+        caller_phone = setup_data.messageTaking.callerPhoneNumber
+        if caller_phone:
+            phone_required = "Required" if caller_phone.required else "Optional"
+            auto_capture = "Automatically captured" if caller_phone.automaticallyCaptured else "Needs to be asked"
+            message_taking_info.append(f"- Caller Phone Number: {phone_required}, {auto_capture}")
+        
+        # Specific questions to ask
+        specific_questions = setup_data.messageTaking.specificQuestions
+        if specific_questions and len(specific_questions) > 0:
+            message_taking_info.append("\n### Specific Questions to Ask:")
+            for i, q in enumerate(specific_questions, 1):
+                required_mark = "(Required)" if q.required else "(Optional)"
+                message_taking_info.append(f"{i}. {q.question} {required_mark}")
+        
+        formatted_message_taking = "\n".join(message_taking_info)
+        logging.info(f"Formatted message taking information:\n{formatted_message_taking}")
+    else:
+        formatted_message_taking = ""
+        logging.info("No message taking information to format")
+    
+    # Format system prompt with business information (which now includes hours) and message taking
+    sys_prompt = SYS_PROMPT_TEMPLATE.format(
+        business_name=business_name,
+        business_information=formatted_business_information,
+        message_taking=formatted_message_taking
+    )
+    
+    logging.info("System prompt formatting completed")
+    logging.info(f"Final formatted system prompt:\n{sys_prompt}")
+    return sys_prompt, business_name
 
 async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Any]:
     """
@@ -184,15 +304,12 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
     try:
         logging.info(f"Creating or updating VAPI assistant for user {user_id}")
         
-        # Get business information
-        business_name = setup_data.businessInformation.businessName if setup_data.businessInformation else "Your Business"
+        # Format the system prompt and get business name
+        sys_prompt, business_name = await format_vapi_system_prompt(setup_data)
         
         # Get guided setup data to check for existing assistant
         guided_setup_data = await get_guided_setup(user_id)
         vapi_assistant_id = guided_setup_data.get("vapi_assistant_id") if guided_setup_data else None
-        
-        # Format system prompt with business information
-        sys_prompt = SYS_PROMPT_TEMPLATE.format(business_name=business_name)
         
         # Create or update the VAPI assistant
         if vapi_assistant_id:
@@ -235,7 +352,4 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
     except Exception as e:
         logging.error(f"Error creating/updating VAPI assistant: {str(e)}")
         return False, f"Error creating/updating VAPI assistant: {str(e)}", {}
-    
 
-
-    

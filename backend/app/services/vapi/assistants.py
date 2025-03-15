@@ -23,97 +23,23 @@ import logging
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
-from app.services.vapi.voice_ids import voice_ids
 
+from app.services.vapi.constants.voice_ids import voice_ids
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# System prompt template - will be formatted with business_name
-SYS_PROMPT_TEMPLATE = """
-# System Prompt for {business_name} AI Phone Assistant
-
-## Core Identity and Purpose
-You are Alex, the AI phone assistant for {business_name}. Your primary role is to professionally represent {business_name} while helping callers with inquiries, providing information, and taking messages when necessary. Always maintain a helpful, courteous, and efficient demeanor that reflects the professional nature of {business_name}.
-
-## Output Format Requirements
-All your responses must be in plain text only. Never use markdown formatting, special characters, or any text styling. Your responses should be simple, clean text that can be directly read aloud over the phone without any formatting elements.
-
-## Response Style Requirements
-Avoid listing information in your responses. Instead of providing exhaustive lists:
-- Generalize information when appropriate (e.g., say "We're open weekdays from 8 to 5" instead of listing each day separately)
-- Offer the most relevant information first, then ask if the caller would like more specific details
-- Keep responses conversational and flowing naturally, not structured as lists or bullet points
-- Focus on what's most relevant to the caller's specific question rather than providing all available information
-
-## Business Information
-
-### Company Details
-- Business Name: {business_name}
-- Website: [Website to be added]
-- Primary Address: [Address to be added]
-- Primary Phone Number: [Phone number to be added]
-
-### Business Hours
-- Monday: 8:00 am - 5:00 pm
-- Tuesday: 8:00 am - 5:00 pm
-- Wednesday: 8:00 am - 5:00 pm
-- Thursday: 8:00 am - 5:00 pm
-- Friday: 8:00 am - 5:00 pm
-- Saturday: 8:00 am - 12:00 pm
-- Sunday: Closed
-
-## Call Handling Guidelines
-
-### General Approach
-1. Introduction: Begin each call with "Thank you for calling {business_name}, this is Alex, how may I help you today?"
-2. Listening: Pay close attention to the caller's needs and respond appropriately.
-3. Information Provision: Offer concise, relevant information about {business_name}'s services and policies. Generalize when possible rather than listing everything.
-4. Problem Solving: Address issues or questions to the best of your ability using the information provided.
-5. Tone: Maintain a professional, warm, and helpful tone throughout all interactions.
-
-### Information You Can Provide
-When providing information, generalize when appropriate and avoid exhaustive lists. For example:
-- Instead of listing all business hours, say "We're generally open on weekdays from 8 am to 5 pm, with some variations. Would you like to know about a specific day?"
-
-### Message Taking Protocol
-When taking a message, always collect:
-- Caller's Name (always required)
-- Caller's Phone Number (automatically captured)
-- Reason for calling
-- Best time to return the call
-
-## Language and Communication
-
-### Preferred Responses
-- Use clear, concise language
-- Be helpful but efficient
-- Reflect the professional nature of {business_name} in your communication style
-- Always use plain text only, never markdown or special characters
-- Avoid listing information; instead, provide general summaries and offer specific details only when requested
-
-### Phrases to Use
-- "I'd be happy to help with that."
-- "Let me take your information so the appropriate person can assist you further."
-- "Thank you for calling {business_name} today."
-- "Is there anything else I can assist you with?"
-- "Would you like more specific details about that?"
-
-## Special Instructions
-1. If a caller asks for information not included in your knowledge base, offer to take a message rather than providing incorrect information.
-2. During busy hours, be especially efficient while maintaining courtesy.
-3. Remember that your responses will be read aloud over the phone, so keep all text in a simple, plain format.
-4. When asked for information that could be presented as a list, provide a generalized summary first, then offer more specific details if the caller requests them.
-"""
-
 async def create_assistant(business_name: str, sys_prompt: str = None,
-                           voice_id: str = voice_ids["british_male"]) -> Dict[str, Any]:
+                           voice_id: str = voice_ids["british_male"], 
+                           first_message: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new VAPI assistant using the guided setup template.
     
     Args:
         business_name: The name of the business to use in the assistant's configuration
         sys_prompt: Optional custom system prompt. If not provided, uses the default template
+        voice_id: Optional voice ID. Defaults to British male voice
+        first_message: Optional custom first message. If not provided, uses default template
         
     Returns:
         The response data from the VAPI API
@@ -148,7 +74,7 @@ async def create_assistant(business_name: str, sys_prompt: str = None,
             "provider": "openai",
             "temperature": 0.3
         },
-        "firstMessage": f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?",
+        "firstMessage": first_message or f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?",
         "endCallFunctionEnabled": True,
         "transcriber": {
             "model": "nova-3",
@@ -216,7 +142,7 @@ async def update_assistant(
     assistant_id: str,
     business_name: Optional[str] = None,
     sys_prompt: Optional[str] = None,
-    voice_id: Optional[str] = None,
+    voice_id: Optional[str] = voice_ids["british_male"],
     first_message: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -312,6 +238,8 @@ async def update_assistant(
 if __name__ == "__main__":
     """ testing the create_assistant and update_assistant functions """
     import asyncio
+    from app.services.vapi.constants.sys_prompt import SYS_PROMPT_TEMPLATE
+    from app.services.vapi.constants.voice_ids import voice_ids
     
     # Set up logging
     logging.basicConfig(

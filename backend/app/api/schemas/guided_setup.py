@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from backend.app.models.guided_setup import QuickSetupData
+from app.models.guided_setup import QuickSetupData
 
 class OnboardingPreviewRequest(BaseModel):
     """Request model for generating onboarding preview audio with minimal business information."""
