@@ -42,7 +42,6 @@ from .api_handlers import (
     check_setup_status,
     generate_onboarding_preview_service,
     set_trial_plan_service,
-    save_onboarding_data_service
 )
 
 # Export all the functions and models from the original guided_setup.py

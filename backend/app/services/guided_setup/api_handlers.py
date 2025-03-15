@@ -4,9 +4,7 @@ import base64
 from datetime import datetime, timedelta
 
 from app.clients.supabase_client import get_supabase
-from app.models.guided_setup import (QuickSetupData, TrainingSource, BusinessInformation, 
-                                     MessageTaking, CallNotifications, EmailNotifications, 
-                                     SmsNotifications, CallerName, CallerPhoneNumber)
+from app.models.guided_setup import (QuickSetupData)
 from app.services.guided_setup.setup_crud import get_guided_setup, save_guided_setup
 from app.services.guided_setup.agent_operations import create_or_update_vapi_assistant
 from app.services.guided_setup.audio_generation import generate_greeting_preview, generate_message_preview
@@ -157,102 +155,6 @@ async def generate_onboarding_preview_service(
         }
     except Exception as e:
         logging.error(f"Error in generate_onboarding_preview_service: {str(e)}")
-        return {"success": False, "error": str(e)}
-
-async def save_onboarding_data_service(
-    user_id: str,
-    business_name: str,
-    business_description: str,
-    business_website: Optional[str] = None,
-    business_address: Optional[str] = None,
-    business_phone: Optional[str] = None,
-    agent_language: str = "en-US"
-) -> Dict[str, Any]:
-    """
-    Service function to save onboarding data with minimal required information.
-    Stores the website data from the place selection.
-    
-    Args:
-        user_id: The ID of the user
-        business_name: Name of the business
-        business_description: Brief description of the business
-        business_website: Optional website URL
-        business_address: Optional business address
-        business_phone: Optional business phone number
-        agent_language: Language code for the agent (default: en-US)
-        
-    Returns:
-        Dictionary with success status and message or error
-    """
-    try:
-        logging.info(f"Saving onboarding data for user {user_id} with business name: {business_name}")
-        
-        # Create a minimal QuickSetupData structure with just the website
-        setup_data = QuickSetupData(
-            trainingSources=TrainingSource(
-                businessWebsite=business_website,
-                googleBusinessProfile=None  # We're not collecting this separately now
-            ),
-            businessInformation=BusinessInformation(
-                businessName=business_name,
-                businessOverview=business_description,
-                primaryBusinessAddress=business_address or "",
-                primaryBusinessPhone=business_phone or "",
-                coreServices=[],
-                businessHours={}
-            ),
-            messageTaking=MessageTaking(
-                callerName=CallerName(required=True, alwaysRequested=True),
-                callerPhoneNumber=CallerPhoneNumber(required=True, automaticallyCaptured=True),
-                specificQuestions=[]
-            ),
-            callNotifications=CallNotifications(
-                emailNotifications=EmailNotifications(enabled=False),
-                smsNotifications=SmsNotifications(enabled=False)
-            ),
-            agentLanguage=agent_language
-        )
-        
-        # Save the setup data with improved error handling
-        success, setup_data_dict, error_msg = await save_guided_setup(user_id, setup_data)
-        
-        if not success:
-            logging.error(f"Failed to save guided setup: {error_msg}")
-            return {
-                "success": False,
-                "error": f"Failed to save onboarding data: {error_msg}"
-            }
-        
-        logging.info(f"Onboarding data saved successfully for user {user_id}")
-        logging.info(f"Agent language set to: {agent_language}")
-        
-        # Create or update the VAPI assistant using the centralized function
-        vapi_warning = None
-        try:
-            vapi_success, vapi_message, vapi_result = await create_or_update_vapi_assistant(user_id, setup_data)
-            
-            if vapi_success:
-                logging.info(f"VAPI assistant operation successful: {vapi_message}")
-            else:
-                logging.warning(f"VAPI assistant operation issue: {vapi_message}")
-                vapi_warning = vapi_message
-        except Exception as e:
-            logging.error(f"Error with VAPI assistant during onboarding: {str(e)}")
-            vapi_warning = str(e)
-        
-        if vapi_warning:
-            return {
-                "success": True,
-                "message": "Onboarding data saved successfully, but VAPI assistant creation failed",
-                "warning": vapi_warning
-            }
-        
-        return {
-            "success": True,
-            "message": "Onboarding data saved successfully"
-        }
-    except Exception as e:
-        logging.error(f"Error in save_onboarding_data_service: {str(e)}")
         return {"success": False, "error": str(e)}
 
 async def set_trial_plan_service(

@@ -39,28 +39,8 @@ export async function saveSetupDataToBackend(
     console.log("Onboarding data with business hours:", 
       flatData.businessHours ? "Yes (hours found)" : "No (missing hours)");
     
-    // First save to the onboarding endpoint for backward compatibility
-    const onboardingResponse = await fetch(`${API_BASE_URL}/guided_setup/save_onboarding_data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        onboardingData: flatData,
-        setupData: setupData,
-      })
-    });
     
-    if (!onboardingResponse.ok) {
-      const errorData = await onboardingResponse.text();
-      console.warn("Warning: Error saving to onboarding endpoint:", errorData);
-      // Continue despite error to try the other endpoint
-    } else {
-      console.log("Successfully saved to onboarding endpoint");
-    }
-    
-    // Now save to the quick_setup endpoint
+    // Save to the quick_setup endpoint
     const setupResponse = await fetch(`${API_BASE_URL}/guided_setup/quick_setup`, {
       method: "POST",
       headers: {

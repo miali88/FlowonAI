@@ -20,7 +20,6 @@ from app.services.guided_setup import (
     retrain_agent_service,
     generate_onboarding_preview_service,
     set_trial_plan_service,
-    save_onboarding_data_service,
 )
 
 router = APIRouter()
@@ -250,10 +249,10 @@ async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str
         logging.error(f"Error in save_onboarding_data endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.options("/save_onboarding_data")
 async def options_save_onboarding_data():
     """
     Handle OPTIONS requests for CORS preflight.
     """
     return {}
+
