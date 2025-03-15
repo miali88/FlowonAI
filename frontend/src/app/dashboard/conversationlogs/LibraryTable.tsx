@@ -41,32 +41,30 @@ import "@/components/loading.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Add Agent type definition
-type Agent = {
+// Updated type definition based on vapi_calls table
+export type CallLog = {
   id: string;
-  agentName: string;
-  agentPurpose: string;
-};
-
-// Update the type definition to include lead
-export type ConversationLog = {
-  id: string
-  created_at: string
-  job_id: string
-  room_name: string
-  room_sid: string
-  transcript: string
-  user_id: string
-  agent_id: string
-  agentPurpose: string | null // Change to allow null
-  agentName: string | null
-  summary: string | null
-  lead: string | null  // Add this line
+  call_id: string;
+  timestamp: string;
+  type: string;
+  summary: string;
+  transcript: string;
+  stereo_recording_url: string;
+  phone_number: string;
+  cost: number;
+  ended_reason: string;
+  started_at: string;
+  ended_at: string;
+  duration_seconds: number;
+  duration_minutes: number;
+  created_at: string;
+  customer_number: string | null;
+  user_id: string | null;
 }
 
 // Update the component props
-interface LibraryTableProps {
-  setSelectedConversation: (conversation: ConversationLog | null) => void;
+interface CallLogTableProps {
+  setSelectedCall: (call: CallLog | null) => void;
 }
 
 // Update the Loader component
@@ -78,9 +76,9 @@ function Loader() {
   );
 }
 
-export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
+export function DataTableDemo({ setSelectedCall }: CallLogTableProps) {
   const { userId, getToken } = useAuth();
-  const [data, setData] = useState<ConversationLog[]>([])
+  const [data, setData] = useState<CallLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -88,35 +86,33 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
   ])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({
-      lead: false  // Add this line to hide the "Lead" column by default
-    })
+    React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [showLeadsOnly, setShowLeadsOnly] = useState(false);
 
-  // Update handleDeleteChat to use JWT
-  const handleDeleteChat = React.useCallback(async (id: string) => {
+  // Update handleDeleteCall
+  const handleDeleteCall = React.useCallback(async (id: string) => {
     try {
       const token = await getToken();
       if (!token) {
         throw new Error('Not authenticated');
       }
 
-      await axios.delete(`${API_BASE_URL}/conversation/${id}`, {
+      // Use the correct API endpoint path
+      await axios.delete(`${API_BASE_URL}/vapi/calls/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      // Remove the deleted conversation from the local state
-      setData(prevData => prevData.filter(conversation => conversation.id !== id));
-      console.log(`Chat with id: ${id} deleted successfully`);
+      // Remove the deleted call from the local state
+      setData(prevData => prevData.filter(call => call.id !== id));
+      console.log(`Call with id: ${id} deleted successfully`);
     } catch (error) {
-      console.error(`Error deleting chat with id: ${id}`, error);
+      console.error(`Error deleting call with id: ${id}`, error);
     }
-  }, []);
+  }, [getToken]);
 
   // Define columns inside the component using useMemo
-  const columns = useMemo<ColumnDef<ConversationLog>[]>(() => [
+  const columns = useMemo<ColumnDef<CallLog>[]>(() => [
     {
       accessorKey: "created_at",
       header: ({ column }) => {
@@ -134,19 +130,39 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
       sortingFn: "datetime",
     },
     {
-      accessorKey: "lead",
+      accessorKey: "duration_seconds",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Lead
+            Duration
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
         )
       },
-      cell: ({ row }) => <div>{(row.getValue("lead") as string) || "No"}</div>,
+      cell: ({ row }) => {
+        const seconds = row.getValue("duration_seconds") as number;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.round(seconds % 60);
+        return <div>{`${minutes}m ${remainingSeconds}s`}</div>;
+      },
+    },
+    {
+      accessorKey: "phone_number",
+      header: "Phone Number",
+      cell: ({ row }) => <div>{row.getValue("phone_number") || "—"}</div>,
+    },
+    {
+      accessorKey: "customer_number",
+      header: "Customer",
+      cell: ({ row }) => <div>{row.getValue("customer_number") || "—"}</div>,
+    },
+    {
+      accessorKey: "ended_reason",
+      header: "End Reason",
+      cell: ({ row }) => <div>{row.getValue("ended_reason")}</div>,
     },
     {
       id: "actions",
@@ -163,13 +179,18 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => handleDeleteChat(row.original.id)}
+                onClick={() => {
+                  // Open audio recording in a new tab
+                  if (row.original.stereo_recording_url) {
+                    window.open(row.original.stereo_recording_url, '_blank');
+                  }
+                }}
               >
-                Copy chat
+                Play Recording
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onClick={() => handleDeleteChat(row.original.id)}
+                onClick={() => handleDeleteCall(row.original.id)}
                 className="text-red-600 focus:text-red-600"
               >
                 Delete
@@ -179,7 +200,7 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
         )
       },
     },
-  ], [handleDeleteChat]) // Add handleDeleteChat to dependencies
+  ], [handleDeleteCall]) // Add handleDeleteCall to dependencies
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,44 +219,22 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
           throw new Error('Not authenticated');
         }
 
-        console.log('Fetching conversation history...');
-        const response = await axios.get(`${API_BASE_URL}/conversation/history`, {
+        console.log('Fetching call logs...');
+        // Use the correct API endpoint path
+        const response = await axios.get(`${API_BASE_URL}/vapi/calls`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
 
-        console.log('Conversation history response:', response.data);
-        const conversations = response.data;
-
-        // Fetch agent data
-        console.log('Fetching agent data...');
-        const agentResponse = await axios.get(`${API_BASE_URL}/agents/`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const agents = agentResponse.data.data as Agent[];
-        console.log('Agent data response:', agents);
-
-        const updatedData = conversations.map((conversation: ConversationLog) => {
-          const agent = agents.find((a) => a.id === conversation.agent_id);
-          return {
-            ...conversation,
-            agentName: agent ? agent.agentName : null,
-            agentPurpose: agent ? agent.agentPurpose : null,
-            summary: conversation.summary || null
-          };
-        });
-
-        console.log('Updated conversation data with agent info:', updatedData);
-        setData(updatedData);
+        console.log('Call logs response:', response.data);
+        // API returns an array of calls directly
+        setData(response.data);
         setLoading(false);
       } catch (error: any) {
         console.error('Error fetching data:', error.response || error);
-        setError(error.response?.data?.detail || error.message || 'Failed to fetch conversation history');
+        setError(error.response?.data?.detail || error.message || 'Failed to fetch call logs');
         setLoading(false);
       }
     };
@@ -243,13 +242,8 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     fetchData();
   }, [userId, getToken]);
 
-  // Create a memoized filtered data array
-  const filteredData = useMemo(() => {
-    return showLeadsOnly ? data.filter(row => row.lead === "yes") : data;
-  }, [data, showLeadsOnly]);
-
   const table = useReactTable({
-    data: filteredData, // Use the memoized filtered data
+    data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -267,8 +261,8 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     },
   })
 
-  const handleRowClick = (conversation: ConversationLog) => {
-    setSelectedConversation(conversation);
+  const handleRowClick = (call: CallLog) => {
+    setSelectedCall(call);
   };
 
   if (loading) return <Loader />;
@@ -278,13 +272,6 @@ export function DataTableDemo({ setSelectedConversation }: LibraryTableProps) {
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center gap-2">
-          <Button
-            variant={showLeadsOnly ? "default" : "outline"}
-            onClick={() => setShowLeadsOnly(!showLeadsOnly)}
-          >
-            {showLeadsOnly ? "Show All" : "Show Leads"}
-          </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

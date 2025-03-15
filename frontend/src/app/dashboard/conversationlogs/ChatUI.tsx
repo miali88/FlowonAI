@@ -1,35 +1,60 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
-import { ConversationLog } from './LibraryTable';
+import { CallLog } from './LibraryTable';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface ChatMessage {
-  user_message?: string;
-  assistant_message?: string;
-}
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlayIcon, PauseIcon } from "@radix-ui/react-icons";
 
 interface ChatUIProps {
-  selectedConversation: ConversationLog | null;
+  selectedCall: CallLog | null;
 }
 
-// Add this helper function before the ChatUI component
-const generateRoomSummary = (fullRoomName: string): string => {
-  if (!fullRoomName) return 'Visitor Chat';
-  
-  // Extract the first part (visitor or agent)
-  const match = fullRoomName.match(/^(visitor|agent)/);
-  if (match) {
-    return match[1] === 'visitor' ? 'Visitor Chat' : 'Agent Chat';
+const formatTimestamp = (timestamp: string): string => {
+  try {
+    return new Date(timestamp).toLocaleString();
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return "Invalid date";
   }
-  
-  return 'Call'; // Default fallback
 };
 
-const renderChatBubble = (message: ChatMessage, index: number) => {
-  const isUser = 'user_message' in message;
-  const content = isUser ? message.user_message : message.assistant_message;
+const formatDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
+};
+
+// Parse the raw transcript into an array of messages
+const parseTranscript = (transcript: string): { role: 'ai' | 'user', content: string }[] => {
+  if (!transcript) return [];
+  
+  const lines = transcript.split('\n');
+  const messages: { role: 'ai' | 'user', content: string }[] = [];
+  
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+    
+    if (line.startsWith('AI:')) {
+      messages.push({
+        role: 'ai',
+        content: line.substring(3).trim()
+      });
+    } else if (line.startsWith('User:')) {
+      messages.push({
+        role: 'user',
+        content: line.substring(5).trim()
+      });
+    }
+  }
+  
+  return messages;
+};
+
+const renderChatBubble = (message: { role: 'ai' | 'user', content: string }, index: number) => {
+  const isUser = message.role === 'user';
   return (
     <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`flex items-end ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -41,44 +66,108 @@ const renderChatBubble = (message: ChatMessage, index: number) => {
             ? 'bg-green-500 text-white' 
             : 'bg-gray-200 text-gray-900'
         }`}>
-          {content}
+          {message.content}
         </div>
       </div>
     </div>
   );
 };
 
-export const ChatUI: React.FC<ChatUIProps> = ({ selectedConversation }) => {
+export const ChatUI: React.FC<ChatUIProps> = ({ selectedCall }) => {
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
+
   useEffect(() => {
-    // Log the raw data of the selected conversation
-    console.log("Selected Conversation Data:", selectedConversation);
-  }, [selectedConversation]);
+    // Log the raw data of the selected call
+    console.log("Selected Call Data:", selectedCall);
+    
+    // Clean up audio player when component unmounts or call changes
+    return () => {
+      if (audioRef) {
+        audioRef.pause();
+        audioRef.src = '';
+      }
+    };
+  }, [selectedCall]);
+
+  const toggleAudio = () => {
+    if (!selectedCall?.stereo_recording_url) return;
+    
+    if (!audioRef) {
+      const audio = new Audio(selectedCall.stereo_recording_url);
+      audio.onended = () => setAudioPlaying(false);
+      audio.onpause = () => setAudioPlaying(false);
+      audio.onplay = () => setAudioPlaying(true);
+      setAudioRef(audio);
+      audio.play();
+    } else {
+      if (audioPlaying) {
+        audioRef.pause();
+      } else {
+        audioRef.play();
+      }
+    }
+  };
 
   return (
     <div className="p-4 h-full flex flex-col">
-      {selectedConversation ? (
+      {selectedCall ? (
         <>
           <h3 className="text-xl font-semibold mb-4">
-            {generateRoomSummary(selectedConversation.room_name)}
+            Call Details
           </h3>
           
+          {/* Call Info Card */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>Call Information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-2 text-sm">
+              <div><strong>Call ID:</strong> {selectedCall.call_id}</div>
+              <div><strong>Duration:</strong> {formatDuration(selectedCall.duration_seconds)}</div>
+              <div><strong>Started At:</strong> {formatTimestamp(selectedCall.started_at)}</div>
+              <div><strong>Ended At:</strong> {formatTimestamp(selectedCall.ended_at)}</div>
+              <div><strong>Phone Number:</strong> {selectedCall.phone_number || "—"}</div>
+              <div><strong>Customer Number:</strong> {selectedCall.customer_number || "—"}</div>
+              <div><strong>End Reason:</strong> {selectedCall.ended_reason}</div>
+              <div><strong>Cost:</strong> ${selectedCall.cost.toFixed(4)}</div>
+            </CardContent>
+            {selectedCall.stereo_recording_url && (
+              <CardFooter>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={toggleAudio}
+                >
+                  {audioPlaying ? <PauseIcon /> : <PlayIcon />}
+                  {audioPlaying ? "Pause Recording" : "Play Recording"}
+                </Button>
+              </CardFooter>
+            )}
+          </Card>
+          
           {/* AI Summary Card */}
-          {selectedConversation.summary && (
+          {selectedCall.summary && (
             <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
               <CardContent>
-                <p>{selectedConversation.summary}</p>
+                <p>{selectedCall.summary}</p>
               </CardContent>
             </Card>
           )}
           
-          <div className="mb-2">
-            <p><strong>Created At:</strong> {new Date(selectedConversation.created_at).toLocaleString()}</p>
-          </div>
-          <ScrollArea className="flex-grow space-y-4">
+          <h4 className="font-medium mb-2">Transcript</h4>
+          <ScrollArea className="flex-grow space-y-4 border rounded-md p-4">
             {(() => {
               try {
-                const messages = JSON.parse(selectedConversation.transcript);
-                return messages.map((message: ChatMessage, index: number) => renderChatBubble(message, index));
+                const messages = parseTranscript(selectedCall.transcript);
+                return messages.length > 0 ? (
+                  messages.map((message, index) => renderChatBubble(message, index))
+                ) : (
+                  <p className="text-muted-foreground">No transcript available.</p>
+                );
               } catch (error) {
                 console.error("Error parsing transcript:", error);
                 return <p className="text-red-500">Error parsing transcript data.</p>;
@@ -88,7 +177,7 @@ export const ChatUI: React.FC<ChatUIProps> = ({ selectedConversation }) => {
         </>
       ) : (
         <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Select a conversation to view details</p>
+          <p className="text-muted-foreground">Select a call to view details</p>
         </div>
       )}
     </div>

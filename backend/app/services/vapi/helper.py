@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
 
-from app.clients.supabase_client import get_supabase
 from app.services.vapi.utils import get_user_id
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class VapiEndOfCallReport:
         type: str,
         summary: str,
         transcript: str,
-        stereo_recording_url: str,
+        recording_url: str,
         phone_number: str,
         customer_number: str,
         cost: float,
@@ -35,7 +34,7 @@ class VapiEndOfCallReport:
         self.type = type
         self.summary = summary
         self.transcript = transcript
-        self.stereo_recording_url = stereo_recording_url
+        self.recording_url = recording_url
         self.phone_number = phone_number
         self.customer_number = customer_number
         self.cost = cost
@@ -69,8 +68,8 @@ class VapiEndOfCallReport:
         transcript = message.get("transcript", "")
         logger.debug(f"Extracted transcript length: {len(transcript)} chars")
         
-        stereo_recording_url = message.get("stereoRecordingUrl", "")
-        logger.debug(f"Extracted stereo_recording_url: {stereo_recording_url}")
+        recording_url = message.get("recordingUrl", "")
+        logger.debug(f"Extracted recording url: {recording_url}")
         
         phone_number = message.get("phoneNumber", {}).get("number", "")
         logger.debug(f"Extracted phone_number: {phone_number}")
@@ -107,7 +106,7 @@ class VapiEndOfCallReport:
             type=type,
             summary=summary,
             transcript=transcript,
-            stereo_recording_url=stereo_recording_url,
+            recording_url=recording_url,
             phone_number=phone_number,
             customer_number=customer_number,
             cost=cost,
@@ -128,7 +127,7 @@ class VapiEndOfCallReport:
             "type": self.type,
             "summary": self.summary,
             "transcript": self.transcript,
-            "stereo_recording_url": self.stereo_recording_url,
+            "recording_url": self.recording_url,
             "phone_number": self.phone_number,
             "customer_number": self.customer_number,
             "cost": self.cost,
@@ -140,42 +139,6 @@ class VapiEndOfCallReport:
             "user_id": self.user_id,
             "created_at": self.created_at,
         }
-
-async def store_call_data(webhook_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Store summarized call data in Supabase.
-    
-    Args:
-        webhook_data: The webhook payload containing VAPI call data
-        
-    Returns:
-        Dict containing the stored call data, including user_id
-    """
-    try:
-        logger.info("Processing call data for storage in vapi_calls table")
-        
-        # Create structured data object from webhook
-        call_data = await VapiEndOfCallReport.from_webhook(webhook_data)
-        
-        # Convert to dictionary for storage
-        data_dict = call_data.to_dict()
-        
-        # Get Supabase client
-        supabase = await get_supabase()
-        
-        # Store in the vapi_calls table
-        logger.info(f"Storing call data for call ID: {call_data.call_id}")
-        result = await supabase.table("vapi_calls").insert(data_dict).execute()
-        
-        logger.info(f"Successfully stored call data for call ID: {call_data.call_id}, user ID: {call_data.user_id}")
-        
-        # Return the data for further processing
-        return data_dict
-    except Exception as e:
-        logger.error(f"Error storing call data: {str(e)}")
-        # Return None if there was an error
-        return None
-
 
 if __name__ == "__main__":
     import asyncio

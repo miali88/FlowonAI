@@ -2,7 +2,7 @@ from typing import Any, Dict
 import logging
 import math
 
-from app.services.vapi.helper import store_call_data
+from app.services.vapi.calls import store_call_data
 from app.services.user.usage import update_call_duration
 from app.services.email_service import send_notification_email
 from app.services.vapi.utils import get_user_notification_settings

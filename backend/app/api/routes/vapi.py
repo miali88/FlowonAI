@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, Request, status
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
 import json
 import logging
+
+from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
+
 from app.services.vapi.api_handlers import VapiService
+from app.services.vapi.calls import get_calls, delete_call
+from app.core.auth import get_current_user
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -201,4 +205,94 @@ async def vapi_webhook_raw(request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing webhook: {str(e)}"
+        )
+
+@router.get("/calls")
+async def get_call_logs(
+    current_user: str = Depends(get_current_user),
+    limit: int = Query(1000, gt=0),
+    offset: int = Query(0, ge=0)
+):
+    """
+    Get all call logs for the authenticated user.
+    
+    Args:
+        limit: Maximum number of records to return (default: 1000)
+        offset: Number of records to skip for pagination (default: 0)
+        
+    Returns:
+        A list of call log records
+    """
+    try:
+        logger.info(f"Retrieving call logs for user: {current_user}")
+        
+        # The current_user is already the user_id string
+        user_id = current_user
+        
+        # Get calls from the database
+        calls = await get_calls(user_id=user_id, limit=limit, offset=offset)
+        
+        logger.info(f"Retrieved {len(calls)} call logs for user: {user_id}")
+        
+        return calls
+    except Exception as e:
+        logger.error(f"Error retrieving call logs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving call logs: {str(e)}"
+        )
+
+@router.delete("/calls/{call_id}")
+async def delete_call_log(
+    call_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Delete a call log by ID.
+    
+    Args:
+        call_id: The ID of the call to delete
+        
+    Returns:
+        A success message if the call was deleted
+    """
+    try:
+        logger.info(f"Deleting call log with ID: {call_id} for user: {current_user}")
+        
+        # First, get the call to check ownership
+        call = await get_call_by_id(call_id)
+        
+        if not call:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Call log with ID {call_id} not found"
+            )
+        
+        # Check if the call belongs to the authenticated user
+        if call.get("user_id") and call.get("user_id") != current_user:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete this call log"
+            )
+        
+        # Delete the call
+        success = await delete_call(call_id)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to delete call log with ID {call_id}"
+            )
+        
+        logger.info(f"Successfully deleted call log with ID: {call_id}")
+        
+        return {"message": f"Call log with ID {call_id} successfully deleted"}
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting call log with ID {call_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting call log: {str(e)}"
         )

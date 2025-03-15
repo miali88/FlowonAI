@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { DataTableDemo, ConversationLog } from './LibraryTable';
+import { DataTableDemo, CallLog } from './LibraryTable';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/resizable";
 import { ChatUI } from './ChatUI';
 
-const ChatHistory: React.FC = () => {
+const CallHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedConversation, setSelectedConversation] = useState<ConversationLog | null>(null);
+  const [selectedCall, setSelectedCall] = useState<CallLog | null>(null);
 
   return (
     <div className="flex flex-col h-full">
@@ -23,13 +23,13 @@ const ChatHistory: React.FC = () => {
           <div className="p-4">
             <div className="mb-4">
               <Input 
-                placeholder="Search chat history..." 
+                placeholder="Search call history..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <ScrollArea className="h-[calc(100vh-300px)]">
-              <DataTableDemo setSelectedConversation={setSelectedConversation} />
+              <DataTableDemo setSelectedCall={setSelectedCall} />
             </ScrollArea>
           </div>
         </ResizablePanel>
@@ -38,11 +38,11 @@ const ChatHistory: React.FC = () => {
 
         {/* Right section (resizable) */}
         <ResizablePanel defaultSize={60} minSize={30}>
-          <ChatUI selectedConversation={selectedConversation} />
+          <ChatUI selectedCall={selectedCall} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
   );
 };
 
-export default ChatHistory;
+export default CallHistory;
