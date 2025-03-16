@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const ProductDemo = () => {
   const steps = [
@@ -63,6 +63,11 @@ const VideoSection = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -75,7 +80,6 @@ const VideoSection = ({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             videoElement.play().catch(() => {
-              // Handle any autoplay restrictions gracefully
               console.log('Autoplay prevented - user interaction may be required');
             });
           } else {
@@ -85,7 +89,7 @@ const VideoSection = ({
         });
       },
       {
-        threshold: 0.5, // Trigger when 50% of the section is visible
+        threshold: 0.5,
       }
     );
 
@@ -119,17 +123,19 @@ const VideoSection = ({
         <div className={`order-1 md:order-${stepNumber % 2 ? 1 : 2} px-8`}>
           <div className="relative w-full rounded-xl overflow-hidden shadow-2xl bg-black">
             <div className="relative pt-[56.25%]">
-              <video
-                ref={videoRef}
-                src={video}
-                className="absolute inset-0 w-full h-full object-cover"
-                controls
-                loop
-                muted
-                playsInline
-              >
-                Your browser does not support the video tag.
-              </video>
+              {isMounted && (
+                <video
+                  ref={videoRef}
+                  src={video}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  controls
+                  loop
+                  muted
+                  playsInline
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
             </div>
           </div>
         </div>

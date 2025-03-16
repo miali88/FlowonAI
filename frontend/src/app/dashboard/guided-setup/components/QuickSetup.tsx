@@ -29,6 +29,7 @@ import BusinessInformation from "./form-sections/BusinessInformation";
 import MessageTaking from "./form-sections/MessageTaking";
 import CallNotifications from "./form-sections/CallNotifications";
 import PlaceChangeDialog from "./form-sections/PlaceChangeDialog";
+import BookingLink from "./form-sections/BookingLink";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -90,6 +91,9 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           enabled: false,
           phoneNumber: "",
         },
+      },
+      bookingLink: {
+        url: "",
       },
     },
     mode: "onBlur",
@@ -517,6 +521,12 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           addQuestion={addQuestion}
           getValues={getValues}
           setValue={setValue}
+        />
+
+        {/* Booking Link Section */}
+        <BookingLink
+          control={control}
+          errors={errors}
         />
 
         {/* Call Notifications Section */}

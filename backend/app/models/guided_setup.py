@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Dict, List, Optional, Any
 
 # Pydantic models for guided setup
@@ -47,9 +47,13 @@ class CallNotifications(BaseModel):
     emailNotifications: EmailNotifications
     smsNotifications: SmsNotifications
 
+class BookingLink(BaseModel):
+    url: Optional[HttpUrl] = None
+
 class QuickSetupData(BaseModel):
     trainingSources: TrainingSource
     businessInformation: BusinessInformation
     messageTaking: MessageTaking
     callNotifications: CallNotifications
+    bookingLink: BookingLink
     agentLanguage: str = "en-US"

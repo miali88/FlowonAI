@@ -66,6 +66,9 @@ export const quickSetupSchema = z.object({
         .transform(val => val === null ? "" : val),
     }),
   }),
+  bookingLink: z.object({
+    url: z.string().url("Invalid URL").optional().or(z.literal("")),
+  }),
 });
 
 // Export form values type that matches our shared SetupData interface
