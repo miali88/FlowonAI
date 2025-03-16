@@ -13,17 +13,17 @@ const ProviderDropdown = ({ title, children }: ProviderDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
-    <div className="mt-4 border border-gray-600 rounded-md overflow-hidden">
+    <div className="mt-4 border rounded-md overflow-hidden">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex justify-between items-center p-2 bg-gray-800 hover:bg-gray-700 text-left transition-colors"
+        className="w-full flex justify-between items-center p-2 text-left transition-colors text-black"
       >
-        <h3 className="text-lg font-semibold">{title}</h3>
-        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <h3 className="text-lg font-semibold text-black">{title}</h3>
+        {isOpen ? <ChevronUp className="h-4 w-4 text-black" /> : <ChevronDown className="h-4 w-4 text-black" />}
       </button>
       
       {isOpen && (
-        <div className="p-3 bg-gray-900">
+        <div className="p-3 text-black border-t">
           {children}
         </div>
       )}
@@ -33,14 +33,16 @@ const ProviderDropdown = ({ title, children }: ProviderDropdownProps) => {
 
 export default function CallForwardingGuidePage() {
   return (
-    <article className="prose prose-invert max-w-4xl mx-auto p-6 text-gray-200">
-      <h1 className="text-2xl font-bold mb-4">Setup call forwarding to launch Flowon for your business</h1>
+    <article className="prose prose-invert max-w-4xl mx-auto p-6 text-black">
+      <h1 className="text-3xl font-bold mb-6 text-black">Routing your calls to Flowon AI</h1>
+
+      <h2 className="text-2xl font-bold mb-4 text-black">Setup call forwarding to launch Flowon for your business</h2>
       
       <section className="mb-6">
         <p className="text-base font-medium">
           Learn how to launch the Flowon AI service for your business by setting your business phone number to forward to Flowon
         </p>
-        <p className="text-xs text-gray-400">Updated over a month ago</p>
+        <p className="text-xs text-black">Updated over a month ago</p>
         
         <p className="mt-4">
           Flowon is always there to answer your calls - the hours Flowon works is up to you! You can launch Flowon at any time by setting up call forwarding for your business phone number, and turn Flowon service off at any time by updating your forwarding settings.
@@ -52,7 +54,7 @@ export default function CallForwardingGuidePage() {
       </section>
       
       <section className="mb-6">
-        <h2 className="text-xl font-bold mb-2">Call forwarding instructions for popular web phone services</h2>
+        <h2 className="text-xl font-bold mb-2 text-black">Call forwarding instructions for popular web phone services</h2>
         
         <ProviderDropdown title="OpenPhone">
           <p className="font-medium">Unconditional Call Forwarding:</p>
@@ -123,7 +125,7 @@ export default function CallForwardingGuidePage() {
       </section>
       
       <section className="mb-6">
-        <h2 className="text-xl font-bold mb-2">Call forwarding instructions for popular cell phone networks</h2>
+        <h2 className="text-xl font-bold mb-2 text-black">Call forwarding instructions for popular cell phone networks</h2>
         
         <ProviderDropdown title="Verizon">
           <p className="font-medium">Unconditional Call Forwarding:</p>
@@ -215,7 +217,7 @@ export default function CallForwardingGuidePage() {
       </section>
       
       <section className="mb-6">
-        <h2 className="text-xl font-bold mb-2">Call forwarding instructions for landlines</h2>
+        <h2 className="text-xl font-bold mb-2 text-black">Call forwarding instructions for landlines</h2>
         
         <ProviderDropdown title="Landlines">
           <p>These instructions work for the vast majority of landlines but there is the occasional exception:</p>
@@ -235,8 +237,8 @@ export default function CallForwardingGuidePage() {
         </ProviderDropdown>
       </section>
       
-      <section className="mt-8 p-3 bg-gray-800 rounded-lg">
-        <p className="text-center">
+      <section className="mt-8 p-3 border rounded-lg">
+        <p className="text-center text-black">
           No instructions for your service? Reach out to our team using the intercom chat or at 
           <a href="mailto:support@flowon.ai" className="text-blue-400 hover:underline ml-1">support@flowon.ai</a> 
           and we'll be happy to help get you set up!

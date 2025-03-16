@@ -8,7 +8,7 @@ export default function GuideLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen text-white bg-black">
+    <div className="min-h-screen bg-white">
       <Header />
       <div className="pt-20">
         <main className="w-full mb-32">

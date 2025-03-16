@@ -80,6 +80,14 @@ export function Footer() {
                     {t('callForwarding')}
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/guide/appointment_booking"
+                    className="cursor-pointer text-muted-foreground hover:text-foreground/80 duration-200 font-[450] text-sm"
+                  >
+                    {t('appointmentBooking')}
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
