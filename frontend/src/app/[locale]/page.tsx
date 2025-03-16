@@ -52,7 +52,8 @@ const DynamicFooter = dynamic(() => import('@/components/footer').then(mod => mo
   ssr: true
 });
 
-const DynamicGuidedSetupSection = dynamic(() => import('@/components/GuidedSetupSection').then(mod => mod.GuidedSetupSection), {
+
+const DynamicProductDemo = dynamic(() => import('@/components/ProductDemo').then(mod => mod.ProductDemo), {
   loading: () => <div className="h-[600px]" />,
   ssr: true
 });
@@ -67,7 +68,7 @@ export default function HomePage({ params }: { params: { locale: string } }) {
       <main className="w-full relative pt-[64px] sm:pt-0">
         <DynamicVoiceHero />
         <DynamicPainPointsSolutions />
-        <DynamicGuidedSetupSection />
+        <DynamicProductDemo />
         <DynamicCarouselTestimonials />
         <DynamicFeaturesAndBenefits />
         <DynamicEmailNotifications />
