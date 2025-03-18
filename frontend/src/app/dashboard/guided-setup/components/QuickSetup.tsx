@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, AlertCircle } from "lucide-react";
@@ -90,9 +90,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           enabled: false,
           phoneNumber: "",
         },
-      },
-      bookingLink: {
-        url: "",
       },
     },
     mode: "onBlur",
@@ -524,14 +521,23 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         />
 
         {/* Form validation error */}
-        {Object.keys(errors).length > 0 && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Please fill in all required fields before proceeding to the next step.
-            </AlertDescription>
-          </Alert>
-        )}
+        {Object.keys(errors).length > 0 && (() => {
+          console.log('Form Validation Errors:', JSON.stringify(errors, null, 2));
+          console.log('Current Form Values:', JSON.stringify(getValues(), null, 2));
+          return (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Please fill in all required fields before proceeding to the next step.
+                {Object.entries(errors).map(([key, value]: [string, any]) => (
+                  <div key={key} className="mt-2 text-sm">
+                    • {key}: {value?.message || JSON.stringify(value)}
+                  </div>
+                ))}
+              </AlertDescription>
+            </Alert>
+          );
+        })()}
 
         {/* Next Button */}
         <div className="flex justify-end">

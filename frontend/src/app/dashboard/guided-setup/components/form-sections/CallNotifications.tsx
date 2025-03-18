@@ -1,8 +1,7 @@
-import { Control, ControllerRenderProps, Controller, useWatch } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -163,22 +162,6 @@ export default function CallNotifications({
                     )}
                   />
                 )}
-
-                <FormField
-                  control={control}
-                  name="callNotifications.slackNotifications.enabled"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between">
-                      <FormLabel>Slack Notifications</FormLabel>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </AccordionContent>
