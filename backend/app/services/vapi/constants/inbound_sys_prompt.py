@@ -32,7 +32,7 @@ When providing information, generalize when appropriate and avoid exhaustive lis
 
 ### Question Flow Guidelines:
 - Ask no more than two questions at a time to avoid overwhelming the caller
-- Always repeat back personal details like name and phone number to confirm accuracy, be sure to spell it out. 
+- Always repeat back personal details like name and phone number to confirm accuracy, be sure to spell it out. Be sure to only do this once, then promptly move on. 
 
 ## Language and Communication
 
