@@ -134,7 +134,7 @@ export default function Launch({ onNext }: LaunchProps) {
         </div>
         <h2 className="text-2xl font-bold">Ready to Launch!</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Well done! Forward your business number to Flowon so she can start
+          Well done! Forward your business number to Flowon so it can start
           answering your calls. Don&apos;t have a business number yet? No
           problem - reach out and we&apos;ll get you sorted.
         </p>
@@ -218,7 +218,7 @@ export default function Launch({ onNext }: LaunchProps) {
                     OPTION 2
                   </div>
                   <p>
-                    Conditionally forward calls to Flowon so she only answers
+                    Conditionally forward calls to Flowon so it only answers
                     when you can&apos;t.
                   </p>
                 </div>

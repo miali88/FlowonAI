@@ -5,22 +5,11 @@ import { useAuth } from "@clerk/nextjs";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SetupStep } from "./types";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@/components/ui/form";
-import { quickSetupSchema, FormValues } from "./components/schema";
 import QuickSetup from "./components/QuickSetup";
 import TalkToFlowon from "./components/TalkToFlowon";
 import Launch from "./components/Launch";
-import { Loader2, ArrowRight, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
-// Import form sections
-import TrainingSources from "./components/form-sections/TrainingSources";
-import BusinessInformation from "./components/form-sections/BusinessInformation";
-import MessageTaking from "./components/form-sections/MessageTaking";
-import CallNotifications from "./components/form-sections/CallNotifications";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

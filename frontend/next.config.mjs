@@ -46,6 +46,13 @@ const nextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
+    // Add warning ignores for OpenTelemetry and require-in-the-middle
+    config.ignoreWarnings = [
+      { module: /@opentelemetry\/instrumentation/ },
+      { module: /require-in-the-middle/ },
+    ];
+
+    // Existing webpack config for audio files
     config.module.rules.push({
       test: /\.(ogg|mp3|wav|mpe?g)$/i,
       exclude: config.exclude,
@@ -92,5 +99,24 @@ const nextConfig = {
   },
 };
 
-// Apply the next-intl plugin
-export default withNextIntl(nextConfig); 
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  silent: true, // Suppresses all logs
+  ignoreErrors: true,
+  include: '.',
+  ignore: ['node_modules'],
+  configFile: 'sentry.properties',
+  sourcemaps: {
+    disable: true, // Temporarily disable source maps
+  }
+};
+
+// Apply plugins in the correct order
+export default withSentryConfig(
+  withNextIntl({
+    ...nextConfig,
+    productionBrowserSourceMaps: false, // Disable browser source maps in production
+    swcMinify: true, // Use SWC minifier instead of Terser
+  }),
+  sentryWebpackPluginOptions
+); 

@@ -58,8 +58,8 @@ export default function TrainingSources({
       <CardContent className="space-y-4">
         <div className="text-sm text-gray-500 mb-4">
           Flowon uses these sources to learn about your business, which
-          helps her answer caller questions effectively. While entering both
-          sources is ideal, just one is enough to get her started. Update
+          helps it answer caller questions effectively. While entering both
+          sources is ideal, just one is enough to get it started. Update
           these sources at anytime to retrain Flowon.
         </div>
         {errors.trainingSources &&

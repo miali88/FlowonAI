@@ -43,6 +43,7 @@ async def get_jwks():
         if _jwks_cache:
             return _jwks_cache
             
+        # Construct proper JWKS URL
         jwks_url = f"{CLERK_JWT_ISSUER}/.well-known/jwks.json"
         logger.debug(f"Fetching JWKS from URL: {jwks_url}")
         
