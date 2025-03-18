@@ -22,21 +22,43 @@ async def get_user_id(phone_number: str) -> Optional[str]:
             
         logger.info(f"Looking up user ID for phone number: {phone_number}")
         
+        # Normalize the phone number format (remove any spaces, dashes, etc.)
+        normalized_phone = phone_number.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        
+        # Ensure it has a + prefix if it doesn't already
+        if not normalized_phone.startswith("+"):
+            normalized_phone = "+" + normalized_phone
+            
+        logger.info(f"Normalized phone number for lookup: {normalized_phone}")
+        
         # Get Supabase client
         supabase = await get_supabase()
         
         # Query the twilio_numbers table for this phone number
-        response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", phone_number).execute()
+        response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", normalized_phone).execute()
         
         # Check if we got results
         data = response.data
         if not data or len(data) == 0:
-            logger.warning(f"No user found for phone number: {phone_number}")
+            logger.warning(f"No user found for phone number: {normalized_phone}")
+            
+            # Try an alternative lookup without the + prefix
+            if normalized_phone.startswith("+"):
+                alt_phone = normalized_phone[1:]
+                logger.info(f"Trying alternative lookup without + prefix: {alt_phone}")
+                alt_response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", alt_phone).execute()
+                
+                alt_data = alt_response.data
+                if alt_data and len(alt_data) > 0:
+                    user_id = alt_data[0].get("owner_user_id")
+                    logger.info(f"Found user ID {user_id} for alternative phone number: {alt_phone}")
+                    return user_id
+            
             return None
             
         # Return the user ID from the first matching record
         user_id = data[0].get("owner_user_id")
-        logger.info(f"Found user ID {user_id} for phone number: {phone_number}")
+        logger.info(f"Found user ID {user_id} for phone number: {normalized_phone}")
         return user_id
         
     except Exception as e:
@@ -46,33 +68,34 @@ async def get_user_id(phone_number: str) -> Optional[str]:
 # New function to get user notification settings
 async def get_user_notification_settings(user_id: str) -> Dict[str, Any]:
     """
-    Get user's notification settings from guided_setup table.
+    Get a user's notification settings from the database
     
     Args:
-        user_id: The user ID to lookup
+        user_id: The user's ID
         
     Returns:
-        Dict containing notification settings
+        Dict containing the user's notification settings
     """
-    from app.clients.supabase_client import get_supabase
-    
     try:
-        logger.info(f"Getting notification settings for user: {user_id}")
+        logger.info(f"Fetching notification settings for user: {user_id}")
+        
+        # Get Supabase client
         supabase = await get_supabase()
         
+        # Query the guided_setup table for call_notifications
         response = await supabase.table("guided_setup").select("call_notifications").eq("user_id", user_id).execute()
         
-        data = response.data
-        if not data or len(data) == 0:
-            logger.warning(f"No guided setup found for user: {user_id}")
-            return {}
-            
-        call_notifications = data[0].get("call_notifications", {})
-        logger.info(f"Found notification settings for user {user_id}: {call_notifications}")
-        return call_notifications
+        if response.data and len(response.data) > 0:
+            call_notifications = response.data[0].get("call_notifications", {})
+            logger.info(f"Found call_notifications in guided_setup table: {call_notifications}")
+            return call_notifications
+        
+        logger.warning(f"No notification settings found for user: {user_id}")
+        return {}
         
     except Exception as e:
-        logger.error(f"Error getting notification settings for user {user_id}: {str(e)}")
+        logger.error(f"Error fetching notification settings: {str(e)}")
+        # Return empty dict on error
         return {}
     
 async def register_phone_number_with_vapi(

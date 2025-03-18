@@ -51,59 +51,68 @@ class VapiEndOfCallReport:
     @classmethod
     async def from_webhook(cls, webhook_data: Dict[str, Any]) -> 'VapiEndOfCallReport':
         """Create a VapiEndOfCallReport instance from webhook data."""
-        # For end-of-call reports, the main data is in the message field
-        message = webhook_data.get("message", {})
-        
         # Extract required fields with proper logging
-        call_id = message.get("call", {}).get("id", "")
+        call_id = webhook_data.get("call", {}).get("id", "")
         logger.debug(f"Extracted call_id: {call_id}")
         
-        timestamp = message.get("timestamp", 0)
+        timestamp = webhook_data.get("timestamp", 0)
         logger.debug(f"Extracted timestamp: {timestamp}")
         
-        type = message.get("type", "")
+        type = webhook_data.get("type", "")
         logger.debug(f"Extracted type: {type}")
         
-        summary = message.get("summary", "")
+        summary = webhook_data.get("summary", "")
         logger.debug(f"Extracted summary length: {len(summary)} chars")
         
-        transcript = message.get("transcript", "")
+        transcript = webhook_data.get("transcript", "")
         logger.debug(f"Extracted transcript length: {len(transcript)} chars")
         
-        recording_url = message.get("recordingUrl", "")
+        recording_url = webhook_data.get("recordingUrl", "")
         logger.debug(f"Extracted recording url: {recording_url}")
         
-        stereo_recording_url = message.get("stereoRecordingUrl", "")
+        stereo_recording_url = webhook_data.get("stereoRecordingUrl", "")
         logger.debug(f"Extracted stereo recording url: {stereo_recording_url}")
         
-        phone_number = message.get("phoneNumber", {}).get("number", "")
+        # Extract phone number from the phoneNumber object
+        phone_number = webhook_data.get("phoneNumber", {}).get("number", "")
+        if not phone_number:
+            # Try alternative location
+            phone_number = webhook_data.get("call", {}).get("phoneNumber", "")
         logger.debug(f"Extracted phone_number: {phone_number}")
         
         # Extract customer number from the webhook data
-        customer_number = message.get("customer", {}).get("number", "")
+        customer_number = webhook_data.get("customer", {}).get("number", "")
         logger.debug(f"Extracted customer_number: {customer_number}")
         
-        cost = message.get("cost", 0.0)
+        cost = webhook_data.get("cost", 0.0)
         logger.debug(f"Extracted cost: {cost}")
         
-        ended_reason = message.get("endedReason", "")
+        ended_reason = webhook_data.get("endedReason", "")
         logger.debug(f"Extracted ended_reason: {ended_reason}")
         
-        started_at = message.get("startedAt", "")
+        started_at = webhook_data.get("startedAt", "")
         logger.debug(f"Extracted started_at: {started_at}")
         
-        ended_at = message.get("endedAt", "")
+        ended_at = webhook_data.get("endedAt", "")
         logger.debug(f"Extracted ended_at: {ended_at}")
         
-        duration_seconds = message.get("durationSeconds", 0.0)
+        duration_seconds = webhook_data.get("durationSeconds", 0.0)
         logger.debug(f"Extracted duration_seconds: {duration_seconds}")
         
-        duration_minutes = message.get("durationMinutes", 0.0)
+        duration_minutes = webhook_data.get("durationMinutes", 0.0)
         logger.debug(f"Extracted duration_minutes: {duration_minutes}")
         
         # Get the user ID associated with the phone number
-        user_id = await get_user_id(phone_number)
-        logger.debug(f"Retrieved user_id for phone number: {user_id}")
+        # First try with the phone number
+        user_id = None
+        if phone_number:
+            user_id = await get_user_id(phone_number)
+            logger.debug(f"Retrieved user_id for phone number: {user_id}")
+        
+        # If no user ID found with phone number, try with customer number
+        if not user_id and customer_number:
+            user_id = await get_user_id(customer_number)
+            logger.debug(f"Retrieved user_id for customer number: {user_id}")
         
         return cls(
             call_id=call_id,

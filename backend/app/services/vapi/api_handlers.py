@@ -22,9 +22,8 @@ class VapiService:
         Returns:
             Dict containing the response to be sent back to VAPI
         """
-        # Extract event type from the message object
-        message = event_data.get("message", {})
-        event_type = message.get("type", "unknown")
+        # Extract event type directly from the top level of the payload
+        event_type = event_data.get("type", "unknown")
         
         logger.info(f"Processing VAPI webhook event: {event_type}")
           
@@ -53,19 +52,21 @@ class VapiService:
         Returns:
             Dict containing the response to be sent back to VAPI
         """
-        # The actual data is in the message field
-        message = call_data.get("message", {})
-        call_id = message.get("call", {}).get("id", "unknown")
+        # Extract call ID from the correct location in the payload
+        call_id = call_data.get("call", {}).get("id", "unknown")
         
         logger.info(f"Handling VAPI end-of-call report for call ID: {call_id}")
         
         try:
             # Extract important data for logging
-            assistant_id = message.get("assistant", {}).get("id", "")
-            duration_seconds = message.get("durationSeconds", 0)
+            assistant_id = call_data.get("assistant", {}).get("id", "")
+            duration_seconds = call_data.get("durationSeconds", 0)
             
             # Log detailed call info
             logger.info(f"Call {call_id} ended. Duration: {duration_seconds}s, Assistant: {assistant_id}")
+            
+            # Extract customer phone number for user lookup
+            customer_number = call_data.get("customer", {}).get("number", "")
             
             # Store the summarized call data using the helper function
             # This will save to vapi_calls_summary table
@@ -86,21 +87,26 @@ class VapiService:
                 try:
                     # Get user notification settings
                     notification_settings = await get_user_notification_settings(user_id)
+                    logger.debug(f"User notification settings: {notification_settings}")
                     
                     # Check if email notifications are enabled
                     email_settings = notification_settings.get("emailNotifications", {})
-                    if email_settings.get("enabled", False):
-                        # Get recipient email
+                    logger.debug(f"Email notification settings: {email_settings}")
+                    
+                    if email_settings.get("enabled", True):
+                        # Get recipient email from the correct location in the structure
                         recipient_email = email_settings.get("email")
+                        logger.debug(f"Recipient email from settings: {recipient_email}")
+                        
                         if recipient_email:
                             # Create email content
-                            subject = f"Flowon AI: New Call Summary - {message.get('call', {}).get('id', 'unknown')}"
+                            subject = f"Flowon AI: New Call Summary - {call_id}"
                             
                             # Format the email body
-                            customer_number = message.get("customer", {}).get("number", "Unknown")
-                            call_date = message.get("endedAt", "Unknown")
+                            customer_number = call_data.get("customer", {}).get("number", "Unknown")
+                            call_date = call_data.get("endedAt", "Unknown")
                             call_duration = f"{duration_seconds} seconds"
-                            summary = message.get("summary", "No summary available")
+                            summary = call_data.get("summary", "No summary available")
                             
                             body = f"""
                             <h2>Call Summary</h2>

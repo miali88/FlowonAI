@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Optional
 import logging
 from app.clients.supabase_client import get_supabase
 from app.services.vapi.helper import VapiEndOfCallReport
+import json
 
 logger = logging.getLogger(__name__)
 async def store_call_data(webhook_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -16,6 +17,9 @@ async def store_call_data(webhook_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         logger.info("Processing call data for storage in vapi_calls table")
+        
+        # Log the webhook data structure for debugging
+        logger.debug(f"Webhook data structure: {json.dumps(webhook_data, indent=2)}")
         
         # Create structured data object from webhook
         call_data = await VapiEndOfCallReport.from_webhook(webhook_data)
