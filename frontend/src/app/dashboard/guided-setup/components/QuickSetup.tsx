@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +12,6 @@ import { Card } from "@/components/ui/card";
 
 // Import our updated utilities
 import { 
-  extractPlaceData, 
   mapPlaceDataToComponent, 
   componentMappings 
 } from "@/utils/placeDataUtils";
@@ -30,7 +29,6 @@ import BusinessInformation from "./form-sections/BusinessInformation";
 import MessageTaking from "./form-sections/MessageTaking";
 import CallNotifications from "./form-sections/CallNotifications";
 import PlaceChangeDialog from "./form-sections/PlaceChangeDialog";
-import BookingLink from "./form-sections/BookingLink";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

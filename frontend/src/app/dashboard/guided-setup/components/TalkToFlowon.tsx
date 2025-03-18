@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PurchaseNumber } from "@/components/dashboard/agenthub/workspace/PurchaseNumber";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
