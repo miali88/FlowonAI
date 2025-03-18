@@ -17,7 +17,6 @@ Usage:
 """
 
 import os
-import json
 import requests
 import logging
 from typing import Dict, Any, Optional

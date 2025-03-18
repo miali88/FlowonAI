@@ -24,7 +24,7 @@ from .setup_crud import (
 )
 
 from .agent_operations import (
-    create_or_update_agent_from_setup
+    create_or_update_vapi_assistant
 )
 
 from .audio_generation import (
@@ -68,10 +68,9 @@ __all__ = [
     'get_formatted_setup_data',
     'get_rosie_phone_number',
     'check_user_exists',
-    'diagnose_and_repair_database_issues',
-    
+
     # Agent operations
-    'create_or_update_agent_from_setup',
+    'create_or_update_vapi_assistant',
     
     # Audio generation
     'generate_greeting_preview',

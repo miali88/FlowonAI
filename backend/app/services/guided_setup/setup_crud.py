@@ -4,6 +4,7 @@ from datetime import datetime
 
 from app.clients.supabase_client import get_supabase
 from app.models.guided_setup import QuickSetupData
+from .language_utils import extract_country_and_language
 
 async def check_user_exists(user_id: str) -> bool:
     """Check if a user exists in the users table."""
@@ -38,6 +39,9 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
     # Check if the user already has setup data
     existing_setup = await get_guided_setup(user_id)
     
+    # Extract country code and language from business address
+    _, agent_language = extract_country_and_language(quick_setup_data.businessInformation.primaryBusinessAddress)
+    
     # Convert Pydantic models to dictionaries for JSONB columns
     setup_data = {
         "user_id": user_id,
@@ -45,7 +49,7 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         "business_information": quick_setup_data.businessInformation.model_dump(),
         "message_taking": quick_setup_data.messageTaking.model_dump(),
         "call_notifications": quick_setup_data.callNotifications.model_dump(),
-        "agent_language": quick_setup_data.agentLanguage,
+        "agent_language": agent_language,  # Set the determined language
     }
     
     # If record exists, preserve the setup_completed value and vapi_assistant_id
@@ -101,6 +105,14 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
                 logging.info(f"Verified vapi_assistant_id was correctly preserved: {setup_data['vapi_assistant_id']}")
             else:
                 logging.warning(f"vapi_assistant_id was not correctly preserved. Expected: {setup_data['vapi_assistant_id']}, Got: {updated_setup.get('vapi_assistant_id')}")
+        
+        # Verify the agent language was set correctly
+        saved_language = updated_setup.get("agent_language")
+        if saved_language == agent_language:
+            logging.info(f"Verified agent_language was correctly set to: {agent_language}")
+        else:
+            logging.warning(f"agent_language was not correctly set. Expected: {agent_language}, Got: {saved_language}")
+        
         return True, updated_setup, None  # Return the updated setup from the database
     else:
         error_message = f"Failed to verify guided setup data save for user {user_id}"
