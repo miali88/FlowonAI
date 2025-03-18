@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { Card } from "@/components/ui/card";
 
 // Import our updated utilities
 import { 
@@ -463,10 +464,10 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 mb-16">
+      <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
         {/* Show error alert if loading failed */}
         {loadError && (
-          <Alert variant="destructive" className="mb-8">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{loadError}</AlertDescription>
           </Alert>
@@ -474,43 +475,37 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
         {/* Show success message */}
         {successMessage && (
-          <Alert className="mb-8 bg-green-50 text-green-800 border-green-200">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <Alert>
             <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         )}
 
-        {/* Place Change Dialog */}
-        <PlaceChangeDialog 
-          open={placeChangeDialog}
-          onOpenChange={setPlaceChangeDialog}
-          onKeepData={handleKeepCurrentData}
-          onUpdateAll={handleUpdateAllFields}
-        />
-
-        {/* Training Sources Section */}
-        <TrainingSources 
-          control={control}
-          errors={errors}
-          isTraining={isTraining}
-          trainingError={trainingError}
-          handleTraining={handleTraining}
-          updateFieldsWithPlaceData={updateFieldsWithPlaceData}
-          setPendingPlaceData={setPendingPlaceData}
-          setPlaceChangeDialog={setPlaceChangeDialog}
-          setValue={setValue}
-          getValues={getValues}
-        />
-
-        {/* Business Information Section */}
-        <BusinessInformation 
-          control={control}
-          errors={errors}
-          newService={newService}
-          setNewService={setNewService}
-          addService={addService}
-          removeService={removeService}
-        />
+        {/* Business Setup Group */}
+        <Card className="p-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900">Train Your Agent</h2>
+            <TrainingSources 
+              control={control}
+              errors={errors}
+              isTraining={isTraining}
+              trainingError={trainingError}
+              handleTraining={handleTraining}
+              updateFieldsWithPlaceData={updateFieldsWithPlaceData}
+              setPendingPlaceData={setPendingPlaceData}
+              setPlaceChangeDialog={setPlaceChangeDialog}
+              setValue={setValue}
+              getValues={getValues}
+            />
+            <BusinessInformation 
+              control={control}
+              errors={errors}
+              newService={newService}
+              setNewService={setNewService}
+              addService={addService}
+              removeService={removeService}
+            />
+          </div>
+        </Card>
 
         {/* Message Taking Section */}
         <MessageTaking 
@@ -523,12 +518,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           setValue={setValue}
         />
 
-        {/* Booking Link Section */}
-        <BookingLink
-          control={control}
-          errors={errors}
-        />
-
         {/* Call Notifications Section */}
         <CallNotifications 
           control={control}
@@ -538,26 +527,28 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
         {/* Form validation error */}
         {Object.keys(errors).length > 0 && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Please fill in all required fields before proceeding to the next
-              step.
+              Please fill in all required fields before proceeding to the next step.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Submit Button */}
-        <div className="flex justify-end mt-12 mb-8">
-          <Button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-lg font-semibold rounded-xl shadow-lg transition-all hover:shadow-xl hover:scale-105"
-            disabled={isSubmitting}
-          >
-            Next Step
-            <ArrowRight className="ml-3 h-5 w-5" />
+        {/* Next Button */}
+        <div className="flex justify-end">
+          <Button type="submit">
+            Next Step <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
+
+        {/* Place Change Dialog */}
+        <PlaceChangeDialog
+          open={placeChangeDialog}
+          onOpenChange={setPlaceChangeDialog}
+          onKeepData={handleKeepCurrentData}
+          onUpdateAll={handleUpdateAllFields}
+        />
       </form>
     </Form>
   );

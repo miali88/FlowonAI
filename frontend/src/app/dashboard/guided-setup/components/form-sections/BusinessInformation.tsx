@@ -35,7 +35,7 @@ export default function BusinessInformation({
   return (
     <Card className={errors.businessInformation ? "border-red-500" : ""}>
       <CardHeader>
-        <CardTitle>Business Information</CardTitle>
+        <CardTitle>Briefing</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-gray-500 mb-4">

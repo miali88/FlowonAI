@@ -94,7 +94,7 @@ class VapiService:
                         recipient_email = email_settings.get("email")
                         if recipient_email:
                             # Create email content
-                            subject = f"Flowon AI: New Call Summary - {message.get('call', {}).get('id', 'unknown')}"
+                            subject = "Flowon AI: New Call"
                             
                             # Format the email body
                             customer_number = message.get("customer", {}).get("number", "Unknown")

@@ -5,10 +5,22 @@ import { useAuth } from "@clerk/nextjs";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SetupStep } from "./types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
+import { quickSetupSchema, FormValues } from "./components/schema";
 import QuickSetup from "./components/QuickSetup";
 import TalkToFlowon from "./components/TalkToFlowon";
 import Launch from "./components/Launch";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Import form sections
+import TrainingSources from "./components/form-sections/TrainingSources";
+import BusinessInformation from "./components/form-sections/BusinessInformation";
+import MessageTaking from "./components/form-sections/MessageTaking";
+import CallNotifications from "./components/form-sections/CallNotifications";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -143,13 +155,21 @@ export default function GuidedSetupPage() {
       </div>
 
       {/* Step Content */}
-      <Card className="p-6">
-        {currentStep === "quick-setup" && <QuickSetup onNext={handleNext} />}
-        {currentStep === "talk-to-rosie" && (
-          <TalkToFlowon onNext={handleNext} />
+      <div className="space-y-6">
+        {currentStep === "quick-setup" && (
+          <QuickSetup onNext={handleNext} />
         )}
-        {currentStep === "launch" && <Launch onNext={handleNext} />}
-      </Card>
+        {currentStep === "talk-to-rosie" && (
+          <Card className="p-6">
+            <TalkToFlowon onNext={handleNext} />
+          </Card>
+        )}
+        {currentStep === "launch" && (
+          <Card className="p-6">
+            <Launch onNext={handleNext} />
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

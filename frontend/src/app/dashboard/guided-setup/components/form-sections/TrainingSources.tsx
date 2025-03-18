@@ -51,7 +51,7 @@ export default function TrainingSources({
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span>Training Sources</span>
+          <span>Sources</span>
           <Info className="h-4 w-4 text-gray-400" />
         </CardTitle>
       </CardHeader>
