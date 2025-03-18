@@ -459,19 +459,22 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(async (data) => {
+        try {
+          // Call onSubmit first
+          await onSubmit(data);
+          // Only proceed to next step if save was successful
+          onNext();
+        } catch (error) {
+          console.error("Error saving form data:", error);
+          // Error is already handled in onSubmit
+        }
+      })} className="space-y-6">
         {/* Show error alert if loading failed */}
         {loadError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{loadError}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Show success message */}
-        {successMessage && (
-          <Alert>
-            <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         )}
 
@@ -491,16 +494,25 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
               setValue={setValue}
               getValues={getValues}
             />
+            {/* Success message inside the card */}
+            {successMessage && (
+              <Alert className="bg-green-50 text-green-700 border border-green-200">
+                <AlertDescription className="font-medium">{successMessage}</AlertDescription>
+              </Alert>
+            )}
+
             <BusinessInformation 
-              control={control}
-              errors={errors}
-              newService={newService}
-              setNewService={setNewService}
-              addService={addService}
-              removeService={removeService}
-            />
+            control={control}
+            errors={errors}
+            newService={newService}
+            setNewService={setNewService}
+            addService={addService}
+            removeService={removeService}
+          />
           </div>
         </Card>
+
+
 
         {/* Message Taking Section */}
         <MessageTaking 

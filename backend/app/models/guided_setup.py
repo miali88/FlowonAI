@@ -55,5 +55,5 @@ class QuickSetupData(BaseModel):
     businessInformation: BusinessInformation
     messageTaking: MessageTaking
     callNotifications: CallNotifications
-    bookingLink: BookingLink
+    bookingLink: Optional[BookingLink] = None
     agentLanguage: str = "en-US"

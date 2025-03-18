@@ -194,16 +194,51 @@ crawl_limiter = RateLimiter(CRAWL_RATE_LIMIT, "Crawl")
 async def scrape_with_retry(url: str) -> Dict[str, Any]:
     logger.info(f"Scraping URL: {url}")
     try:
+        # Configure browser settings
+        browser_config = BrowserConfig(
+            browser_type="chromium",
+            headless=True,
+            extra_args=[
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
+                "--disable-setuid-sandbox",
+                "--no-sandbox",
+                "--disable-web-security",
+                "--disable-features=IsolateOrigins,site-per-process",
+                "--disable-site-isolation-trials"
+            ],
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0'
+            }
+        )
+        
         run_cfg = CrawlerRunConfig(
             markdown_generator=DefaultMarkdownGenerator()  # Enable markdown generation
         )
-        browser_config=BrowserConfig(
-            browser_type="chromium",
-            headless=True,
-            extra_args=["--disable-gpu"]
-        )
+        
         async with AsyncWebCrawler(config=browser_config) as crawler:
             result = await crawler.arun(url=url, config=run_cfg)
+            
+            # Handle unsuccessful scraping
+            if not result.success:
+                logger.warning(f"Scraping unsuccessful for {url}: {result.error_message}")
+                return {
+                    'content': 'Unable to scrape content at this time.',
+                    'metadata': {'title': 'Scraping Error', 'description': result.error_message},
+                    'success': False,
+                    'error_message': result.error_message
+                }
             
             # Convert CrawlResult to dictionary with expected structure
             return {
@@ -211,16 +246,26 @@ async def scrape_with_retry(url: str) -> Dict[str, Any]:
                     else result.markdown.text if result.markdown 
                     else result.cleaned_html,
                 'metadata': result.metadata or {},
-                'success': result.success,
-                'error_message': result.error_message
+                'success': True,
+                'error_message': None
             }
             
     except RequestException as e:
         logger.error(f"HTTP error while scraping {url}: {str(e)}")
-        raise
+        return {
+            'content': 'Unable to access the website at this time.',
+            'metadata': {'title': 'Connection Error', 'description': str(e)},
+            'success': False,
+            'error_message': f"HTTP error: {str(e)}"
+        }
     except Exception as e:
         logger.error(f"Unexpected error while scraping {url}: {str(e)}")
-        raise
+        return {
+            'content': 'An unexpected error occurred while processing this website.',
+            'metadata': {'title': 'Processing Error', 'description': str(e)},
+            'success': False,
+            'error_message': f"Unexpected error: {str(e)}"
+        }
 
 async def process_single_url(
     site: str, 
@@ -234,9 +279,14 @@ async def process_single_url(
         return None
 
     try:
-        response = await scrape_with_retry(
-            site
-        )
+        response = await scrape_with_retry(site)
+
+        # If scraping was unsuccessful, log and return None
+        if not response['success']:
+            logger.warning(
+                f"Failed to scrape {site}: {response['error_message']}"
+            )
+            return None
 
         content_list = [
             item for item in response['content'].split('\n\n')
@@ -247,39 +297,59 @@ async def process_single_url(
         try:
             title = response['metadata'].get('title', 'No Title Available')
             description = response['metadata'].get('description', 'No Description Available')
-
             header = f"## Title: {title} ## Description: {description}"
         except KeyError:
-            logger.warning(f"KeyError occurred for site {site}: Missing description")
-            header = "## Title: " + response['metadata']['title']
+            logger.warning(f"KeyError occurred for site {site}: Missing metadata")
+            header = "## Title: No Title Available ## Description: No Description Available"
+
+        # Skip processing if content is empty
+        if not content.strip():
+            logger.warning(f"Empty content for site {site}")
+            return None
 
         chunks = await sliding_window_chunking(content)
         results = []
 
-        async def process_chunk(chunk: str) -> Dict[str, Any]:
-            sb_insert = {
-                "url": site,
-                "header": header,
-                "content": chunk,
-                "token_count": 0,
-                "jina_embedding": "",
-                "user_id": user_id,
-                "root_url": root_url
-            }
-            logger.info(f"sb_insert url: {sb_insert['url']}")
+        async def process_chunk(chunk: str) -> Optional[Dict[str, Any]]:
+            try:
+                sb_insert = {
+                    "url": site,
+                    "header": header,
+                    "content": chunk,
+                    "token_count": 0,
+                    "jina_embedding": "",
+                    "user_id": user_id,
+                    "root_url": root_url
+                }
+                logger.info(f"Processing chunk for URL: {sb_insert['url']}")
 
-            chunk_text = header + chunk
-            jina_response = await get_embedding(chunk_text)
-            sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
-            sb_insert['token_count'] = jina_response['usage']['total_tokens']
+                chunk_text = header + chunk
+                try:
+                    jina_response = await get_embedding(chunk_text)
+                    sb_insert['jina_embedding'] = jina_response['data'][0]['embedding']
+                    sb_insert['token_count'] = jina_response['usage']['total_tokens']
+                except Exception as e:
+                    logger.error(f"Error getting embedding for {site}: {str(e)}")
+                    return None
 
-            await insert_to_db(sb_insert)
-            return sb_insert
+                await insert_to_db(sb_insert)
+                return sb_insert
+            except Exception as e:
+                logger.error(f"Error processing chunk for {site}: {str(e)}")
+                return None
 
         chunk_tasks = [process_chunk(chunk) for chunk in chunks]
         results = await asyncio.gather(*chunk_tasks, return_exceptions=True)
 
-        return [r for r in results if isinstance(r, dict)]
+        # Filter out None results and exceptions
+        valid_results = []
+        for result in results:
+            if isinstance(result, dict):
+                valid_results.append(result)
+            elif isinstance(result, Exception):
+                logger.error(f"Error processing chunk: {str(result)}")
+
+        return valid_results if valid_results else None
 
     except Exception as e:
         logger.error(f"Error processing site {site}: {str(e)}", exc_info=True)
@@ -288,21 +358,62 @@ async def process_single_url(
 async def scrape_url(
     urls: List[str], 
     user_id: Optional[str] = None
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     logger.info(f"URLs to scrape at {datetime.now()}: {urls}")
-    parsed_url = urlparse(urls[0])
-    root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    
+    if not urls:
+        logger.warning("No URLs provided for scraping")
+        return {
+            "message": "No URLs provided for scraping",
+            "success": False,
+            "error_count": 0,
+            "success_count": 0
+        }
+
+    try:
+        parsed_url = urlparse(urls[0])
+        root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    except Exception as e:
+        logger.error(f"Error parsing root URL: {str(e)}")
+        return {
+            "message": f"Error parsing root URL: {str(e)}",
+            "success": False,
+            "error_count": len(urls),
+            "success_count": 0
+        }
 
     tasks = [process_single_url(site, user_id, root_url) for site in urls]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    flat_results = []
-    for result in results:
-        if isinstance(result, list):
-            flat_results.extend(result)
+    success_count = 0
+    error_count = 0
+    errors = []
 
-    logger.info("Scraping completed")
-    return {"message": "Scraping completed"}
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            error_count += 1
+            logger.error(f"Error processing {urls[i]}: {str(result)}")
+            errors.append({"url": urls[i], "error": str(result)})
+        elif result is None:
+            error_count += 1
+            logger.warning(f"No data extracted from {urls[i]}")
+        elif isinstance(result, list):
+            success_count += 1
+            logger.info(f"Successfully processed {urls[i]}")
+
+    status_message = (
+        "All URLs processed successfully" if error_count == 0
+        else f"Processed with {error_count} errors and {success_count} successes"
+    )
+
+    logger.info(f"Scraping completed: {status_message}")
+    return {
+        "message": status_message,
+        "success": error_count == 0,
+        "error_count": error_count,
+        "success_count": success_count,
+        "errors": errors if errors else None
+    }
 
 async def map_url(url: str) -> List[str]:
     logger.info(f"Starting URL mapping for: {url}")

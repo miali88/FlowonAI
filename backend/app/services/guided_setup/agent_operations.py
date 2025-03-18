@@ -5,7 +5,7 @@ from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
 from app.services.vapi.assistants import create_assistant, update_assistant
 from app.services.vapi.constants.voice_ids import voice_ids
-from app.services.vapi.constants.sys_prompt import SYS_PROMPT_TEMPLATE
+from app.services.vapi.constants.inbound_sys_prompt import SYS_PROMPT_TEMPLATE
 from app.clients.supabase_client import get_supabase
 from .setup_crud import get_guided_setup, update_guided_setup_agent_id
 from app.models.guided_setup import QuickSetupData
@@ -37,7 +37,6 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         business_phone = ""
         core_services = []
         business_hours = {}
-    print(f"\n\nBusiness information: {setup_data.businessInformation}")
 
     # Format comprehensive business information with markdown headings if they exist
     business_info_lines = []
@@ -72,7 +71,6 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         logging.info("Added business hours to business information")
     
     formatted_business_information = "\n".join(business_info_lines) if business_info_lines else ""
-    logging.info(f"Formatted business information (with hours):\n{formatted_business_information}")
     
     # We'll still format business hours separately for logging purposes
     if business_hours:
@@ -80,7 +78,6 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         for day, hours in business_hours.items():
             hours_lines.append(f"- {day}: {hours.open} - {hours.close}")
         standalone_hours = "\n".join(hours_lines)
-        logging.info(f"Formatted business hours (standalone):\n{standalone_hours}")
     else:
         logging.info("No business hours to format")
     
@@ -113,7 +110,6 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
                 message_taking_info.append(f"{i}. {q.question} {required_mark}")
         
         formatted_message_taking = "\n".join(message_taking_info)
-        logging.info(f"Formatted message taking information:\n{formatted_message_taking}")
     else:
         formatted_message_taking = ""
         logging.info("No message taking information to format")
@@ -126,7 +122,6 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
     )
     
     logging.info("System prompt formatting completed")
-    logging.info(f"Final formatted system prompt:\n{sys_prompt}")
     return sys_prompt, business_name
 
 async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Any]:

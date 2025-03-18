@@ -47,6 +47,7 @@ class VapiEndOfCallReport:
         self.duration_minutes = duration_minutes
         self.user_id = user_id
         self.created_at = datetime.utcnow().isoformat()
+        logger.debug(f"[SERVICE] VapiEndOfCallReport: Initialized report for call {call_id}")
     
     @classmethod
     async def from_webhook(cls, webhook_data: Dict[str, Any]) -> 'VapiEndOfCallReport':
@@ -56,55 +57,57 @@ class VapiEndOfCallReport:
         
         # Extract required fields with proper logging
         call_id = message.get("call", {}).get("id", "")
-        logger.debug(f"Extracted call_id: {call_id}")
+        logger.debug(f"[SERVICE] from_webhook: Processing call ID: {call_id}")
         
         timestamp = message.get("timestamp", 0)
-        logger.debug(f"Extracted timestamp: {timestamp}")
+        logger.debug(f"[SERVICE] from_webhook: Timestamp: {timestamp}")
         
         type = message.get("type", "")
-        logger.debug(f"Extracted type: {type}")
+        logger.debug(f"[SERVICE] from_webhook: Event type: {type}")
         
         summary = message.get("summary", "")
-        logger.debug(f"Extracted summary length: {len(summary)} chars")
+        logger.debug(f"[SERVICE] from_webhook: Summary length: {len(summary)} chars")
         
         transcript = message.get("transcript", "")
-        logger.debug(f"Extracted transcript length: {len(transcript)} chars")
+        logger.debug(f"[SERVICE] from_webhook: Transcript length: {len(transcript)} chars")
         
         recording_url = message.get("recordingUrl", "")
-        logger.debug(f"Extracted recording url: {recording_url}")
+        logger.debug(f"[SERVICE] from_webhook: Recording URL: {recording_url}")
         
         stereo_recording_url = message.get("stereoRecordingUrl", "")
-        logger.debug(f"Extracted stereo recording url: {stereo_recording_url}")
+        logger.debug(f"[SERVICE] from_webhook: Stereo recording URL: {stereo_recording_url}")
         
         phone_number = message.get("phoneNumber", {}).get("number", "")
-        logger.debug(f"Extracted phone_number: {phone_number}")
+        logger.debug(f"[SERVICE] from_webhook: Phone number: {phone_number}")
         
         # Extract customer number from the webhook data
         customer_number = message.get("customer", {}).get("number", "")
-        logger.debug(f"Extracted customer_number: {customer_number}")
+        logger.debug(f"[SERVICE] from_webhook: Customer number: {customer_number}")
         
         cost = message.get("cost", 0.0)
-        logger.debug(f"Extracted cost: {cost}")
+        logger.debug(f"[SERVICE] from_webhook: Cost: {cost}")
         
         ended_reason = message.get("endedReason", "")
-        logger.debug(f"Extracted ended_reason: {ended_reason}")
+        logger.debug(f"[SERVICE] from_webhook: Ended reason: {ended_reason}")
         
         started_at = message.get("startedAt", "")
-        logger.debug(f"Extracted started_at: {started_at}")
+        logger.debug(f"[SERVICE] from_webhook: Started at: {started_at}")
         
         ended_at = message.get("endedAt", "")
-        logger.debug(f"Extracted ended_at: {ended_at}")
+        logger.debug(f"[SERVICE] from_webhook: Ended at: {ended_at}")
         
         duration_seconds = message.get("durationSeconds", 0.0)
-        logger.debug(f"Extracted duration_seconds: {duration_seconds}")
+        logger.debug(f"[SERVICE] from_webhook: Duration seconds: {duration_seconds}")
         
         duration_minutes = message.get("durationMinutes", 0.0)
-        logger.debug(f"Extracted duration_minutes: {duration_minutes}")
+        logger.debug(f"[SERVICE] from_webhook: Duration minutes: {duration_minutes}")
         
         # Get the user ID associated with the phone number
+        logger.info(f"[SERVICE] from_webhook: Looking up user ID for phone number: {phone_number}")
         user_id = await get_user_id(phone_number)
-        logger.debug(f"Retrieved user_id for phone number: {user_id}")
+        logger.debug(f"[SERVICE] from_webhook: Retrieved user ID: {user_id}")
         
+        logger.info(f"[SERVICE] from_webhook: Creating call report for call {call_id}")
         return cls(
             call_id=call_id,
             timestamp=timestamp,
@@ -126,6 +129,7 @@ class VapiEndOfCallReport:
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage."""
+        logger.debug(f"[SERVICE] to_dict: Converting call report {self.call_id} to dictionary")
         return {
             "id": self.id,
             "call_id": self.call_id,

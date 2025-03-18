@@ -1,47 +1,142 @@
 import logging
 import os
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from app.clients.supabase_client import get_supabase
+from app.core.config import settings
+import json
+import httpx
+
 logger = logging.getLogger(__name__)
 
 async def get_user_id(phone_number: str) -> Optional[str]:
-    """
-    Query the Twilio numbers table to get the user ID associated with a phone number.
-    
-    Args:
-        phone_number: The phone number to lookup
-        
-    Returns:
-        The user ID if found, None otherwise
-    """
+    """Get user ID associated with a phone number."""
+    logger.info(f"[SERVICE] get_user_id: Looking up user for phone number: {phone_number}")
     try:
-        if not phone_number:
-            logger.warning("Empty phone number provided to getUserID")
-            return None
-            
-        logger.info(f"Looking up user ID for phone number: {phone_number}")
         
-        # Get Supabase client
         supabase = await get_supabase()
+        response = await supabase.table("users").select("id").eq("phone_number", phone_number).execute()
         
-        # Query the twilio_numbers table for this phone number
-        response = await supabase.table("twilio_numbers").select("owner_user_id").eq("phone_number", phone_number).execute()
+        if response.data and len(response.data) > 0:
+            user_id = response.data[0]["id"]
+            logger.debug(f"[SERVICE] get_user_id: Found user ID: {user_id}")
+            return user_id
         
-        # Check if we got results
-        data = response.data
-        if not data or len(data) == 0:
-            logger.warning(f"No user found for phone number: {phone_number}")
-            return None
-            
-        # Return the user ID from the first matching record
-        user_id = data[0].get("owner_user_id")
-        logger.info(f"Found user ID {user_id} for phone number: {phone_number}")
-        return user_id
-        
-    except Exception as e:
-        logger.error(f"Error looking up user ID for phone number {phone_number}: {str(e)}")
+        logger.warning(f"[SERVICE] get_user_id: No user found for phone number: {phone_number}")
         return None
+    except Exception as e:
+        logger.error(f"[SERVICE] get_user_id: Error looking up user: {str(e)}")
+        return None
+
+async def get_vapi_token() -> Optional[str]:
+    """Get VAPI API token from environment variables."""
+    logger.debug("[SERVICE] get_vapi_token: Retrieving VAPI API token")
+    token = settings.VAPI_API_TOKEN
+    if not token:
+        logger.error("[SERVICE] get_vapi_token: No VAPI API token found in environment")
+        return None
+    return token
+
+async def make_vapi_request(
+    method: str,
+    endpoint: str,
+    data: Optional[Dict[str, Any]] = None,
+    params: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Make a request to the VAPI API."""
+    logger.info(f"[SERVICE] make_vapi_request: Making {method} request to {endpoint}")
+    
+    token = await get_vapi_token()
+    if not token:
+        logger.error("[SERVICE] make_vapi_request: No VAPI API token available")
+        return None
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    
+    url = f"{settings.VAPI_API_BASE_URL}{endpoint}"
+    logger.debug(f"[SERVICE] make_vapi_request: Full URL: {url}")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            if method.upper() == "GET":
+                logger.debug(f"[SERVICE] make_vapi_request: GET request with params: {params}")
+                response = await client.get(url, headers=headers, params=params)
+            elif method.upper() == "POST":
+                logger.debug(f"[SERVICE] make_vapi_request: POST request with data: {json.dumps(data)}")
+                response = await client.post(url, headers=headers, json=data)
+            elif method.upper() == "PUT":
+                logger.debug(f"[SERVICE] make_vapi_request: PUT request with data: {json.dumps(data)}")
+                response = await client.put(url, headers=headers, json=data)
+            else:
+                logger.error(f"[SERVICE] make_vapi_request: Unsupported HTTP method: {method}")
+                return None
+            
+            response.raise_for_status()
+            response_data = response.json()
+            logger.debug(f"[SERVICE] make_vapi_request: Successful response: {json.dumps(response_data)}")
+            return response_data
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"[SERVICE] make_vapi_request: HTTP error {e.response.status_code}: {str(e)}")
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"[SERVICE] make_vapi_request: Request error: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"[SERVICE] make_vapi_request: Unexpected error: {str(e)}")
+        return None
+
+async def get_assistant_details(assistant_id: str) -> Optional[Dict[str, Any]]:
+    """Get details of a VAPI assistant."""
+    logger.info(f"[SERVICE] get_assistant_details: Fetching details for assistant {assistant_id}")
+    
+    response = await make_vapi_request(
+        method="GET",
+        endpoint=f"/assistants/{assistant_id}",
+    )
+    
+    if response:
+        logger.debug(f"[SERVICE] get_assistant_details: Successfully retrieved assistant details")
+        return response
+    else:
+        logger.error(f"[SERVICE] get_assistant_details: Failed to retrieve assistant details")
+        return None
+
+async def get_call_details(call_id: str) -> Optional[Dict[str, Any]]:
+    """Get details of a VAPI call."""
+    logger.info(f"[SERVICE] get_call_details: Fetching details for call {call_id}")
+    
+    response = await make_vapi_request(
+        method="GET",
+        endpoint=f"/calls/{call_id}",
+    )
+    
+    if response:
+        logger.debug(f"[SERVICE] get_call_details: Successfully retrieved call details")
+        return response
+    else:
+        logger.error(f"[SERVICE] get_call_details: Failed to retrieve call details")
+        return None
+
+async def get_user_assistants(user_id: str) -> List[Dict[str, Any]]:
+    """Get all assistants associated with a user."""
+    logger.info(f"[SERVICE] get_user_assistants: Fetching assistants for user {user_id}")
+    try:
+        supabase = await get_supabase()
+        response = await supabase.table("assistants").select("*").eq("user_id", user_id).execute()
+        
+        if response.data:
+            logger.debug(f"[SERVICE] get_user_assistants: Found {len(response.data)} assistants")
+            return response.data
+        
+        logger.warning(f"[SERVICE] get_user_assistants: No assistants found for user {user_id}")
+        return []
+    except Exception as e:
+        logger.error(f"[SERVICE] get_user_assistants: Error fetching assistants: {str(e)}")
+        return []
 
 # New function to get user notification settings
 async def get_user_notification_settings(user_id: str) -> Dict[str, Any]:
@@ -53,9 +148,7 @@ async def get_user_notification_settings(user_id: str) -> Dict[str, Any]:
         
     Returns:
         Dict containing notification settings
-    """
-    from app.clients.supabase_client import get_supabase
-    
+    """    
     try:
         logger.info(f"Getting notification settings for user: {user_id}")
         supabase = await get_supabase()
