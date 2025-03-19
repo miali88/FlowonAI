@@ -13,12 +13,12 @@ async def get_user_id(phone_number: str) -> Optional[str]:
     """Get user ID associated with a phone number."""
     logger.info(f"[SERVICE] get_user_id: Looking up user for phone number: {phone_number}")
     try:
-        
         supabase = await get_supabase()
-        response = await supabase.table("users").select("id").eq("phone_number", phone_number).execute()
+        # Use containedBy to check if the phone number is in the JSON array
+        response = await supabase.table("guided_setup").select("user_id").filter("phone_number", "eq", phone_number).execute()
         
         if response.data and len(response.data) > 0:
-            user_id = response.data[0]["id"]
+            user_id = response.data[0]["user_id"]
             logger.debug(f"[SERVICE] get_user_id: Found user ID: {user_id}")
             return user_id
         
