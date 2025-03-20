@@ -208,17 +208,17 @@ export function AppSidebar({
       icon: MessageSquare,
       href: "/dashboard/conversationlogs",
     },
-    { title: "Insights", icon: BarChart3, href: "/dashboard/analytics" },
-    { title: "Integrations", icon: Plug, href: "/dashboard/integrations" },
+    // { title: "Insights", icon: BarChart3, href: "/dashboard/analytics" },
+    // { title: "Integrations", icon: Plug, href: "/dashboard/integrations" },
     {
       title: "Knowledge Base",
       icon: BookOpen,
       href: "/dashboard/knowledgebase",
     },
     {
-      title: "Contact Founders",
+      title: "Contact Founder",
       icon: Calendar,
-      href: "/dashboard/contactfounders",
+      href: "/dashboard/contactfounder",
     },
   ];
 

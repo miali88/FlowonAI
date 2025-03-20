@@ -80,8 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Conversation Logs",
       href: "/dashboard/conversationlogs",
     },
-    { icon: Plug, label: "Integrations", href: "/dashboard/integrations" },
-    { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+    // { icon: Plug, label: "Integrations", href: "/dashboard/integrations" },
+    // { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
     {
       icon: BookOpen,
       label: "Knowledge Base",
