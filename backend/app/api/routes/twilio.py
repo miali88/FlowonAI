@@ -74,15 +74,19 @@ async def purchase_phone_number(
 ) -> JSONResponse:
     """Purchase a Twilio phone number for the user"""
     try:
-        purchase_result = await provision_user_phone_number(
-            country_code=country_code,
-            number_type=number_type,
-            area_code=area_code,
-            user_id=current_user
-        )
+        logger.info(f"Purchasing phone number for user: {current_user}")
+        logger.info(f"Country code: {country_code}")
+        logger.info(f"Number type: {number_type}")
+        logger.info(f"Area code: {area_code}")
+        # purchase_result = await provision_user_phone_number(
+        #     country_code=country_code,
+        #     number_type=number_type,
+        #     area_code=area_code,
+        #     user_id=current_user
+        # )
         
-        return JSONResponse(content=purchase_result)
-        
+        # return JSONResponse(content=purchase_result)
+        return JSONResponse(content={"phone_number": "1234567890"})
     except HTTPException:
         # Re-raise HTTP exceptions
         raise

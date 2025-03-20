@@ -210,8 +210,14 @@ async def get_rosie_phone_number(user_id: str) -> Dict[str, Any]:
         return {"success": False, "error": "No setup data found for user"}
     
     phone_number = setup_data.get("phone_number", "")
-    
-    return {
-        "success": True,
-        "phone_number": phone_number
-    }
+
+    if not phone_number:
+        return {
+            "success": False,
+            "error": "No phone number found for user"
+        }
+    else:
+        return {
+            "success": True,
+            "phone_number": phone_number
+        }

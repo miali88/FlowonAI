@@ -60,6 +60,7 @@ async def get_phone_number(current_user: str = Depends(get_current_user)):
         if not result.get("success", False):
             raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
         
+
         return result
     except Exception as e:
         logging.error(f"Error in get_phone_number endpoint: {str(e)}")

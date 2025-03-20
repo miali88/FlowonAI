@@ -44,10 +44,38 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean>(true);
   const [showPurchaseUI, setShowPurchaseUI] = useState<boolean>(false);
-  const [selectedCountry, setSelectedCountry] = useState<string>("US"); // Default to US for now
-  
+  const [isPhonePurchaseLoading, setIsPhonePurchaseLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState<string>('US'); // Default to US initially
+
+  // Function to determine country code from address
+  const getCountryCodeFromAddress = (address: string): string => {
+    // Common country indicators in addresses
+    const countryIndicators = {
+      'UK': 'GB',
+      'United Kingdom': 'GB',
+      'England': 'GB',
+      'Scotland': 'GB',
+      'Wales': 'GB',
+      'Northern Ireland': 'GB',
+      'USA': 'US',
+      'United States': 'US',
+      'Canada': 'CA',
+      'Australia': 'AU',
+      // Add more mappings as needed
+    };
+
+    const upperAddress = address.toUpperCase();
+    for (const [indicator, code] of Object.entries(countryIndicators)) {
+      if (upperAddress.includes(indicator.toUpperCase())) {
+        return code;
+      }
+    }
+    return 'US'; // Default fallback
+  };
+
+  // Fetch setup data and phone number
   useEffect(() => {
-    async function fetchPhoneNumber() {
+    async function fetchData() {
       try {
         setIsLoading(true);
         setError(null);
@@ -57,6 +85,43 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           throw new Error("Authentication required");
         }
 
+        // First try to get setup data to determine country
+        const setupResponse = await fetch(
+          `${API_BASE_URL}/guided_setup/setup_data`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        if (setupResponse.ok) {
+          const setupData = await setupResponse.json();
+          console.log("Loaded setup data:", setupData);
+
+          if (setupData.success && setupData.setupData?.businessInformation?.primaryBusinessAddress) {
+            const detectedCountryCode = getCountryCodeFromAddress(setupData.setupData.businessInformation.primaryBusinessAddress);
+            console.log("Detected country code from address:", detectedCountryCode);
+            setCountryCode(detectedCountryCode);
+          } else {
+            // Fallback to localStorage
+            const businessInfoString = localStorage.getItem('flowonAI_businessInfo');
+            if (businessInfoString) {
+              try {
+                const businessInfo = JSON.parse(businessInfoString);
+                if (businessInfo.countryCode) {
+                  console.log("Using country code from localStorage:", businessInfo.countryCode);
+                  setCountryCode(businessInfo.countryCode);
+                }
+              } catch (err) {
+                console.error('Error parsing business info from localStorage:', err);
+              }
+            }
+          }
+        }
+
+        // Then fetch phone number
         const phoneNumberResponse = await fetch(
           `${API_BASE_URL}/guided_setup/phone_number`,
           {
@@ -79,36 +144,14 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           }
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/guided_setup/phone_number`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
+        // If we get here, no phone number was found
+        console.log("No dedicated phone number assigned, showing purchase UI");
+        setHasPhoneNumber(false);
+        setShowPurchaseUI(true);
+        setPhoneNumber(null);
 
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error("Error fetching phone number:", errorData);
-          throw new Error("Failed to fetch phone number");
-        }
-
-        const data = await response.json();
-        console.log("Guided setup phone number response:", data);
-
-        if (data.success && data.phone_number && data.phone_number !== "(814) 261-0317") {
-          setPhoneNumber(data.phone_number);
-          setHasPhoneNumber(true);
-        } else {
-          console.log("No dedicated phone number assigned, showing purchase UI");
-          setHasPhoneNumber(false);
-          setShowPurchaseUI(true);
-          setPhoneNumber(null);
-        }
       } catch (err) {
-        console.error("Error fetching Flowon phone number:", err);
+        console.error("Error fetching data:", err);
         setPhoneNumber(null);
         setHasPhoneNumber(false);
         setShowPurchaseUI(true);
@@ -117,14 +160,56 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       }
     }
 
-    fetchPhoneNumber();
+    fetchData();
   }, [userId, getToken]);
 
-  const handleNumberPurchased = (number: string) => {
-    console.log("Number purchased:", number);
-    setPhoneNumber(number);
-    setHasPhoneNumber(true);
-    setSuccessMessage("Phone number purchased successfully! You can use this number for your Flowon agent.");
+  const handlePurchasePhoneNumber = async () => {
+    try {
+      setIsPhonePurchaseLoading(true);
+      setError(null);
+
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      console.log(`Requesting phone number purchase for country code: ${countryCode}`);
+      
+      const phoneResponse = await fetch(
+        `${API_BASE_URL}/twilio/purchase_phone_number?country_code=${encodeURIComponent(countryCode)}&number_type=${encodeURIComponent('local')}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!phoneResponse.ok) {
+        const errorData = await phoneResponse.json().catch(e => ({ error: `Failed to parse error response: ${e.message}` }));
+        console.error('Failed to purchase phone number:', errorData);
+        throw new Error(errorData.error || 'Failed to purchase phone number');
+      }
+
+      const phoneResult = await phoneResponse.json();
+      console.log('Phone number purchased:', phoneResult);
+
+      if (phoneResult.phone_number) {
+        setPhoneNumber(phoneResult.phone_number);
+        setHasPhoneNumber(true);
+        setShowPurchaseUI(false);
+        setSuccessMessage("Phone number successfully purchased!");
+        localStorage.setItem('flowonAI_phoneNumber', phoneResult.phone_number);
+      } else {
+        throw new Error('No phone number received from server');
+      }
+    } catch (err: any) {
+      console.error('Error purchasing phone number:', err);
+      setError(err.message || 'Failed to purchase phone number. Please try again.');
+    } finally {
+      setIsPhonePurchaseLoading(false);
+    }
   };
 
   const handleNext = () => {
@@ -141,20 +226,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Purchase a Phone Number"}
+          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Assign a Phone Number to your Flowon Agent"}
         </h2>
       </div>
-
-      <Alert variant="default" className="border-blue-500">
-        <Info className="h-4 w-4 text-blue-500" />
-        <AlertDescription>
-          {hasPhoneNumber ? (
-            "This is your dedicated Flowon agent phone number. You can call this number directly to test your agent, and all call forwarding should be directed to this number. In the next step, we'll show you how to set up call forwarding from your business number to ensure your agent can answer calls seamlessly."
-          ) : (
-            "To get started with your Flowon agent, you'll need a dedicated phone number. This number will be used for all call interactions with your agent. Purchase a number below to continue."
-          )}
-        </AlertDescription>
-      </Alert>
 
       {error && error !== "Could not load Flowon phone number. Please try purchasing one below." && (
         <Alert variant="destructive">
@@ -189,19 +263,33 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         ) : showPurchaseUI ? (
           <div className="bg-card rounded-xl p-6 border">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
-                <span className="text-lg font-medium">{selectedCountry}</span>
+              <div className="text-center mb-6">
+                <p className="text-lg font-medium mb-2">To get your agent up and running, you'll need a phone number</p>
+                <p className="text-sm text-gray-500">Click the button below to request a telephone number</p>
               </div>
               
-              <StripeNumberPurchase
-                amount={2}
-                twilioNumber=""
-                disabled={false}
-              />
+              <div className="flex justify-center">
+                <Button
+                  onClick={handlePurchasePhoneNumber}
+                  disabled={isPhonePurchaseLoading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  {isPhonePurchaseLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Purchasing Number...
+                    </>
+                  ) : (
+                    <>
+                      <PhoneCall className="mr-2 h-4 w-4" />
+                      Request Phone Number
+                    </>
+                  )}
+                </Button>
+              </div>
               
-              <p className="text-sm text-gray-500 mt-4">
-                * Refundable one-time fee for phone number purchase during trial period.
+              <p className="text-sm text-gray-500 text-center mt-4">
+                * A phone number will be assigned based on your business location
               </p>
             </div>
           </div>
