@@ -245,30 +245,7 @@ export default function AudioTestPage() {
           <p className="text-xl text-center max-w-md text-gray-300 mb-8">
             Your AI assistant uses natural language processing to create a voice that represents your brand.
           </p>
-          
-          <div className="grid grid-cols-1 gap-6 max-w-md">
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl">
-              <h3 className="font-semibold mb-2">Natural Voice</h3>
-              <p className="text-sm text-gray-300">
-                AI-generated voice that sounds natural and professional
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl">
-              <h3 className="font-semibold mb-2">Customizable Tone</h3>
-              <p className="text-sm text-gray-300">
-                Adjust the tone to match your brand's personality
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl">
-              <div className="flex items-center gap-2">
-                <Volume2 className="h-5 w-5 text-cyan-400" />
-                <h3 className="font-semibold">High-Quality Audio</h3>
-              </div>
-              <p className="text-sm text-gray-300 mt-1">
-                Crystal clear voice quality for professional calls
-              </p>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

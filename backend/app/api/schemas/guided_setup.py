@@ -47,4 +47,11 @@ class RetrainAgentResponse(BaseModel):
     success: bool
     business_overview: Optional[str] = None
     error: Optional[str] = None
-    setup_data: Optional[dict] = None 
+    setup_data: Optional[dict] = None
+
+class UpdateTrainingStatusRequest(BaseModel):
+    """
+    Schema for updating the trained_on_website status
+    """
+    trained_on_website: bool = Field(..., description="Whether the agent has been trained on the website")
+ 

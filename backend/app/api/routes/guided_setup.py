@@ -9,6 +9,7 @@ from app.api.schemas.guided_setup import (
     OnboardingPreviewRequest,
     AudioPreviewResponse,
     TrialPlanRequest,
+    UpdateTrainingStatusRequest,
 )
 from app.services.guided_setup import (
     get_phone_number_handler,
@@ -19,6 +20,7 @@ from app.services.guided_setup import (
     retrain_agent_service,
     generate_onboarding_preview_service,
     set_trial_plan_service,
+    update_training_status_service,
 )
 
 router = APIRouter()
@@ -237,4 +239,37 @@ async def options_set_trial_plan():
     Handle OPTIONS requests for CORS preflight.
     """
     logging.debug("[ENDPOINT] /set_trial_plan OPTIONS request received")
+    return {}
+
+@router.post("/update_training_status")
+async def update_training_status(
+    request: UpdateTrainingStatusRequest,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Update the trained_on_website status for a user's guided setup.
+    """
+    logging.info(f"[ENDPOINT] /update_training_status invoked by user {current_user}")
+    try:
+        # Update the training status in the database
+        result = await update_training_status_service(
+            user_id=current_user,
+            trained_status=request.trained_on_website
+        )
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to update training status"))
+        
+        return result
+    
+    except Exception as e:
+        logging.error(f"Error updating training status: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error updating training status: {str(e)}")
+
+@router.options("/update_training_status")
+async def options_update_training_status():
+    """
+    Handle OPTIONS requests for CORS preflight.
+    """
+    logging.debug("[ENDPOINT] /update_training_status OPTIONS request received")
     return {}

@@ -18,7 +18,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import StripeNumberPurchase from "@/components/StripeNumberPurchase";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -176,7 +175,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       console.log(`Requesting phone number purchase for country code: ${countryCode}`);
       
       const phoneResponse = await fetch(
-        `${API_BASE_URL}/twilio/purchase_phone_number?country_code=${encodeURIComponent(countryCode)}&number_type=${encodeURIComponent('local')}`,
+        `${API_BASE_URL}/twilio/purchase_phone_number?country_code=${encodeURIComponent(countryCode)}`,
         {
           method: 'POST',
           headers: {

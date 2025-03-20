@@ -21,6 +21,7 @@ from .setup_crud import (
     get_formatted_setup_data,
     get_phone_number_handler,
     check_user_exists,
+    update_training_status_service,
 )
 
 from .agent_operations import (
@@ -38,13 +39,13 @@ from .web_scraping import (
 )
 
 from .api_handlers import (
-    submit_quick_setup,
-    check_setup_status,
     generate_onboarding_preview_service,
     set_trial_plan_service,
+    submit_quick_setup,
+    check_setup_status,
 )
 
-# Export all the functions and models from the original guided_setup.py
+# Export all the functions and models
 __all__ = [
     # Models
     'TrainingSource',
@@ -68,6 +69,7 @@ __all__ = [
     'get_formatted_setup_data',
     'get_phone_number_handler',
     'check_user_exists',
+    'update_training_status_service',
 
     # Agent operations
     'create_or_update_vapi_assistant',
@@ -81,9 +83,8 @@ __all__ = [
     'retrain_agent_service',
     
     # API handlers
-    'submit_quick_setup',
-    'check_setup_status',
     'generate_onboarding_preview_service',
     'set_trial_plan_service',
-    'save_onboarding_data_service'
+    'submit_quick_setup',
+    'check_setup_status'
 ] 
