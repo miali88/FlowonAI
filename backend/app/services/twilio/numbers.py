@@ -214,6 +214,11 @@ async def provision_user_phone_number(
             "already_exists": True
         }
     
+    # For GB, always use mobile numbers
+    if country_code == 'GB':
+        number_type = 'mobile'
+        logger.info(f"Country code is GB, defaulting to mobile number type")
+    
     # Get an available number from the specified country and type
     logger.info(f"Fetching available numbers for country_code={country_code}, type={number_type}")
     available_numbers = get_available_numbers(country_code)
@@ -268,7 +273,6 @@ async def provision_user_phone_number(
             vapi_result = await register_phone_number_with_vapi(
                 phone_number=phone_number,
                 twilio_account_sid=purchase_result['account_sid'],
-                twilio_auth_token=None  # Will be fetched from environment variables
             )
             logger.info(f"Successfully registered number {phone_number} with Vapi")
             logger.debug(f"Vapi registration result: {vapi_result}")

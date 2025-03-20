@@ -85,8 +85,8 @@ async def purchase_phone_number(
             user_id=current_user
         )
         
-        # return JSONResponse(content=purchase_result)
-        return JSONResponse(content={"phone_number": "1234567890"})
+        return JSONResponse(content=purchase_result)
+        # return JSONResponse(content={"phone_number": "1234567890"})
     except HTTPException:
         # Re-raise HTTP exceptions
         raise

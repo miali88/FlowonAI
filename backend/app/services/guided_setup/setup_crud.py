@@ -119,8 +119,6 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         logging.error(error_message)
         return False, {}, error_message
 
-
-
 async def get_guided_setup(user_id: str):
     """Retrieve the guided setup data for a user from Supabase."""
     supabase = await get_supabase()
@@ -192,7 +190,8 @@ async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
         "trainingSources": setup_data.get("training_sources", {}),
         "businessInformation": setup_data.get("business_information", {}),
         "messageTaking": setup_data.get("message_taking", {}),
-        "callNotifications": setup_data.get("call_notifications", {})
+        "callNotifications": setup_data.get("call_notifications", {}),
+        "trained_on_website": setup_data.get("trained_on_website", False)
     }
     
     # Format and return the setup data
@@ -219,4 +218,44 @@ async def get_phone_number_handler(user_id: str) -> Dict[str, Any]:
         return {
             "success": True,
             "phone_number": phone_number
+        }
+
+async def update_training_status_service(user_id: str, trained_status: bool) -> Dict[str, Any]:
+    """
+    Update the trained_on_website status for a user in the guided_setup table.
+    
+    Args:
+        user_id: The ID of the user
+        trained_status: The new training status
+        
+    Returns:
+        Dict containing success status and any error message
+    """
+    try:
+        supabase = await get_supabase()
+        
+        # Update the trained_on_website status
+        result = await supabase.table('guided_setup') \
+            .update({'trained_on_website': trained_status}) \
+            .eq('user_id', user_id) \
+            .execute()
+            
+        if not result.data or len(result.data) == 0:
+            logging.error(f"No guided setup record found for user {user_id}")
+            return {
+                'success': False,
+                'error': 'No guided setup record found for user'
+            }
+            
+        logging.info(f"Updated training status to {trained_status} for user {user_id}")
+        return {
+            'success': True,
+            'data': result.data[0]
+        }
+            
+    except Exception as e:
+        logging.error(f"Error updating training status: {str(e)}")
+        return {
+            'success': False,
+            'error': f"Failed to update training status: {str(e)}"
         }

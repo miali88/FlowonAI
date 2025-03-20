@@ -2,6 +2,7 @@ import logging
 from typing import Dict, Any, Optional
 
 from app.clients.elevenlabs_client import elevenlabs_client
+from app.services.vapi.constants.voice_ids import get_voice_for_country, get_agent_name_for_voice
 
 async def generate_greeting_preview(
     user_id: str,
@@ -27,8 +28,11 @@ async def generate_greeting_preview(
     try:
         logging.info(f"Generating greeting preview for user {user_id} with business: {business_name}, language: {language}")
         
-        # Use a default voice for the preview
-        default_voice_id = 'Ize3YDdGqJYYKQSDLORJ'
+        # Get appropriate voice ID and agent name based on language code
+        country_code = language.split("-")[-1].upper() if "-" in language else language.upper()
+        voice_id = get_voice_for_country(country_code)
+        agent_name = get_agent_name_for_voice(voice_id)
+        logging.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
         
         # Create a sample greeting message based on business info and language
         greeting_text = ""
@@ -36,26 +40,26 @@ async def generate_greeting_preview(
         # Generate greeting text based on language
         # Handle the specific en-us and en-gb variants
         if language.startswith("en"):  # Any English variant
-            greeting_text = f"Hello, thank you for calling {business_name}. This is Jess. How can I help you today?"
+            greeting_text = f"Hello, thank you for calling {business_name}. This is {agent_name}. How can I help you today?"
         elif language == "es":  # Spanish
-            greeting_text = f"Hola, gracias por llamar a {business_name}. Soy Jess. ¿Cómo puedo ayudarle hoy?"
+            greeting_text = f"Hola, gracias por llamar a {business_name}. Soy {agent_name}. ¿Cómo puedo ayudarle hoy?"
         elif language == "fr":  # French
-            greeting_text = f"Bonjour, merci d'avoir appelé {business_name}. Je suis Jess. Comment puis-je vous aider aujourd'hui?"
+            greeting_text = f"Bonjour, merci d'avoir appelé {business_name}. Je suis {agent_name}. Comment puis-je vous aider aujourd'hui?"
         elif language == "de":  # German
-            greeting_text = f"Hallo, vielen Dank für Ihren Anruf bei {business_name}. Hier ist Jess. Wie kann ich Ihnen heute helfen?"
+            greeting_text = f"Hallo, vielen Dank für Ihren Anruf bei {business_name}. Hier ist {agent_name}. Wie kann ich Ihnen heute helfen?"
         elif language == "pt":  # Portuguese
-            greeting_text = f"Olá, obrigado por ligar para {business_name}. Sou Jess. Como posso ajudá-lo hoje?"
+            greeting_text = f"Olá, obrigado por ligar para {business_name}. Sou {agent_name}. Como posso ajudá-lo hoje?"
         elif language == "ar":  # Arabic
-            greeting_text = f"مرحبًا، شكرًا لاتصالك بـ {business_name}. أنا جيس. كيف يمكنني مساعدتك اليوم؟"
+            greeting_text = f"مرحبًا، شكرًا لاتصالك بـ {business_name}. أنا {agent_name}. كيف يمكنني مساعدتك اليوم؟"
         else:  # Default to English for other languages
-            greeting_text = f"Hello, thank you for calling {business_name}. This is Jess. How can I help you today?"
+            greeting_text = f"Hello, thank you for calling {business_name}. This is {agent_name}. How can I help you today?"
         
         # Generate audio using ElevenLabs client
         try:
             # Generate the audio using our client and get binary data
             audio_data = elevenlabs_client.generate_audio(
                 text=greeting_text,
-                voice_id=default_voice_id,
+                voice_id=voice_id,
                 return_bytes=True
             )
             logging.info(f"Successfully generated audio for greeting preview")
@@ -100,8 +104,11 @@ async def generate_message_preview(
     try:
         logging.info(f"Generating message preview for user {user_id} with business: {business_name}, language: {language}")
         
-        # Use a default voice for the preview
-        default_voice_id = 'Ize3YDdGqJYYKQSDLORJ'
+        # Get appropriate voice ID and agent name based on language code
+        country_code = language.split("-")[-1].upper() if "-" in language else language.upper()
+        voice_id = get_voice_for_country(country_code)
+        agent_name = get_agent_name_for_voice(voice_id)
+        logging.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
         
         # Create a sample message-taking text based on language
         message_text = ""
@@ -163,7 +170,7 @@ async def generate_message_preview(
             # Generate the audio using our client and get binary data
             audio_data = elevenlabs_client.generate_audio(
                 text=message_text,
-                voice_id=default_voice_id,
+                voice_id=voice_id,
                 return_bytes=True
             )
             logging.info(f"Successfully generated audio for message preview")

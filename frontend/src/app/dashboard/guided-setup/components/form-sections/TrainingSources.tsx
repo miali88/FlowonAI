@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Control, ControllerRenderProps, useFormState, useWatch } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { Info, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AutoSearchPlacesInput from "../AutoSearchPlacesInput";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@clerk/nextjs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { FormValues } from "../schema";
 
@@ -24,6 +32,8 @@ interface TrainingSourcesProps {
   getValues: (name?: any) => any;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function TrainingSources({
   control,
   errors,
@@ -37,12 +47,87 @@ export default function TrainingSources({
   getValues,
 }: TrainingSourcesProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [trainedOnWebsite, setTrainedOnWebsite] = useState(false);
+  const { getToken } = useAuth();
   
+  // Fetch initial trained status
+  useEffect(() => {
+    async function fetchTrainingStatus() {
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE_URL}/guided_setup/setup_data`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.setupData) {
+            setTrainedOnWebsite(data.setupData.trained_on_website || false);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching training status:', error);
+      }
+    }
+    fetchTrainingStatus();
+  }, [getToken]);
+
   // Watch for business website value for enabling/disabling the training button
   const businessWebsite = useWatch({
     control,
     name: "trainingSources.businessWebsite",
   });
+
+  // Effect to reset trained status when website changes
+  useEffect(() => {
+    if (businessWebsite) {
+      setTrainedOnWebsite(false);
+    }
+  }, [businessWebsite]);
+
+  // Enhanced training handler
+  const handleTrainingWithStatus = async () => {
+    try {
+      await handleTraining();
+      
+      // Get the auth token
+      const token = await getToken();
+      
+      // Update training status in database
+      const response = await fetch(`${API_BASE_URL}/guided_setup/update_training_status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          trained_on_website: true
+        }),
+      });
+
+      if (response.ok) {
+        setTrainedOnWebsite(true);
+      } else {
+        console.error('Failed to update training status:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error updating training status:', error);
+    }
+  };
+
+  // CSS classes for the pulsating effect
+  const buttonClasses = cn(
+    "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold",
+    !trainedOnWebsite && businessWebsite && "animate-pulse"
+  );
+
+  // Determine if we should show the tooltip content (only when not trained and has website)
+  const showTooltipContent = !trainedOnWebsite && businessWebsite;
 
   return (
     <Card
@@ -176,25 +261,36 @@ export default function TrainingSources({
                       <AlertDescription>{trainingError}</AlertDescription>
                     </Alert>
                   )}
-                  <Button
-                    type="button"
-                    variant="default"
-                    disabled={!businessWebsite || isTraining}
-                    onClick={handleTraining}
-                    className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold"
-                  >
-                    {isTraining ? (
-                      <>
-                        <span className="mr-2">🔄</span>
-                        Training...
-                      </>
-                    ) : (
-                      <>
-                        <span className="mr-2">🤖</span>
-                        Train with AI
-                      </>
-                    )}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="default"
+                          disabled={!businessWebsite || isTraining}
+                          onClick={handleTrainingWithStatus}
+                          className={buttonClasses}
+                        >
+                          {isTraining ? (
+                            <>
+                              <span className="mr-2">🔄</span>
+                              Training...
+                            </>
+                          ) : (
+                            <>
+                              <span className="mr-2">✨</span>
+                              {trainedOnWebsite ? 'Retrain Agent' : 'Train Agent'}
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      {showTooltipContent && (
+                        <TooltipContent side="left" sideOffset={5} className="animate-in fade-in-0 zoom-in-95">
+                          <p>Click to train agent with your business website</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </CardContent>
