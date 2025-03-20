@@ -3,7 +3,6 @@ VAPI Assistant Management Module
 
 This module provides functions to create and manage VAPI AI phone assistants.
 It includes:
-- A default system prompt for a business phone assistant
 - Function to create assistants with default configuration
 - Function to update existing assistants
 - Direct execution with hard-coded variables
@@ -23,13 +22,16 @@ from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
 from app.services.vapi.constants.voice_ids import voice_ids
+from app.services.vapi.agent_config import build_assistant_payload, build_update_payload
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-async def create_assistant(business_name: str, sys_prompt: str = None,
-                           voice_id: str = voice_ids["british_male"], 
-                           first_message: Optional[str] = None) -> Dict[str, Any]:
+async def create_assistant(business_name: str, voice_id: str,
+                            sys_prompt: str = None,
+                            first_message: Optional[str] = None,
+                            **kwargs) -> Dict[str, Any]:
     """
     Create a new VAPI assistant using the guided setup template.
     
@@ -38,6 +40,7 @@ async def create_assistant(business_name: str, sys_prompt: str = None,
         sys_prompt: Optional custom system prompt. If not provided, uses the default template
         voice_id: Optional voice ID. Defaults to British male voice
         first_message: Optional custom first message. If not provided, uses default template
+        **kwargs: Additional configuration overrides
         
     Returns:
         The response data from the VAPI API
@@ -50,68 +53,15 @@ async def create_assistant(business_name: str, sys_prompt: str = None,
         logger.error("[SERVICE] create_assistant: No VAPI API token provided")
         raise ValueError("VAPI API token is required")
     
-    # Create assistant payload based on the guided_setup_assistant template
+    # Build the assistant payload using the configuration module
     logger.debug(f"[SERVICE] create_assistant: Building payload for {business_name}")
-    payload = {
-        "name": f"{business_name} Phone Assistant",
-        "voice": {
-            "model": "eleven_multilingual_v2",
-            "speed": 0.9,
-            "voiceId": voice_id,
-            "provider": "11labs",
-            "stability": 0.5,
-            "similarityBoost": 0.75
-        },
-        "model": {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": sys_prompt
-                }
-            ],
-            "provider": "openai",
-            "temperature": 0.3
-        },
-        "firstMessage": first_message or f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?",
-        "endCallFunctionEnabled": True,
-        "transcriber": {
-            "model": "nova-3",
-            "language": "en",
-            "numerals": True,
-            "provider": "deepgram"
-        },
-        "clientMessages": [
-            "transcript",
-            "hang",
-            "function-call",
-            "speech-update",
-            "metadata",
-            "transfer-update",
-            "conversation-update",
-            "function-call-result",
-            "model-output",
-            "status-update",
-            "tool-calls",
-            "tool-calls-result",
-            "voice-input"
-        ],
-        "serverMessages": [
-            "end-of-call-report",
-            "status-update",
-            "hang",
-            "function-call"
-        ],
-        "hipaaEnabled": False,
-        "backchannelingEnabled": False,
-        "backgroundDenoisingEnabled": False,
-        "compliancePlan": {
-            "hipaaEnabled": False,
-            "pciEnabled": False
-        }
-    }
-    
-    logger.debug(f"[SERVICE] create_assistant: Payload prepared for {business_name}")
+    payload = build_assistant_payload(
+        business_name=business_name,
+        voice_id=voice_id,
+        sys_prompt=sys_prompt,
+        first_message=first_message,
+        **kwargs
+    )
     
     # Make the POST request to VAPI
     url = "https://api.vapi.ai/assistant"
@@ -140,9 +90,10 @@ async def create_assistant(business_name: str, sys_prompt: str = None,
 async def update_assistant(
     assistant_id: str,
     business_name: Optional[str] = None,
+    voice_id: Optional[str] = None,
     sys_prompt: Optional[str] = None,
-    voice_id: Optional[str] = voice_ids["british_male"],
-    first_message: Optional[str] = None
+    first_message: Optional[str] = None,
+    **kwargs
 ) -> Dict[str, Any]:
     """
     Update an existing VAPI assistant.
@@ -153,6 +104,7 @@ async def update_assistant(
         sys_prompt: Optional new system prompt
         voice_id: Optional new voice ID
         first_message: Optional new first message
+        **kwargs: Additional fields to update
         
     Returns:
         The response data from the VAPI API with the updated assistant
@@ -165,44 +117,15 @@ async def update_assistant(
         logger.error("[SERVICE] update_assistant: No VAPI API token provided")
         raise ValueError("VAPI API token is required")
     
-    # Create update payload with only the fields that need to be updated
+    # Build the update payload using the configuration module
     logger.debug(f"[SERVICE] update_assistant: Building update payload for assistant {assistant_id}")
-    payload = {}
-    
-    # Update name if business_name is provided
-    if business_name:
-        payload["name"] = f"{business_name} Phone Assistant"
-    
-    # Update voice if voice_id is provided
-    if voice_id:
-        payload["voice"] = {
-            "model": "eleven_multilingual_v2",
-            "speed": 0.9,
-            "voiceId": voice_id,
-            "provider": "11labs",
-            "stability": 0.5,
-            "similarityBoost": 0.75
-        }
-    
-    # Update system prompt if sys_prompt is provided
-    if sys_prompt:
-        payload["model"] = {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": sys_prompt
-                }
-            ],
-            "provider": "openai",
-            "temperature": 0.3
-        }
-    
-    # Update first message if provided
-    if first_message:
-        payload["firstMessage"] = first_message
-    elif business_name:  # Update first message if business_name is provided but first_message is not
-        payload["firstMessage"] = f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?"
+    payload = build_update_payload(
+        business_name=business_name,
+        voice_id=voice_id,
+        sys_prompt=sys_prompt,
+        first_message=first_message,
+        **kwargs
+    )
     
     # Skip the update if there's nothing to update
     if not payload:

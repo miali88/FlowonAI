@@ -238,38 +238,3 @@ async def options_set_trial_plan():
     """
     logging.debug("[ENDPOINT] /set_trial_plan OPTIONS request received")
     return {}
-
-@router.post("/save_onboarding_data")
-async def save_onboarding_data(request: OnboardingSaveRequest, current_user: str = Depends(get_current_user)):
-    """
-    Save onboarding data including website and business information from Google Maps places API.
-    """
-    logging.info(f"[ENDPOINT] /save_onboarding_data invoked by user {current_user} with business name: {request.businessName}")
-    try:
-        # Call the service function to save the onboarding data
-        result = await save_onboarding_data_service(
-            user_id=current_user,
-            business_name=request.businessName,
-            business_description=request.businessDescription,
-            business_website=request.businessWebsite,
-            business_address=request.businessAddress,
-            business_phone=request.businessPhone,
-            agent_language=request.agentLanguage
-        )
-        
-        if not result.get("success"):
-            raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
-        
-        return result
-    except Exception as e:
-        logging.error(f"Error in save_onboarding_data endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.options("/save_onboarding_data")
-async def options_save_onboarding_data():
-    """
-    Handle OPTIONS requests for CORS preflight.
-    """
-    logging.debug("[ENDPOINT] /save_onboarding_data OPTIONS request received")
-    return {}
-

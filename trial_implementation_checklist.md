@@ -8,13 +8,11 @@
   - [ ] Create automated system to release numbers that exceed 14-day limit
   - [ ] Add warning notifications before number release
 
-@gabriel
 - [ ] **Call Duration Tracking:**
   - [ ] For trial users, increment `trial_minutes_used` after each call
   - [ ] Block further calls if `trial_minutes_used >= trial_minutes_total`
   - [ ] Add warning when approaching minute limit (80% usage)
 
-@gabriel
 - [ ] **Trial Expiration Handling:**
   - [ ] Create scheduled job to check for expired trials daily
   - [ ] When trial expires:

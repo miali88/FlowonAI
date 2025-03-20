@@ -177,6 +177,7 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
             assistant_result = await update_assistant(
                 assistant_id=vapi_assistant_id,
                 business_name=business_name,
+                voice_id=voice_id,
                 sys_prompt=sys_prompt
             )
             logging.info(f"VAPI assistant updated successfully: {assistant_result.get('id')}")
@@ -185,8 +186,8 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
             logging.info(f"Creating new VAPI assistant for {business_name}")
             assistant_result = await create_assistant(
                 business_name=business_name,
-                sys_prompt=sys_prompt,
-                voice_id=voice_id  # Use country-based voice selection
+                voice_id=voice_id,
+                sys_prompt=sys_prompt
             )
             
             # Save the new assistant ID to the guided setup data
