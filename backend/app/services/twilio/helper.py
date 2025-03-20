@@ -27,13 +27,13 @@ class PhoneNumberSchema(BaseModel):
 
 def get_country_codes() -> List[str]:
     try:
-        print("[TWILIO HELPER] 🌎 Fetching available country codes from Twilio")
+        logger.info("Fetching available country codes from Twilio")
         countries = client.available_phone_numbers.list()
         country_codes = [country.country_code for country in countries]
-        print(f"[TWILIO HELPER] ✅ Retrieved {len(country_codes)} country codes: {', '.join(country_codes[:10])}{'...' if len(country_codes) > 10 else ''}")
+        logger.info(f"Retrieved {len(country_codes)} country codes: {', '.join(country_codes[:10])}{'...' if len(country_codes) > 10 else ''}")
         return country_codes
     except Exception as e:
-        print(f"[TWILIO HELPER] ❌ Error fetching country codes: {str(e)}")
+        logger.error(f"Error fetching country codes: {str(e)}")
         raise
 
 async def fetch_twilio_numbers(user_id: str) -> str:
@@ -60,9 +60,8 @@ async def fetch_twilio_numbers(user_id: str) -> str:
         logger.error(f"Error fetching Twilio number for user {user_id}: {str(e)}")
         raise
 
-
 def get_available_numbers(country_code: str) -> Dict[str, Dict]:
-    print(f"[TWILIO HELPER] 🔍 Fetching available numbers for country code: {country_code}")
+    logger.info(f"Fetching available numbers for country code: {country_code}")
     # Map our internal types to Twilio's pricing types
     number_type_mapping = {
         'local': 'local',
@@ -73,7 +72,7 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
     
     # For GB (United Kingdom), prioritize toll-free numbers to avoid regulatory issues
     if country_code == "GB":
-        print(f"[TWILIO HELPER] 🇬🇧 UK detected - prioritizing toll-free numbers to avoid regulatory complications")
+        logger.info("UK detected - prioritizing toll-free numbers to avoid regulatory complications")
         number_types = ['toll_free', 'mobile', 'local', 'national']  # Prioritize toll-free for GB
     else:
         number_types = list(number_type_mapping.keys())
@@ -83,12 +82,12 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
 
     for number_type in number_types:
         try:
-            print(f"[TWILIO HELPER] 📞 Fetching {number_type} numbers for {country_code}")
+            logger.info(f"Fetching {number_type} numbers for {country_code}")
             # Try to list up to 5 numbers of each type
             numbers = getattr(client.available_phone_numbers(country_code), number_type).list(limit=5)
             numbers_list = [number.phone_number for number in numbers]
 
-            print(f"[TWILIO HELPER] 💲 Fetching pricing information for {country_code}")
+            logger.info(f"Fetching pricing information for {country_code}")
             country_pricing = client.pricing.v1.phone_numbers.countries(country_code).fetch()
             country_pricing = country_pricing.phone_number_prices
 
@@ -109,23 +108,23 @@ def get_available_numbers(country_code: str) -> Dict[str, Dict]:
                     "monthly_cost": monthly_cost.get(number_type),
                     "numbers": numbers_list
                 }
-                print(f"[TWILIO HELPER] ✅ Found {len(numbers_list)} {number_type} numbers for {country_code}")
+                logger.info(f"Found {len(numbers_list)} {number_type} numbers for {country_code}")
                 
                 # For GB, immediately return if we found mobile numbers
                 if country_code == "GB" and number_type == "mobile" and numbers_list:
-                    print(f"[TWILIO HELPER] 🎯 Found GB mobile numbers, prioritizing these to avoid regulatory issues")
+                    logger.info("Found GB mobile numbers, prioritizing these to avoid regulatory issues")
                     # Create a new dictionary with only mobile numbers at the top
                     prioritized_numbers = {"mobile": available_numbers["mobile"]}
                     total_numbers = len(numbers_list)
-                    print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: returning {total_numbers} mobile numbers")
+                    logger.info(f"Completed fetching numbers for {country_code}: returning {total_numbers} mobile numbers")
                     return prioritized_numbers
                 
         except Exception as e:
-            print(f"[TWILIO HELPER] ❌ Error processing {number_type} numbers for {country_code}: {str(e)}")
+            logger.error(f"Error processing {number_type} numbers for {country_code}: {str(e)}")
             continue
     
     total_numbers = sum(len(group["numbers"]) for group in available_numbers.values())
-    print(f"[TWILIO HELPER] 📊 Completed fetching numbers for {country_code}: found {total_numbers} numbers across {len(available_numbers)} types")
+    logger.info(f"Completed fetching numbers for {country_code}: found {total_numbers} numbers across {len(available_numbers)} types")
     return available_numbers
 
 async def purchase_number(phone_number: str) -> Dict[str, Any]:
@@ -138,11 +137,11 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         Dict with the purchase result containing SIDs
     """
     try:
-        print(f"[TWILIO SERVICE] 🔄 Starting purchase_number function")
+        logger.info("Starting purchase_number function")
         
         # Get API base URL for webhooks
         vapi_base_url = 'https://api.vapi.ai/twilio/inbound_call'
-        print(f"[TWILIO SERVICE] 🌐 Using API base URL: {vapi_base_url}")
+        logger.info(f"Using API base URL: {vapi_base_url}")
         api_base_url = 'https://internally-wise-spaniel.eu.ngrok.io/api/v1'
         
         # Identify UK numbers
@@ -152,7 +151,7 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         # UK mobile numbers start with +447
         if is_uk_number and phone_number.startswith('+447'):
             is_mobile = True
-            print(f"[TWILIO SERVICE] 🇬🇧 Detected UK mobile number: {phone_number}")
+            logger.info(f"Detected UK mobile number: {phone_number}")
         
         # Base parameters for number purchase
         purchase_params = {
@@ -166,22 +165,21 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
         
         # UK mobile numbers need specific address and bundle SID
         if is_uk_number and is_mobile:
-            print(f"[TWILIO SERVICE] 🇬🇧 UK mobile number requires address and specific bundle")
+            logger.info("UK mobile number requires address and specific bundle")
             purchase_params['address_sid'] = 'ADc0fef05afa186248e701be32efc66b02'
             purchase_params['bundle_sid'] = 'BU7c5bf3064734bb52c444977d725e2661'
         # For non-UK numbers, just use address
         else:
-            print(f"[TWILIO SERVICE] 🌎 Non-UK or non-mobile UK number, using standard purchase parameters")
+            logger.info("Non-UK or non-mobile UK number, using standard purchase parameters")
             purchase_params['address_sid'] = 'AD3a5c7d3df0ef707bc8bedd4ed91c7d06'
         
         # Purchase number through Twilio with proper webhook configuration
-        print(f"[TWILIO SERVICE] 📱 Creating number with Twilio: {phone_number}")
-        print(f"[TWILIO SERVICE] 🔧 Purchase parameters: {purchase_params}")
+        logger.info(f"Creating number with Twilio: {phone_number}")
+        logger.debug(f"Purchase parameters: {purchase_params}")
         number = client.incoming_phone_numbers.create(**purchase_params)
         
-        print(f"[TWILIO SERVICE] ✅ Successfully purchased number {phone_number} with SID {number.sid}")
-        
-        print(f"[TWILIO SERVICE] 🏁 purchase_number completed successfully")
+        logger.info(f"Successfully purchased number {phone_number} with SID {number.sid}")
+        logger.info("purchase_number completed successfully")
         
         return {
             'success': True,
@@ -190,5 +188,67 @@ async def purchase_number(phone_number: str) -> Dict[str, Any]:
             'account_sid': number.account_sid
         }
     except Exception as e:
-        print(f"[TWILIO SERVICE] ❌ Error in purchase_number: {str(e)}")
+        logger.error(f"Error in purchase_number: {str(e)}")
         raise
+
+async def release_number(user_id: str, phone_number: str) -> Dict[str, Any]:
+    """Release a Twilio phone number and remove it from user's telephony_numbers
+    
+    Args:
+        user_id: The ID of the user whose number is being released
+        phone_number: The phone number to release
+        
+    Returns:
+        Dict with the release result status
+    """
+    try:
+        logger.info(f"Starting release_number function for user {user_id}")
+        logger.info(f"Attempting to release number: {phone_number}")
+        
+        # First, get the user's current telephony numbers
+        supabase = await get_supabase()
+        user = await supabase.table('users').select('telephony_numbers').eq('id', user_id).execute()
+        
+        if not user.data or not user.data[0].get('telephony_numbers'):
+            logger.warning(f"No telephony numbers found for user {user_id}")
+            return {'success': False, 'error': 'No telephony numbers found for user'}
+            
+        telephony_numbers = user.data[0]['telephony_numbers']
+        twilio_numbers = telephony_numbers.get('twilio', [])
+        
+        if phone_number not in twilio_numbers:
+            logger.warning(f"Number {phone_number} not found in user's Twilio numbers")
+            return {'success': False, 'error': 'Number not found in user\'s Twilio numbers'}
+        
+        # Remove the number from the user's telephony_numbers
+        twilio_numbers.remove(phone_number)
+        telephony_numbers['twilio'] = twilio_numbers
+        
+        # Update the user's record in Supabase
+        logger.info(f"Updating user's telephony numbers in database")
+        await supabase.table('users').update({
+            'telephony_numbers': telephony_numbers
+        }).eq('id', user_id).execute()
+        
+        # Find and release the number in Twilio
+        logger.info(f"Finding number in Twilio system")
+        incoming_numbers = client.incoming_phone_numbers.list(phone_number=phone_number)
+        
+        if not incoming_numbers:
+            logger.warning(f"Number {phone_number} not found in Twilio system")
+            return {'success': False, 'error': 'Number not found in Twilio system'}
+            
+        # Release the number
+        logger.info(f"Releasing number from Twilio")
+        incoming_numbers[0].delete()
+        
+        logger.info(f"Successfully released number {phone_number}")
+        return {
+            'success': True,
+            'message': f'Successfully released number {phone_number}'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in release_number: {str(e)}")
+        raise
+

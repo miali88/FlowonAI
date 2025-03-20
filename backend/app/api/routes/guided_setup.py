@@ -9,10 +9,9 @@ from app.api.schemas.guided_setup import (
     OnboardingPreviewRequest,
     AudioPreviewResponse,
     TrialPlanRequest,
-    OnboardingSaveRequest
 )
 from app.services.guided_setup import (
-    get_rosie_phone_number,
+    get_phone_number_handler,
     submit_quick_setup as submit_quick_setup_service,
     check_setup_status,
     mark_setup_complete,
@@ -56,7 +55,7 @@ async def get_phone_number(current_user: str = Depends(get_current_user)):
     """
     logging.info(f"[ENDPOINT] /phone_number invoked by user {current_user}")
     try:
-        result = await get_rosie_phone_number(current_user)
+        result = await get_phone_number_handler(current_user)
         if not result.get("success", False):
             raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
         

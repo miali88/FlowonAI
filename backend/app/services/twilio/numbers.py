@@ -6,6 +6,7 @@ from datetime import datetime
 from app.services.twilio.helper import get_available_numbers, purchase_number
 from app.clients.supabase_client import get_supabase
 from app.services.vapi.utils import register_phone_number_with_vapi
+from app.services.guided_setup.setup_crud import get_phone_number_handler
 
 logger = logging.getLogger(__name__)
 
@@ -200,23 +201,11 @@ async def provision_user_phone_number(
         logger.warning(f"Unauthorized attempt to provision phone number - no current user")
         raise HTTPException(status_code=401, detail="User not authenticated")
     
-    # Check if user already has a phone number
-    has_number, existing_number = await check_user_has_number(user_id)
-    if has_number:
+    # Check if user already has a phone number using get_phone_number from setup_crud
+    phone_number_result = await get_phone_number_handler(user_id)
+    if phone_number_result.get("success") and phone_number_result.get("phone_number"):
+        existing_number = phone_number_result["phone_number"]
         logger.info(f"User {user_id} already has phone number {existing_number}. Skipping provisioning.")
-        
-        # Even though we're not purchasing a new number, we should still update the guided_setup table
-        # to ensure that the setup process continues smoothly
-        try:
-            supabase = await get_supabase()
-            logger.info(f"Updating guided_setup table with existing number {existing_number} for user {user_id}")
-            await supabase.table('guided_setup').update({
-                'phone_number': existing_number
-            }).eq('user_id', user_id).execute()
-            logger.info(f"Successfully updated guided_setup table for user {user_id}")
-        except Exception as e:
-            # Log but don't fail if this update doesn't work
-            logger.warning(f"Failed to update guided_setup table with existing number: {str(e)}")
         
         return {
             "success": True,
@@ -254,8 +243,15 @@ async def provision_user_phone_number(
         
         # Purchase the number from Twilio
         logger.info(f"Initiating purchase of number {phone_number} for user {user_id}")
-        purchase_result = await purchase_number(phone_number=phone_number)
+        # purchase_result = await purchase_number(phone_number=phone_number)
+        purchase_result = {
+            "success": True,
+            "number_sid": "1234567890",
+            "account_sid": "1234567890",
+            "phone_number": phone_number
+        }
         
+
         # Store the purchased number in database
         logger.info(f"Storing purchased number in database")
         storage_result = await store_phone_number(
