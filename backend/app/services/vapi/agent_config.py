@@ -114,8 +114,19 @@ def build_assistant_payload(
     """
     logger.debug(f"[CONFIG] build_assistant_payload: Building payload for {business_name}")
     
+    # Calculate max length for business name to ensure total name is under 40 chars
+    SUFFIX = " Phone Assistant"
+    MAX_TOTAL_LENGTH = 40
+    max_business_name_length = MAX_TOTAL_LENGTH - len(SUFFIX)
+    
+    # Truncate business name if needed
+    truncated_business_name = business_name[:max_business_name_length].strip()
+    assistant_name = f"{truncated_business_name}{SUFFIX}"
+    
+    logger.debug(f"[CONFIG] build_assistant_payload: Assistant name set to: {assistant_name}")
+    
     payload = {
-        "name": f"{business_name} Phone Assistant",
+        "name": assistant_name,
         "voice": build_voice_config(voice_id),
         "model": build_model_config(sys_prompt),
         "firstMessage": first_message or f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?",
@@ -161,7 +172,17 @@ def build_update_payload(
     payload = {}
     
     if business_name:
-        payload["name"] = f"{business_name} Phone Assistant"
+        # Calculate max length for business name to ensure total name is under 40 chars
+        SUFFIX = " Phone Assistant"
+        MAX_TOTAL_LENGTH = 40
+        max_business_name_length = MAX_TOTAL_LENGTH - len(SUFFIX)
+        
+        # Truncate business name if needed
+        truncated_business_name = business_name[:max_business_name_length].strip()
+        assistant_name = f"{truncated_business_name}{SUFFIX}"
+        
+        logger.debug(f"[CONFIG] build_update_payload: Assistant name set to: {assistant_name}")
+        payload["name"] = assistant_name
     
     if voice_id:
         payload["voice"] = build_voice_config(voice_id)
