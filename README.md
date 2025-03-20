@@ -1,5 +1,5 @@
 # 🌊 Flowon AI
-##### 🔄 Streamlining the information flow of your business
+##### 🔄 Bringing Voice AI to small business
 
 ## 🏗️ Codebase Overview
 ### 🛠️ Tech Stack
