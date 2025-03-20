@@ -1,11 +1,12 @@
 import os
 import logging
 
-from fastapi import Request, APIRouter, Header, HTTPException
+from fastapi import Request, APIRouter, Header, HTTPException, Depends
 from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.services.clerk import post_user, get_clerk_private_metadata
 from app.models.users import UserMetadataResponse
+from app.core.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -79,13 +80,13 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
         return {"status": "success", "message": f"Unhandled event type: {event_type}"}
     
 @router.get('/get-customer-id')
-async def get_user_metadata(clerk_user_id: str):
+async def get_user_metadata(current_user: str = Depends(get_current_user)):
     """Endpoint to fetch a user's Clerk private metadata."""
-    logger.info(f"Fetching customer ID for clerk_user_id: {clerk_user_id}")
+    logger.info(f"Fetching customer ID for clerk_user_id: {current_user}")
     try:
-        metadata = await get_clerk_private_metadata(clerk_user_id)
+        metadata = await get_clerk_private_metadata(current_user)
         customer_id = metadata.get('stripe_customer_id')
-        logger.info(f"Retrieved customer_id: {customer_id} for clerk_user_id: {clerk_user_id}")
+        logger.info(f"Retrieved customer_id: {customer_id} for clerk_user_id: {current_user}")
         return UserMetadataResponse(customer_id=customer_id)
     except HTTPException as he:
         logger.error(f"HTTP Exception while fetching user metadata: {str(he)}")
@@ -93,3 +94,5 @@ async def get_user_metadata(clerk_user_id: str):
     except Exception as e:
         logger.error(f"Error fetching user metadata: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch user metadata: {str(e)}")
+    
+    

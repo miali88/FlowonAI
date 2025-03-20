@@ -204,8 +204,8 @@ async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
 
 async def get_rosie_phone_number(user_id: str) -> Dict[str, Any]:
     """Get the Rosie phone number for a user."""
-    setup_data = await get_guided_setup(user_id)
-    
+    # setup_data = await get_guided_setup(user_id)
+    setup_data = None
     if not setup_data:
         return {"success": False, "error": "No setup data found for user"}
     

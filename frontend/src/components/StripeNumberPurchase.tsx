@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,18 +17,25 @@ export default function StripeNumberPurchase({
   twilioNumber,
 }: StripeNumberPurchaseProps) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const getStripeCustomerId = async () => {
-    if (!user?.id) return null;
+    if (!user) return null;
+
+    const token = await getToken();
+    if (!token) {
+      throw new Error("Authentication required");
+    }
 
     const response = await fetch(
-      `${api_base_url}/clerk/get-customer-id?clerk_user_id=${user.id}`,
+      `${api_base_url}/clerk/get-customer-id`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         credentials: "include",
       }
@@ -60,12 +67,18 @@ export default function StripeNumberPurchase({
         throw new Error("Failed to get customer ID");
       }
 
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
       const response = await fetch(
         `${api_base_url}/stripe/create-payment-link`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           credentials: "include",
           body: JSON.stringify({
@@ -99,7 +112,7 @@ export default function StripeNumberPurchase({
       disabled={disabled || amount <= 0 || isLoading}
       className="w-[200px] mx-2"
     >
-      {isLoading ? "Processing..." : `Purchase $${amount}/month`}
+      {isLoading ? "Processing..." : `Purchase for $${amount}`}
     </Button>
   );
 }

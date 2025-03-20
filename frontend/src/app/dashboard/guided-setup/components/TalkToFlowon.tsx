@@ -10,7 +10,6 @@ import {
   Loader2,
   Copy,
   Check,
-  AlertTriangle,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -19,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import StripeNumberPurchase from "@/components/StripeNumberPurchase";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -43,24 +43,20 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
   const { userId, getToken } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean>(true);
-  const [showSupportMessage, setShowSupportMessage] = useState<boolean>(false);
+  const [showPurchaseUI, setShowPurchaseUI] = useState<boolean>(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>("US"); // Default to US for now
   
-  // For phone number selection
-  const [countryCodes, setCountryCodes] = useState<string[]>([]);
-
   useEffect(() => {
     async function fetchPhoneNumber() {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Get the authentication token
         const token = await getToken();
         if (!token) {
           throw new Error("Authentication required");
         }
 
-        // Fetch user's phone number
         const phoneNumberResponse = await fetch(
           `${API_BASE_URL}/guided_setup/phone_number`,
           {
@@ -75,9 +71,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           const phoneNumberData = await phoneNumberResponse.json();
           console.log("User's phone number:", phoneNumberData);
 
-          // Check if user has a phone number
           if (phoneNumberData.success && phoneNumberData.phone_number) {
-            // Set the returned phone number
             setPhoneNumber(phoneNumberData.phone_number);
             setHasPhoneNumber(true);
             setIsLoading(false);
@@ -85,8 +79,6 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           }
         }
 
-        // If the first request didn't succeed, try again to ensure we've exhausted options
-        // This is kept for backwards compatibility, though it's the same endpoint
         const response = await fetch(
           `${API_BASE_URL}/guided_setup/phone_number`,
           {
@@ -110,64 +102,33 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           setPhoneNumber(data.phone_number);
           setHasPhoneNumber(true);
         } else {
-          // No real phone number assigned - show support message instead of claim UI
-          console.log("No dedicated phone number assigned, showing support contact message");
+          console.log("No dedicated phone number assigned, showing purchase UI");
           setHasPhoneNumber(false);
-          setShowSupportMessage(true);
-          // Still set the fallback number for display
-          setPhoneNumber("(814) 261-0317");
+          setShowPurchaseUI(true);
+          setPhoneNumber(null);
         }
       } catch (err) {
         console.error("Error fetching Flowon phone number:", err);
-        setError("Could not load Flowon phone number. Please contact support.");
-        // Fallback to a constant if the API fails
-        setPhoneNumber("(814) 261-0317");
+        setPhoneNumber(null);
         setHasPhoneNumber(false);
-        setShowSupportMessage(true);
+        setShowPurchaseUI(true);
       } finally {
         setIsLoading(false);
-      }
-    }
-
-    async function fetchCountryCodes() {
-      try {
-        console.log("Fetching available country codes");
-        const response = await fetch(
-          `${API_BASE_URL}/twilio/country_codes`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch country codes");
-        }
-        const data = await response.json();
-        console.log("Country codes data:", data);
-        
-        if (data.countries && Array.isArray(data.countries)) {
-          setCountryCodes(data.countries);
-        } else {
-          console.error("Invalid country codes format:", data);
-          setCountryCodes([]);
-        }
-      } catch (error) {
-        console.error("Error fetching country codes:", error);
-        setCountryCodes([]);
       }
     }
 
     fetchPhoneNumber();
   }, [userId, getToken]);
 
-  const handleNumberClaimed = (number: string) => {
-    // This would be called after successful claiming of a number
-    console.log("Number claimed:", number);
+  const handleNumberPurchased = (number: string) => {
+    console.log("Number purchased:", number);
     setPhoneNumber(number);
     setHasPhoneNumber(true);
-    setSuccessMessage("Phone number claimed successfully! You can use this number for free for 14 days.");
+    setSuccessMessage("Phone number purchased successfully! You can use this number for your Flowon agent.");
   };
 
   const handleNext = () => {
     setSuccessMessage("Great! Let's continue to the final step.");
-
-    // Proceed to next step after a short delay
     setTimeout(() => {
       onNext();
     }, 1500);
@@ -180,7 +141,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Phone Number Required"}
+          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Purchase a Phone Number"}
         </h2>
       </div>
 
@@ -190,12 +151,12 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           {hasPhoneNumber ? (
             "This is your dedicated Flowon agent phone number. You can call this number directly to test your agent, and all call forwarding should be directed to this number. In the next step, we'll show you how to set up call forwarding from your business number to ensure your agent can answer calls seamlessly."
           ) : (
-            "A dedicated phone number is required for your Flowon agent to function properly. This number is used for all call interactions with your agent."
+            "To get started with your Flowon agent, you'll need a dedicated phone number. This number will be used for all call interactions with your agent. Purchase a number below to continue."
           )}
         </AlertDescription>
       </Alert>
 
-      {error && (
+      {error && error !== "Could not load Flowon phone number. Please try purchasing one below." && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -209,23 +170,11 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       )}
 
       <div className="space-y-6">
-        <div className="space-y-2">
-          <h3 className="font-medium text-blue-500">
-            {hasPhoneNumber ? "Your Assigned Agent Number" : "Phone Number Not Assigned"}
-          </h3>
-          <p className="text-sm text-gray-400">
-            {hasPhoneNumber ? (
-              "This is the number your agent uses. All calls and call forwarding should be directed to this number."
-            ) : (
-              "You currently don't have a phone number assigned to your Flowon account."
-            )}
-          </p>
-        </div>
 
         {hasPhoneNumber ? (
           <div className="bg-card rounded-xl p-6 border">
             {isLoading ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
               <div>
                 <div className="flex items-center gap-3 justify-center mb-4">
@@ -237,20 +186,24 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
               </div>
             )}
           </div>
-        ) : showSupportMessage ? (
+        ) : showPurchaseUI ? (
           <div className="bg-card rounded-xl p-6 border">
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                You don't have a phone number assigned to your account.
-              </AlertDescription>
-            </Alert>
-            <p className="text-center mb-4">
-              Please contact <a href="mailto:support@flowon.ai" className="text-blue-500 font-medium">support@flowon.ai</a> to get a phone number assigned to your account.
-            </p>
-            <p className="text-sm text-gray-500 text-center">
-              Our support team will help you set up your dedicated Flowon agent phone number.
-            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
+                <span className="text-lg font-medium">{selectedCountry}</span>
+              </div>
+              
+              <StripeNumberPurchase
+                amount={2}
+                twilioNumber=""
+                disabled={false}
+              />
+              
+              <p className="text-sm text-gray-500 mt-4">
+                * Refundable one-time fee for phone number purchase during trial period.
+              </p>
+            </div>
           </div>
         ) : null}
       </div>
@@ -259,7 +212,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
         <div className="text-sm text-gray-400">
           {hasPhoneNumber 
             ? "You can launch or continue training Flowon on the next step" 
-            : "You'll need a phone number to proceed with the next steps"}
+            : "Purchase a phone number to proceed with the next steps"}
         </div>
         <Button
           onClick={handleNext}

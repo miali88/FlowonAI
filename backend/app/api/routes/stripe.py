@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class PaymentLinkRequest(BaseModel):
-    product_id: str = "prod_RcfvpRgzSUvVXj"
+    product_id: str = "prod_Ryi6M9XhsSdInn" #"prod_RcfvpRgzSUvVXj" # live product id
     quantity: int = 1
     unit_amount: int 
     currency: Optional[str] = "usd"
