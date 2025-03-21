@@ -7,6 +7,7 @@ It includes default configurations and functions to build agent payloads.
 
 import logging
 from typing import Dict, Any, Optional
+from app.services.vapi.constants.voice_ids import get_agent_name_for_voice
 
 logger = logging.getLogger(__name__)
 
@@ -124,12 +125,13 @@ def build_assistant_payload(
     assistant_name = f"{truncated_business_name}{SUFFIX}"
     
     logger.debug(f"[CONFIG] build_assistant_payload: Assistant name set to: {assistant_name}")
-    
+    agent_name = get_agent_name_for_voice(voice_id)
+
     payload = {
         "name": assistant_name,
         "voice": build_voice_config(voice_id),
         "model": build_model_config(sys_prompt),
-        "firstMessage": first_message or f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?",
+        "firstMessage": first_message or f"Hello, thank you for calling {business_name}, this is {agent_name}, calls may be recorded for quality assurance, how can I help you today?",
         "endCallFunctionEnabled": True,
         "transcriber": DEFAULT_TRANSCRIBER_CONFIG.copy(),
         "clientMessages": DEFAULT_CLIENT_MESSAGES.copy(),
