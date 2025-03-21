@@ -1,0 +1,26 @@
+{
+    "fallbackDestination": {
+      "message": null,
+      "type": "number",
+      "numberE164CheckEnabled": true, 
+      "number": "string",
+      "extension": "string",
+      "callerId": "string",
+      "transferPlan": null,
+      "description": "string"
+    },
+    "provider": "byo-phone-number",
+    "numberE164CheckEnabled": true,
+    "number": "string", 
+    "credentialId": "string",
+    "name": "string",
+    "assistantId": "string",
+    "squadId": "string",
+    "server": {
+      "timeoutSeconds": 20,
+      "url": "string",
+      "secret": "string",
+      "headers": {},
+      "backoffPlan": null
+    }
+  }

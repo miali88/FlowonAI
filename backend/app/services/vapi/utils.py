@@ -31,7 +31,7 @@ async def get_user_id(phone_number: str) -> Optional[str]:
 async def get_vapi_token() -> Optional[str]:
     """Get VAPI API token from environment variables."""
     logger.debug("[SERVICE] get_vapi_token: Retrieving VAPI API token")
-    token = settings.VAPI_API_TOKEN
+    token = settings.VAPI_API_PRIVATE_KEY
     if not token:
         logger.error("[SERVICE] get_vapi_token: No VAPI API token found in environment")
         return None
@@ -190,7 +190,7 @@ async def register_phone_number_with_vapi(
     # Get credentials from environment variables if not provided
     account_sid = twilio_account_sid or os.environ.get("TWILIO_ACCOUNT_SID")
     auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-    vapi_api_key = os.environ.get("VAPI_API_KEY")
+    vapi_api_key = settings.VAPI_API_PRIVATE_KEY
     
     if not account_sid or not auth_token:
         error_msg = "Missing Twilio credentials for Vapi registration"
@@ -201,6 +201,25 @@ async def register_phone_number_with_vapi(
         error_msg = "Missing Vapi API key for phone number registration"
         logger.error(error_msg)
         raise ValueError(error_msg)
+
+    # Get the user ID associated with this phone number
+    user_id = await get_user_id(phone_number)
+    if not user_id:
+        error_msg = f"No user found for phone number {phone_number}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    # Get the assistant ID from guided setup
+    supabase = await get_supabase()
+    setup_result = await supabase.table("guided_setup").select("vapi_assistant_id").eq("user_id", user_id).execute()
+    
+    if not setup_result.data or not setup_result.data[0].get("vapi_assistant_id"):
+        error_msg = f"No Vapi assistant ID found for user {user_id}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    assistant_id = setup_result.data[0]["vapi_assistant_id"]
+    logger.info(f"Found Vapi assistant ID {assistant_id} for user {user_id}")
     
     try:
         # Make the API request to Vapi
@@ -215,7 +234,8 @@ async def register_phone_number_with_vapi(
                 "provider": "twilio",
                 "number": phone_number,
                 "twilioAccountSid": account_sid,
-                "twilioAuthToken": auth_token
+                "twilioAuthToken": auth_token,
+                "assistantId": assistant_id  # Include the assistant ID in the payload
             },
         )
         

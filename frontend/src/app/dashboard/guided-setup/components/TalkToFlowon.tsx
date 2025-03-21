@@ -264,7 +264,6 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <p className="text-lg font-medium mb-2">To get your agent up and running, you'll need a phone number</p>
-                <p className="text-sm text-gray-500">Click the button below to request a telephone number</p>
               </div>
               
               <div className="flex justify-center">

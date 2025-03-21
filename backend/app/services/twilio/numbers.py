@@ -248,13 +248,13 @@ async def provision_user_phone_number(
         
         # Purchase the number from Twilio
         logger.info(f"Initiating purchase of number {phone_number} for user {user_id}")
-        # purchase_result = await purchase_number(phone_number=phone_number)
-        purchase_result = {
-            "success": True,
-            "number_sid": "1234567890",
-            "account_sid": "1234567890",
-            "phone_number": phone_number
-        }
+        purchase_result = await purchase_number(phone_number=phone_number)
+        # purchase_result = {
+        #     "success": True,
+        #     "number_sid": "1234567890",
+        #     "account_sid": "1234567890",
+        #     "phone_number": phone_number
+        # }
         
 
         # Store the purchased number in database
