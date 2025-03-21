@@ -103,7 +103,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     getValues,
     reset,
   } = form;
-  const { errors, isSubmitting } = formState;
+  const { errors, isSubmitting, isDirty } = formState;
 
   // Fetch existing setup data when component loads
   useEffect(() => {
@@ -239,6 +239,61 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
       "businessInformation.coreServices",
       currentServices.filter((_: string, i: number) => i !== index)
     );
+  };
+
+  // Add save only function
+  const handleSaveOnly = async (data: FormValues) => {
+    try {
+      setSuccessMessage(null);
+      
+      // Extra validation for notification fields
+      if (data.callNotifications.emailNotifications.enabled) {
+        if (data.callNotifications.emailNotifications.email === null) {
+          data.callNotifications.emailNotifications.email = "";
+          console.log("Fixed null email value before submission");
+        }
+      }
+      
+      if (data.callNotifications.smsNotifications.enabled) {
+        if (data.callNotifications.smsNotifications.phoneNumber === null) {
+          data.callNotifications.smsNotifications.phoneNumber = "";
+          console.log("Fixed null phone number value before submission");
+        }
+      }
+
+      // Get the authentication token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      // Log the data before sending
+      console.log("Form data to be saved:", data);
+      
+      // Use our utility to save data to all backend endpoints
+      const setupData = data as unknown as SetupData;
+      const saveResult = await saveSetupDataToBackend(setupData, token);
+
+      if (!saveResult.success) {
+        throw new Error(saveResult.error || "Failed to save setup data");
+      }
+
+      console.log("Setup data saved successfully:", saveResult.data);
+
+      // Set success message
+      setSuccessMessage("Your setup data has been saved successfully!");
+      
+      // Reset the form's dirty state by re-setting the current values
+      reset(data);
+      
+    } catch (error) {
+      console.error("Error saving setup data:", error);
+      if (error instanceof Error) {
+        setLoadError(error.message);
+      } else {
+        setLoadError("An unknown error occurred while saving the form data.");
+      }
+    }
   };
 
   // Form submission
@@ -461,15 +516,12 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(async (data) => {
         try {
-          // Call onSubmit first
           await onSubmit(data);
-          // Only proceed to next step if save was successful
           onNext();
         } catch (error) {
           console.error("Error saving form data:", error);
-          // Error is already handled in onSubmit
         }
-      })} className="space-y-6">
+      })} className="space-y-6 mb-16">
         {/* Show error alert if loading failed */}
         {loadError && (
           <Alert variant="destructive">
@@ -512,8 +564,6 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           </div>
         </Card>
 
-
-
         {/* Message Taking Section */}
         <MessageTaking 
           control={control}
@@ -537,7 +587,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           console.log('Form Validation Errors:', JSON.stringify(errors, null, 2));
           console.log('Current Form Values:', JSON.stringify(getValues(), null, 2));
           return (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Please fill in all required fields before proceeding to the next step.
@@ -551,9 +601,28 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           );
         })()}
 
-        {/* Next Button */}
-        <div className="flex justify-end">
-          <Button type="submit">
+        {/* Buttons */}
+        <div className="flex justify-between pt-6 pb-8">
+          <Button 
+            type="button"
+            onClick={form.handleSubmit(handleSaveOnly)}
+            disabled={!isDirty || isSubmitting}
+            variant="outline"
+            className={`${!isDirty ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800 mr-2"></div>
+                Saving...
+              </div>
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+          >
             Next Step <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
