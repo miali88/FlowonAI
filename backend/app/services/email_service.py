@@ -1,6 +1,6 @@
 import logging
-from backend.app.api.routes.nylas import nylas
-from backend.app.api.routes.nylas import settings
+from app.api.routes.nylas import nylas
+from app.api.routes.nylas import settings
 
 logger = logging.getLogger(__name__)
 

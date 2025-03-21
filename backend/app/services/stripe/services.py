@@ -1,5 +1,5 @@
 import os 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
@@ -8,7 +8,8 @@ import logging
 import stripe
 
 from app.clients.supabase_client import get_supabase
-
+from app.core.auth import get_current_user
+from app.services.clerk import get_clerk_private_metadata
 """ TODO: create the twilio number purchase function, also add new numb metadata """
 
 load_dotenv()
@@ -24,6 +25,9 @@ class PaymentLinkRequest(BaseModel):
     unit_amount: int 
     currency: Optional[str] = "usd"
     customer_id: str
+
+class SubscriptionLinkRequest(BaseModel):
+    customer_id: Optional[str] = None
 
 async def create_payment_link(request: PaymentLinkRequest):
     try:
@@ -164,5 +168,72 @@ async def handle_subscription_completed(session):
     )   
     logger.info(f"Successfully updated user features for customer_id: {customer_id}")
 
-    # await 
+async def create_subscription_link(request: SubscriptionLinkRequest, user_id: str):
+    try:
+        logger.info(f"Creating subscription payment link for user: {user_id}")
+        
+        # Get stripe_customer_id from Clerk metadata
+        try:
+            metadata = await get_clerk_private_metadata(user_id)
+            stripe_customer_id = metadata.get('stripe_customer_id')
+            logger.info(f"Retrieved stripe_customer_id: {stripe_customer_id}")
+        except Exception as e:
+            logger.error(f"Error getting Clerk metadata: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to get Stripe customer ID")
+        
+        if not stripe_customer_id:
+            logger.error("User does not have a Stripe customer ID")
+            raise HTTPException(status_code=400, detail="Stripe customer ID not found")
+
+        # Get trial_plan_type from Supabase
+        try:
+            supabase = await get_supabase()
+            response = await supabase.table('users').select('trial_plan_type').eq('id', user_id).single().execute()
+            
+            if not response.data:
+                logger.error(f"User {user_id} not found in database")
+                raise HTTPException(status_code=404, detail="User not found")
+                
+            trial_plan_type = response.data.get('trial_plan_type')
+            logger.info(f"User trial plan type: {trial_plan_type}")
+        except Exception as e:
+            logger.error(f"Error getting trial plan type: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to get trial plan type")
+
+        # Create a Price object with the dynamic amount
+        price = stripe.Price.create(
+            unit_amount=request.unit_amount,
+            currency=request.currency,
+            product=request.product_id,
+        )
+
+        # Create a checkout session for subscription
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                customer=stripe_customer_id,
+                payment_method_types=['card'],
+                mode='subscription',
+                line_items=[{
+                    'price': "49",
+                    'quantity': 1,
+                }],
+                success_url=f"{os.getenv('FRONTEND_BASE_URL')}/dashboard?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{os.getenv('FRONTEND_BASE_URL')}/dashboard",
+                metadata={
+                    'customer_id': stripe_customer_id,
+                    'trial_plan_type': trial_plan_type,
+                    'user_id': user_id
+                }
+            )
+            logger.info(f"Successfully created checkout session for customer: {stripe_customer_id}")
+            return checkout_session.url
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error creating checkout session: {str(e)}")
+            raise HTTPException(status_code=400, detail=str(e))
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error creating subscription link: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 

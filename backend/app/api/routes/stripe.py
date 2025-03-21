@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 import logging
 
 import stripe
-from fastapi import APIRouter, HTTPException, Request, Header
+from fastapi import APIRouter, HTTPException, Request, Header, Depends
 
-from app.services.stripe.services import create_payment_link, handle_subscription_completed, payment_result
-
+from app.services.stripe.services import create_payment_link, handle_subscription_completed, payment_result, create_subscription_link, SubscriptionLinkRequest
+from app.core.auth import get_current_user
 load_dotenv()
 router = APIRouter()
 
@@ -105,3 +105,21 @@ async def payment_result_handler(checkout_session_id: str):
     checkout_result = await payment_result(checkout_session_id)
 
     return checkout_result
+
+# @router.post("/create-subscription-link")
+# async def create_subscription_link_handler(
+#     request: SubscriptionLinkRequest,
+#     current_user: str = Depends(get_current_user)
+# ):
+#     logger.info("Received request to create subscription link")
+#     try:
+#         if not current_user:
+#             raise HTTPException(status_code=401, detail="Authorization header is required")
+            
+#         logger.info(f"Creating subscription link for user: {current_user}")
+#         payment_link = await create_subscription_link(request, current_user)
+#         logger.info("Successfully created subscription link")
+#         return {"payment_link": payment_link}
+#     except Exception as e:
+#         logger.error(f"Error creating subscription link: {str(e)}", exc_info=True)
+#         raise HTTPException(status_code=400, detail=str(e))

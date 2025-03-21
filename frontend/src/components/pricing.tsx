@@ -26,7 +26,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      // 'Multilingual agent'
+      'Multilingual agent (Coming Soon)'
     ]
   },
   scale: {
@@ -39,9 +39,9 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      // 'Multilingual agent',
-      'Appointment Links',
-      'Call Transfers'
+      'Multilingual agent (Coming Soon)',
+      'Appointment Links (Coming Soon)',
+      'Call Transfers (Coming Soon)'
     ],
     popular: true
   },
@@ -52,13 +52,12 @@ const PRICING_CONFIG = {
     yearlyPrice: 'Contact Us',
     features: [
       'Unlimited minutes',
-      'Then $0.25 per minute',
+      'Then $0.22 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      // 'Multilingual agent',
-      'Appointment Links',
-      'Call Transfers',
-      'Live Transfers (Coming Soon)',
+      'Multilingual agent (Coming Soon)',
+      'Appointment Links (Coming Soon)',
+      'Call Transfers (Coming Soon)',
       'Training Files',
       'Custom Agent Training'
     ]
@@ -95,7 +94,7 @@ export function Pricing({ currentPlan }: PricingProps) {
   // Memoize handlers
   const handlePlanClick = useCallback((planName: string) => {
     if (currentPlan?.toLowerCase() === planName.toLowerCase()) return;
-    window.location.href = "https://calendly.com/michael-flowon/catch-up";
+    window.location.href = "/sign-up";
   }, [currentPlan]);
 
   const getButtonText = useCallback((planName: string) => {

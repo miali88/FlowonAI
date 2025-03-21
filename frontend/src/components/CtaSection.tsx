@@ -24,7 +24,7 @@ export function CtaSection() {
             variant="outline"
             className="group mt-6 rounded-full px-6 hover:bg-border"
           >
-            <Link href="https://calendly.com/michael-flowon/catch-up" className="flex items-center justify-center transition-all duration-300 ease-out">
+            <Link href="https://cal.com/michael-ali-5fcg8p/30min" className="flex items-center justify-center transition-all duration-300 ease-out">
               {t('buttonText')}
               <ChevronRight
                 size={16}

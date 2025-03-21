@@ -28,6 +28,7 @@ export default function Launch({ onNext }: LaunchProps) {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const { userId, getToken } = useAuth();
 
   useEffect(() => {
@@ -124,6 +125,49 @@ export default function Launch({ onNext }: LaunchProps) {
     }
   };
 
+  // const handleSubscription = async () => {
+  //   try {
+  //     setIsLoadingSubscription(true);
+  //     setError(null);
+      
+  //     // Get the authentication token
+  //     const token = await getToken();
+  //     if (!token) {
+  //       throw new Error("Authentication required");
+  //     }
+
+  //     // Create subscription link
+  //     const response = await fetch(`${API_BASE_URL}/stripe/create-subscription-link`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`
+  //       },
+  //       body: JSON.stringify({})  // Empty request body since we get everything from the token
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.text();
+  //       console.error("Error creating subscription link:", errorData);
+  //       throw new Error("Failed to create subscription link");
+  //     }
+
+  //     const data = await response.json();
+      
+  //     // Redirect to the payment link
+  //     if (data.payment_link) {
+  //       window.location.href = data.payment_link;
+  //     } else {
+  //       throw new Error("No payment link received");
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Error handling subscription:", err);
+  //     setError(err.message || "Failed to start subscription process");
+  //   } finally {
+  //     setIsLoadingSubscription(false);
+  //   }
+  // };
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4 mb-8">
@@ -190,8 +234,21 @@ export default function Launch({ onNext }: LaunchProps) {
                 will not be charged until your free minutes have been used.
               </p>
             </div>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-              Add Credit Card <ArrowRight className="ml-2 h-4 w-4" />
+            <Button 
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={handleSubscription}
+              disabled={isLoadingSubscription}
+            >
+              {isLoadingSubscription ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Add Credit Card <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
           </div>
         </Card>
