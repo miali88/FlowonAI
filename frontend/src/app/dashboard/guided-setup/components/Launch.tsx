@@ -227,38 +227,6 @@ export default function Launch({ onNext }: LaunchProps) {
             <div className="space-y-4">
               <div className="text-blue-500 font-semibold">STEP 1</div>
               <h3 className="text-lg font-semibold">
-                Add your credit card details to avoid interruption
-              </h3>
-              <p className="text-gray-600">
-                Add your payment info now to avoid interruption in service. You
-                will not be charged until your free minutes have been used.
-              </p>
-            </div>
-            <Button 
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-              onClick={handleSubscription}
-              disabled={isLoadingSubscription}
-            >
-              {isLoadingSubscription ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  Add Credit Card <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
-        </Card>
-
-        {/* Step 2 */}
-        <Card className="p-6 border-l-4 border-l-blue-500">
-          <div className="flex justify-between items-start">
-            <div className="space-y-4">
-              <div className="text-blue-500 font-semibold">STEP 2</div>
-              <h3 className="text-lg font-semibold">
                 Forward your business number to Flowon
               </h3>
 
@@ -295,7 +263,38 @@ export default function Launch({ onNext }: LaunchProps) {
           </div>
         </Card>
 
-        {/* Step 3 */}
+        {/* Step 2 */}
+        <Card className="p-6 border-l-4 border-l-blue-500">
+          <div className="flex justify-between items-start">
+            <div className="space-y-4">
+              <div className="text-blue-500 font-semibold">STEP 2</div>
+              <h3 className="text-lg font-semibold">
+                Upgrade to a paid plan
+              </h3>
+              <p className="text-gray-600">
+                Start with your free minutes. We&apos;ll reach out before you near your limit
+                to help you upgrade to a plan that fits your needs.
+              </p>
+            </div>
+            <Button 
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              disabled={isLoadingSubscription}
+            >
+              {isLoadingSubscription ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  View Plans <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
+
+        {/* Step 3
         <Card className="p-6 border-l-4 border-l-blue-500">
           <div className="flex justify-between items-start">
             <div className="space-y-4">
@@ -321,7 +320,7 @@ export default function Launch({ onNext }: LaunchProps) {
               </label>
             </div>
           </div>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
