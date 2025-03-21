@@ -115,7 +115,7 @@ class VapiService:
                             <h2>Call Summary</h2>
                             <p><strong>Customer Number:</strong> {customer_number}</p>
                             <p><strong>End Time:</strong> {self.format_timestamp(call_date)}</p>
-                            <p><strong>Duration:</strong> {call_duration}</p>
+                            <p><strong>Duration:</strong> {math.ceil(call_data.get("duration_seconds", 0))} seconds</p>
                             <h3>Call Summary:</h3>
                             <p>{summary}</p>
                             <p>View more details in your <a href="https://flowon.ai/dashboard/conversationlogs">Flowon AI dashboard</a>.</p>
@@ -384,7 +384,7 @@ class VapiService:
                     <h2>Call Summary</h2>
                     <p><strong>Customer Number:</strong> {call_data.get("customer_number", "Unknown")}</p>
                     <p><strong>End Time:</strong> {self.format_timestamp(call_data.get("ended_at", "Unknown"))}</p>
-                    <p><strong>Duration:</strong> {call_data.get("duration_seconds", 0)} seconds</p>
+                    <p><strong>Duration:</strong> {math.ceil(call_data.get("duration_seconds", 0))} seconds</p>
                     
                     <h3>Notes from the call:</h3>
                     <p>{call_summary}</p>
