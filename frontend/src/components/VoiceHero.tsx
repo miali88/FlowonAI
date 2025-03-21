@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { WavyBackground } from "@/components/ui/wavy-background";
+import AppUILanding from "@/components/AppUILanding";
 
 // Shared button component
 const CallToActionButton = () => {
@@ -15,7 +16,7 @@ const CallToActionButton = () => {
     <>
       <div className="flex flex-col items-center relative z-20 animate-fade-in [--animation-delay:600ms]">
         <Link 
-          href="https://cal.com/michael-ali-5fcg8p/30min" 
+          href="/sign-up" 
           className="inline-block"
         >
           <Button 
@@ -27,7 +28,7 @@ const CallToActionButton = () => {
         </Link>
       </div>
       <div className="opacity-0 animate-fade-in [--animation-delay:800ms]">
-        <p className="text-sm text-gray-500 mt-2">{t('noCreditCard')}</p>
+        <p className="text-sm text-gray-500 mt-2 text-center">{t('noCreditCard')}</p>
       </div>
     </>
   );
@@ -40,7 +41,7 @@ const MobileHero = memo(() => {
   return (
     <div className="w-screen sm:hidden">
       <WavyBackground 
-        containerClassName="min-h-[50dvh]"
+        containerClassName="min-h-[50dvh] opacity-0 animate-fade-in [--animation-delay:100ms]"
         className="max-w-[90rem] mx-auto px-4"
         colors={['#38bdf8', '#818cf8', '#c084fc']}
         blur={10}
@@ -50,11 +51,11 @@ const MobileHero = memo(() => {
         waveOpacity={0.5}
       >
         <div className="flex flex-col items-center justify-start pt-8">
-          <h1 className="text-4xl font-medium font-heading leading-[1.1] tracking-tighter py-1 opacity-0 animate-fade-in [--animation-delay:200ms] text-black">
+          <h1 className="text-4xl font-medium font-heading leading-[1.1] tracking-tighter py-1 opacity-0 animate-fade-in [--animation-delay:200ms] text-black text-center w-full px-4">
             <span className="block">{t('title')}</span>
           </h1>
 
-          <p className="mb-2 text-sm tracking-tight text-gray-600 max-w-[90vw] mx-auto mt-4 opacity-0 animate-fade-in [--animation-delay:400ms]">
+          <p className="mb-2 text-sm tracking-tight text-gray-600 max-w-[90vw] mx-auto mt-4 opacity-0 animate-fade-in [--animation-delay:400ms] text-center px-4">
             {t('description')}
           </p>
 
@@ -62,6 +63,7 @@ const MobileHero = memo(() => {
             <CallToActionButton />
           </div> 
         </div>
+        <AppUILanding />
       </WavyBackground>
     </div>
   );
@@ -75,7 +77,7 @@ const DesktopHero = memo(() => {
   return (
     <div className="w-screen hidden sm:block">
       <WavyBackground 
-        containerClassName="min-h-[60dvh]"
+        containerClassName="min-h-[60dvh] opacity-0 animate-fade-in [--animation-delay:100ms]"
         className="max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8"
         colors={['#38bdf8', '#818cf8', '#c084fc']}
         blur={10}
@@ -97,6 +99,7 @@ const DesktopHero = memo(() => {
             <CallToActionButton />
           </div>
         </div>
+        <AppUILanding />
       </WavyBackground>
     </div>
   );

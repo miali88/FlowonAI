@@ -1,19 +1,22 @@
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 export default function AppUILanding() {
+  const t = useTranslations('appUILanding');
+  
   return (
     <div className="mt-8 w-full max-w-[900px] mx-auto pb-40 md:pb-32">
-      {/* Flex container - Added responsive gap */}
-      <div className="flex items-center justify-between gap-4 md:gap-32">
-        {/* Chat Bubbles Section - Added responsive width */}
+      {/* Modified flex container to center content */}
+      <div className="flex items-center justify-center">
+        {/* Chat Bubbles Section - Adjusted width */}
         <div 
-          className="relative w-[45%] md:w-[48%]"
+          className="relative w-[80%] sm:w-[45%] md:w-[40%]"
           style={{
             perspective: '1000px'
           }}
         >
           <div 
-            className="w-full scale-[0.45] md:scale-75"
+            className="w-full scale-[0.65] sm:scale-[0.45] md:scale-75"
             style={{
               transform: 'rotateY(-20deg) rotateX(10deg)',
               transformStyle: 'preserve-3d'
@@ -27,7 +30,7 @@ export default function AppUILanding() {
                 <div className="flex-1 max-w-[80%]">
                   <div className="bg-purple-100 rounded-2xl md:rounded-3xl rounded-tl-sm p-2 md:p-3 text-gray-800 chat-bubble"
                        style={{ transform: 'translateZ(10px)' }}>
-                    <p className="text-base md:text-lg">Mason Brook's Estate Agents, how can I help?</p>
+                    <p className="text-base md:text-lg">{t('agentGreeting')}</p>
                   </div>
                 </div>
               </div>
@@ -38,7 +41,7 @@ export default function AppUILanding() {
                 <div className="flex-1 max-w-[80%]">
                   <div className="bg-blue-500 rounded-2xl md:rounded-3xl rounded-tr-sm p-2 md:p-3 text-white chat-bubble"
                        style={{ transform: 'translateZ(20px)' }}>
-                    <p className="text-base md:text-lg">I would like to schedule a viewing of the property in Surrey</p>
+                    <p className="text-base md:text-lg">{t('userMessage')}</p>
                   </div>
                 </div>
               </div>
@@ -49,7 +52,7 @@ export default function AppUILanding() {
                 <div className="flex-1 max-w-[80%]">
                   <div className="bg-purple-100 rounded-2xl md:rounded-3xl rounded-tl-sm p-2 md:p-3 text-gray-800 chat-bubble"
                        style={{ transform: 'translateZ(30px)' }}>
-                    <p className="text-base md:text-lg">Sure, let me start by taking some details...</p>
+                    <p className="text-base md:text-lg">{t('agentResponse')}</p>
                   </div>
                 </div>
               </div>
@@ -59,7 +62,7 @@ export default function AppUILanding() {
                    style={{ animation: 'fadeIn 1s ease-out 2.4s forwards' }}>
                 <Image 
                   src="/images/phone.png"
-                  alt="Phone Icon"
+                  alt={t('phoneIconAlt')}
                   width={60}
                   height={60}
                   className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]"
@@ -92,50 +95,49 @@ export default function AppUILanding() {
           </div>
         </div>
 
-        {/* Text Widget Section - Added responsive width */}
-        <div 
-          className="relative w-[45%] md:w-[40%] animate-slideFromRight"
-          style={{
-            perspective: '1000px'
-          }}
-        >
+        {/* Text Widget Section - Commented out for now */}
+        {/*
           <div 
-            className="w-full scale-100 md:scale-90"
+            className="relative w-[45%] md:w-[40%] animate-slideFromRight"
             style={{
-              transform: 'rotateY(-20deg) rotateX(10deg)',
-              transformStyle: 'preserve-3d'
+              perspective: '1000px'
             }}
           >
-            {/* Main Image */}
-            <img 
-              src="/images/textwidget_letscreate.png"
-              alt="Text Widget Demo"
-              className="w-full h-auto rounded-xl shadow-2xl"
-            />
-            
-            {/* Reflection Effect */}
             <div 
-              className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent rounded-xl"
+              className="w-full scale-100 md:scale-90"
               style={{
-                transform: 'translateZ(-1px)'
+                transform: 'rotateY(-20deg) rotateX(10deg)',
+                transformStyle: 'preserve-3d'
               }}
-            />
-            
-            {/* Decorative Glowing Elements */}
-            <div 
-              className="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/20 rounded-full blur-xl"
-              style={{
-                transform: 'translateZ(20px)'
-              }}
-            />
-            <div 
-              className="absolute -left-4 -bottom-4 w-32 h-32 bg-purple-500/20 rounded-full blur-xl"
-              style={{
-                transform: 'translateZ(40px)'
-              }}
-            />
+            >
+              <img 
+                src="/images/textwidget_letscreate.png"
+                alt="Text Widget Demo"
+                className="w-full h-auto rounded-xl shadow-2xl"
+              />
+              
+              <div 
+                className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent rounded-xl"
+                style={{
+                  transform: 'translateZ(-1px)'
+                }}
+              />
+              
+              <div 
+                className="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/20 rounded-full blur-xl"
+                style={{
+                  transform: 'translateZ(20px)'
+                }}
+              />
+              <div 
+                className="absolute -left-4 -bottom-4 w-32 h-32 bg-purple-500/20 rounded-full blur-xl"
+                style={{
+                  transform: 'translateZ(40px)'
+                }}
+              />
+            </div>
           </div>
-        </div>
+        */}
       </div>
     </div>
   );

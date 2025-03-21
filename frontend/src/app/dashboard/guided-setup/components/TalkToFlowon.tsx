@@ -256,6 +256,13 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
                   </div>
                   <CopyToClipboardButton text={phoneNumber || ""} />
                 </div>
+                <div className="text-center text-gray-600 mt-4">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Info className="h-4 w-4" />
+                    <span>You can call this number anytime to speak with your Flowon agent</span>
+                  </div>
+                  <p className="text-sm">Your agent is ready to assist with customer inquiries 24/7</p>
+                </div>
               </div>
             )}
           </div>

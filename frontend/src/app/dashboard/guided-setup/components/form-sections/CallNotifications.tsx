@@ -123,6 +123,7 @@ export default function CallNotifications({
                   />
                 )}
 
+                {/* SMS Notifications - temporarily hidden
                 <FormField
                   control={control}
                   name="callNotifications.smsNotifications.enabled"
@@ -161,7 +162,7 @@ export default function CallNotifications({
                       </FormItem>
                     )}
                   />
-                )}
+                )} */}
               </div>
             </CardContent>
           </AccordionContent>

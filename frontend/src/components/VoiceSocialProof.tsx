@@ -1,7 +1,6 @@
 'use client';
 
 import React from "react";
-import { CardSpotlight } from "@/components/ui/card-spotlight";
 import { StarIcon } from "lucide-react";
 import { useTranslations } from 'next-intl';
 
@@ -20,8 +19,8 @@ export function VoiceSocialProof() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto max-w-4xl">
-          <CardSpotlight className="p-8 bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mx-auto max-w-2xl justify-items-center">
+          {/* <div className="p-8 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-lg transition-all duration-300 hover:bg-white/10">
             <div className="flex flex-col items-center space-y-4">
               <div className="flex space-x-1">
                 {[...Array(5)].map((_, i) => (
@@ -34,13 +33,12 @@ export function VoiceSocialProof() {
               </blockquote>
               
               <div className="text-center">
-                <p className="font-semibold">{t('testimonial1.author')}</p>
                 <p className="text-sm text-muted-foreground">{t('testimonial1.company')}</p>
               </div>
             </div>
-          </CardSpotlight>
+          </div> */}
 
-          <CardSpotlight className="p-8 bg-black/10 backdrop-filter backdrop-blur-sm border border-white/10 rounded-xl">
+          <div className="p-8 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-lg transition-all duration-300 hover:bg-white/10">
             <div className="flex flex-col items-center space-y-4">
               <div className="flex space-x-1">
                 {[...Array(5)].map((_, i) => (
@@ -53,11 +51,10 @@ export function VoiceSocialProof() {
               </blockquote>
               
               <div className="text-center">
-                <p className="font-semibold">{t('testimonial2.author')}</p>
                 <p className="text-sm text-muted-foreground">{t('testimonial2.company')}</p>
               </div>
             </div>
-          </CardSpotlight>
+          </div>
         </div>
 
       </div>

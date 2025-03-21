@@ -26,7 +26,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Multilingual agent'
+      // 'Multilingual agent'
     ]
   },
   scale: {
@@ -39,7 +39,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Multilingual agent',
+      // 'Multilingual agent',
       'Appointment Links',
       'Call Transfers'
     ],
@@ -55,7 +55,7 @@ const PRICING_CONFIG = {
       'Then $0.25 per minute',
       'Message taking with custom questions',
       'Smart spam detection',
-      'Multilingual agent',
+      // 'Multilingual agent',
       'Appointment Links',
       'Call Transfers',
       'Live Transfers (Coming Soon)',

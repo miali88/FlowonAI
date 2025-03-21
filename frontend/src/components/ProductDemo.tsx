@@ -1,23 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export const ProductDemo = () => {
+  const t = useTranslations('productDemo');
+  
   const steps = [
     {
-      title: "Step 1: Simply enter business name",
+      title: t('steps.step1.title'),
       video: "/product_clips/1_business_name.mp4",
-      description: "Get started by entering your business name - it's that simple."
+      description: t('steps.step1.description')
     },
     {
-      title: "Step 2: Review your automatically generated business information",
+      title: t('steps.step2.title'),
       video: "/product_clips/2_business_info.mp4",
-      description: "Our AI automatically generates relevant business information for verification."
+      description: t('steps.step2.description')
     },
     {
-      title: "Step 3: Have your agent ask specific questions on the call",
+      title: t('steps.step3.title'),
       video: "/product_clips/3_ask_specific_questions.mp4",
-      description: "Watch as your AI agent intelligently handles customer inquiries with specific, relevant questions."
+      description: t('steps.step3.description')
+    },
+    {
+      title: t('steps.step4.title'),
+      video: "/product_clips/4_number.mp4",
+      description: t('steps.step4.description')
     },
   ];
 
@@ -26,10 +34,10 @@ export const ProductDemo = () => {
       <div className="max-w-[2000px] mx-auto px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center mb-32">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">
-            Set up in minutes, no IT team needed
+            {t('sectionTitle')}
           </h2>
           <p className="max-w-[85%] md:max-w-[65%] text-muted-foreground text-lg md:text-xl">
-            Our guided setup process makes it easy to get started
+            {t('subtitle')}
           </p>
         </div>
         

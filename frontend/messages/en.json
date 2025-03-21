@@ -2,7 +2,7 @@
   "home": {
     "title": "Human-Like AI To Answer Your Phone",
     "description": "Flowon answers calls when you cannot. Ready to qualify new leads, provide answers, take messages, set appointments, and notifies you all the while.",
-    "cta": "Sign up today for 20 minutes free",
+    "cta": "Sign up today with 20 minutes free",
     "noCreditCard": "No credit card required",
     "neverMissCall": "Never miss another call or opportunity",
     "neverMissCallDesc": "Flowon is there anytime you're not available. You'll never miss another opportunity just because you can't answer the phone.",
@@ -113,13 +113,11 @@
     "subtitle": "Join these businesses in transforming how you handle customer calls",
     "testimonial1": {
       "quote": "Flowon has been a game-changer for our small practice. We never miss important calls anymore!",
-      "author": "Dr. Sarah Johnson",
       "company": "Wellness Dental Clinic"
     },
     "testimonial2": {
-      "quote": "Our clients love talking to Flowon. It's professional, efficient, and captures all the information we need.",
-      "author": "Michael Chen",
-      "company": "Premier Real Estate"
+      "quote": "It's professional, efficient, and captures all the information we need.",
+      "company": "Rodriguez Roofing"
     }
   },
   "pricing": {
@@ -184,6 +182,28 @@
     "subtitle": "Our guided setup process makes it easy to get started",
     "buttonText": "See how it works"
   },
+  "productDemo": {
+    "sectionTitle": "Set up in minutes, no IT team needed",
+    "subtitle": "Our guided setup process makes it easy to get started",
+    "steps": {
+      "step1": {
+        "title": "Step 1: Simply enter business name",
+        "description": ""
+      },
+      "step2": {
+        "title": "Step 2: Review your automatically generated business information",
+        "description": "Our AI automatically generates relevant business information for verification."
+      },
+      "step3": {
+        "title": "Step 3: Have your agent ask specific questions on the call",
+        "description": "Watch as your AI agent intelligently handles customer inquiries with specific, relevant questions."
+      },
+      "step4": {
+        "title": "Claim your free number and begin routing calls",
+        "description": "You can set up for all calls to route to Flowon first or conditionally only if your main line doesn't answer, allowing you to keep your existing business phone number."
+      }
+    }
+  },
   "carouselTestimonials": {
     "title": "Some of our happy clients..."
   },
@@ -202,5 +222,11 @@
       "subject": "New Call: Needs urgent repair services",
       "message": "Hi, We have an emergency situation and need your repair team as soon as possible. Can you..."
     }
+  },
+  "appUILanding": {
+    "agentGreeting": "Mason Brook's Estate Agents, how can I help?",
+    "userMessage": "I would like to schedule a viewing of the property in Surrey",
+    "agentResponse": "Sure, let me start by taking some details...",
+    "phoneIconAlt": "Phone Icon"
   }
 } 

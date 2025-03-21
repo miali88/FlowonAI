@@ -37,11 +37,6 @@ const DynamicCtaSection = dynamic(() => import('@/components/CtaSection').then(m
   ssr: true
 });
 
-const DynamicCarouselTestimonials = dynamic(() => import('@/components/CarouselTestimonials').then(mod => mod.CarouselTestimonials), {
-  loading: () => <div className="h-[600px]" />,
-  ssr: true
-});
-
 const DynamicFooter = dynamic(() => import('@/components/footer').then(mod => mod.Footer), {
   loading: () => <div className="h-[200px]" />,
   ssr: true
@@ -74,7 +69,6 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         <DynamicPainPointsSolutions />
         <DynamicProductDemo />
         <DynamicIndustriesGrid />
-        <DynamicCarouselTestimonials />
         <DynamicFeaturesAndBenefits />
         <DynamicEmailNotifications />
         <DynamicVoiceSocialProof />

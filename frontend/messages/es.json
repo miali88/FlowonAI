@@ -172,6 +172,28 @@
     "subtitle": "Nuestro proceso de configuración guiada facilita comenzar",
     "buttonText": "Ver cómo funciona"
   },
+  "productDemo": {
+    "sectionTitle": "Configura en minutos, sin necesidad de equipo de TI",
+    "subtitle": "Nuestro proceso de configuración guiada facilita comenzar",
+    "steps": {
+      "step1": {
+        "title": "Paso 1: Simplemente ingresa el nombre de tu negocio",
+        "description": ""
+      },
+      "step2": {
+        "title": "Paso 2: Revisa tu información comercial generada automáticamente",
+        "description": "Nuestra IA genera automáticamente información relevante del negocio para su verificación."
+      },
+      "step3": {
+        "title": "Paso 3: Haz que tu agente haga preguntas específicas en la llamada",
+        "description": "Observa cómo tu agente de IA maneja inteligentemente las consultas de los clientes con preguntas específicas y relevantes."
+      },
+      "step4": {
+        "title": "Reclama tu número gratuito y comienza a enrutar llamadas",
+        "description": "Puedes configurar para que todas las llamadas se enruten primero a Flowon o condicionalmente solo si tu línea principal no responde, permitiéndote mantener tu número de teléfono comercial existente."
+      }
+    }
+  },
   "carouselTestimonials": {
     "title": "Algunos de nuestros clientes satisfechos..."
   },
@@ -195,5 +217,11 @@
     "title": "Diseñado para negocios como el tuyo",
     "subtitle": "Únete a otros pequeños negocios de tu industria que usan Flowon",
     "footer": "Y otros pequeños negocios que necesitan contestar el teléfono..."
+  },
+  "appUILanding": {
+    "agentGreeting": "Agentes Inmobiliarios Mason Brook, ¿en qué puedo ayudarle?",
+    "userMessage": "Me gustaría programar una visita a la propiedad en Surrey",
+    "agentResponse": "Claro, permítame tomar algunos datos...",
+    "phoneIconAlt": "Icono de Teléfono"
   }
 } 
