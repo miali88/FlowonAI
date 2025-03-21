@@ -7,11 +7,6 @@ const DynamicVoiceHero = dynamic(() => import('@/components/VoiceHero').then(mod
   ssr: true
 });
 
-const DynamicHowItWorks = dynamic(() => import('@/components/HowItWorks').then(mod => mod.HowItWorks), {
-  loading: () => <div className="h-[600px]" />,
-  ssr: true
-});
-
 const DynamicFeaturesAndBenefits = dynamic(() => import('@/components/FeaturesAndBenefits').then(mod => mod.FeaturesAndBenefits), {
   loading: () => <div className="h-[600px]" />,
   ssr: true
@@ -52,8 +47,17 @@ const DynamicFooter = dynamic(() => import('@/components/footer').then(mod => mo
   ssr: true
 });
 
-
 const DynamicProductDemo = dynamic(() => import('@/components/ProductDemo').then(mod => mod.ProductDemo), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
+});
+
+const DynamicIndustriesGrid = dynamic(() => import('@/components/IndustriesGrid').then(mod => mod.IndustriesGrid), {
+  loading: () => <div className="h-[600px]" />,
+  ssr: true
+});
+
+const DynamicFAQSection = dynamic(() => import('@/components/FAQSection'), {
   loading: () => <div className="h-[600px]" />,
   ssr: true
 });
@@ -69,12 +73,13 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         <DynamicVoiceHero />
         <DynamicPainPointsSolutions />
         <DynamicProductDemo />
+        <DynamicIndustriesGrid />
         <DynamicCarouselTestimonials />
         <DynamicFeaturesAndBenefits />
         <DynamicEmailNotifications />
-        <DynamicHowItWorks />
         <DynamicVoiceSocialProof />
-        <DynamicPricing />  
+        <DynamicPricing />
+        <DynamicFAQSection />  
         <DynamicCtaSection />
       </main>
       <DynamicFooter />

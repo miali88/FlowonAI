@@ -89,7 +89,8 @@ const VideoSection = ({
         });
       },
       {
-        threshold: 0.5,
+        threshold: 0.3,
+        rootMargin: '50px',
       }
     );
 
@@ -128,10 +129,10 @@ const VideoSection = ({
                   ref={videoRef}
                   src={video}
                   className="absolute inset-0 w-full h-full object-cover"
-                  controls
                   loop
                   muted
                   playsInline
+                  autoPlay
                 >
                   Your browser does not support the video tag.
                 </video>
