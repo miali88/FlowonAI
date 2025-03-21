@@ -1,0 +1,214 @@
+{
+    "type": "tool-calls",
+    "callId": "1d3f4201-410f-4fbc-8101-99625b63e619",
+    "tools": [
+        {
+        "name": "message_taking",
+        "arguments": {
+            "caller_name": "Jacob",
+            "caller_phone": "08000010066",
+            "message": "Needs a quote for a new roof installation"
+        }
+        }
+    ],
+    "message": {
+        "timestamp": 1742341185272,
+        "type": "end-of-call-report",
+        "analysis": {
+            "summary": "Jacob called Roofing Pros USA to request a quote for a new roof installation but was unsure about the type of roof needed. He provided his contact information and asked for someone to come assess the situation in person.",
+            "successEvaluation": "false"
+        },
+        "artifact": {
+            "messages": [
+                {
+                    "role": "system",
+                    "message": "",
+                    "time": 1742341024824,
+                    "secondsFromStart": 0
+                },
+                {
+                    "role": "bot",
+                    "message": "Hello. Thank you for call",
+                    "time": 1742341027854,
+                    "endTime": 1742341029294,
+                    "secondsFromStart": 2.72,
+                    "duration": 1440,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "Hello, Alex. How are you?",
+                    "time": 1742341027934,
+                    "endTime": 1742341029294,
+                    "secondsFromStart": 2.8,
+                    "duration": 1360
+                },
+                {
+                    "role": "bot",
+                    "message": "Hello.",
+                    "time": 1742341030794,
+                    "endTime": 1742341031194,
+                    "secondsFromStart": 5.66,
+                    "duration": 400,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "What business are you again?",
+                    "time": 1742341030823.9995,
+                    "endTime": 1742341032424,
+                    "secondsFromStart": 5.6899996,
+                    "duration": 1600.00048828125
+                },
+                {
+                    "role": "bot",
+                    "message": "We are Roofing Pros USA, a professional",
+                    "time": 1742341033854,
+                    "endTime": 1742341036334,
+                    "secondsFromStart": 8.72,
+                    "duration": 2480,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "Yeah. I need to speak to someone. I need to get quote for my roof fixing.",
+                    "time": 1742341035214,
+                    "endTime": 1742341040314,
+                    "secondsFromStart": 10.08,
+                    "duration": 4880
+                },
+                {
+                    "role": "bot",
+                    "message": "I'd be happy to help with",
+                    "time": 1742341041494,
+                    "endTime": 1742341042774,
+                    "secondsFromStart": 16.36,
+                    "duration": 1280,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "It's a new installation. Name is Jacob. Yeah. That's o 800 0 0 10 66. Yeah.",
+                    "time": 1742341041564,
+                    "endTime": 1742341051924,
+                    "secondsFromStart": 16.43,
+                    "duration": 6160.001953125
+                },
+                {
+                    "role": "bot",
+                    "message": "Thank you. Thank you, Jacob. Just to confer",
+                    "time": 1742341051904,
+                    "endTime": 1742341055304,
+                    "secondsFromStart": 26.77,
+                    "duration": 3280,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "Yeah. A lot? I did. You you did confirm already.",
+                    "time": 1742341053423.999,
+                    "endTime": 1742341057904,
+                    "secondsFromStart": 28.289999,
+                    "duration": 2800.0009765625
+                },
+                {
+                    "role": "bot",
+                    "message": "I apologize for the confusion.",
+                    "time": 1742341059444,
+                    "endTime": 1742341060804.002,
+                    "secondsFromStart": 34.31,
+                    "duration": 1360.001953125,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "Yes. That's correct.",
+                    "time": 1742341059814,
+                    "endTime": 1742341060774,
+                    "secondsFromStart": 34.68,
+                    "duration": 960
+                },
+                {
+                    "role": "bot",
+                    "message": "Great. Can you please tell me what type of",
+                    "time": 1742341062244,
+                    "endTime": 1742341064164,
+                    "secondsFromStart": 37.11,
+                    "duration": 1920,
+                    "source": ""
+                },
+                {
+                    "role": "user",
+                    "message": "I don't know the type. Someone can have a look.",
+                    "time": 1742341063354,
+                    "endTime": 1742341066434,
+                    "secondsFromStart": 38.22,
+                    "duration": 2160.001953125
+                }
+            ],
+            "messagesOpenAIFormatted": [
+                {
+                    "role": "system",
+                    "content": ""
+                },
+                {
+                    "role": "assistant",
+                    "content": "Hello. Thank you for call"
+                },
+                {
+                    "role": "user",
+                    "content": "Hello, Alex. How are you?"
+                },
+                {
+                    "role": "assistant",
+                    "content": "Hello."
+                },
+                {
+                    "role": "user",
+                    "content": "What business are you again?"
+                },
+                {
+                    "role": "assistant",
+                    "content": "We are Roofing Pros USA, a professional"
+                },
+                {
+                    "role": "user",
+                    "content": "Yeah. I need to speak to someone. I need to get quote for my roof fixing."
+                },
+                {
+                    "role": "assistant",
+                    "content": "I'd be happy to help with"
+                },
+                {
+                    "role": "user",
+                    "content": "It's a new installation. Name is Jacob. Yeah. That's o 800 0 0 10 66. Yeah."
+                },
+                {
+                    "role": "assistant",
+                    "content": "Thank you. Thank you, Jacob. Just to confer"
+                },
+                {
+                    "role": "user",
+                    "content": "Yeah. A lot? I did. You you did confirm already."
+                },
+                {
+                    "role": "assistant",
+                    "content": "I apologize for the confusion."
+                },
+                {
+                    "role": "user",
+                    "content": "Yes. That's correct."
+                },
+                {
+                    "role": "assistant",
+                    "content": "Great. Can you please tell me what type of"
+                },
+                {
+                    "role": "user",
+                    "content": "I don't know the type. Someone can have a look."
+                }
+            ],
+            "transcript": "AI: Hello. Thank you for call\nUser: Hello, Alex. How are you?\nAI: Hello.\nUser: What business are you again?\nAI: We are Roofing Pros USA, a professional\nUser: Yeah. I need to speak to someone. I need to get quote for my roof fixing.\nAI: I'd be happy to help with\nUser: It's a new installation. Name is Jacob. Yeah. That's o 800 0 0 10 66. Yeah.\nAI: Thank you. Thank you, Jacob. Just to confer\nUser: Yeah. A lot? I did. You you did confirm already.\nAI: I apologize for the confusion.\nUser: Yes. That's correct.\nAI: Great. Can you please tell me what type of\nUser: I don't know the type. Someone can have a look.\n"
+        }
+    }
+}

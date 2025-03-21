@@ -6,6 +6,9 @@ from app.services.vapi.calls import store_call_data
 from app.services.user.usage import update_call_duration
 from app.services.email_service import send_notification_email
 from app.services.vapi.utils import get_user_notification_settings
+from app.services.chat.chat import llm_response
+from app.clients.supabase_client import get_supabase
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -111,11 +114,12 @@ class VapiService:
                             body = f"""
                             <h2>Call Summary</h2>
                             <p><strong>Customer Number:</strong> {customer_number}</p>
-                            <p><strong>End Time:</strong> {call_date}</p>
+                            <p><strong>End Time:</strong> {self.format_timestamp(call_date)}</p>
                             <p><strong>Duration:</strong> {call_duration}</p>
                             <h3>Call Summary:</h3>
                             <p>{summary}</p>
-                            <p>View more details in your Flowon AI dashboard.</p>
+                            <p>View more details in your <a href="https://flowon.ai/dashboard/conversationlogs">Flowon AI dashboard</a>.</p>
+                            <p><img src="https://flowon.ai/flowon.png" alt="Flowon AI Logo" style="max-width: 150px; height: auto;"></p>
                             """
                             
                             # Send the email
@@ -213,19 +217,213 @@ class VapiService:
             tool_name = tool.get("name", "unknown")
             logger.info(f"Processing tool call: {tool_name}")
             
-            # Add your tool call implementation here
-            # This is similar to function calls but follows the OpenAI tools format
-            
-            results.append({
-                "tool_name": tool_name,
-                "status": "success",
-                "data": {}  # Your tool response data
-            })
+            # Handle message taking tool
+            if tool_name == "message_taking":
+                try:
+                    # Extract the tool arguments
+                    args = tool.get("arguments", {})
+                    call_id = tool_calls_data.get("callId")
+                    
+                    # Process message taking data
+                    result = await self.process_message_taking(call_id, args)
+                    
+                    results.append({
+                        "tool_name": tool_name,
+                        "status": "success",
+                        "data": result
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing message taking tool: {str(e)}")
+                    results.append({
+                        "tool_name": tool_name,
+                        "status": "error",
+                        "error": str(e)
+                    })
+            else:
+                # Handle other tool types
+                results.append({
+                    "tool_name": tool_name,
+                    "status": "success",
+                    "data": {}  # Your tool response data
+                })
         
         return {
             "status": "success",
             "results": results
         }
+    
+    async def process_message_taking(self, call_id: str, message_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process message taking data from a call and update the call summary.
+        
+        Args:
+            call_id: The ID of the call
+            message_data: The message taking data from the tool call
+            
+        Returns:
+            Dict containing the processed message data
+        """
+        logger.info(f"Processing message taking data for call {call_id}")
+        
+        try:
+            # Get the call data from Supabase
+            supabase = await get_supabase()
+            response = await supabase.table("vapi_calls").select("*").eq("call_id", call_id).execute()
+            
+            if not response.data:
+                logger.warning(f"No call data found for call ID {call_id}")
+                return {"status": "error", "message": "Call data not found"}
+            
+            call_data = response.data[0]
+            user_id = call_data.get("user_id")
+            
+            if not user_id:
+                logger.warning(f"No user ID found for call {call_id}")
+                return {"status": "error", "message": "User ID not found"}
+            
+            # Get the user's message taking settings
+            user_settings = await supabase.table("guided_setup").select("message_taking").eq("user_id", user_id).execute()
+            
+            if not user_settings.data:
+                logger.warning(f"No message taking settings found for user {user_id}")
+                return {"status": "success", "message": "No message taking settings found"}
+            
+            message_taking_settings = user_settings.data[0].get("message_taking", {})
+            
+            # Format the collected data based on the settings
+            formatted_data = {}
+            
+            # Add caller name if it was collected
+            if message_taking_settings.get("callerName", {}).get("required", False):
+                formatted_data["Caller Name"] = message_data.get("caller_name", "Not provided")
+            
+            # Add caller phone number if it was collected
+            if message_taking_settings.get("callerPhoneNumber", {}).get("required", False):
+                formatted_data["Caller Phone Number"] = message_data.get("caller_phone", "Not provided")
+            
+            # Add specific questions and answers
+            has_required_questions = False
+            formatted_questions = {}
+            specific_questions = message_taking_settings.get("specificQuestions", [])
+            for question_setting in specific_questions:
+                question = question_setting.get("question", "")
+                if question and question_setting.get("required", False):
+                    has_required_questions = True
+                    # Find the answer in the message data
+                    answer_key = question.lower().replace(" ", "_").replace("?", "")
+                    answer = message_data.get(answer_key, "Not provided")
+                    formatted_questions[question] = answer
+            
+            # Update the call summary with the formatted data
+            call_summary = call_data.get("summary", "")
+            call_transcript = call_data.get("transcript", "")
+
+            logger.info(f"Call summary: {call_summary}")
+            logger.info(f"Formatted data: {formatted_data}")
+            
+            # Skip LLM call if there are no specific questions or none are required
+            enhanced_summary = call_summary
+            if specific_questions and has_required_questions:
+                # Use LLM to generate a structured summary with the collected data
+                system_prompt = """
+                You are a helpful assistant that formats answers to each question in the collected data.
+                Create a professional, well-structured summary for each of the answers in the collected data.
+                Format each question and its corresponding answer in a clean, organized way.
+                
+                IMPORTANT: Do not include markdown code block tags like ```html or ``` in your response.
+                Just provide the clean HTML content directly.
+                """
+                
+                user_prompt = f"""
+                Call transcript:
+                {call_transcript}
+                
+                Questions:
+                {formatted_questions}
+                
+                Please provide comprehensive answers to all questions based on the call transcript.
+                Format your response as an HTML unordered list where each question is followed by its answer.
+                
+                Use this exact format:
+                <ul>
+                <li><strong>Question:</strong> [Question text]</li>
+                <li><strong>Answer:</strong> [Detailed answer]</li>
+                <li><strong>Question:</strong> [Next question text]</li>
+                <li><strong>Answer:</strong> [Next detailed answer]</li>
+                </ul>
+                
+                Make sure each question and its corresponding answer are clearly paired together.
+                And make sure you didn't change any of the questions, I want them to be exactly the same.
+                
+                IMPORTANT: Do not include markdown code block tags like ```html or ``` in your response.
+                Just provide the clean HTML content directly.
+                """
+                
+                # Call the LLM to generate the enhanced summary
+                enhanced_summary = await llm_response(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    conversation_history=None,
+                    model="claude",
+                    token_size=500
+                )
+            
+            # Check if email notifications are enabled and send an updated email
+            notification_settings = await get_user_notification_settings(user_id)
+            email_settings = notification_settings.get("emailNotifications", {})
+            
+            if email_settings.get("enabled", True):
+                recipient_email = email_settings.get("email")
+                
+                if recipient_email:
+                    # Create email content with the call summary
+                    subject = f"Flowon AI: Call Summary - {call_id}"
+                    
+                    # Format the email body with the call summary and collected data
+                    body = f"""
+                    <h2>Call Summary</h2>
+                    <p><strong>Customer Number:</strong> {call_data.get("customer_number", "Unknown")}</p>
+                    <p><strong>End Time:</strong> {self.format_timestamp(call_data.get("ended_at", "Unknown"))}</p>
+                    <p><strong>Duration:</strong> {call_data.get("duration_seconds", 0)} seconds</p>
+                    
+                    <h3>Notes from the call:</h3>
+                    <p>{call_summary}</p>
+                    """
+                    
+                    # Only add collected information section if there is any data
+                    if formatted_data:
+                        body += """
+                        <h3>Collected Information:</h3>
+                        <ul>
+                        """
+                        
+                        # Add each piece of collected information
+                        for key, value in formatted_data.items():
+                            body += f"<li><strong>{key}:</strong> {value}</li>\n"
+                        
+                        body += "</ul>"
+                    
+                    if enhanced_summary:
+                        body += f"<h3>Answers to specific questions:</h3><p>{enhanced_summary}</p>"
+                    
+                    body += """
+                    <p>View more details in your <a href="https://flowon.ai/dashboard/conversationlogs">Flowon AI dashboard</a>.</p>
+                    <p><img src="https://flowon.ai/flowon.png" alt="Flowon AI Logo" style="max-width: 50px; height: auto;"></p>
+                    """
+                    
+                    # Send the email
+                    logger.info(f"Sending call summary email to {recipient_email}")
+                    await send_notification_email(subject, body, recipient_email)
+            
+            return {
+                "status": "success",
+                "message": "Message taking data processed successfully",
+                "data": formatted_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing message taking data: {str(e)}")
+            return {"status": "error", "message": str(e)}
     
     async def handle_transfer_request(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -272,4 +470,32 @@ class VapiService:
             "status": "error",
             "message": f"Unknown event type: {event_type}"
         }
+
+    def format_timestamp(self, timestamp: str) -> str:
+        """
+        Format a timestamp into a human-readable date and time.
+        
+        Args:
+            timestamp: ISO format timestamp string
+            
+        Returns:
+            Human-readable date and time string
+        """
+        try:
+            from datetime import datetime
+            import pytz
+            
+            # Parse the ISO format timestamp
+            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            
+            # Convert to local timezone (optional)
+            local_tz = pytz.timezone('America/New_York')
+            local_dt = dt.astimezone(local_tz)
+            
+            # Format the date and time in a readable format
+            return local_dt.strftime("%B %d, %Y at %I:%M %p %Z")
+        except Exception as e:
+            logger.error(f"Error formatting timestamp: {str(e)}")
+            return timestamp  
+        
 
