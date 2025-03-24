@@ -4,7 +4,7 @@ from typing import Dict, Any, Tuple
 from app.services import prompts
 from app.services.voice.agents import create_agent, get_agents, update_agent
 from app.services.vapi.assistants import create_assistant, update_assistant
-from app.services.vapi.constants.voice_ids import voice_ids, get_voice_for_country
+from app.services.vapi.constants.voice_ids import voice_ids, get_voice_for_country, get_agent_name_for_voice
 from app.services.vapi.constants.inbound_sys_prompt import SYS_PROMPT_TEMPLATE
 from app.clients.supabase_client import get_supabase
 from .setup_crud import get_guided_setup, update_guided_setup_agent_id
@@ -56,6 +56,11 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         business_phone = ""
         core_services = []
         business_hours = {}
+
+    # Extract country code and get voice ID
+    country_code, _ = extract_country_and_language(business_address)
+    voice_id = get_voice_for_country(country_code)
+    agent_name = get_agent_name_for_voice(voice_id)
 
     # Format comprehensive business information with markdown headings if they exist
     business_info_lines = []
@@ -135,6 +140,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
     
     # Format system prompt with business information (which now includes hours) and message taking
     sys_prompt = SYS_PROMPT_TEMPLATE.format(
+        agent_name=agent_name,
         business_name=business_name,
         business_information=formatted_business_information,
         message_taking=formatted_message_taking
