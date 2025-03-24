@@ -50,10 +50,13 @@ export default function CallNotifications({
   // Initialize email field with empty string when enabled
   useEffect(() => {
     if (emailNotificationsEnabled && setValue) {
-      setValue("callNotifications.emailNotifications.email", "", { shouldValidate: false });
-      console.log("Email notifications enabled, initialized email field with empty string");
+      const currentValue = control._getWatch("callNotifications.emailNotifications.email");
+      if (typeof currentValue === 'undefined') {
+        setValue("callNotifications.emailNotifications.email", "", { shouldValidate: false });
+        console.log("Email notifications enabled, initialized empty email field");
+      }
     }
-  }, [emailNotificationsEnabled, setValue]);
+  }, [emailNotificationsEnabled, setValue, control]);
 
   // Initialize phone number field with empty string when enabled
   useEffect(() => {
@@ -105,10 +108,15 @@ export default function CallNotifications({
                             type="email"
                             placeholder="Enter your email"
                             {...field}
-                            value={field.value || ""}
+                            value={field.value === null ? "" : field.value}
+                            onChange={(e) => {
+                              console.log("Email field change:", e.target.value);
+                              field.onChange(e);
+                            }}
                             onBlur={(e) => {
                               field.onBlur();
                               setEmailTouched(true);
+                              console.log("Email field blur, value:", e.target.value);
                             }}
                             className={
                               emailTouched && errors.callNotifications?.emailNotifications?.email
