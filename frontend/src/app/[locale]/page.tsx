@@ -1,5 +1,6 @@
 import { Header } from "@/components/header";
 import dynamic from "next/dynamic";
+import { ProductHuntBadge } from "@/components/ProductHuntBadge";
 
 // Dynamically import components
 const DynamicVoiceHero = dynamic(() => import('@/components/VoiceHero').then(mod => mod.VoiceHero), {
@@ -64,6 +65,7 @@ export default function HomePage({ params }: { params: { locale: string } }) {
   return (
     <div className="overflow-x-hidden relative">
       <Header locale={locale} />
+      <ProductHuntBadge />
       <main className="w-full relative pt-[64px] sm:pt-0">
         <DynamicVoiceHero />
         <DynamicPainPointsSolutions />
