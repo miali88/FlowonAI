@@ -195,7 +195,7 @@ def build_update_payload(
     if first_message:
         payload["firstMessage"] = first_message
     elif business_name:
-        payload["firstMessage"] = f"Hello, thank you for calling {business_name}, this is Alex, calls may be recorded for quality purposes, how can I help you today?"
+        payload["firstMessage"] = f"Hello, thank you for calling {business_name}, this is {assistant_name}, calls may be recorded for quality purposes, how can I help you today?"
     
     # Update with any additional fields
     payload.update(kwargs)
