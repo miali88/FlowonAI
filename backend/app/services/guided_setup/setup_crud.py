@@ -27,6 +27,8 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
     Returns:
         Tuple of (success, data_dict, error_message)
     """
+    logging.info(f"[SERVICE] save_guided_setup: Starting save process for user {user_id}")
+    
     # First check if the user exists
     user_exists = await check_user_exists(user_id)
     
@@ -36,86 +38,64 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         # Continue anyway, since we want to allow setup creation even if user record doesn't exist yet
         logging.warning(f"Proceeding with guided setup creation despite missing user record")
     
-    # Check if the user already has setup data
-    existing_setup = await get_guided_setup(user_id)
-    
-    # Extract country code and language from business address
-    _, agent_language = extract_country_and_language(quick_setup_data.businessInformation.primaryBusinessAddress)
-    
-    # Convert Pydantic models to dictionaries for JSONB columns
-    setup_data = {
-        "user_id": user_id,
-        "training_sources": quick_setup_data.trainingSources.model_dump(),
-        "business_information": quick_setup_data.businessInformation.model_dump(),
-        "message_taking": quick_setup_data.messageTaking.model_dump(),
-        "call_notifications": quick_setup_data.callNotifications.model_dump(),
-        "agent_language": agent_language,  # Set the determined language
-    }
-    
-    # If record exists, preserve the setup_completed value and vapi_assistant_id
-    # If it's a new record, set setup_completed to False by default
-    if existing_setup:
-        # Preserve the existing setup_completed status 
-        setup_data["setup_completed"] = existing_setup.get("setup_completed", False)
-        
-        # Preserve the existing vapi_assistant_id if it exists
-        if "vapi_assistant_id" in existing_setup and existing_setup["vapi_assistant_id"]:
-            setup_data["vapi_assistant_id"] = existing_setup["vapi_assistant_id"]
-            logging.info(f"Preserving existing vapi_assistant_id: {existing_setup['vapi_assistant_id']} for user {user_id}")
-        else:
-            logging.info(f"No vapi_assistant_id to preserve for user {user_id}")
-            
-        logging.info(f"Updating existing guided setup data for user {user_id}")
-    else:
-        # New record, not completed yet
-        setup_data["setup_completed"] = False
-        logging.info(f"Creating new guided setup data for user {user_id}")
-    
-    # Update or insert the record
-    supabase = await get_supabase()
     try:
+        # Check if the user already has setup data
+        existing_setup = await get_guided_setup(user_id)
+        
+        # Extract country code and language from business address
+        _, agent_language = extract_country_and_language(quick_setup_data.businessInformation.primaryBusinessAddress)
+        
+        # Convert Pydantic models to dictionaries for JSONB columns
+        setup_data = {
+            "user_id": user_id,
+            "training_sources": quick_setup_data.trainingSources.model_dump(),
+            "business_information": quick_setup_data.businessInformation.model_dump(),
+            "message_taking": quick_setup_data.messageTaking.model_dump(),
+            "call_notifications": quick_setup_data.callNotifications.model_dump(),
+            "agent_language": agent_language,  # Set the determined language
+            "setup_completed": False,  # Default to False for new records
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        # If record exists, preserve certain values
+        if existing_setup:
+            setup_data["setup_completed"] = existing_setup.get("setup_completed", False)
+            if "vapi_assistant_id" in existing_setup and existing_setup["vapi_assistant_id"]:
+                setup_data["vapi_assistant_id"] = existing_setup["vapi_assistant_id"]
+            if "phone_number" in existing_setup and existing_setup["phone_number"]:
+                setup_data["phone_number"] = existing_setup["phone_number"]
+            logging.info(f"Updating existing guided setup data for user {user_id}")
+        else:
+            logging.info(f"Creating new guided setup data for user {user_id}")
+        
+        # Update or insert the record
+        supabase = await get_supabase()
+        
         if existing_setup:
             # Update existing record
             result = await supabase.table("guided_setup").update(setup_data).eq("user_id", user_id).execute()
-            if hasattr(result, 'error') and result.error:
-                error_message = f"Database error updating guided setup: {result.error}"
-                logging.error(error_message)
-                return False, {}, error_message
-            logging.info(f"Successfully updated guided setup data for user {user_id}")
         else:
             # Insert new record
             result = await supabase.table("guided_setup").insert(setup_data).execute()
-            if hasattr(result, 'error') and result.error:
-                error_message = f"Database error inserting guided setup: {result.error}"
-                logging.error(error_message)
-                return False, {}, error_message
-            logging.info(f"Successfully created guided setup data for user {user_id}")
+        
+        if hasattr(result, 'error') and result.error:
+            error_message = f"Database error {'updating' if existing_setup else 'inserting'} guided setup: {result.error}"
+            logging.error(error_message)
+            return False, {}, error_message
+        
+        # Verify the data was saved correctly
+        updated_setup = await get_guided_setup(user_id)
+        if not updated_setup:
+            error_message = f"Failed to verify guided setup data save for user {user_id}"
+            logging.error(error_message)
+            return False, {}, error_message
+            
+        logging.info(f"Successfully {'updated' if existing_setup else 'created'} guided setup data for user {user_id}")
+        return True, updated_setup, None
         
     except Exception as e:
         error_message = f"Exception during guided setup save: {str(e)}"
-        logging.error(error_message)
-        return False, {}, error_message
-    
-    # Verify the data was saved correctly
-    updated_setup = await get_guided_setup(user_id)
-    if updated_setup:
-        # Check if vapi_assistant_id was preserved
-        if "vapi_assistant_id" in setup_data and setup_data["vapi_assistant_id"]:
-            if updated_setup.get("vapi_assistant_id") == setup_data["vapi_assistant_id"]:
-                logging.info(f"Verified vapi_assistant_id was correctly preserved: {setup_data['vapi_assistant_id']}")
-            else:
-                logging.warning(f"vapi_assistant_id was not correctly preserved. Expected: {setup_data['vapi_assistant_id']}, Got: {updated_setup.get('vapi_assistant_id')}")
-        
-        # Verify the agent language was set correctly
-        saved_language = updated_setup.get("agent_language")
-        if saved_language == agent_language:
-            logging.info(f"Verified agent_language was correctly set to: {agent_language}")
-        else:
-            logging.warning(f"agent_language was not correctly set. Expected: {agent_language}, Got: {saved_language}")
-        
-        return True, updated_setup, None  # Return the updated setup from the database
-    else:
-        error_message = f"Failed to verify guided setup data save for user {user_id}"
         logging.error(error_message)
         return False, {}, error_message
 

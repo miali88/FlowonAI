@@ -41,10 +41,10 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
   const [error, setError] = useState<string | null>(null);
   const { userId, getToken } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean>(true);
+  const [hasPhoneNumber, setHasPhoneNumber] = useState<boolean>(false);
   const [showPurchaseUI, setShowPurchaseUI] = useState<boolean>(false);
   const [isPhonePurchaseLoading, setIsPhonePurchaseLoading] = useState(false);
-  const [countryCode, setCountryCode] = useState<string>('US'); // Default to US initially
+  const [countryCode, setCountryCode] = useState<string>('US');
 
   // Function to determine country code from address
   const getCountryCodeFromAddress = (address: string): string => {
@@ -194,14 +194,17 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
       const phoneResult = await phoneResponse.json();
       console.log('Phone number purchased:', phoneResult);
 
-      if (phoneResult.phone_number) {
-        setPhoneNumber(phoneResult.phone_number);
-        setHasPhoneNumber(true);
-        setShowPurchaseUI(false);
+      if (phoneResult.success && (phoneResult.number || phoneResult.phone_number)) {
+        const purchasedNumber = phoneResult.number || phoneResult.phone_number;
+        // Update all states in a more controlled order
+        setPhoneNumber(purchasedNumber);
+        localStorage.setItem('flowonAI_phoneNumber', purchasedNumber);
         setSuccessMessage("Phone number successfully purchased!");
-        localStorage.setItem('flowonAI_phoneNumber', phoneResult.phone_number);
+        setShowPurchaseUI(false);
+        setHasPhoneNumber(true);
       } else {
-        throw new Error('No phone number received from server');
+        console.error('Invalid server response:', phoneResult);
+        throw new Error(phoneResult.error || 'Failed to purchase phone number');
       }
     } catch (err: any) {
       console.error('Error purchasing phone number:', err);
