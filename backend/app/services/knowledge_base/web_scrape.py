@@ -2,8 +2,9 @@ from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
 from requests.exceptions import RequestException
-import asyncio, logging, aiohttp, os
+import asyncio, aiohttp, os
 from dotenv import load_dotenv
+from app.core.logging_setup import logger
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 from fastapi import HTTPException
@@ -13,12 +14,6 @@ from tiktoken import encoding_for_model
 from supabase import create_client, Client
 
 load_dotenv()
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 async def count_tokens(text: str, model: str = "gpt-4o") -> int:
     logger.debug("Counting tokens with model gpt-4o")

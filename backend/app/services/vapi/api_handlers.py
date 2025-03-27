@@ -1,13 +1,11 @@
 from typing import Any, Dict
-import logging
+from app.core.logging_setup import logger
 import math
 
 from app.services.vapi.calls import store_call_data
 from app.services.user.usage import update_call_duration
 from app.services.email_service import send_notification_email
 from app.services.vapi.utils import get_user_notification_settings
-# Configure logging
-logger = logging.getLogger(__name__)
 
 class VapiService:
     """Service class to handle VAPI webhook events."""

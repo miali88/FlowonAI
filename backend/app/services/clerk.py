@@ -1,5 +1,6 @@
 from datetime import datetime
-import requests, os, logging
+import requests, os
+from app.core.logging_setup import logger
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
@@ -13,8 +14,6 @@ load_dotenv()
 
 # Set your Stripe secret key
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-
-logger = logging.getLogger(__name__)
 
 async def post_user(payload):
     user_data = payload.get('data', {})

@@ -17,7 +17,7 @@ Usage:
 
 import os
 import requests
-import logging
+from app.core.logging_setup import logger
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
@@ -25,8 +25,6 @@ from app.services.vapi.constants.voice_ids import voice_ids
 from app.services.vapi.agent_config import build_assistant_payload, build_update_payload
 
 load_dotenv()
-
-logger = logging.getLogger(__name__)
 
 async def create_assistant(business_name: str, voice_id: str,
                             sys_prompt: str = None,

@@ -9,7 +9,7 @@ It uses Playwright for browser automation and BeautifulSoup for HTML parsing.
 import os
 import json
 import time
-import logging
+from app.core.logging_setup import logger
 import asyncio
 import csv
 from typing import List, Dict, Any, Optional
@@ -18,14 +18,6 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-logger = logging.getLogger('google_maps_scraper')
 
 # Constants
 GOOGLE_MAPS_URL = "https://www.google.com/maps/place/American+Precision+Routing/@32.8175431,-96.896077,11z/data=!4m10!1m2!2m1!1scarpenter!3m6!1s0x864e958aef79f383:0x3ebe6944c79e053f!8m2!3d32.6030431!4d-96.7513228!15sCgljYXJwZW50ZXJaCyIJY2FycGVudGVykgENY2FiaW5ldF9tYWtlcpoBJENoZERTVWhOTUc5blMwVkpRMEZuU1VNMU5uSlBZMmRSUlJBQuABAPoBBAgAEB4!16s%2Fg%2F1tgtfxkb?entry=ttu&g_ep=EgoyMDI1MDIyNi4xIKXMDSoASAFQAw%3D%3D"

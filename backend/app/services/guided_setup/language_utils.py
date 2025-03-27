@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from typing import Tuple
 
 # Map country codes to language codes
@@ -51,12 +51,12 @@ def extract_country_and_language(address: str | None) -> Tuple[str, str]:
                 country_code = last_part
                 normalized_code = normalize_country_code(country_code)
                 if normalized_code != country_code:
-                    logging.info(f"Normalized country code from {country_code} to {normalized_code}")
+                    logger.info(f"Normalized country code from {country_code} to {normalized_code}")
                     country_code = normalized_code
-                logging.info(f"Extracted country code from address: {country_code}")
+                logger.info(f"Extracted country code from address: {country_code}")
     
     # Get language based on country code
     language_code = COUNTRY_TO_LANGUAGE.get(country_code, DEFAULT_LANGUAGE)
-    logging.info(f"Setting agent language to {language_code} based on country code {country_code}")
+    logger.info(f"Setting agent language to {language_code} based on country code {country_code}")
     
     return country_code, language_code 

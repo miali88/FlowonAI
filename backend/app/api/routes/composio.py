@@ -5,9 +5,7 @@ from fastapi import APIRouter
 from composio import Composio
 from composio import ComposioToolSet
 
-import logging
-
-logger = logging.getLogger(__name__)
+from app.core.logging_setup import logger
 
 router = APIRouter()
 

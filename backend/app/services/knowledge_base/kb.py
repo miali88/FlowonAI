@@ -1,4 +1,3 @@
-import logging
 from dotenv import load_dotenv
 from itertools import groupby
 from operator import itemgetter
@@ -6,6 +5,7 @@ from typing import List, Dict, Tuple
 from supabase import create_client, Client
 from openai import AsyncOpenAI
 from app.core.config import settings
+from app.core.logging_setup import logger
 
 load_dotenv()
 
@@ -14,12 +14,6 @@ supabase: Client = create_client(
     settings.SUPABASE_URL,
     settings.SUPABASE_SERVICE_ROLE_KEY
 )
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 async def get_kb_items(
     current_user: str,

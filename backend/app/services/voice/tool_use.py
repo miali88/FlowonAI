@@ -1,7 +1,7 @@
 from typing import Annotated, Dict, List, Optional, Any
 import aiohttp
 import os
-import logging
+from app.core.logging_setup import logger
 import asyncio
 import json
 from dotenv import load_dotenv
@@ -13,10 +13,6 @@ from app.services.chat.chat import similarity_search
 from app.services.cache import get_agent_metadata, calendar_cache
 from app.services.composio import book_appointment_composio
 from app.services.voice.livekit_helper import detect_call_type_and_get_agent_id
-
-# Update logger configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 load_dotenv()
 

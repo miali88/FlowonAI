@@ -1,7 +1,7 @@
 import os
 import uuid
 import asyncio
-import logging
+from app.core.logging_setup import logger
 import re
 import time
 import json
@@ -33,8 +33,6 @@ supabase: Client = create_client(
 )
 
 room_locks = {}
-logger = logging.getLogger(__name__)
-
 
 async def create_livekit_api() -> LiveKitAPI:
     return LiveKitAPI(

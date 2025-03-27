@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os 
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 
 import stripe
 from fastapi import APIRouter, HTTPException, Request, Header, Depends
@@ -11,10 +11,6 @@ from app.services.stripe.services import create_payment_link, handle_subscriptio
 from app.core.auth import get_current_user
 load_dotenv()
 router = APIRouter()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class PaymentLinkRequest(BaseModel):
     product_id: str = "prod_Ryi6M9XhsSdInn" #"prod_RcfvpRgzSUvVXj" # live product id

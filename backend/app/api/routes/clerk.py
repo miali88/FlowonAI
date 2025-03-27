@@ -1,5 +1,5 @@
 import os
-import logging
+from app.core.logging_setup import logger
 
 from fastapi import Request, APIRouter, Header, HTTPException, Depends
 from svix.webhooks import Webhook, WebhookVerificationError
@@ -7,8 +7,6 @@ from svix.webhooks import Webhook, WebhookVerificationError
 from app.services.clerk import post_user, get_clerk_private_metadata
 from app.models.users import UserMetadataResponse
 from app.core.auth import get_current_user
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

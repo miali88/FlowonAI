@@ -1,11 +1,9 @@
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
-import logging
+from app.core.logging_setup import logger
 
 from app.services.vapi.utils import get_user_id
-
-logger = logging.getLogger(__name__)
 
 class VapiEndOfCallReport:
     """Data model for storing summarized VAPI call data."""

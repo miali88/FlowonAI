@@ -1,11 +1,9 @@
-import logging
+from app.core.logging_setup import logger
 
 from fastapi import HTTPException, Depends, APIRouter
 
 from app.services.user.usage import check_user_trial_status
 from app.core.auth import get_current_user
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

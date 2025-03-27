@@ -1,13 +1,11 @@
 from supabase._async.client import AsyncClient
 import os
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger 
 from typing import Optional
 import asyncio
 
 load_dotenv()
-
-logger = logging.getLogger(__name__)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 if not SUPABASE_URL:

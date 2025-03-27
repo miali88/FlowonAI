@@ -1,14 +1,12 @@
 from fastapi import Request, HTTPException, APIRouter
 
-import logging
+from app.core.logging_setup import logger
 import traceback
 from typing import Any
 
 from app.clients.supabase_client import get_supabase
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
-
 
 @router.post("/")
 async def update_settings(request: Request) -> dict[str, str]:

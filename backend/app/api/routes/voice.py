@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from typing import List, Dict, Any, Optional
 import json
 
@@ -7,8 +7,6 @@ from fastapi import Request, APIRouter
 from app.services.cache import call_data
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
-
 # global variable to store the jobs
 jobs: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
 

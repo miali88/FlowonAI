@@ -1,5 +1,5 @@
 # flake8: noqa: E501
-import logging
+from app.core.logging_setup import logger
 from fastapi import HTTPException, APIRouter, Request
 from nylas import Client as NylasClient # type: ignore
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
@@ -76,7 +76,7 @@ async def oauth_exchange(code: str) -> HTMLResponse:
         """
         return HTMLResponse(content=html_content, status_code=200)
     except Exception as e:
-        logging.error(f"Failed to exchange authorization code: {str(e)}")
+        logger.error(f"Failed to exchange authorization code: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Failed to exchange authorization code for token"

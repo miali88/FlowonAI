@@ -8,13 +8,10 @@ This module provides functionality for:
 """
 
 import os
-import logging
+from app.core.logging_setup import logger
 from datetime import datetime, timezone, timedelta
 
 from app.clients.supabase_client import get_supabase
-
-# Set up logging
-logger = logging.getLogger("subscription.trial")
 
 async def check_expired_trials():
     """

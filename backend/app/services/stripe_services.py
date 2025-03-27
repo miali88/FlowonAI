@@ -5,7 +5,7 @@ import stripe
 from typing import Optional
 import os 
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 
 from app.clients.supabase_client import get_supabase
 
@@ -13,8 +13,6 @@ load_dotenv()
 
 # Initialize Stripe
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-
-logger = logging.getLogger(__name__)
 
 class PaymentLinkRequest(BaseModel):
     product_id: str = "prod_RcfvpRgzSUvVXj"

@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from fastapi import Request, HTTPException, APIRouter, Depends, Header, Body
 from typing import Dict, List, Any
 
@@ -19,9 +19,6 @@ from app.models.agent import (
 )
 
 router = APIRouter()
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 @router.post("/", response_model=Dict[str, List[AgentInDB]], status_code=201)
 async def new_agent_handler(request: Request, current_user: str = Depends(get_current_user)):

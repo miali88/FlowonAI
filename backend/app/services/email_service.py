@@ -1,8 +1,6 @@
-import logging
+from app.core.logging_setup import logger
 from app.api.routes.nylas import nylas
 from app.api.routes.nylas import settings
-
-logger = logging.getLogger(__name__)
 
 async def send_notification_email(subject: str, body: str, recipient_email: str = "support@flowon.ai") -> bool:
     """
@@ -28,10 +26,10 @@ async def send_notification_email(subject: str, body: str, recipient_email: str 
         grant_id = settings.NYLAS_GRANT_ID
         
         if not grant_id:
-            logging.error("NYLAS_GRANT_ID is not set in environment variables")
+            logger.error("NYLAS_GRANT_ID is not set in environment variables")
             return False
             
-        logging.info(f"Attempting to send email via Nylas with grant_id: {grant_id}")
+        logger.info(f"Attempting to send email via Nylas with grant_id: {grant_id}")
         
         # Send the email using the Nylas v3 API format
         try:
@@ -42,13 +40,13 @@ async def send_notification_email(subject: str, body: str, recipient_email: str 
             
             return True
         except Exception as api_error:
-            logging.error(f"Nylas API error: {str(api_error)}")
-            logging.error(f"API error type: {type(api_error)}")
+            logger.error(f"Nylas API error: {str(api_error)}")
+            logger.error(f"API error type: {type(api_error)}")
             return False
             
     except Exception as e:
-        logging.error(f"Failed to send notification email: {str(e)}")
-        logging.error(f"Error type: {type(e)}")
+        logger.error(f"Failed to send notification email: {str(e)}")
+        logger.error(f"Error type: {type(e)}")
         import traceback
-        logging.error(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False

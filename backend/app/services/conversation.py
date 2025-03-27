@@ -1,10 +1,7 @@
-import logging
+from app.core.logging_setup import logger
 
 from app.services.chat.chat import llm_response
 from app.clients.supabase_client import get_supabase
-
-# Set up logging
-logger = logging.getLogger(__name__)
 
 async def transcript_summary(transcript: str, job_id: str) -> str | None:
     """

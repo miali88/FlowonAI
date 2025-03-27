@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from typing import Dict, Any, Optional
 
 from app.clients.elevenlabs_client import elevenlabs_client
@@ -26,13 +26,13 @@ async def generate_greeting_preview(
         Dictionary with success status and audio binary data or error
     """
     try:
-        logging.info(f"Generating greeting preview for user {user_id} with business: {business_name}, language: {language}")
+        logger.info(f"Generating greeting preview for user {user_id} with business: {business_name}, language: {language}")
         
         # Get appropriate voice ID and agent name based on language code
         country_code = language.split("-")[-1].upper() if "-" in language else language.upper()
         voice_id = get_voice_for_country(country_code)
         agent_name = get_agent_name_for_voice(voice_id)
-        logging.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
+        logger.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
         
         # Create a sample greeting message based on business info and language
         greeting_text = ""
@@ -62,15 +62,15 @@ async def generate_greeting_preview(
                 voice_id=voice_id,
                 return_bytes=True
             )
-            logging.info(f"Successfully generated audio for greeting preview")
+            logger.info(f"Successfully generated audio for greeting preview")
         except Exception as audio_error:
-            logging.error(f"Error generating audio: {str(audio_error)}")
+            logger.error(f"Error generating audio: {str(audio_error)}")
             return {
                 "success": False,
                 "error": f"Failed to generate audio: {str(audio_error)}"
             }
         
-        logging.info(f"Generated greeting preview for {business_name} in {language}")
+        logger.info(f"Generated greeting preview for {business_name} in {language}")
         
         # Return both the audio data and the text
         return {
@@ -79,7 +79,7 @@ async def generate_greeting_preview(
             "text": greeting_text
         }
     except Exception as e:
-        logging.error(f"Error generating greeting preview: {str(e)}")
+        logger.error(f"Error generating greeting preview: {str(e)}")
         return {
             "success": False,
             "error": f"Failed to generate greeting audio: {str(e)}"
@@ -102,13 +102,13 @@ async def generate_message_preview(
         Dictionary with success status and audio binary data or error
     """
     try:
-        logging.info(f"Generating message preview for user {user_id} with business: {business_name}, language: {language}")
+        logger.info(f"Generating message preview for user {user_id} with business: {business_name}, language: {language}")
         
         # Get appropriate voice ID and agent name based on language code
         country_code = language.split("-")[-1].upper() if "-" in language else language.upper()
         voice_id = get_voice_for_country(country_code)
         agent_name = get_agent_name_for_voice(voice_id)
-        logging.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
+        logger.info(f"Selected voice ID {voice_id} with agent name {agent_name} for country code {country_code}")
         
         # Create a sample message-taking text based on language
         message_text = ""
@@ -173,15 +173,15 @@ async def generate_message_preview(
                 voice_id=voice_id,
                 return_bytes=True
             )
-            logging.info(f"Successfully generated audio for message preview")
+            logger.info(f"Successfully generated audio for message preview")
         except Exception as audio_error:
-            logging.error(f"Error generating audio: {str(audio_error)}")
+            logger.error(f"Error generating audio: {str(audio_error)}")
             return {
                 "success": False,
                 "error": f"Failed to generate audio: {str(audio_error)}"
             }
         
-        logging.info(f"Generated message preview for {business_name} in {language}")
+        logger.info(f"Generated message preview for {business_name} in {language}")
         
         # Return both the audio data and the text
         return {
@@ -190,7 +190,7 @@ async def generate_message_preview(
             "text": message_text
         }
     except Exception as e:
-        logging.error(f"Error generating message preview: {str(e)}")
+        logger.error(f"Error generating message preview: {str(e)}")
         return {
             "success": False,
             "error": f"Failed to generate message audio: {str(e)}"

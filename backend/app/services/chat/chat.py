@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 import os
 import requests
 import asyncio
@@ -15,7 +15,6 @@ from anthropic import AsyncAnthropic
 from app.clients.supabase_client import get_supabase
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
 load_dotenv()
 
 openai = OpenAI()

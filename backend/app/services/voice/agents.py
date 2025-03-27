@@ -1,19 +1,10 @@
 # flake8: noqa: E501
-import logging
+from app.core.logging_setup import logger
 from fastapi import HTTPException
 from typing import Any, Dict, List, Union
 from uuid import UUID
 
 from app.clients.supabase_client import get_supabase
-
-# Set up logging with timestamps
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a custom formatter with timestamps
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
 # system prompt scaffold
 sys_prompt_scaffold = """
 # Role

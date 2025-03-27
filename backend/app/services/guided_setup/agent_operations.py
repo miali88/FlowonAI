@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from typing import Dict, Any, Tuple
 
 from app.services import prompts
@@ -39,7 +39,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
     Returns:
         Tuple of (formatted system prompt string, business name)
     """
-    logging.info("Formatting system prompt from guided setup data")
+    logger.info("Formatting system prompt from guided setup data")
     
     # Get business information with proper None checks
     if setup_data.businessInformation:
@@ -92,7 +92,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         for day, hours in business_hours.items():
             business_info_lines.append(f"- {day}: {hours.open} - {hours.close}")
         
-        logging.info("Added business hours to business information")
+        logger.info("Added business hours to business information")
     
     formatted_business_information = "\n".join(business_info_lines) if business_info_lines else ""
     
@@ -103,7 +103,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
             hours_lines.append(f"- {day}: {hours.open} - {hours.close}")
         standalone_hours = "\n".join(hours_lines)
     else:
-        logging.info("No business hours to format")
+        logger.info("No business hours to format")
     
     # Format message taking information if it exists
     formatted_message_taking = ""
@@ -136,7 +136,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         formatted_message_taking = "\n".join(message_taking_info)
     else:
         formatted_message_taking = ""
-        logging.info("No message taking information to format")
+        logger.info("No message taking information to format")
     
     # Format system prompt with business information (which now includes hours) and message taking
     sys_prompt = SYS_PROMPT_TEMPLATE.format(
@@ -146,7 +146,7 @@ async def format_vapi_system_prompt(setup_data: QuickSetupData) -> Tuple[str, st
         message_taking=formatted_message_taking
     )
     
-    logging.info("System prompt formatting completed")
+    logger.info("System prompt formatting completed")
     return sys_prompt, business_name
 
 async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Dict[str, Any]]:
@@ -161,7 +161,7 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
         Tuple of (success, message, assistant_data)
     """
     try:
-        logging.info(f"Creating or updating VAPI assistant for user {user_id}")
+        logger.info(f"Creating or updating VAPI assistant for user {user_id}")
         
         # Format the system prompt and get business name
         sys_prompt, business_name = await format_vapi_system_prompt(setup_data)
@@ -171,7 +171,7 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
         
         # Get the appropriate voice ID based on country code
         voice_id = get_voice_for_country(country_code)
-        logging.info(f"Selected voice ID {voice_id} based on country code {country_code}")
+        logger.info(f"Selected voice ID {voice_id} based on country code {country_code}")
         
         # Get guided setup data to check for existing assistant
         guided_setup_data = await get_guided_setup(user_id)
@@ -179,17 +179,17 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
         
         # Create or update the VAPI assistant
         if vapi_assistant_id:
-            logging.info(f"Updating existing VAPI assistant with ID: {vapi_assistant_id}")
+            logger.info(f"Updating existing VAPI assistant with ID: {vapi_assistant_id}")
             assistant_result = await update_assistant(
                 assistant_id=vapi_assistant_id,
                 business_name=business_name,
                 voice_id=voice_id,
                 sys_prompt=sys_prompt
             )
-            logging.info(f"VAPI assistant updated successfully: {assistant_result.get('id')}")
+            logger.info(f"VAPI assistant updated successfully: {assistant_result.get('id')}")
             return True, f"Updated existing VAPI assistant with ID: {vapi_assistant_id}", assistant_result
         else:
-            logging.info(f"Creating new VAPI assistant for {business_name}")
+            logger.info(f"Creating new VAPI assistant for {business_name}")
             assistant_result = await create_assistant(
                 business_name=business_name,
                 voice_id=voice_id,
@@ -207,22 +207,22 @@ async def create_or_update_vapi_assistant(user_id: str, setup_data: QuickSetupDa
                 }).eq("user_id", user_id).execute()
                 
                 if not update_result.data:
-                    logging.warning(f"Failed to update guided_setup with VAPI assistant ID for user {user_id}")
+                    logger.warning(f"Failed to update guided_setup with VAPI assistant ID for user {user_id}")
                     return True, f"Created VAPI assistant but failed to update guided_setup", assistant_result
                 else:
-                    logging.info(f"Saved VAPI assistant ID {new_assistant_id} to guided_setup for user {user_id}")
+                    logger.info(f"Saved VAPI assistant ID {new_assistant_id} to guided_setup for user {user_id}")
                     return True, f"Created new VAPI assistant with ID: {new_assistant_id}", assistant_result
             else:
-                logging.warning(f"Created VAPI assistant result does not contain an ID")
+                logger.warning(f"Created VAPI assistant result does not contain an ID")
                 return False, "Failed to retrieve VAPI assistant ID from creation result", assistant_result
             
     except Exception as e:
-        logging.error(f"Error creating/updating VAPI assistant: {str(e)}")
+        logger.error(f"Error creating/updating VAPI assistant: {str(e)}")
         return False, f"Error creating/updating VAPI assistant: {str(e)}", {}
 
 async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetupData) -> Tuple[bool, str, Any]:
     try:
-        logging.info(f"Checking for existing agents for user {user_id}")
+        logger.info(f"Checking for existing agents for user {user_id}")
         
         # Access data directly from the Pydantic model
         business_info = setup_data.businessInformation
@@ -242,18 +242,18 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetup
         agent_id = guided_setup_data.get("agent_id") if guided_setup_data else None
         guided_setup_id = guided_setup_data.get("id") if guided_setup_data else None
         
-        logging.info(f"Retrieved phone number for agent assignment: {phone_number}")
+        logger.info(f"Retrieved phone number for agent assignment: {phone_number}")
         if agent_id:
-            logging.info(f"Found existing agent_id in guided_setup: {agent_id}")
+            logger.info(f"Found existing agent_id in guided_setup: {agent_id}")
         else:
-            logging.info(f"No agent_id found in guided_setup for user {user_id}")
+            logger.info(f"No agent_id found in guided_setup for user {user_id}")
             
         if guided_setup_id:
-            logging.info(f"Found guided_setup_id: {guided_setup_id}")
+            logger.info(f"Found guided_setup_id: {guided_setup_id}")
         else:
-            logging.warning(f"No guided_setup_id found for user {user_id}")
+            logger.warning(f"No guided_setup_id found for user {user_id}")
         
-        logging.info(f"Preparing agent data for business: {business_name}")
+        logger.info(f"Preparing agent data for business: {business_name}")
 
         features = {
             "end_call": {
@@ -285,25 +285,25 @@ async def create_or_update_agent_from_setup(user_id: str, setup_data: QuickSetup
 
         # Create or update the agent
         if agent_id:
-            logging.info(f"Updating existing agent with ID: {agent_id}")
+            logger.info(f"Updating existing agent with ID: {agent_id}")
             agent_result = await update_agent(agent_id, agent_data)
-            logging.info(f"Agent updated successfully: {agent_result.get('id')}")
+            logger.info(f"Agent updated successfully: {agent_result.get('id')}")
             return True, f"Updated existing agent with ID: {agent_id}", agent_result
         else:
-            logging.info(f"Creating new agent for {business_name}")
+            logger.info(f"Creating new agent for {business_name}")
             agent_result = await create_agent(agent_data)
             
             # Save the new agent ID to the guided setup data
             new_agent_id = agent_result.get('id')
             if new_agent_id:
                 await update_guided_setup_agent_id(user_id, new_agent_id)
-                logging.info(f"Saved agent ID {new_agent_id} to guided_setup for user {user_id}")
+                logger.info(f"Saved agent ID {new_agent_id} to guided_setup for user {user_id}")
                 return True, f"Created new agent with ID: {new_agent_id}", agent_result
             else:
-                logging.warning(f"Created agent result does not contain an ID")
+                logger.warning(f"Created agent result does not contain an ID")
                 return False, "Failed to retrieve agent ID from creation result", agent_result
 
     except Exception as e:
-        logging.error(f"Error creating/updating agent: {str(e)}")
+        logger.error(f"Error creating/updating agent: {str(e)}")
         return False, f"Error creating/updating agent: {str(e)}", None
 

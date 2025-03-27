@@ -5,13 +5,9 @@ import os
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
-import logging
+from app.core.logging_setup import logger
 
 from app.core.config import settings
-
-logger = logging.getLogger(__name__)
-# Set logging level to DEBUG for this module
-logger.setLevel(logging.DEBUG)
 
 security = HTTPBearer()
 
