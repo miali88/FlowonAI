@@ -1,4 +1,4 @@
-# **🚀 Project Name**  
+# **Flowon AI**  
 **🔒 Private Intellectual Property of Crescent Advisors Limited** *(CRN: 13530427)*  
 
 ---
