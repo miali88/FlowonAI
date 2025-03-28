@@ -18,23 +18,23 @@ interface PainPointCardProps {
 }
 
 const PainPointCard = ({ icon, title, problem, solution }: PainPointCardProps) => (
-  <Card className="relative overflow-hidden bg-black/10 backdrop-blur-sm border border-white/10 h-full hover:bg-black/20 transition-colors duration-300">
+  <Card className="relative overflow-hidden bg-background/80 dark:bg-background/80 border border-white/10 h-full hover:bg-background/90 dark:hover:bg-background/90 transition-colors duration-300">
     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
     <CardContent className="p-6 flex flex-col h-full space-y-4 relative z-10">
       <div className="flex items-center space-x-3">
-        <div className="h-10 w-10 rounded-full bg-primary/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-white/10">
           {icon}
         </div>
         <h3 className="text-xl font-semibold">{title}</h3>
       </div>
       
       <div className="space-y-4">
-        <div className="bg-red-500/5 backdrop-blur-sm border border-red-500/10 rounded-lg p-4">
+        <div className="bg-red-500/5 border border-red-500/10 rounded-lg p-4">
           <h4 className="text-sm font-medium text-red-400 mb-2">Problem:</h4>
           <p className="text-sm text-muted-foreground">{problem}</p>
         </div>
         
-        <div className="bg-green-500/5 backdrop-blur-sm border border-green-500/10 rounded-lg p-4">
+        <div className="bg-green-500/5 border border-green-500/10 rounded-lg p-4">
           <h4 className="text-sm font-medium text-green-400 mb-2">Solution:</h4>
           <p className="text-sm text-muted-foreground">{solution}</p>
         </div>
