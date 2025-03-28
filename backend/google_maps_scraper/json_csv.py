@@ -2,18 +2,11 @@
 import json
 import csv
 import os
-import logging
+from app.core.logging_setup import logger
 import argparse
 from datetime import datetime
 import glob
 import re
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger('json_to_csv_converter')
 
 def clean_data(data):
     """

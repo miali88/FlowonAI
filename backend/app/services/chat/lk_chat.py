@@ -8,7 +8,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 import os 
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 import asyncio
 import httpx
 
@@ -28,7 +28,6 @@ load_dotenv()
 
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
-logger = logging.getLogger(__name__)
 
 @dataclass
 class ChatScenario:

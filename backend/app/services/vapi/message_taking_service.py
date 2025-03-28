@@ -1,13 +1,10 @@
 from typing import Dict, Any, Optional
-import logging
+from app.core.logging_setup import logger
 import json
 
 from app.models.guided_setup import MessageTaking
 from app.clients.supabase_client import get_supabase
 from app.services.chat.chat import llm_response
-
-# Configure logging
-logger = logging.getLogger(__name__)
 
 async def get_user_message_taking(user_id: str) -> Optional[MessageTaking]:
     """

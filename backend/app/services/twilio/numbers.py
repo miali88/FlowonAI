@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional, Tuple
-import logging
+from app.core.logging_setup import logger
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -8,7 +8,6 @@ from app.clients.supabase_client import get_supabase
 from app.services.vapi.utils import register_phone_number_with_vapi
 from app.services.guided_setup.setup_crud import get_phone_number_handler
 
-logger = logging.getLogger(__name__)
 
 async def check_user_has_number(user_id: str) -> Tuple[bool, Optional[str]]:
     """

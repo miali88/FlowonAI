@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 import asyncio
-import logging
+from app.core.logging_setup import logger
 from collections import defaultdict
 from datetime import datetime
 import httpx
@@ -17,10 +17,6 @@ from app.clients.supabase_client import get_supabase
 from app.services.chat.lk_chat import save_chat_history_to_supabase, form_data_to_chat, get_chat_rag_results
 from app.services.conversation import transcript_summary
 from app.core.config import settings
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

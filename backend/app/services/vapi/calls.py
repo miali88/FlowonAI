@@ -1,9 +1,8 @@
 from typing import Dict, Any, List, Optional
-import logging
+from app.core.logging_setup import logger
 from app.clients.supabase_client import get_supabase
 from app.services.vapi.helper import VapiEndOfCallReport
 
-logger = logging.getLogger(__name__)
 async def store_call_data(webhook_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Store summarized call data in Supabase.

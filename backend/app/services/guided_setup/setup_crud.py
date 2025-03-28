@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from typing import Dict, Any, Tuple, Optional
 from datetime import datetime
 
@@ -13,7 +13,7 @@ async def check_user_exists(user_id: str) -> bool:
         result = await supabase.table("users").select("id").eq("id", user_id).execute()
         return result.data and len(result.data) > 0
     except Exception as e:
-        logging.error(f"Error checking if user exists: {str(e)}")
+        logger.error(f"Error checking if user exists: {str(e)}")
         return False
 
 async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> Tuple[bool, Dict[str, Any], Optional[str]]:
@@ -27,16 +27,16 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
     Returns:
         Tuple of (success, data_dict, error_message)
     """
-    logging.info(f"[SERVICE] save_guided_setup: Starting save process for user {user_id}")
+    logger.info(f"[SERVICE] save_guided_setup: Starting save process for user {user_id}")
     
     # First check if the user exists
     user_exists = await check_user_exists(user_id)
     
     if not user_exists:
         error_message = f"User with ID {user_id} does not exist in the users table"
-        logging.error(error_message)
+        logger.error(error_message)
         # Continue anyway, since we want to allow setup creation even if user record doesn't exist yet
-        logging.warning(f"Proceeding with guided setup creation despite missing user record")
+        logger.warning(f"Proceeding with guided setup creation despite missing user record")
     
     try:
         # Check if the user already has setup data
@@ -65,9 +65,9 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
                 setup_data["vapi_assistant_id"] = existing_setup["vapi_assistant_id"]
             if "phone_number" in existing_setup and existing_setup["phone_number"]:
                 setup_data["phone_number"] = existing_setup["phone_number"]
-            logging.info(f"Updating existing guided setup data for user {user_id}")
+            logger.info(f"Updating existing guided setup data for user {user_id}")
         else:
-            logging.info(f"Creating new guided setup data for user {user_id}")
+            logger.info(f"Creating new guided setup data for user {user_id}")
         
         # Update or insert the record
         supabase = await get_supabase()
@@ -81,22 +81,22 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         
         if hasattr(result, 'error') and result.error:
             error_message = f"Database error {'updating' if existing_setup else 'inserting'} guided setup: {result.error}"
-            logging.error(error_message)
+            logger.error(error_message)
             return False, {}, error_message
         
         # Verify the data was saved correctly
         updated_setup = await get_guided_setup(user_id)
         if not updated_setup:
             error_message = f"Failed to verify guided setup data save for user {user_id}"
-            logging.error(error_message)
+            logger.error(error_message)
             return False, {}, error_message
             
-        logging.info(f"Successfully {'updated' if existing_setup else 'created'} guided setup data for user {user_id}")
+        logger.info(f"Successfully {'updated' if existing_setup else 'created'} guided setup data for user {user_id}")
         return True, updated_setup, None
         
     except Exception as e:
         error_message = f"Exception during guided setup save: {str(e)}"
-        logging.error(error_message)
+        logger.error(error_message)
         return False, {}, error_message
 
 async def get_guided_setup(user_id: str):
@@ -107,10 +107,10 @@ async def get_guided_setup(user_id: str):
     result = await supabase.table("guided_setup").select("*").eq("user_id", user_id).execute()
     
     if result.data and len(result.data) > 0:
-        logging.info(f"Retrieved guided setup data for user {user_id}")
+        logger.info(f"Retrieved guided setup data for user {user_id}")
         return result.data[0]
     
-    logging.info(f"No guided setup data found for user {user_id}")
+    logger.info(f"No guided setup data found for user {user_id}")
     return None
 
 async def has_completed_setup(user_id: str) -> bool:
@@ -131,13 +131,13 @@ async def update_guided_setup_agent_id(user_id: str, agent_id: str) -> bool:
         result = await supabase.table("guided_setup").update({"agent_id": agent_id}).eq("user_id", user_id).execute()
         
         if hasattr(result, 'error') and result.error:
-            logging.error(f"Error updating agent_id for user {user_id}: {result.error}")
+            logger.error(f"Error updating agent_id for user {user_id}: {result.error}")
             return False
             
-        logging.info(f"Successfully updated agent_id to {agent_id} for user {user_id}")
+        logger.info(f"Successfully updated agent_id to {agent_id} for user {user_id}")
         return True
     except Exception as e:
-        logging.error(f"Exception updating agent_id for user {user_id}: {str(e)}")
+        logger.error(f"Exception updating agent_id for user {user_id}: {str(e)}")
         return False
 
 async def mark_setup_complete(user_id: str) -> Dict[str, Any]:
@@ -149,13 +149,13 @@ async def mark_setup_complete(user_id: str) -> Dict[str, Any]:
         result = await supabase.table("guided_setup").update({"setup_completed": True}).eq("user_id", user_id).execute()
         
         if hasattr(result, 'error') and result.error:
-            logging.error(f"Error marking setup complete for user {user_id}: {result.error}")
+            logger.error(f"Error marking setup complete for user {user_id}: {result.error}")
             return {"success": False, "error": str(result.error)}
             
-        logging.info(f"Successfully marked setup as complete for user {user_id}")
+        logger.info(f"Successfully marked setup as complete for user {user_id}")
         return {"success": True}
     except Exception as e:
-        logging.error(f"Exception marking setup complete for user {user_id}: {str(e)}")
+        logger.error(f"Exception marking setup complete for user {user_id}: {str(e)}")
         return {"success": False, "error": str(e)}
 
 async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
@@ -221,20 +221,20 @@ async def update_training_status_service(user_id: str, trained_status: bool) -> 
             .execute()
             
         if not result.data or len(result.data) == 0:
-            logging.error(f"No guided setup record found for user {user_id}")
+            logger.error(f"No guided setup record found for user {user_id}")
             return {
                 'success': False,
                 'error': 'No guided setup record found for user'
             }
             
-        logging.info(f"Updated training status to {trained_status} for user {user_id}")
+        logger.info(f"Updated training status to {trained_status} for user {user_id}")
         return {
             'success': True,
             'data': result.data[0]
         }
             
     except Exception as e:
-        logging.error(f"Error updating training status: {str(e)}")
+        logger.error(f"Error updating training status: {str(e)}")
         return {
             'success': False,
             'error': f"Failed to update training status: {str(e)}"

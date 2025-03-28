@@ -4,7 +4,6 @@ import psutil
 import time
 import platform
 import sys
-import logging
 from dotenv import load_dotenv
 
 from fastapi import FastAPI
@@ -15,11 +14,13 @@ import sentry_sdk
 from app.core.config import settings
 from app.api.main import api_router
 from app.clients.supabase_client import SupabaseConnection
+from app.core.logging_setup import logger
 
 load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+os.environ["FORCE_COLOR"] = "1"  # Force colorized output
+
+logger.info("Starting application initialization")
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -48,21 +49,17 @@ app = FastAPI(
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
 )
 
-origins = ["flowon.ai",
-           "https://flowon.ai",
-           "https://www.flowon.ai",
-           "http://localhost:3000", 
-           "https://localhost:3000", 
-           ]
-    
-if origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Log CORS configuration
+logger.info(f"Configuring CORS with origins: {settings.BACKEND_CORS_ORIGINS}")
+
+# Configure CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #print("origins",[str(origins).strip(",") for origin in settings.BACKEND_CORS_ORIGINS])
 
@@ -99,7 +96,8 @@ def kill_processes_on_port(port):
 
 @app.on_event("startup")
 async def startup_event():
-    logger.debug("Starting up FastAPI server...")
+    logger.info(f"{settings.PROJECT_NAME} application started successfully")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
     global livekit_process
     global supabase
     logger.info("Initializing Supabase client...")
@@ -179,7 +177,7 @@ async def shutdown_event():
     global livekit_process
 
     await SupabaseConnection.close()
-    logger.debug("Shutting down FastAPI server...")
+    logger.info(f"{settings.PROJECT_NAME} application shutting down")
     print("twilio cleanup")
     cleanup()
     if livekit_process:

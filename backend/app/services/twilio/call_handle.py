@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 import os
 import asyncio
 import math
@@ -14,9 +14,6 @@ from app.clients.supabase_client import get_supabase
 from app.services.user.usage import update_call_duration
 
 livekit_sip_host = os.getenv('LIVEKIT_SIP_HOST')
-
-# Add this near the top of the file, after imports
-logger = logging.getLogger(__name__)
 
 """ CALL HANDLING """
 async def add_to_conference(request: Request) -> JSONResponse:

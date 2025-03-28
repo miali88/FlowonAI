@@ -1,10 +1,8 @@
-import logging
+from app.core.logging_setup import logger
 from livekit import api
 import os
 
 from app.clients.supabase_client import get_supabase
-
-logger = logging.getLogger(__name__)
 
 """ DETECT CALL TYPE (INBOUND, OUTBOUND, WEB), EXTRACT AGENT ID, AND CREATE VOICE ASSISTANT """
 

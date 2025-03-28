@@ -2,12 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, List
 from enum import Enum
 import math
-import logging
+from app.core.logging_setup import logger
 
 from app.services.twilio.client import client
 from app.clients.supabase_client import get_supabase
-
-logger = logging.getLogger(__name__)
 
 class NumberType(str, Enum):
     LOCAL = "local"

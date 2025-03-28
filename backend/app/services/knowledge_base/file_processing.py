@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook # type: ignore
@@ -10,9 +10,6 @@ from fastapi import UploadFile, BackgroundTasks
 
 from app.clients.supabase_client import get_supabase
 from app.services.knowledge_base.vectorise_data import kb_item_to_chunks
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 async def process_file(file: UploadFile) -> Any:
     logger.info(f"Processing file: {file.filename}")

@@ -5,11 +5,9 @@ This module provides configuration settings and helper functions for VAPI AI pho
 It includes default configurations and functions to build agent payloads.
 """
 
-import logging
+from app.core.logging_setup import logger
 from typing import Dict, Any, Optional
 from app.services.vapi.constants.voice_ids import get_agent_name_for_voice
-
-logger = logging.getLogger(__name__)
 
 # Default configuration settings
 DEFAULT_VOICE_CONFIG = {

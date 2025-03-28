@@ -10,7 +10,7 @@ import os
 import json
 import time
 import random
-import logging
+from app.core.logging_setup import logger
 import asyncio
 import csv
 from typing import List, Dict, Any, Optional
@@ -19,14 +19,6 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page, BrowserContext
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-logger = logging.getLogger('google_maps_scraper_stealth')
 
 # Constants
 GOOGLE_MAPS_URL = "https://www.google.com/maps/search/Roofers/@31.863223,-106.5993968,33655m/data=!3m1!1e3?entry=ttu&g_ep=EgoyMDI1MDIyMy4xIKXMDSoASAFQAw%3D%3D"

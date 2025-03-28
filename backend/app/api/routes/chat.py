@@ -1,6 +1,6 @@
 from fastapi import Request, HTTPException, APIRouter, Body
 from fastapi.responses import StreamingResponse
-import logging
+from app.core.logging_setup import logger
 import json
 from pydantic import BaseModel
 from typing import AsyncGenerator, Dict
@@ -8,10 +8,6 @@ from datetime import datetime
 
 from app.services.chat.lk_chat import lk_chat_process
 from app.services.redis_service import RedisChatStorage
-
-router = APIRouter()
-logger = logging.getLogger(__name__)
-
 
 class ChatMessage(BaseModel):
     message: str

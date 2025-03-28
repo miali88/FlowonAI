@@ -1,13 +1,10 @@
-import logging
+from app.core.logging_setup import logger 
 
 from fastapi import Request, HTTPException, APIRouter, BackgroundTasks, Depends, Header
 
 from app.services.voice.livekit_services import token_gen, start_agent_request
 
 router = APIRouter()
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 # @router.get("/token")
 # async def get_token(request: Request, background_tasks: BackgroundTasks):

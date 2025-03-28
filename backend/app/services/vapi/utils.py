@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 import os
 import requests
 from typing import Dict, Any, Optional, List
@@ -6,8 +6,6 @@ from app.clients.supabase_client import get_supabase
 from app.core.config import settings
 import json
 import httpx
-
-logger = logging.getLogger(__name__)
 
 async def get_user_id(phone_number: str) -> Optional[str]:
     """Get user ID associated with a phone number."""

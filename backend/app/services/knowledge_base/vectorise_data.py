@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 from tiktoken import encoding_for_model
 import requests
 import json
@@ -11,11 +11,6 @@ from app.core.config import settings
 from app.clients.supabase_client import get_supabase
 
 openai = AsyncOpenAI()
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 nlp = spacy.load("en_core_web_md")
 

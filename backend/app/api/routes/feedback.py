@@ -3,10 +3,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import logging
-
-router = APIRouter()
-logger = logging.getLogger(__name__)
+from app.core.logging_setup import logger
 
 class ResponseFeedback(BaseModel):
     thumbs_up: bool

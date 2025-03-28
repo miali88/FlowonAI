@@ -1,12 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-import logging
+from app.core.logging_setup import logger
 import asyncio
 
 from app.api.deps import get_current_user
 from services.initiate_outbound import initiate_outbound_call
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

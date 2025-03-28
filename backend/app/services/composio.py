@@ -11,8 +11,6 @@ load_dotenv()
 
 # Initialize the Composio client
 client = Composio()
-logger = logging.getLogger(__name__)
-
 
 async def get_calendar_slots(user_id: str, app: str) -> Any:
     print("Getting calendar slots..")

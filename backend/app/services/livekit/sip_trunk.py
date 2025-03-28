@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 
 from livekit import api 
 from livekit.protocol.sip import (CreateSIPInboundTrunkRequest, 
@@ -9,18 +9,6 @@ from livekit.protocol.sip import (CreateSIPInboundTrunkRequest,
 )
 
 load_dotenv()
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-
-# Set up logger
-logger = logging.getLogger(__name__)
-# Set logger level to ensure all messages are processed
-logger.setLevel(logging.DEBUG)
 
 async def create_sip_outbound_trunk(twilio_number: str):
     """

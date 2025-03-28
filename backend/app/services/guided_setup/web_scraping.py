@@ -1,4 +1,4 @@
-import logging
+from app.core.logging_setup import logger
 
 from app.services.chat.chat import llm_response
 from app.services.knowledge_base.web_scrape import scrape_url_simple
@@ -32,7 +32,7 @@ async def generate_business_overview(scraped_content: str) -> str:
         
         return response.strip() if response else "Unable to generate business overview."
     except Exception as e:
-        logging.error(f"Error generating business overview: {str(e)}")
+        logger.error(f"Error generating business overview: {str(e)}")
         # Return a fallback message instead of raising an exception
         return "Unable to generate business overview due to an error."
 
@@ -41,27 +41,27 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
     Business logic for retraining an agent with website data.
     """
     try:
-        logging.info(f"Retraining agent for user {user_id} with URL: {request.url}")
+        logger.info(f"Retraining agent for user {user_id} with URL: {request.url}")
         
         # Get existing setup data for the user
         existing_setup = await get_guided_setup(user_id)
         if not existing_setup:
-            logging.warning(f"No existing setup data found for user {user_id}")
+            logger.warning(f"No existing setup data found for user {user_id}")
         else:
-            logging.info(f"Found existing guided setup data for user {user_id}")
+            logger.info(f"Found existing guided setup data for user {user_id}")
             if "agent_id" in existing_setup and existing_setup["agent_id"]:
-                logging.info(f"Found existing agent_id in guided setup: {existing_setup['agent_id']}")
+                logger.info(f"Found existing agent_id in guided setup: {existing_setup['agent_id']}")
             else:
-                logging.info(f"No agent_id found in existing guided setup for user {user_id}")
+                logger.info(f"No agent_id found in existing guided setup for user {user_id}")
             
         # Log specific questions if provided in setup data
         if request.setup_data and request.setup_data.messageTaking:
             specific_questions = request.setup_data.messageTaking.specificQuestions
             question_count = len(specific_questions)
-            logging.info(f"Received {question_count} specific questions for retraining")
+            logger.info(f"Received {question_count} specific questions for retraining")
             if question_count > 0:
                 for i, q in enumerate(specific_questions):
-                    logging.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
+                    logger.info(f"Question {i+1}: '{q.question}' (Required: {q.required})")
         
         # Generate business overview from the URL
         # 1. Crawl the website to get content
@@ -70,12 +70,12 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         # 2. Generate business overview from content using LLM
         business_overview = await generate_business_overview(scraped_content)
         
-        logging.info(f"Generated business overview for user {user_id}")
+        logger.info(f"Generated business overview for user {user_id}")
         
         # Use provided setup data or create minimal setup data
         setup_data = {}
         if request.setup_data:
-            logging.info(f"Using provided setup data for update")
+            logger.info(f"Using provided setup data for update")
             setup_data = request.setup_data.model_dump()
         elif existing_setup:
             # Convert database format to frontend format
@@ -85,7 +85,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
                 "messageTaking": existing_setup.get("message_taking", {}),
                 "callNotifications": existing_setup.get("call_notifications", {})
             }
-            logging.info(f"Using existing setup data from database for user {user_id}")
+            logger.info(f"Using existing setup data from database for user {user_id}")
         else:
             # Create minimal setup data with the business overview
             setup_data = {
@@ -108,12 +108,12 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
                     "smsNotifications": {"enabled": False, "phoneNumber": None}
                 }
             }
-            logging.info(f"Created minimal setup data for user {user_id}")
+            logger.info(f"Created minimal setup data for user {user_id}")
         
         # Always update the business overview with the newly generated one
         if "businessInformation" in setup_data:
             setup_data["businessInformation"]["businessOverview"] = business_overview
-            logging.info("Updated business overview in setup data")
+            logger.info("Updated business overview in setup data")
         
         # Convert to QuickSetupData for saving
         quick_setup_data = QuickSetupData(**setup_data)
@@ -129,10 +129,10 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
                 agent_language = existing_setup["agent_language"]
                 
             await save_guided_setup(user_id, quick_setup_data)
-            logging.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
-            logging.info(f"Agent language set to: {agent_language}")
+            logger.info(f"{'Updated' if existing_setup else 'Created new'} guided setup data for user {user_id}")
+            logger.info(f"Agent language set to: {agent_language}")
         except Exception as save_error:
-            logging.error(f"Error saving guided setup data: {str(save_error)}")
+            logger.error(f"Error saving guided setup data: {str(save_error)}")
             return RetrainAgentResponse(
                 success=False,
                 business_overview=None,
@@ -143,7 +143,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         # Get the freshly updated setup data
         updated_setup = await get_guided_setup(user_id)
         if not updated_setup:
-            logging.error("Failed to retrieve updated setup data after save")
+            logger.error("Failed to retrieve updated setup data after save")
             return RetrainAgentResponse(
                 success=False,
                 business_overview=business_overview,
@@ -167,7 +167,7 @@ async def retrain_agent_service(user_id: str, request: RetrainAgentRequest) -> R
         )
     
     except Exception as e:
-        logging.error(f"Error in retrain_agent_service: {str(e)}")
+        logger.error(f"Error in retrain_agent_service: {str(e)}")
         error_msg = f"Error retraining agent: {str(e)}"
         return RetrainAgentResponse(
             success=False,

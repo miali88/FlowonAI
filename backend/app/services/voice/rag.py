@@ -1,6 +1,6 @@
 from app.core.config import settings
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 import os
 import requests
 import asyncio
@@ -14,7 +14,6 @@ from supabase import create_client, Client
 from openai import OpenAI
 from anthropic import AsyncAnthropic
 
-logger = logging.getLogger(__name__)
 load_dotenv()
 supabase: Client = create_client(
     settings.SUPABASE_URL,

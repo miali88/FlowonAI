@@ -3,7 +3,7 @@ from fastapi import HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
-import logging
+from app.core.logging_setup import logger
 
 import stripe
 
@@ -16,8 +16,6 @@ load_dotenv()
 
 # Initialize Stripe
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-
-logger = logging.getLogger(__name__)
 
 class PaymentLinkRequest(BaseModel):
     product_id: str = "prod_RcfvpRgzSUvVXj"

@@ -2,17 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import Dict, List
 from pydantic import BaseModel
-import logging
+from app.core.logging_setup import logger
 
 from app.services.twilio import helper, provision_user_phone_number
 from app.core.auth import get_current_user
-
-# Add logger configuration at the top after imports
-logger = logging.getLogger(__name__)
-
-# Suppress verbose Twilio HTTP client logs
-twilio_http_client_logger = logging.getLogger("twilio.http_client")
-twilio_http_client_logger.setLevel(logging.WARNING)  # Only show WARNING and above
 
 router = APIRouter()
 

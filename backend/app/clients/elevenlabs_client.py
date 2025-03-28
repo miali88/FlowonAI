@@ -7,14 +7,12 @@ using the ElevenLabs API.
 
 import os
 import uuid
-import logging
+from app.core.logging_setup import logger
 from typing import Optional, Dict, Any, Union
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs, Voice
 
 load_dotenv()
-
-logger = logging.getLogger(__name__)
 
 class ElevenLabsClient:
     """Client for interacting with the ElevenLabs text-to-speech API."""

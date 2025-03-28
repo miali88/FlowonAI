@@ -2,13 +2,12 @@ import json
 from typing import Optional, Dict, Any
 import redis.asyncio as redis
 from datetime import datetime
-import logging
+from app.core.logging_setup import logger
 
 from app.core.config import settings
 from app.clients.supabase_client import get_supabase
 
-# Configure logger
-logger = logging.getLogger(__name__)
+
 
 # Redis connection pool
 redis_client = redis.Redis(

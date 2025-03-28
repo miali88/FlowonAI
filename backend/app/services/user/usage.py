@@ -1,12 +1,10 @@
 from typing import Dict, Any
 import datetime
-import logging
+from app.core.logging_setup import logger
 from fastapi import HTTPException
 import math
 
 from app.clients.supabase_client import get_supabase
-
-logger = logging.getLogger(__name__)
 
 async def check_user_trial_status(user_id: str, current_user: str) -> Dict[str, Any]:
     """

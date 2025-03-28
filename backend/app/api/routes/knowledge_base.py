@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any, Union, Tuple
 from pydantic import BaseModel, Field
-import json, logging
+import json
+from app.core.logging_setup import logger
 import tiktoken
 from datetime import datetime
 from uuid import UUID
@@ -15,20 +16,6 @@ from app.services.knowledge_base.vectorise_data import kb_item_to_chunks
 from app.services.knowledge_base.kb import get_kb_items, get_kb_headers
 from app.services.knowledge_base.web_scrape import map_url, scrape_url
 from app.core.auth import get_current_user
-
-
-# Set up logging with timestamps
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a custom formatter with timestamps
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Add a StreamHandler with the custom formatter
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
 
 router = APIRouter()
 
