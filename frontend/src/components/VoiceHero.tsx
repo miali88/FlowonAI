@@ -14,10 +14,10 @@ const CallToActionButton = () => {
   
   return (
     <>
-      <div className="flex flex-col items-center relative z-20 animate-fade-in [--animation-delay:600ms]">
+      <div className="flex flex-col items-center relative z-20">
         <Link 
           href="/sign-up" 
-          className="inline-block"
+          className="inline-block opacity-0 animate-fade-in [--animation-delay:600ms]"
         >
           <Button 
             className="text-lg sm:px-8 sm:py-6 px-6 py-4 sm:text-lg text-base group bg-black hover:bg-black/90 text-white shadow-lg"
@@ -41,7 +41,7 @@ const MobileHero = memo(() => {
   return (
     <div className="w-screen sm:hidden">
       <WavyBackground 
-        containerClassName="min-h-[50dvh] opacity-0 animate-fade-in [--animation-delay:100ms]"
+        containerClassName="min-h-[50dvh]"
         className="max-w-[90rem] mx-auto px-4"
         colors={['#38bdf8', '#818cf8', '#c084fc']}
         blur={10}
@@ -77,7 +77,7 @@ const DesktopHero = memo(() => {
   return (
     <div className="w-screen hidden sm:block">
       <WavyBackground 
-        containerClassName="min-h-[60dvh] opacity-0 animate-fade-in [--animation-delay:100ms]"
+        containerClassName="min-h-[60dvh]"
         className="max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8"
         colors={['#38bdf8', '#818cf8', '#c084fc']}
         blur={10}

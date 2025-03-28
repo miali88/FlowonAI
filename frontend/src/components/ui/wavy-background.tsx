@@ -36,6 +36,7 @@ export const WavyBackground = ({
     canvas: any;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [opacity, setOpacity] = useState(0);
 
   const getSpeed = () => {
     switch (speed) {
@@ -67,6 +68,13 @@ export const WavyBackground = ({
     };
 
     window.addEventListener('resize', resizeCanvas);
+
+    // Start with opacity 0 and fade in
+    setOpacity(0);
+    setTimeout(() => {
+      setOpacity(1);
+    }, 100);
+
     render();
 
     return () => window.removeEventListener('resize', resizeCanvas);
@@ -130,11 +138,12 @@ export const WavyBackground = ({
       )}
     >
       <canvas
-        className="absolute inset-0 z-0 w-full h-full"
+        className="absolute inset-0 z-0 w-full h-full transition-opacity duration-1000"
         ref={canvasRef}
         id="canvas"
         style={{
           ...(isSafari ? { filter: `blur(${blur}px)` } : {}),
+          opacity: opacity,
         }}
       ></canvas>
       <div className={cn("relative z-10 w-full", className)} {...props}>
