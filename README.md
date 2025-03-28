@@ -1,10 +1,10 @@
 # **Flowon AI**  
-**🔒 Private Intellectual Property of Crescent Advisors Limited** *(CRN: 13530427)*  
+**🔒 Private Intellectual Property of Crescent Advisors Limited** 
 
 ---
 
 ## **📜 Ownership & License**  
-This repository and all associated code, documentation, and materials are the **exclusive intellectual property of Crescent Advisors Limited**, a UK incorporated entity ("**the Company**").  
+This repository and all associated code, documentation, and materials are the **exclusive intellectual property of Crescent Advisors Limited**, incorporated in England & Wales ("**the Company**") *(CRN: 13530427)* .  
 
 ---
 
