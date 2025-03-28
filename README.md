@@ -1,119 +1,17 @@
-# 🌊 Flowon AI
-##### 🔄 Bringing Voice AI to small business
+# **Project Name**  
+**Private Intellectual Property of Crescent Advisors Limited (CRN: 13530427)**  
 
-## 🏗️ Codebase Overview
-### 🛠️ Tech Stack
-#### Backend
-- 🐍 Python with FastAPI
-- 🗄️ Supabase (Database)
-- 📊 Pinecone (Vector Database)
-- ⚡ Redis (In-memory Cache)
-- 🎥 LiveKit (Real-time Communication)
-- 🔐 Clerk (Authentication)
-- 🔌 Composio (LLM Integration)
-- 📞 Twilio (Telephony)
+## **Ownership & License**  
+This repository and all associated code, documentation, and materials are the **private intellectual property of Crescent Advisors Limited**, a UK incorporated entity ("**the Company**").  
 
-#### Frontend
-- ⚛️ React & Next.js
-- 🎨 Tailwind CSS
-- 💅 Styled-components
-- 🔄 LiveKit Components
+### **Terms of Use**  
+- All rights are reserved by **Crescent Advisors Limited**.  
+- Unauthorized copying, distribution, modification, or commercial use is strictly prohibited without express written permission from the Company.  
+- This software and related materials are provided for **internal use only** by authorized personnel.  
 
-### 🤖 AI Tools
-- 📝 Cursor (IDE) with Claude 3.5 Sonnet
-- 📊 CodeViz (Architecture Visualization)
-- 💻 Warp (Terminal)
-- 🧠 LLM Models:
-  - OpenAI
-  - Anthropic
-  - Meta
-  - Coming soon: Cerebras & Groq
+### **Legal Notice**  
+Any violation of these terms may result in legal action under applicable intellectual property and copyright laws, including but not limited to the **Copyright, Designs and Patents Act 1988 (UK)** and international treaties.  
 
-### ⚙️ Infrastructure & CI/CD
-- 🌊 DigitalOcean (Hosting)
-- ☁️ Cloudflare (DNS/CDN)
-- 🔄 nginx (Reverse Proxy)
-- 🚨 Sentry (Error Monitoring)
-- 🧹 Code Quality:
-  - flake8 (Linting)
-  - mypy (Type Checking)
-  - bandit (Security)
-- 📊 PostHog (Analytics)
-- 🤖 AI-Powered Code Review:
-  - Greptile
-  - CodeRabbit
-
-## 🚀 Getting Started
-
-### Backend Setup
-1. Create Python virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. Start development server:
-```bash
-python run_fast.py
-```
-
-5. Run all the tests:
-```bash
-pytest tests/ -v
-```
-
-### Frontend Setup
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Start development server:
-```bash
-npm run dev
-```
-
-3. Production build:
-```bash
-npm run build
-npm start
-```
-
-## 🔌 Widget System
-Our modular widget system consists of:
-
-### Components
-- 💬 **ChatWidget**: Real-time conversational interface
-  - LiveKit integration
-  - Styled-components theming
-
-- 📝 **TextWidget**: Text-based interaction
-  - Markdown support
-  - Custom styling
-  - Responsive design
-
-- 🖼️ **iframe Integration**
-  - Secure embedding
-  - Cross-origin communication
-  - Responsive sizing
-
-### Development
-Each widget can be developed independently:
-```bash
-# ChatWidget
-cd ChatWidget && npm run dev
-
-# TextWidget
-cd TextWidget && npm run dev
-```
+For licensing inquiries, please contact:  
+**Crescent Advisors Limited**  
+michael@flowon.ai 
