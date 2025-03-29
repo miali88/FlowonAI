@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Safely update production build
+Run build in a new .next_tmp folder
+```cli
+npx next build && cp -r .next .next_tmp
+```
+
+Swaps the new build with the current build
+```cli
+mv .next .next_old && mv .next_tmp .next
+```
+
+Finally reload the pm2 process 
+```
+pm2 reload frontend --update-env
+```
