@@ -9,14 +9,8 @@ from fastapi import Request, HTTPException, Depends, Header, APIRouter, Backgrou
 from fastapi.responses import JSONResponse
 from fastapi import File, UploadFile
 
-from app.clients.supabase_client import get_supabase
-from app.services.knowledge_base import file_processing
-from app.services.knowledge_base.vectorise_data import kb_item_to_chunks
-from app.services.knowledge_base.kb import get_kb_items, get_kb_headers
-from app.services.knowledge_base.web_scrape import map_url, scrape_url
 from app.core.auth import get_current_user
 from app.services.knowledge_base import knowledge_base
-
 
 # Set up logging with timestamps
 logging.basicConfig(level=logging.INFO)
@@ -297,12 +291,8 @@ async def calculate_tokens_handler(request: TokenCalculationRequest, current_use
 @router.get("/users", response_model=UserResponse)
 async def user_info(current_user: str = Depends(get_current_user)):
     try:
-        supabase = await get_supabase()
-
-        user_info = await supabase.table('users').select('*').eq('id', current_user).execute()
-        if not user_info.data:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user_info.data[0]
+        user_info = await knowledge_base.get_user_info(current_user)
+        return user_info
     except Exception as e:
         logger.error(f"Error fetching user info: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error fetching user info: {str(e)}")
@@ -321,35 +311,11 @@ async def scrape_for_setup_handler(
         request_data = await request.json()
         website_url = request_data.get('website_url')
         
-        if not website_url:
-            raise HTTPException(status_code=400, detail="website_url is required")
-        
-        # Use the existing crawl_website function to get URLs
-        urls = await knowledge_base.crawl_website(website_url)
-        
-        # Remove duplicates from the URL list
-        unique_urls = list(dict.fromkeys(urls))
-        logger.info(f"Found {len(urls)} URLs, {len(unique_urls)} unique URLs")
-        
-        # Limit to 200 unique URLs
-        urls_to_scrape = unique_urls[:200]
-        
-        # Process URLs in batches of 10 to optimize memory usage
-        batch_size = 10
-        for i in range(0, len(urls_to_scrape), batch_size):
-            batch = urls_to_scrape[i:i+batch_size]
-            # Schedule each batch to run in the background
-            background_tasks.add_task(knowledge_base.start_web_scraping, batch, current_user)
+        result = await knowledge_base.scrape_for_setup(website_url, current_user, background_tasks)
         
         return MessageResponse(
             message="Website scraping started in background", 
-            data={
-                "website_url": website_url,
-                "urls_found": len(urls),
-                "unique_urls": len(unique_urls),
-                "urls_to_scrape": len(urls_to_scrape),
-                "batches": (len(urls_to_scrape) + batch_size - 1) // batch_size
-            }
+            data=result
         )
     except HTTPException as e:
         # Re-raise HTTP exceptions
