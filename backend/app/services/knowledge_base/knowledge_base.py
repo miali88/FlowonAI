@@ -63,10 +63,7 @@ async def get_knowledge_base_items(user_id: str) -> Tuple[List[Dict[str, Any]], 
             if item.get('title') is None:
                 item['title'] = "Untitled Document"  # Default title for items with NULL title
         
-        # Validate each item (remove this in production)
-        for i, item in enumerate(items):
-            logger.debug(f"Item {i} structure: {json.dumps(item, default=str)}")
-        
+
         return items, total_tokens
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
@@ -198,11 +195,11 @@ async def scrape_for_setup(website_url: str, user_id: str, background_tasks: Bac
         unique_urls = list(dict.fromkeys(urls))
         logger.info(f"Found {len(urls)} URLs, {len(unique_urls)} unique URLs")
         
-        # Limit to 200 unique URLs
-        urls_to_scrape = unique_urls[:200]
+        # Limit to 50 unique URLs
+        urls_to_scrape = unique_urls[:50]
         
         # Process URLs in batches of 10 to optimize memory usage
-        batch_size = 10
+        batch_size = 7
         for i in range(0, len(urls_to_scrape), batch_size):
             batch = urls_to_scrape[i:i+batch_size]
             # Schedule each batch to run in the background
