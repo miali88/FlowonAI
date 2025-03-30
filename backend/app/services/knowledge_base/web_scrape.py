@@ -105,8 +105,6 @@ async def insert_to_db(data: Dict[str, Any]) -> None:
         if not web_data_result.data:
             raise Exception("Failed to insert into user_web_data")
             
-        logger.info(f"Successfully inserted data into user_web_data for URL: {main_data['url']}")
-
         # Insert into user_web_data_headers
         headers_result = await asyncio.to_thread(
             lambda: supabase.table('user_web_data_headers')
@@ -117,7 +115,6 @@ async def insert_to_db(data: Dict[str, Any]) -> None:
         if not headers_result.data:
             raise Exception("Failed to insert into user_web_data_headers")
             
-        logger.info(f"Successfully inserted data into user_web_data_headers for URL: {headers_data['url']}")
 
     except Exception as e:
         logger.error(f"Database insertion error: {str(e)}")
@@ -316,7 +313,6 @@ async def process_single_url(
                     "user_id": user_id,
                     "root_url": root_url
                 }
-                logger.info(f"Processing chunk for URL: {sb_insert['url']}")
 
                 chunk_text = header + chunk
                 try:
