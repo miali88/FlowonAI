@@ -48,13 +48,18 @@
 ### Backend Setup
 1. Create Python virtual environment:
 ```bash
-python3.11 -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment using uv with Python 3.11
+uv venv --python=3.11
+source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
 ```
 
 2. Install dependencies:
 ```bash
-pip install -r requirements.txt
+# Install dependencies using uv
+uv pip install -r requirements.txt
 ```
 
 3. Configure environment variables:
