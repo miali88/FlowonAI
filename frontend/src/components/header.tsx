@@ -53,6 +53,12 @@ export function Header({ locale = "en" }: { locale?: string }) {
               <Globe className="h-4 w-4 mr-1" />
               {languageSwitchText}
             </Link>
+            <Link
+              href={`/sign-in`}
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              {t('signIn')}
+            </Link>
           </div>
 
           {/* Mobile Navigation removed */}
