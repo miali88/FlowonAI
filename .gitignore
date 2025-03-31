@@ -5,6 +5,14 @@ env/
 
 # Environment Variables
 .env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+
+# But allow
+!.env.example
 
 # Python cache files
 __pycache__/

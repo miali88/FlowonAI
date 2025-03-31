@@ -1,19 +1,11 @@
-from dotenv import load_dotenv
 from itertools import groupby
 from operator import itemgetter
 from typing import List, Dict, Tuple
-from supabase import create_client, Client
 from openai import AsyncOpenAI
-from app.core.config import settings
 from app.core.logging_setup import logger
-
-load_dotenv()
+from app.clients.supabase_client import get_supabase
 
 openai = AsyncOpenAI()
-supabase: Client = create_client(
-    settings.SUPABASE_URL,
-    settings.SUPABASE_SERVICE_ROLE_KEY
-)
 
 async def get_kb_items(
     current_user: str,
@@ -24,6 +16,7 @@ async def get_kb_items(
     Fetch KB items with pagination.
     Returns: (items, total_tokens, total_count)
     """
+    supabase = await get_supabase()
     kb_tables = ["user_web_data", "user_text_files"]
     logger.info(f"Fetching items for user: {current_user}, page: {page}")
     all_items = []
@@ -80,6 +73,7 @@ async def get_kb_items(
 
 
 async def get_kb_headers(current_user: str) -> Tuple[List[Dict], int]:
+    supabase = await get_supabase()
     kb_tables = ["user_web_data_headers", "user_text_files_headers"]
     logger.info(f"Fetching KB headers for user: {current_user}")
     all_items = []

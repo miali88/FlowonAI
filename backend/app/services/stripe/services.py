@@ -1,5 +1,5 @@
 import os 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
@@ -8,14 +8,15 @@ from app.core.logging_setup import logger
 import stripe
 
 from app.clients.supabase_client import get_supabase
-from app.core.auth import get_current_user
 from app.services.clerk import get_clerk_private_metadata
-""" TODO: create the twilio number purchase function, also add new numb metadata """
 
 load_dotenv()
 
 # Initialize Stripe
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+stripe_secret_key = os.getenv('STRIPE_SECRET_KEY')
+if not stripe_secret_key:
+    raise ValueError("STRIPE_SECRET_KEY is not set in the environment variables")
+stripe.api_key = stripe_secret_key
 
 class PaymentLinkRequest(BaseModel):
     product_id: str = "prod_RcfvpRgzSUvVXj"

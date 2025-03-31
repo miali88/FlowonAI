@@ -7,5 +7,6 @@ htmlcov
 .cache
 .venv
 .env
+.ipynb
 FlowonAI/backend/app/main.py
 backend/app/main.py
