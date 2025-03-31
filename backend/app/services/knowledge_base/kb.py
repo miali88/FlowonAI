@@ -28,7 +28,7 @@ async def get_kb_items(
         logger.info(f"Processing table: {table}")
         
         if table == "user_web_data":
-            results = (
+            results = await (
                 supabase.table(table)
                 .select('*', count='exact')
                 .eq('user_id', current_user)
@@ -44,7 +44,7 @@ async def get_kb_items(
             total_tokens += sum(item.get('token_count', 0) or 0 for item in results.data)
 
         elif table == "user_text_files":
-            items = (
+            items = await (
                 supabase.table(table)
                 .select('*', count='exact')
                 .eq('user_id', current_user)
@@ -90,7 +90,7 @@ async def get_kb_headers(current_user: str) -> Tuple[List[Dict], int]:
             offset = page * limit
             
             if table == "user_web_data_headers":
-                results = (
+                results = await (
                     supabase.table(table)
                     .select('*')
                     .eq('user_id', current_user)
@@ -105,7 +105,7 @@ async def get_kb_headers(current_user: str) -> Tuple[List[Dict], int]:
                 total_tokens += sum(item.get('token_count', 0) or 0 for item in results.data)
                 
             elif table == "user_text_files_headers":
-                items = (
+                items = await (
                     supabase.table(table)
                     .select('*')
                     .eq('user_id', current_user)
