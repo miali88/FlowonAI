@@ -137,16 +137,25 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
             if (data.success && data.setupData) {
               console.log("Loaded existing setup data from API:", data.setupData);
               
-              // Use reset to update all form values at once
-              reset({
+              // Use the user's email from the setup data for email notifications
+              const formData = {
                 trainingSources: data.setupData.trainingSources,
                 businessInformation: {
                   ...data.setupData.businessInformation,
                   businessOverview: data.setupData.businessInformation.businessOverview || "",
                 },
                 messageTaking: data.setupData.messageTaking,
-                callNotifications: data.setupData.callNotifications,
-              });
+                callNotifications: {
+                  ...data.setupData.callNotifications,
+                  emailNotifications: {
+                    ...data.setupData.callNotifications?.emailNotifications,
+                    email: data.setupData.userEmail || data.setupData.callNotifications?.emailNotifications?.email || ""
+                  }
+                }
+              };
+              
+              // Use reset to update all form values at once
+              reset(formData);
               
               setupDataFound = true;
             }
