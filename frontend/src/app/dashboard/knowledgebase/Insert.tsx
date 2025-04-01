@@ -105,7 +105,7 @@ export function Insert({
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl h-[80vh]">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {selectedTab === 'text' && 'Add Text Content'}
@@ -118,7 +118,7 @@ export function Insert({
               <>
                 <Textarea 
                   placeholder="Type or paste anything that will help Flowon learn more about your business"
-                  className="w-full h-[calc(100vh-400px)] p-4 bg-background border border-input mb-4"
+                  className="w-full h-[calc(40vh-300px)] p-4 bg-background border border-input mb-4"
                   value={newItemContent}
                   onChange={(e) => setNewItemContent(e.target.value)}
                 />
@@ -175,7 +175,7 @@ export function Insert({
               </>
             )}
             {selectedTab === 'web' && (
-              <div className="flex flex-col h-[calc(100vh-400px)]">
+              <div className="flex flex-col h-[calc(20vh -100px)]">
                 {isScrapingUrls ? (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
                     <div className="loader"></div>

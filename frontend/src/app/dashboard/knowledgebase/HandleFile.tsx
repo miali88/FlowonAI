@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { KnowledgeBaseItem } from './types';
+import { toast } from 'sonner';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -17,9 +18,8 @@ interface HandleNewItemProps {
   setSavedItems: React.Dispatch<React.SetStateAction<KnowledgeBaseItem[]>>;
   setNewItemContent: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
-  setAlertMessage: React.Dispatch<React.SetStateAction<string>>;
-  setAlertType: React.Dispatch<React.SetStateAction<string>>;
   selectedFile: File | null;
+  setDialogOpen: (open: boolean) => void;
 }
 
 export const handleNewItem = async ({
@@ -31,43 +31,36 @@ export const handleNewItem = async ({
   setSavedItems,
   setNewItemContent,
   setSelectedFile,
-  setAlertMessage,
-  setAlertType,
-  selectedFile
+  selectedFile,
+  setDialogOpen
 }: HandleNewItemProps) => {
   if (!user) {
-    setAlertMessage("User not authenticated");
-    setAlertType("error");
+    toast.error("User not authenticated");
     return;
   }
 
   if (activeAddTab === 'files') {
     if (!selectedFile) {
-      setAlertMessage("Please select a file to upload");
-      setAlertType("error");
+      toast.error("Please select a file to upload");
       return;
     }
 
     // Display file info
     const fileSize = (selectedFile.size / 1024 / 1024).toFixed(2); // Convert to MB
-    setAlertMessage(`Processing ${selectedFile.name} (${selectedFile.type}) - ${fileSize}MB`);
-    setAlertType("info");
+    toast.info(`Processing ${selectedFile.name} (${selectedFile.type}) - ${fileSize}MB`);
 
     try {
       await handleFileUpload();
-      setAlertMessage(`Successfully uploaded ${selectedFile.name}`);
-      setAlertType("success");
+      toast.success(`Successfully uploaded ${selectedFile.name}`);
     } catch (error) {
       console.error("Error uploading file:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setAlertMessage(`Failed to upload file: ${errorMessage}`);
-      setAlertType("error");
+      toast.error(`Failed to upload file: ${errorMessage}`);
     }
   } else {
     // Text content validation only for non-file uploads
     if (newItemContent.trim() === "") {
-      setAlertMessage("Cannot add empty item");
-      setAlertType("error");
+      toast.error("Cannot add empty item");
       return;
     }
 
@@ -93,8 +86,8 @@ export const handleNewItem = async ({
       setSavedItems(prevItems => [...prevItems, newItem]);
       setNewItemContent("");
       setSelectedFile(null);
-      setAlertMessage("New item added successfully");
-      setAlertType("success");
+      setDialogOpen(false);
+      toast.success("New item added successfully");
     } catch (error: unknown) {
       console.error("Error sending data to server:", error);
       if (axios.isAxiosError(error)) {
@@ -102,11 +95,10 @@ export const handleNewItem = async ({
         console.error("Response status:", error.response?.status);
         console.error("Response data:", error.response?.data);
         console.error("Request config:", error.config);
-        setAlertMessage("Failed to send data to server: " + (error.response?.data?.detail || error.message));
+        toast.error("Failed to send data to server: " + (error.response?.data?.detail || error.message));
       } else {
-        setAlertMessage("Failed to send data to server: " + (error instanceof Error ? error.message : 'Unknown error'));
+        toast.error("Failed to send data to server: " + (error instanceof Error ? error.message : 'Unknown error'));
       }
-      setAlertType("error");
     }
   }
 };

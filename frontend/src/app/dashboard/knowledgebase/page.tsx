@@ -3,6 +3,7 @@
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { toast } from 'sonner';
 
 import React from "react";
 import { Button } from "@/components/ui/button";
@@ -85,7 +86,7 @@ function KnowledgeBaseContent() {
       if (response.data && response.data.items) {
         console.log("Fetched items:", response.data.items);
         const formattedItems = response.data.items.map(
-          (item: any) => ({
+          (item: KnowledgeBaseItem) => ({
             id: item.id,
             title: item.title,
             content: item.content,
@@ -195,16 +196,14 @@ function KnowledgeBaseContent() {
       setSavedItems,
       setNewItemContent,
       setSelectedFile,
-      setAlertMessage,
-      setAlertType,
       selectedFile,
+      setDialogOpen
     });
   };
 
   const handleDeleteItem = async (itemId: number) => {
     if (!user) {
-      setAlertMessage("User not authenticated");
-      setAlertType("error");
+      toast.error("User not authenticated");
       return;
     }
 
@@ -226,15 +225,11 @@ function KnowledgeBaseContent() {
       if (selectedItem?.id === itemId) {
         setSelectedItem(null);
       }
-      setAlertMessage("Item deleted successfully");
-      setAlertType("success");
+      toast.success("Item deleted successfully");
     } catch (error: unknown) {
       const apiError = error as ApiError;
       console.error("Error deleting item:", apiError);
-      setAlertMessage(
-        "Failed to delete item: " + (apiError.message || "Unknown error")
-      );
-      setAlertType("error");
+      toast.error("Failed to delete item: " + (apiError.message || "Unknown error"));
     }
   };
 
