@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { Providers } from './providers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/get-messages';
+import { Toaster } from 'sonner';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -107,6 +108,7 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
             {children}
+            <Toaster position="bottom-right" />
           </Providers>
         </NextIntlClientProvider>
       </body>
