@@ -166,6 +166,11 @@ export default function BusinessInfoPage() {
     try {
       setIsSubmitting(true);
       setError(null);
+
+      // Validate that either business name or website is provided
+      if (!businessName.trim() && !businessWebsite.trim()) {
+        throw new Error("Please provide either a business name or website to continue");
+      }
       
       // Get the authentication token
       const token = await getToken();

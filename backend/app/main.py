@@ -1,9 +1,7 @@
 import os 
 import subprocess
 import psutil
-import time
 import platform
-import sys
 from dotenv import load_dotenv
 
 from fastapi import FastAPI

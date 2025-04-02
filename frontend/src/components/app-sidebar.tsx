@@ -291,13 +291,22 @@ export function AppSidebar({
                 >
                   <SidebarMenuButton
                     className={cn(
-                      "w-full",
-                      pathname === item.href &&
-                        "bg-secondary text-secondary-foreground"
+                      "w-full transition-colors duration-200",
+                      pathname === item.href && "bg-blue-100/50 text-blue-700 hover:bg-blue-100/70",
+                      pathname !== item.href && "hover:bg-gray-100/50"
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {!isCollapsed && <span>{item.title}</span>}
+                    <item.icon className={cn(
+                      "h-4 w-4",
+                      pathname === item.href ? "text-blue-600" : "text-gray-600"
+                    )} />
+                    {!isCollapsed && (
+                      <span className={cn(
+                        pathname === item.href ? "font-medium" : "font-normal"
+                      )}>
+                        {item.title}
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </a>
               </SidebarMenuItem>
