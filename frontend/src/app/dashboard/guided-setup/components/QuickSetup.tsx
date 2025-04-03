@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { quickSetupSchema, FormValues } from "./schema";
 import TrainingSources from "./form-sections/TrainingSources";
 import BusinessInformation from "./form-sections/BusinessInformation";
+import BookingLink from "./form-sections/BookingLink";
 import MessageTaking from "./form-sections/MessageTaking";
 import CallNotifications from "./form-sections/CallNotifications";
 import PlaceChangeDialog from "./form-sections/PlaceChangeDialog";
@@ -92,6 +93,9 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           phoneNumber: "",
         },
       },
+      bookingLink: {
+        url: "",
+      }
     },
     mode: "onBlur",
   });
@@ -146,6 +150,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 },
                 messageTaking: data.setupData.messageTaking,
                 callNotifications: data.setupData.callNotifications,
+                bookingLink: data.setupData.bookingLink,
               });
               
               setupDataFound = true;
@@ -175,6 +180,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 businessInformation: parsedSetupData.businessInformation,
                 messageTaking: parsedSetupData.messageTaking,
                 callNotifications: parsedSetupData.callNotifications,
+                bookingLink: parsedSetupData.bookingLink,
               });
               
               setupDataFound = true;
@@ -449,6 +455,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           businessInformation: result.setup_data.businessInformation,
           messageTaking: result.setup_data.messageTaking,
           callNotifications: result.setup_data.callNotifications,
+          bookingLink: result.setup_data.bookingLink,
         });
 
         setSuccessMessage("AI training completed successfully!");
@@ -600,6 +607,19 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
           getValues={getValues}
           setValue={setValue}
         />
+
+
+        {/* Appointment Booking Section */}
+        <BookingLink
+          control={control}
+          errors={errors}
+          newQuestion={newQuestion}
+          setNewQuestion={setNewQuestion}
+          addQuestion={addQuestion}
+          getValues={getValues}
+          setValue={setValue}
+        />
+        
 
         {/* Call Notifications Section */}
         <CallNotifications 

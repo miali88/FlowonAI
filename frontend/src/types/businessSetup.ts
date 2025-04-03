@@ -19,6 +19,7 @@
  *    - localStorage caching
  */
 
+
 // Basic business hours structure
 export interface BusinessHours {
   [day: string]: { open: string; close: string };
@@ -68,12 +69,18 @@ export interface BusinessInformation {
   businessHours: BusinessHours;
 }
 
+// Booking link
+export interface BookingLink {
+  url?: string;
+}
+
 // Complete setup data structure used in QuickSetup
 export interface SetupData {
   trainingSources: TrainingSources;
   businessInformation: BusinessInformation;
   messageTaking: MessageTaking;
   callNotifications: CallNotifications;
+  bookingLink: BookingLink;
 }
 
 // Onboarding data - mapped version of the legacy flat structure
@@ -111,9 +118,9 @@ export function convertOnboardingToSetupData(data: OnboardingData): SetupData {
     Saturday: { open: "", close: "" },
     Sunday: { open: "", close: "" },
   };
-  
+
   // Log selected business hours for verification
-  console.log("[convertOnboardingToSetupData] Using businessHours:", 
+  console.log("[convertOnboardingToSetupData] Using businessHours:",
     data.businessHours ? "FROM DATA" : "DEFAULT HOURS");
 
   return {

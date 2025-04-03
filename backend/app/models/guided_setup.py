@@ -50,6 +50,12 @@ class CallNotifications(BaseModel):
 class BookingLink(BaseModel):
     url: Optional[HttpUrl] = None
 
+    def model_dump(self, **kwargs):
+        data = super().model_dump(**kwargs)
+        if data.get('url'):
+            data['url'] = str(data['url'])  # Convert HttpUrl to string for JSON serialization
+        return data
+
 class QuickSetupData(BaseModel):
     trainingSources: TrainingSource
     businessInformation: BusinessInformation
@@ -57,3 +63,11 @@ class QuickSetupData(BaseModel):
     callNotifications: CallNotifications
     bookingLink: Optional[BookingLink] = None
     agentLanguage: str = "en-US"
+
+    @classmethod
+    def from_db(cls, data: dict):
+        """Convert database data to QuickSetupData model"""
+        if data.get('booking_link', {}).get('url'):
+            # Ensure URL is properly formatted
+            data['booking_link']['url'] = str(data['booking_link']['url'])
+        return cls(**data)
