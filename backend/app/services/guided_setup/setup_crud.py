@@ -52,6 +52,7 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
             "business_information": quick_setup_data.businessInformation.model_dump(),
             "message_taking": quick_setup_data.messageTaking.model_dump(),
             "call_notifications": quick_setup_data.callNotifications.model_dump(),
+            "booking_link": quick_setup_data.bookingLink.model_dump(),
             "agent_language": agent_language,  # Set the determined language
             "setup_completed": False,  # Default to False for new records
             "created_at": datetime.utcnow().isoformat(),
@@ -171,7 +172,8 @@ async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
         "businessInformation": setup_data.get("business_information", {}),
         "messageTaking": setup_data.get("message_taking", {}),
         "callNotifications": setup_data.get("call_notifications", {}),
-        "trained_on_website": setup_data.get("trained_on_website", False)
+        "trained_on_website": setup_data.get("trained_on_website", False),
+        "bookingLink": setup_data.get("booking_link", {})
     }
     
     # Format and return the setup data

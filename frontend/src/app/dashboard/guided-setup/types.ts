@@ -3,6 +3,10 @@ export interface TrainingSource {
   businessWebsite?: string;
 }
 
+export interface BookingLink {
+  url?: string;
+}
+
 export interface BusinessInformation {
   businessName: string;
   businessOverview: string;
@@ -48,6 +52,7 @@ export interface QuickSetupData {
   businessInformation: BusinessInformation;
   messageTaking: MessageTaking;
   callNotifications: CallNotifications;
+  bookingLink: BookingLink;
 }
 
 export type SetupStep = "trial-plan" | "quick-setup" | "talk-to-rosie" | "launch";
