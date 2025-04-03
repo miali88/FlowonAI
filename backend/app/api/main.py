@@ -6,12 +6,12 @@ from fastapi import APIRouter
 #                             composio, feedback, stripe, onboarding,
 #                             guided_setup, outbound)
 
-from app.api.routes import (guided_setup, clerk, twilio, stripe, vapi, knowledge_base, conversation, user, hubspot)
+from app.api.routes import (guided_setup, clerk, twilio, stripe, vapi, knowledge_base, conversation, user, hubspot, campaigns)
 
 api_router = APIRouter()
 
 api_router.include_router(guided_setup.router, prefix="/guided_setup", tags=["guided_setup"])
-
+api_router.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])
 api_router.include_router(clerk.router, prefix="/clerk", tags=["clerk"])
 api_router.include_router(twilio.router, prefix="/twilio", tags=["twilio"])
 api_router.include_router(knowledge_base.router, prefix="/knowledge_base", tags=["knowledge_base"])
