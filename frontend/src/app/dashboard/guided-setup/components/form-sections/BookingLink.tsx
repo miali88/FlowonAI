@@ -65,4 +65,4 @@ export default function BookingLink({ control, errors }: BookingLinkProps) {
       </Accordion>
     </Card>
   );
-} 
+}
