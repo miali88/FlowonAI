@@ -7,7 +7,7 @@ export default function RootPage() {
   const headersList = headers();
   const acceptLanguage = headersList.get('accept-language') || '';
   
-  // Extract language code (simplified example)
+  // Extract language code (simplified example) 
   let preferredLocale = defaultLocale;
   
   // Check if Spanish is in the Accept-Language header
