@@ -16,6 +16,18 @@ async def check_user_exists(user_id: str) -> bool:
         logger.error(f"Error checking if user exists: {str(e)}")
         return False
 
+async def get_user_email(user_id: str) -> Optional[str]:
+    """Get the user's email from the users table."""
+    try:
+        supabase = await get_supabase()
+        result = await supabase.table("users").select("email").eq("id", user_id).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0].get("email")
+        return None
+    except Exception as e:
+        logger.error(f"Error getting user email: {str(e)}")
+        return None
+
 async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> Tuple[bool, Dict[str, Any], Optional[str]]:
     """
     Save the guided setup data to Supabase.
@@ -44,6 +56,29 @@ async def save_guided_setup(user_id: str, quick_setup_data: QuickSetupData) -> T
         
         # Extract country code and language from business address
         _, agent_language = extract_country_and_language(quick_setup_data.businessInformation.primaryBusinessAddress)
+        
+        # Get the user's email
+        user_email = await get_user_email(user_id)
+        
+        # Check if the email in the form is different from the user's email in the database
+        form_email = None
+        if (hasattr(quick_setup_data, 'callNotifications') and 
+            hasattr(quick_setup_data.callNotifications, 'emailNotifications') and
+            hasattr(quick_setup_data.callNotifications.emailNotifications, 'email')):
+            form_email = quick_setup_data.callNotifications.emailNotifications.email
+        
+        # If the form email is provided and different from the user's email, update the user's email
+        if form_email and form_email != user_email:
+            supabase = await get_supabase()
+            await supabase.table("users").update({"email": form_email}).eq("id", user_id).execute()
+            user_email = form_email
+        
+        # If we have a user email, ensure it's set in the call notifications
+        if user_email and quick_setup_data.callNotifications:
+            if not hasattr(quick_setup_data.callNotifications, 'emailNotifications'):
+                quick_setup_data.callNotifications.emailNotifications = {"enabled": True, "email": user_email}
+            else:
+                quick_setup_data.callNotifications.emailNotifications.email = user_email
         
         # Convert Pydantic models to dictionaries for JSONB columns
         setup_data = {
@@ -165,13 +200,38 @@ async def get_formatted_setup_data(user_id: str) -> Dict[str, Any]:
     if not setup_data:
         return {"success": False, "error": "No setup data found for user"}
     
+    # Get the user's email if not already in the call_notifications
+    user_email = await get_user_email(user_id)
+    call_notifications = setup_data.get("call_notifications", {})
+    
+    # Check if we need to update the email in call_notifications
+    if user_email and (
+        not call_notifications.get("emailNotifications") or 
+        not call_notifications.get("emailNotifications", {}).get("email")
+    ):
+        # Update the email in call_notifications
+        if not call_notifications.get("emailNotifications"):
+            call_notifications["emailNotifications"] = {"enabled": True, "email": user_email}
+        else:
+            call_notifications["emailNotifications"]["email"] = user_email
+        
+        # Update the database
+        supabase = await get_supabase()
+        await supabase.table("guided_setup").update({
+            "call_notifications": call_notifications
+        }).eq("user_id", user_id).execute()
+        
+        # Update the setup_data for the return value
+        setup_data["call_notifications"] = call_notifications
+    
     # Convert snake_case to camelCase for frontend compatibility
     formatted_data = {
         "trainingSources": setup_data.get("training_sources", {}),
         "businessInformation": setup_data.get("business_information", {}),
         "messageTaking": setup_data.get("message_taking", {}),
         "callNotifications": setup_data.get("call_notifications", {}),
-        "trained_on_website": setup_data.get("trained_on_website", False)
+        "trained_on_website": setup_data.get("trained_on_website", False),
+        "userEmail": setup_data.get("call_notifications", {}).get("emailNotifications", {}).get("email", "")
     }
     
     # Format and return the setup data
