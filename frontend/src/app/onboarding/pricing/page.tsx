@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, Gift } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -91,48 +90,23 @@ export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { getToken } = useAuth();
   
   const handleSelectPlan = (planId: string) => {
     setSelectedPlan(planId);
   };
   
-  const handleContinueToSetup = async () => {
+  const handleContinueToSignUp = async () => {
     try {
       setIsLoading(true);
       
-      // Store selected plan in localStorage
+      // Store selected plan and billing interval in localStorage
       localStorage.setItem('flowonAI_selectedPlan', selectedPlan);
+      localStorage.setItem('flowonAI_billingInterval', isAnnual ? 'annual' : 'monthly');
       
-      // Get the authentication token
-      const token = await getToken();
-      
-      // Call the backend API to activate the trial plan
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/guided_setup/set_trial_plan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          trial_plan_type: selectedPlan
-        })
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to activate trial plan', await response.json());
-        throw new Error('Failed to activate trial plan');
-      }
-      
-      const result = await response.json();
-      console.log('Trial plan activated:', result);
-      
-      // Navigate to the guided setup
-      router.push("/dashboard/guided-setup");
+      // Navigate to sign up
+      router.push("/sign-up");
     } catch (error) {
-      console.error('Error activating trial plan:', error);
-      // Still navigate to guided setup even if there's an error
-      router.push("/dashboard/guided-setup");
+      console.error('Error storing plan selection:', error);
     } finally {
       setIsLoading(false);
     }
@@ -141,51 +115,51 @@ export default function PricingPage() {
   return (
     <div className="flex min-h-screen">
       {/* Main Content */}
-      <div className="w-full p-10 flex flex-col justify-center">
+      <div className="w-full px-4 sm:p-10 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-10 text-center">
-            <h1 className="text-3xl font-bold tracking-tight mb-3">Choose Your Plan</h1>
+          <div className="mb-6 sm:mb-10 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">Choose Your Plan</h1>
             
             {/* Enhanced free trial highlight */}
-            <div className="mt-8 flex justify-center">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md shadow-sm">
+            <div className="mt-6 sm:mt-8 flex justify-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 max-w-md shadow-sm mx-4">
                 <div className="flex items-center justify-center">
-                  <Gift className="h-6 w-6 text-blue-500 mr-2" />
-                  <h3 className="text-lg font-semibold text-blue-700">Free Trial Included</h3>
+                  <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 mr-2" />
+                  <h3 className="text-base sm:text-lg font-semibold text-blue-700">Free Trial Included</h3>
                 </div>
-                <p className="mt-2 text-blue-700 font-medium">
+                <p className="mt-2 text-sm sm:text-base text-blue-700 font-medium">
                   All plans come with a 14-day free trial, with 20 minutes free.
                 </p>
-                <p className="text-sm text-blue-600 font-medium mt-1">No credit card required.</p>
+                <p className="text-xs sm:text-sm text-blue-600 font-medium mt-1">No credit card required.</p>
               </div>
             </div>
             
-            <p className="mt-4 text-sm text-gray-500">Need help choosing? Contact our sales team at support@flowon.ai</p>
+            <p className="mt-4 text-xs sm:text-sm text-gray-500">Need help choosing? Contact our sales team at support@flowon.ai</p>
           </div>
           
           {/* Billing toggle */}
-          <div className="flex w-full items-center justify-center space-x-2 mx-2 my-6">
+          <div className="flex w-full items-center justify-center space-x-2 mx-2 my-4 sm:my-6">
             <Switch 
               id="interval" 
               checked={isAnnual}
               onCheckedChange={(checked) => setIsAnnual(checked)}
             />
-            <span>Annual</span>
-            <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
+            <span className="text-sm sm:text-base">Annual</span>
+            <span className="inline-block whitespace-nowrap rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-semibold uppercase leading-5 tracking-wide bg-foreground text-background">
               Get 2 months free ✨
             </span>
           </div>
           
           {/* Pricing cards */}
-          <div className="mx-auto grid w-full justify-center sm:grid-cols-2 lg:grid-cols-3 flex-col gap-4 place-items-center">
+          <div className="mx-auto grid w-full justify-center grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-4 px-4 sm:px-0">
             {/* Professional Plan */}
-            <Card className={`relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border ${
+            <Card className={`relative max-w-[300px] mx-auto overflow-hidden rounded-2xl shadow-lg border ${
               selectedPlan === 'professional' ? 'ring-2 ring-primary' : ''
             }`}>
               <CardContent className="flex flex-col gap-8 p-4">
-                <div className="flex flex-col pl-4">
+                <div className="flex flex-col pl-2 sm:pl-4">
                   <h2 className="text-base font-semibold leading-7">{PRICING_CONFIG.professional.name}</h2>
-                  <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
+                  <p className="h-auto sm:h-12 text-xs sm:text-sm leading-5 text-center sm:flex sm:justify-center sm:justify-items-center sm:place-content-center sm:origin-center sm:bg-center sm:place-self-center">
                     {PRICING_CONFIG.professional.description}
                   </p>
                 </div>
@@ -203,7 +177,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("professional")}
                 >
-                  <span>{selectedPlan === "professional" ? "Start 14 day free trial" : "Select Plan"}</span>
+                  <span>{selectedPlan === "professional" ? "Selected" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>
@@ -214,7 +188,7 @@ export default function PricingPage() {
             </Card>
 
             {/* Scale Plan */}
-            <Card className={`relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border ${
+            <Card className={`relative max-w-[300px] mx-auto overflow-hidden rounded-2xl shadow-lg border ${
               selectedPlan === 'scale' ? 'ring-2 ring-primary' : ''
             } ${PRICING_CONFIG.scale.popular ? 'bg-primary/5 border-primary' : ''}`}>
               {PRICING_CONFIG.scale.popular && (
@@ -223,9 +197,9 @@ export default function PricingPage() {
                 </div>
               )}
               <CardContent className="flex flex-col gap-8 p-4 pt-12">
-                <div className="flex flex-col pl-4">
+                <div className="flex flex-col pl-2 sm:pl-4">
                   <h2 className="text-base font-semibold leading-7">{PRICING_CONFIG.scale.name}</h2>
-                  <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
+                  <p className="h-auto sm:h-12 text-xs sm:text-sm leading-5 text-center sm:flex sm:justify-center sm:justify-items-center sm:place-content-center sm:origin-center sm:bg-center sm:place-self-center">
                     {PRICING_CONFIG.scale.description}
                   </p>
                 </div>
@@ -243,7 +217,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("scale")}
                 >
-                  <span>{selectedPlan === "scale" ? "Start 14 day free trial" : "Select Plan"}</span>
+                  <span>{selectedPlan === "scale" ? "Selected" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>
@@ -254,13 +228,13 @@ export default function PricingPage() {
             </Card>
 
             {/* Growth Plan */}
-            <Card className={`relative max-w-[300px] overflow-hidden rounded-2xl shadow-lg border ${
+            <Card className={`relative max-w-[300px] mx-auto overflow-hidden rounded-2xl shadow-lg border ${
               selectedPlan === 'growth' ? 'ring-2 ring-primary' : ''
             }`}>
               <CardContent className="flex flex-col gap-8 p-4">
-                <div className="flex flex-col pl-4">
+                <div className="flex flex-col pl-2 sm:pl-4">
                   <h2 className="text-base font-semibold leading-7">{PRICING_CONFIG.growth.name}</h2>
-                  <p className="h-12 text-sm leading-5 flex justify-center justify-items-center place-content-center origin-center bg-center place-self-center">
+                  <p className="h-auto sm:h-12 text-xs sm:text-sm leading-5 text-center sm:flex sm:justify-center sm:justify-items-center sm:place-content-center sm:origin-center sm:bg-center sm:place-self-center">
                     {PRICING_CONFIG.growth.description}
                   </p>
                 </div>
@@ -284,7 +258,7 @@ export default function PricingPage() {
                   className="group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-2"
                   onClick={() => handleSelectPlan("growth")}
                 >
-                  <span>{selectedPlan === "growth" ? "Start 14 day free trial" : "Select Plan"}</span>
+                  <span>{selectedPlan === "growth" ? "Selected" : "Select Plan"}</span>
                   <span className="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 transform-gpu opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-96 bg-black">
                     Select
                   </span>
@@ -297,13 +271,13 @@ export default function PricingPage() {
           
           <div className="flex justify-center mt-12">
             <Button 
-              onClick={handleContinueToSetup} 
-              className="px-8 py-6 bg-primary hover:bg-primary/90 text-lg"
+              onClick={handleContinueToSignUp} 
+              className="px-6 sm:px-8 py-4 sm:py-6 bg-primary hover:bg-primary/90 text-base sm:text-lg"
               disabled={!selectedPlan || isLoading}
             >
               {isLoading ? (
                 <>
-                  <span className="mr-2">Activating Trial...</span>
+                  <span className="mr-2">Processing...</span>
                   <span className="animate-spin">⏳</span>
                 </>
               ) : (
