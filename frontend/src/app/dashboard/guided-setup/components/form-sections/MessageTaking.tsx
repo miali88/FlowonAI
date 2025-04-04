@@ -37,7 +37,7 @@ export default function MessageTaking({
 
   return (
     <Card className={errors.messageTaking ? "border-red-500" : ""}>
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible defaultValue="message-taking">
         <AccordionItem value="message-taking" className="border-none">
           <CardHeader className="border-b">
             <AccordionTrigger className="hover:no-underline">

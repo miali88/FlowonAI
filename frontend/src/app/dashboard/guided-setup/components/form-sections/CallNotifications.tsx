@@ -68,7 +68,7 @@ export default function CallNotifications({
 
   return (
     <Card className={errors.callNotifications ? "border-red-500" : ""}>
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible defaultValue="call-notifications">
         <AccordionItem value="call-notifications" className="border-none">
           <CardHeader className="border-b">
             <AccordionTrigger className="hover:no-underline">

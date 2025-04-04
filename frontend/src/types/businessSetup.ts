@@ -86,6 +86,8 @@ export interface OnboardingData {
   agentLanguage: string;
   countryCode?: string;
   businessHours?: BusinessHours;
+  placeId?: string;
+  photoReference?: string;
 }
 
 /**

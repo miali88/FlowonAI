@@ -137,7 +137,7 @@ export default function TrainingSources({
           : ""
       }
     >
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible defaultValue="sources">
         <AccordionItem value="sources" className="border-none">
           <CardHeader className="border-b">
             <AccordionTrigger className="hover:no-underline">

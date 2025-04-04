@@ -20,13 +20,7 @@ import BlobAnimation from "@/app/onboarding/components/BlobAnimation";
 // Import our updated utilities
 import { mapPlaceDataToComponent, componentMappings } from "@/utils/placeDataUtils";
 // Import shared interfaces
-import { OnboardingData, SetupData, convertOnboardingToSetupData, BusinessHours } from "@/types/businessSetup";
-// Import setup data utilities
-import { saveSetupDataToBackend } from "@/utils/setupDataUtils";
-// Import Select components but comment them out as we're hiding language selection UI
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { OnboardingData, BusinessHours } from "@/types/businessSetup";
 
 // Map of country codes to languages
 const COUNTRY_TO_LANGUAGE = {
@@ -106,6 +100,8 @@ export default function BusinessInfoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [placeId, setPlaceId] = useState<string>("");
+  const [photoReference, setPhotoReference] = useState<string>("");
   
   const router = useRouter();
   const { getToken } = useAuth();
@@ -124,6 +120,17 @@ export default function BusinessInfoPage() {
       setBusinessAddress(mappedData.businessAddress);
       setBusinessPhone(mappedData.businessPhone);
       setBusinessDescription(mappedData.businessDescription || "");
+      
+      // Store place ID and photo reference
+      if (placeData.place_id) {
+        console.log("Found place ID:", placeData.place_id);
+        setPlaceId(placeData.place_id);
+      }
+      
+      if (placeData.photos && placeData.photos.length > 0) {
+        console.log("Found photo reference:", placeData.photos[0].photo_reference);
+        setPhotoReference(placeData.photos[0].photo_reference);
+      }
       
       // CRITICAL FIX: Store business hours in state
       if (mappedData.businessHours) {
@@ -172,7 +179,7 @@ export default function BusinessInfoPage() {
         throw new Error("Please provide either a business name or website to continue");
       }
 
-      console.log("Submitting business information for preview...");
+      console.log("Storing business information...");
       
       // Create onboarding data object
       const onboardingData: OnboardingData = {
@@ -183,60 +190,20 @@ export default function BusinessInfoPage() {
         businessPhone,
         agentLanguage,
         countryCode: countryCode || 'US',
-        businessHours
+        businessHours,
+        placeId,
+        photoReference
       };
       
-      // Get session token from localStorage if it exists
-      const sessionToken = localStorage.getItem('flowonAI_sessionToken');
-      
-      // Submit business information for audio preview
-      const response = await fetch(`${API_BASE_URL}/guided_setup/onboarding_preview`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(sessionToken && { "X-Session-Token": sessionToken })
-        },
-        body: JSON.stringify(onboardingData)
-      });
-
-      // Store new session token if provided
-      const newSessionToken = response.headers.get("X-Session-Token");
-      if (newSessionToken) {
-        localStorage.setItem('flowonAI_sessionToken', newSessionToken);
-      }
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        }
-        const errorData = await response.text();
-        console.error("Error generating audio preview:", errorData);
-        throw new Error("Failed to generate audio preview");
-      }
-
-      const data = await response.json();
-      console.log("Audio preview generated successfully:", data);
-      
-      // Store the setup data in localStorage for later use during signup
-      const setupData: SetupData = convertOnboardingToSetupData(onboardingData);
-      localStorage.setItem('flowonAI_setupData', JSON.stringify(setupData));
+      // Store the onboarding data in localStorage
       localStorage.setItem('flowonAI_onboardingData', JSON.stringify(onboardingData));
       
-      // Store audio data in localStorage
-      if (data.greeting_audio_data_base64) {
-        localStorage.setItem('flowonAI_greetingAudio', data.greeting_audio_data_base64);
-      }
-      
-      if (data.message_audio_data_base64) {
-        localStorage.setItem('flowonAI_messageAudio', data.message_audio_data_base64);
-      }
-      
-      // Navigate to the next step
-      router.push("/onboarding/audio-test");
+      // Navigate to the confirmation page
+      router.push("/onboarding/business-confirmation");
       
     } catch (err: any) {
-      console.error("Error in onboarding submission:", err);
-      setError(err.message || "Failed to generate audio preview");
+      console.error("Error storing business information:", err);
+      setError(err.message || "Failed to store business information");
     } finally {
       setIsSubmitting(false);
     }
@@ -344,11 +311,11 @@ export default function BusinessInfoPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Voice Preview...
+                    Storing Business Information...
                   </>
                 ) : (
                   <>
-                    Continue to Audio Test <ArrowRight className="ml-2 h-4 w-4" />
+                    Continue <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>

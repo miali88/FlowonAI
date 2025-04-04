@@ -35,7 +35,7 @@ export default function BusinessInformation({
 
   return (
     <Card className={errors.businessInformation ? "border-red-500" : ""}>
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible defaultValue="briefing">
         <AccordionItem value="briefing" className="border-none">
           <CardHeader className="border-b">
             <AccordionTrigger className="hover:no-underline">

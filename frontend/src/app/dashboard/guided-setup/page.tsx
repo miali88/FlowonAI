@@ -8,8 +8,6 @@ import { SetupStep } from "./types";
 import QuickSetup from "./components/QuickSetup";
 import TalkToFlowon from "./components/TalkToFlowon";
 import Launch from "./components/Launch";
-import { Loader2 } from "lucide-react";
-
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -21,19 +19,17 @@ const steps: { id: SetupStep; label: string }[] = [
 
 export default function GuidedSetupPage() {
   const [currentStep, setCurrentStep] = useState<SetupStep>("quick-setup");
-  const [isLoading, setIsLoading] = useState(true);
   const { userId, getToken } = useAuth();
+  const [initialSetupChecked, setInitialSetupChecked] = useState(false);
 
   useEffect(() => {
     async function checkSetupStatus() {
       try {
-        setIsLoading(true);
-
         // Get the authentication token from Clerk
         const token = await getToken();
         if (!token) {
           console.error("No authentication token available");
-          throw new Error("Authentication required");
+          return;
         }
 
         const response = await fetch(
@@ -47,7 +43,8 @@ export default function GuidedSetupPage() {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch setup status");
+          console.error("Failed to fetch setup status");
+          return;
         }
 
         const data = await response.json();
@@ -66,7 +63,7 @@ export default function GuidedSetupPage() {
       } catch (error) {
         console.error("Error checking setup status:", error);
       } finally {
-        setIsLoading(false);
+        setInitialSetupChecked(true);
       }
     }
 
@@ -80,15 +77,8 @@ export default function GuidedSetupPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[50vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-          <p className="text-gray-500">Loading setup status...</p>
-        </div>
-      </div>
-    );
+  if (!initialSetupChecked) {
+    return null; // Return nothing while checking initial setup status
   }
 
   return (
@@ -146,16 +136,16 @@ export default function GuidedSetupPage() {
       {/* Step Content */}
       <div className="space-y-6">
         {currentStep === "quick-setup" && (
-          <QuickSetup onNext={handleNext} />
+          <QuickSetup onNext={handleNext} key="quick-setup" />
         )}
         {currentStep === "talk-to-rosie" && (
           <Card className="p-6">
-            <TalkToFlowon onNext={handleNext} />
+            <TalkToFlowon onNext={handleNext} key="talk-to-rosie" />
           </Card>
         )}
         {currentStep === "launch" && (
           <Card className="p-6">
-            <Launch onNext={handleNext} />
+            <Launch onNext={handleNext} key="launch" />
           </Card>
         )}
       </div>

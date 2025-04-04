@@ -18,6 +18,39 @@ export interface PlaceDataExtracted {
   countryCode: string;
   businessHours: BusinessHours;
   coreServices: string[];
+  placeId?: string;
+  photoReference?: string;
+}
+
+/**
+ * Cleans a URL by removing UTM parameters and standardizing the format
+ * @param url The URL to clean
+ * @returns Cleaned URL with only the root domain
+ */
+function cleanBusinessUrl(url: string): string {
+  if (!url) return "";
+  
+  try {
+    // Create URL object to parse the URL
+    const urlObj = new URL(url);
+    
+    // Remove 'www.' if present
+    let hostname = urlObj.hostname.replace(/^www\./, '');
+    
+    // Get protocol (default to https if not specified)
+    const protocol = urlObj.protocol || 'https:';
+    
+    // Combine protocol and hostname for clean URL
+    return `${protocol}//${hostname}`;
+  } catch (error) {
+    // If URL parsing fails, try basic string cleanup
+    console.warn("URL parsing failed, attempting basic cleanup:", error);
+    return url
+      .replace(/^(https?:\/\/)?(www\.)?/, 'https://') // Standardize protocol and www
+      .split('?')[0] // Remove query parameters
+      .split('#')[0] // Remove hash
+      .replace(/\/+$/, ''); // Remove trailing slashes
+  }
 }
 
 /**
@@ -48,7 +81,14 @@ export function extractPlaceData(placeData: any): PlaceDataExtracted {
       Sunday: { open: "", close: "" },
     },
     coreServices: [],
+    placeId: placeData.place_id || "",
   };
+
+  // Extract photo reference if available
+  if (placeData.photos && placeData.photos.length > 0) {
+    extractedData.photoReference = placeData.photos[0].photo_reference;
+    console.log("Extracted photo reference:", extractedData.photoReference);
+  }
 
   // Extract basic information
   if (placeData.name) {
@@ -64,7 +104,9 @@ export function extractPlaceData(placeData: any): PlaceDataExtracted {
   }
 
   if (placeData.website) {
-    extractedData.businessWebsite = placeData.website;
+    // Clean the website URL before storing
+    extractedData.businessWebsite = cleanBusinessUrl(placeData.website);
+    console.log("Cleaned business website URL:", extractedData.businessWebsite);
   }
 
   if (placeData.editorial_summary?.overview) {
