@@ -16,7 +16,7 @@ const CallToActionButton = () => {
     <>
       <div className="flex flex-col items-center relative z-20">
         <Link 
-          href="/sign-up" 
+          href="/onboarding" 
           className="inline-block opacity-0 animate-fade-in [--animation-delay:600ms]"
         >
           <Button 

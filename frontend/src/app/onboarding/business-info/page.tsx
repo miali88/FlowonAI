@@ -171,15 +171,8 @@ export default function BusinessInfoPage() {
       if (!businessName.trim() && !businessWebsite.trim()) {
         throw new Error("Please provide either a business name or website to continue");
       }
-      
-      // Get the authentication token
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Authentication required");
-      }
 
       console.log("Submitting business information for preview...");
-      console.log("Agent language:", agentLanguage);
       
       // Create onboarding data object
       const onboardingData: OnboardingData = {
@@ -193,24 +186,29 @@ export default function BusinessInfoPage() {
         businessHours
       };
       
-      // Log for verification
-      console.log("Including business hours in onboardingData:", businessHours ? "Yes (hours found)" : "No (missing hours)");
+      // Get session token from localStorage if it exists
+      const sessionToken = localStorage.getItem('flowonAI_sessionToken');
       
-      // Convert to structured setup data
-      const setupData: SetupData = convertOnboardingToSetupData(onboardingData);
-      console.log("Converted to setup data:", setupData);
-      
-      // Submit business information for audio preview - keep using flat structure for compatibility
+      // Submit business information for audio preview
       const response = await fetch(`${API_BASE_URL}/guided_setup/onboarding_preview`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          ...(sessionToken && { "X-Session-Token": sessionToken })
         },
         body: JSON.stringify(onboardingData)
       });
 
+      // Store new session token if provided
+      const newSessionToken = response.headers.get("X-Session-Token");
+      if (newSessionToken) {
+        localStorage.setItem('flowonAI_sessionToken', newSessionToken);
+      }
+
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
         const errorData = await response.text();
         console.error("Error generating audio preview:", errorData);
         throw new Error("Failed to generate audio preview");
@@ -219,16 +217,10 @@ export default function BusinessInfoPage() {
       const data = await response.json();
       console.log("Audio preview generated successfully:", data);
       
-      // Save the setup data to the backend using our utility
-      const saveResult = await saveSetupDataToBackend(setupData, token, onboardingData);
-      
-      if (!saveResult.success) {
-        console.error("Error saving setup data:", saveResult.error);
-        // Continue anyway since this is not critical for the audio test
-        console.warn("Continuing to next step despite error saving setup data");
-      } else {
-        console.log("Setup data saved successfully");
-      }
+      // Store the setup data in localStorage for later use during signup
+      const setupData: SetupData = convertOnboardingToSetupData(onboardingData);
+      localStorage.setItem('flowonAI_setupData', JSON.stringify(setupData));
+      localStorage.setItem('flowonAI_onboardingData', JSON.stringify(onboardingData));
       
       // Store audio data in localStorage
       if (data.greeting_audio_data_base64) {
@@ -251,9 +243,9 @@ export default function BusinessInfoPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left side - Business Info Form */}
-      <div className="w-1/2 p-10 flex flex-col justify-center">
+      <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center">
         <div className="max-w-lg mx-auto">
           <div className="mb-10">
             <h1 className="text-3xl font-bold tracking-tight mb-3">Welcome to Flowon AI</h1>
@@ -279,7 +271,7 @@ export default function BusinessInfoPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
-                Business Name
+                Google Business Profile
               </label>
               <div className="flex items-center">
                 <Building2 className="w-5 h-5 text-gray-400 mr-2" />
@@ -374,8 +366,8 @@ export default function BusinessInfoPage() {
         </div>
       </div>
       
-      {/* Right side - Moving Gradient Blob */}
-      <div className="w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+      {/* Right side - Moving Gradient Blob - Hidden on mobile */}
+      <div className="hidden md:block w-full md:w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
         <BlobAnimation />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-10 z-10">
           <h2 className="text-3xl font-bold mb-6 text-center">

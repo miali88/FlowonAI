@@ -8,7 +8,6 @@ import {
   ArrowRight, 
   Play, 
   Pause, 
-  Volume2
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import BlobAnimation from "@/app/onboarding/components/BlobAnimation";
@@ -125,7 +124,7 @@ export default function AudioTestPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Audio Test Section */}
-      <div className="w-1/2 p-10 flex flex-col justify-center">
+      <div className="w-full sm:w-1/2 p-10 flex flex-col justify-center">
         <div className="max-w-lg mx-auto">
           <div className="mb-10">
             <h1 className="text-3xl font-bold tracking-tight mb-3">Test Your AI Assistant</h1>
@@ -234,8 +233,8 @@ export default function AudioTestPage() {
         </div>
       </div>
       
-      {/* Right side - Moving Gradient Blob */}
-      <div className="w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+      {/* Right side - Moving Gradient Blob - Hidden on mobile */}
+      <div className="hidden sm:block w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
         <BlobAnimation />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-10 z-10">
           <h2 className="text-3xl font-bold mb-6 text-center">

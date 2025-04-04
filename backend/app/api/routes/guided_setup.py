@@ -1,4 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
+from fastapi.responses import JSONResponse
+import secrets
+from datetime import datetime, timedelta
+from typing import Dict, Optional
+import time
 from app.core.logging_setup import logger
 
 from app.core.auth import get_current_user
@@ -24,6 +29,59 @@ from app.services.guided_setup import (
 )
 
 router = APIRouter()
+
+# Rate limiting storage - in production this should be in Redis
+session_attempts: Dict[str, int] = {}
+ip_attempts: Dict[str, Dict[str, any]] = {}
+SESSION_LIMIT = 3  # Maximum attempts per session
+IP_LIMIT = 5  # Maximum attempts per IP per hour
+SESSION_TOKEN_HEADER = "X-Session-Token"
+
+def check_rate_limit(request: Request, session_token: Optional[str] = None) -> str:
+    """
+    Check rate limits and return session token.
+    Raises HTTPException if limits exceeded.
+    """
+    client_ip = request.client.host
+    current_time = time.time()
+
+    # Clean up old IP records
+    for ip in list(ip_attempts.keys()):
+        if current_time - ip_attempts[ip]["timestamp"] > 3600:  # 1 hour
+            del ip_attempts[ip]
+
+    # Check IP-based rate limit
+    if client_ip in ip_attempts:
+        ip_data = ip_attempts[client_ip]
+        if current_time - ip_data["timestamp"] <= 3600:  # Within 1 hour
+            if ip_data["count"] >= IP_LIMIT:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Too many requests from this IP. Please try again later."
+                )
+            ip_data["count"] += 1
+        else:
+            ip_attempts[client_ip] = {"count": 1, "timestamp": current_time}
+    else:
+        ip_attempts[client_ip] = {"count": 1, "timestamp": current_time}
+
+    # Handle session token
+    if not session_token:
+        session_token = secrets.token_urlsafe(32)
+        session_attempts[session_token] = 0
+    
+    # Check session-based rate limit
+    if session_token in session_attempts:
+        if session_attempts[session_token] >= SESSION_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail="Session limit reached. Please try again with a new session."
+            )
+        session_attempts[session_token] += 1
+    else:
+        session_attempts[session_token] = 1
+
+    return session_token
 
 @router.post("/quick_setup")
 async def submit_quick_setup(data: QuickSetupData, current_user: str = Depends(get_current_user)):
@@ -165,16 +223,25 @@ async def options_retrain_agent():
     return {}
 
 @router.post("/onboarding_preview", response_model=AudioPreviewResponse)
-async def generate_onboarding_preview(request: OnboardingPreviewRequest, current_user: str = Depends(get_current_user)):
+async def generate_onboarding_preview(
+    request: OnboardingPreviewRequest,
+    req: Request,
+    session_token: Optional[str] = Header(None, alias=SESSION_TOKEN_HEADER)
+):
     """
     Generate audio previews for onboarding with minimal business information.
     This returns both greeting and message-taking audio samples.
+    Uses IP and session-based rate limiting to prevent abuse.
     """
-    logger.info(f"[ENDPOINT] /onboarding_preview invoked by user {current_user} with business name: {request.businessName}")
+    logger.info(f"[ENDPOINT] /onboarding_preview invoked for business: {request.businessName}")
+    
     try:
+        # Check rate limits and get session token
+        new_session_token = check_rate_limit(req, session_token)
+        
         # Call the service function to generate the preview
         result = await generate_onboarding_preview_service(
-            user_id=current_user,
+            user_id=None,  # No user ID for unauthenticated requests
             business_name=request.businessName,
             business_description=request.businessDescription,
             business_website=request.businessWebsite,
@@ -187,14 +254,23 @@ async def generate_onboarding_preview(request: OnboardingPreviewRequest, current
                 error=result.get("error", "Failed to generate audio previews")
             )
         
-        # Return a response with the data from the service function
-        return AudioPreviewResponse(
+        # Create response with session token
+        response_data = AudioPreviewResponse(
             success=True,
             greeting_audio_data_base64=result.get("greeting_audio_data_base64"),
             message_audio_data_base64=result.get("message_audio_data_base64"),
             greeting_text=result.get("greeting_text"),
             message_text=result.get("message_text")
         )
+        
+        # Return response with new session token in header
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={SESSION_TOKEN_HEADER: new_session_token}
+        )
+        
+    except HTTPException as he:
+        raise he
     except Exception as e:
         logger.error(f"Error in generate_onboarding_preview endpoint: {str(e)}")
         return AudioPreviewResponse(success=False, error=str(e))

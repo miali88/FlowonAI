@@ -1,0 +1,864 @@
+[
+  {
+    "url": "https://www.google.com/maps/place/Blue+Diamond+Heating+and+Air/data=!4m7!3m6!1s0x80d9595be867c1cd:0x5e704f813406c423!8m2!3d32.805637!4d-116.9545822!16s%2Fg%2F11fr8c5g5t!19sChIJzcFn6FtZ2YARI8QGNIFPcF4?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:33:55.970372",
+    "name": "Blue Diamond Heating and Air",
+    "address": "\n609 Cedar St, El Cajon, CA 92021, United States",
+    "phone": "\n+1 619-304-5228",
+    "website": "https://www.bluediamond.tech/el-cajon-hvac-company/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Air+Plus+Heating+%26+Cooling/data=!4m7!3m6!1s0x80dc0073d6162f0d:0xf7bdf17f7a071050!8m2!3d32.8367236!4d-117.1246494!16s%2Fg%2F11xrvq65_!19sChIJDS8W1nMA3IARUBAHen_xvfc?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:33:59.525539",
+    "name": "Air Plus Heating & Cooling",
+    "address": "\n9484 Chesapeake Dr Ste. 806, San Diego, CA 92123, United States",
+    "phone": "\n+1 858-505-8711",
+    "website": "https://airplusmechanical.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Same+Day+Heating,+Cooling,+Plumbing/data=!4m7!3m6!1s0x80dbff369eaa8b57:0x8b582c8c20a629da!8m2!3d32.8316807!4d-117.1163868!16s%2Fg%2F11j7dn5s7h!19sChIJV4uqnjb_24AR2immIIwsWIs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:02.720242",
+    "name": "Same Day Heating, Cooling, Plumbing",
+    "address": "\n9771 Clairemont Mesa Blvd Suite E, San Diego, CA 92124, United States",
+    "phone": "\n+1 619-345-0832",
+    "website": "https://samedaysd.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Hi-Tech+Air+Conditioning,+Inc/data=!4m7!3m6!1s0x80d9581b3098e579:0x1465297bd0e3910b!8m2!3d32.8608213!4d-116.9406332!16s%2Fg%2F1tdzg8q9!19sChIJeeWYMBtY2YARC5Hj0HspZRQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:05.828952",
+    "name": "Hi-Tech Air Conditioning, Inc",
+    "address": "\n11647 Riverside Dr UNIT 135, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-440-2080",
+    "website": "http://www.hitechair.net/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Stable+Temp+HVAC/data=!4m7!3m6!1s0x80d95541dc057cad:0xc3750dfd89d809e5!8m2!3d32.8274056!4d-117.2296903!16s%2Fg%2F11h2c0_cx1!19sChIJrXwF3EFV2YAR5QnYif0NdcM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:08.949200",
+    "name": "Stable Temp HVAC",
+    "address": "\n4901 Morena Blvd Ste 319, San Diego, CA 92117, United States",
+    "phone": "\n+1 858-766-5520",
+    "website": "http://stabletemphvac.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Big+City+HVAC+%26+Appliance+Repair/data=!4m7!3m6!1s0x80dc07bf372335cb:0x6d76d7bc8f0efea!8m2!3d32.9448111!4d-117.2382702!16s%2Fg%2F11gsn3jygd!19sChIJyzUjN78H3IAR6u_wyHtt1wY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:11.947937",
+    "name": "Big City HVAC & Appliance Repair",
+    "address": "\n3534 Caminito El Rincon UNIT 41, San Diego, CA 92130, United States",
+    "phone": "\n+1 619-377-1485",
+    "website": "https://bigcityhomeservice.com/?utm_campaign=gmb",
+    "rating": 4.7
+  },
+  {
+    "url": "https://www.google.com/maps/place/Comfort+Bros+Heating+Air+%26+Plumbing/data=!4m7!3m6!1s0x2d8c2292536251af:0x47e508c4882ea0a1!8m2!3d32.8165989!4d-116.9704847!16s%2Fg%2F11s5gdnf_9!19sChIJr1FiU5IijC0RoaAuiMQI5Uc?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:15.047137",
+    "name": "Comfort Bros Heating Air & Plumbing",
+    "address": "\n1597 N Johnson Ave, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-639-4050",
+    "website": "https://comfortbros.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Global+Heating+and+Air+Conditioning/data=!4m7!3m6!1s0x80d95954b17cbfc5:0xf7635cc3bae45b26!8m2!3d32.8153684!4d-116.9791637!16s%2Fg%2F11j3s1r_sq!19sChIJxb98sVRZ2YARJlvkusNcY_c?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:18.173440",
+    "name": "Global Heating and Air Conditioning",
+    "address": "\n1475 Cuyamaca St, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-567-6691",
+    "website": "https://www.globalheatingairconditioning.com/?utm_source=GMB&utm_medium=GMB%20New%20Page&utm_campaign=GMB%20Traffic",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Hamel%27s+Air+Conditioning+%26+Heating+Inc./data=!4m7!3m6!1s0x80dbe319345ed64f:0x51d7ca34340f4e2e!8m2!3d32.8617601!4d-116.9259137!16s%2Fg%2F11lr_lhgzj!19sChIJT9ZeNBnj24ARLk4PNDTK11E?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:21.494547",
+    "name": "Hamel's Air Conditioning & Heating Inc.",
+    "address": "\n10149 Channel Rd Suite E, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-456-1488",
+    "website": "http://hamelsac.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Bob+Jenson+Air+Conditioning+and+Heating/data=!4m7!3m6!1s0x80d95901a35e3b3d:0xa60fe186b60a9197!8m2!3d32.8246204!4d-117.1495417!16s%2Fg%2F1vl9rsfj!19sChIJPTteowFZ2YARl5EKtobhD6Y?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:24.717064",
+    "name": "Bob Jenson Air Conditioning and Heating",
+    "address": "\n8159 Engineer Rd, San Diego, CA 92111, United States",
+    "phone": "\n+1 619-440-5634",
+    "website": "https://bobjenson.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Atlas+HVAC,+INC/data=!4m7!3m6!1s0x80dbf9e36077f1f9:0x532dae694e98c23e!8m2!3d32.8936257!4d-117.1399047!16s%2Fg%2F1tkrm2lv!19sChIJ-fF3YOP524ARPsKYTmmuLVM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:27.847350",
+    "name": "Atlas HVAC, INC",
+    "address": "\n8525 Arjons Dr suite u, San Diego, CA 92126, United States",
+    "phone": "\n+1 877-452-8527",
+    "website": "https://atlascoolingandheating.com/",
+    "rating": 4.7
+  },
+  {
+    "url": "https://www.google.com/maps/place/Maximum+Comfort+Heating+and+AC+Repair/data=!4m7!3m6!1s0x80d9a1cf8cfd07b1:0xb6e34086edd3d5e4!8m2!3d32.8122727!4d-116.962262!16s%2Fg%2F11fj31kw2t!19sChIJsQf9jM-h2YAR5NXT7YZA47Y?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:30.893194",
+    "name": "Maximum Comfort Heating and AC Repair",
+    "address": "\n206 Greenfield Dr B, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-932-5205",
+    "website": "https://maxcomfortheatandair.com/ac-repair/?utm_campaign=gmb",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Airmaxx/data=!4m7!3m6!1s0x80d9581f287f6be5:0xc809f65e898cc49!8m2!3d32.8224753!4d-116.9800799!16s%2Fg%2F1tdxw9nc!19sChIJ5Wt_KB9Y2YARScyY6GWfgAw?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:34.112843",
+    "name": "Airmaxx",
+    "address": "\n1865 John Towers Ave # B, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-639-1960",
+    "website": "http://airmaxx.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Cano+Air+Conditioning+and+Heating+Inc./data=!4m7!3m6!1s0x80d9459e4d56bbf9:0x3ecd227525fb799!8m2!3d32.7927245!4d-116.8536668!16s%2Fg%2F11f1jx22x6!19sChIJ-btWTZ5F2YARmbdfUifS7AM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:37.581876",
+    "name": "Cano Air Conditioning and Heating Inc.",
+    "address": "\n14628 Quail Haven Ln, El Cajon, CA 92019, United States",
+    "phone": "\n+1 619-733-0152",
+    "website": "http://canoair.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Goettl+Air+Conditioning+and+Plumbing+-+Escondido+CA/data=!4m7!3m6!1s0x80dc74e2a2bb7cf9:0x55a8894c6499c937!8m2!3d33.1261458!4d-117.1295545!16s%2Fg%2F11j03bvgjp!19sChIJ-Xy7ouJ03IARN8mZZEyJqFU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:40.744516",
+    "name": "Goettl Air Conditioning and Plumbing - Escondido CA",
+    "address": "\n2863 Executive Pl, Escondido, CA 92029, United States",
+    "phone": "\n+1 760-359-8460",
+    "website": "https://www.goettl.com/location/escondido-california/?utm_source=google-gbp&utm_medium=organic&utm_campaign=*335*goettl",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Aerify+Heating+and+Air/data=!4m7!3m6!1s0x80d951c6267cfb05:0x8b690d1d7eca5ac7!8m2!3d32.8780926!4d-116.9174654!16s%2Fg%2F11dfgnzzjf!19sChIJBft8JsZR2YARx1rKfh0NaYs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:43.818054",
+    "name": "Aerify Heating and Air",
+    "address": "\n12626 Willow Rd, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-535-3855",
+    "website": "https://aerifysandiego.com/",
+    "rating": 4.7
+  },
+  {
+    "url": "https://www.google.com/maps/place/Coastal+Refrigeration+Heating+and+Air+Conditioning,+Inc./data=!4m7!3m6!1s0x80dc0b337675e529:0x4db52a597a3badf6!8m2!3d33.1754074!4d-117.2958776!16s%2Fg%2F11b6z1y5st!19sChIJKeV1djML3IAR9q07elkqtU0?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:47.102501",
+    "name": "Coastal Refrigeration Heating and Air Conditioning, Inc.",
+    "address": "\n3604 Barranca Ct, Carlsbad, CA 92010, United States",
+    "phone": "\n+1 760-586-3758",
+    "website": "https://coastalrefrigerationheatingandair.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Straight+Shooter+Heating+%26+Cooling/data=!4m7!3m6!1s0x88f5dd66e07a1415:0x48fc8403d8ac3890!8m2!3d32.7501377!4d-117.1719234!16s%2Fg%2F11fll6dpg_!19sChIJFRR64Gbd9YgRkDis2AOE_Eg?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:50.248705",
+    "name": "Straight Shooter Heating & Cooling",
+    "address": "\n930 W Washington St Suite 157, San Diego, CA 92103, United States",
+    "phone": "\n+1 619-304-2863",
+    "website": "https://www.bestsandiegohvac.com/mission-hills-ac-installation-repair",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/La+Jolla+Heating+and+Air+Conditioning/data=!4m7!3m6!1s0x80dbe3810dd25da1:0xe3f97d35d35fb86d!8m2!3d32.8436882!4d-116.8460104!16s%2Fg%2F11ghf85f8d!19sChIJoV3SDYHj24ARbbhf0zV9-eM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:53.201212",
+    "name": "La Jolla Heating and Air Conditioning",
+    "phone": "\n+1 858-201-4467",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Castle+Comfort+HVAC/data=!4m7!3m6!1s0x80d955b10b7c2c89:0x46fa74ca4b1d4e50!8m2!3d32.7765794!4d-117.138715!16s%2Fg%2F11fvg8zy3z!19sChIJiSx8C7FV2YARUE4dS8p0-kY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:56.377074",
+    "name": "Castle Comfort HVAC",
+    "address": "\n8880 Rio San Diego Dr # 800, San Diego, CA 92108, United States",
+    "phone": "\n+1 800-484-4323",
+    "website": "http://castlecomfort.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/HVAC+Experts+Inc+San+Diego/data=!4m7!3m6!1s0xa47ce7c944fa0167:0xa45a3860f51723bb!8m2!3d32.8249653!4d-117.1186496!16s%2Fg%2F11v422jqy9!19sChIJZwH6RMnnfKQRuyMX9WA4WqQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:34:59.942427",
+    "name": "HVAC Experts Inc San Diego",
+    "address": "\n4455 Murphy Canyon Rd Ste 8, San Diego, CA 92123, United States",
+    "phone": "\n+1 619-800-0110",
+    "website": "https://hvacexpertssd.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/MAX+AIR+HVAC/data=!4m7!3m6!1s0x80dbf5bee26fa2e1:0x8ab3b516bc1a200b!8m2!3d33.1180223!4d-117.1042635!16s%2Fg%2F11tp4h_q0q!19sChIJ4aJv4r7124ARCyAavBa1s4o?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:03.130176",
+    "name": "MAX AIR HVAC",
+    "address": "\n1145 Industrial Ave # A, Escondido, CA 92029, United States",
+    "phone": "\n+1 760-309-3364",
+    "website": "https://www.maxairsocal.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/EVO+AIR/data=!4m7!3m6!1s0x80dbf9e93211e3cb:0x981084a4cb621e61!8m2!3d32.9554434!4d-117.1289564!16s%2Fg%2F11j0w83drw!19sChIJy-MRMun524ARYR5iy6SEEJg?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:06.257957",
+    "name": "EVO AIR",
+    "address": "\n9245 Twin Trails Dr Suite #721232, San Diego, CA 92129, United States",
+    "phone": "\n+1 858-605-8351",
+    "website": "http://www.evoairinc.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/FRYE+Mechanical/data=!4m7!3m6!1s0x80dbe7a323800c5f:0xc79b112b605d20d4!8m2!3d33.0115508!4d-116.8238259!16s%2Fg%2F11dd_nk1xb!19sChIJXwyAI6Pn24AR1CBdYCsRm8c?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:09.463932",
+    "name": "FRYE Mechanical",
+    "address": "\n23445 Everett Pl, Ramona, CA 92065, United States",
+    "phone": "\n+1 619-454-3069",
+    "website": "http://www.fryehvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Carini+Home+Services/data=!4m7!3m6!1s0x80dc0056e5488a47:0x767829a68414955e!8m2!3d32.7499748!4d-117.1568642!16s%2Fg%2F1tf_t4qf!19sChIJR4pI5VYA3IARXpUUhKYpeHY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:12.509501",
+    "name": "Carini Home Services",
+    "address": "\n825 Washington St, San Diego, CA 92103, United States",
+    "phone": "\n+1 619-332-5176",
+    "website": "https://www.carinihome.com/?utm_campaign=gmb&utm_medium=organic&utm_source=gmb",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Southcoast+Heating+%26+Air+Conditioning/data=!4m7!3m6!1s0x80dc76ca540178e7:0x682ce3fd85fa30ee!8m2!3d33.152113!4d-117.2284578!16s%2Fg%2F1tdxw9ww!19sChIJ53gBVMp23IAR7jD6hf3jLGg?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:16.122213",
+    "name": "Southcoast Heating & Air Conditioning",
+    "address": "\n2373 La Mirada Dr, Vista, CA 92081, United States",
+    "phone": "\n+1 760-941-7000",
+    "website": "https://www.southcoastkoolsyou.com/",
+    "rating": 4.6
+  },
+  {
+    "url": "https://www.google.com/maps/place/Prime+Air+Solutions/data=!4m7!3m6!1s0x80dbf94fe9d0c087:0x4f64561c9added30!8m2!3d32.9741968!4d-117.0917736!16s%2Fg%2F11sydc94tw!19sChIJh8DQ6U_524ARMO3dmhxWZE8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:20.533446",
+    "name": "Prime Air Solutions",
+    "address": "\n11040 Bryce Way, San Diego, CA 92129, United States",
+    "phone": "\n+1 619-655-3355",
+    "website": "http://yourprimeservice.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Mauzy+Cooling,+Heating,+Plumbing,+and+Electrical/data=!4m7!3m6!1s0x80d954e849604339:0xaf73e9b677f3dc69!8m2!3d32.8173362!4d-116.9627198!16s%2Fg%2F1tdz53db!19sChIJOUNgSehU2YARadzzd7bpc68?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:23.702778",
+    "name": "Mauzy Cooling, Heating, Plumbing, and Electrical",
+    "address": "\n1456 Magnolia Ave Ste E, El Cajon, CA 92021, United States",
+    "phone": "\n+1 619-492-4144",
+    "website": "http://mauzy.com/?utm_source=google-gbp&utm_medium=organic&utm_campaign=*143*mauzy-heating-air-el-cajon",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Pantaira+Heating+and+Air/data=!4m7!3m6!1s0xa2384184d9acbfe9:0xbbbe9cbc14c3bb75!8m2!3d32.8295424!4d-117.0232715!16s%2Fg%2F11pzg0h35h!19sChIJ6b-s2YRBOKIRdbvDFLycvrs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:26.833528",
+    "name": "Pantaira Heating and Air",
+    "address": "\n8001 Linen Dr, Santee, CA 92071, United States",
+    "phone": "\n+1 619-808-7300",
+    "website": "http://www.pantaira.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Indoor+Climate+Experts,+Inc./data=!4m7!3m6!1s0x80dbfd61c45010ed:0x2ba0a74f2b6690f!8m2!3d33.0446069!4d-117.0586459!16s%2Fg%2F11clvw8lbj!19sChIJ7RBQxGH924ARD2m28nQKugI?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:29.840896",
+    "name": "Indoor Climate Experts, Inc.",
+    "phone": "\n+1 619-536-1620",
+    "website": "https://icehvacsd.com/?utm_source=GMB&utm_medium=organic&utm_campaign=santee",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/HEYNOW+Heating+and+Air+Conditioning/data=!4m7!3m6!1s0x6ee3a65ff7d35e3d:0x6c20644affb5af77!8m2!3d32.8744275!4d-116.9727871!16s%2Fg%2F11t42dg317!19sChIJPV7T91-m424Rd6-1_0pkIGw?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:33.253029",
+    "name": "HEYNOW Heating and Air Conditioning",
+    "address": "\n10944 Easthaven Ct, Santee, CA 92071, United States",
+    "phone": "\n+1 619-844-1159",
+    "website": "https://heynowhvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Accord+Air/data=!4m7!3m6!1s0x80dc07f224192a2b:0x3cbb58e661a8aea!8m2!3d32.9568386!4d-117.1920479!16s%2Fg%2F11j6tm6v0h!19sChIJKyoZJPIH3IAR6ooaZo61ywM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:36.367984",
+    "name": "Accord Air",
+    "address": "\n5050 Camino Pyrenees, San Diego, CA 92130, United States",
+    "phone": "\n+1 858-208-8140",
+    "website": "https://accordair.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/G%26G+Indoor+Air+Services/data=!4m7!3m6!1s0x80dc012bc57ff8c1:0x4f1d6a0900a6607!8m2!3d32.8626728!4d-117.2240279!16s%2Fg%2F1pp2vfmkt!19sChIJwfh_xSsB3IARB2YKkKDW8QQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:39.882628",
+    "name": "G&G Indoor Air Services",
+    "address": "\n7770 Regents Rd #113, San Diego, CA 92122, United States",
+    "phone": "\n+1 858-391-6707",
+    "website": "https://www.ggindoorairservices.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Surf+Bros+HVAC/data=!4m7!3m6!1s0xa91306ee5c41cef3:0xd38e27edc798d2a9!8m2!3d32.7630477!4d-117.1347981!16s%2Fg%2F11vlp5wx5h!19sChIJ885BXO4GE6kRqdKYx-0njtM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:43.315931",
+    "name": "Surf Bros HVAC",
+    "address": "\n2710 Adams Ave, San Diego, CA 92116, United States",
+    "phone": "\n+1 619-673-5259",
+    "website": "https://www.surfbroshvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Western+Mechanical+HVAC/data=!4m7!3m6!1s0x80dbe276a3ed3b05:0x8eeaa9e53c828799!8m2!3d32.8583563!4d-116.92102!16s%2Fg%2F1tgxjbnp!19sChIJBTvto3bi24ARmYeCPOWp6o4?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:46.263246",
+    "name": "Western Mechanical HVAC",
+    "address": "\n9830 Vine St UNIT 100, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-448-5222",
+    "website": "http://westernhvacsd.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/San+Diego+HVAC+%26+Airduct+Cleaning/data=!4m7!3m6!1s0x80d95ec0eb60a919:0x26b95b8146c6ee31!8m2!3d32.755063!4d-117.097886!16s%2Fg%2F1td00sc0!19sChIJGalg68Be2YARMe7GRoFbuSY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:49.217259",
+    "name": "San Diego HVAC & Airduct Cleaning",
+    "address": "\n4481-91 El Cajon Blvd, San Diego, CA 92115, United States",
+    "phone": "\n+1 619-272-9793",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Air+Climate+Solutions/data=!4m7!3m6!1s0x80dc0dce6f90fea9:0x9b4b02c1c038ccc6!8m2!3d33.0813855!4d-117.2886464!16s%2Fg%2F11jjt5bq0v!19sChIJqf6Qb84N3IARxsw4wMECS5s?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:52.303871",
+    "name": "Air Climate Solutions",
+    "address": "\n1717 Gascony Rd, Encinitas, CA 92024, United States",
+    "phone": "\n+1 619-894-1886",
+    "website": "http://airclimatesolutions.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/HVAC+Medic+Inc/data=!4m7!3m6!1s0x80dbe29dd58005f7:0x6cf0793c1c6e284f!8m2!3d32.8481118!4d-116.9559677!16s%2Fg%2F11b6hp5xnk!19sChIJ9wWA1Z3i24ARTyhuHDx58Gw?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:55.311601",
+    "name": "HVAC Medic Inc",
+    "address": "\n11220 N Woodside Ave, Santee, CA 92071, United States",
+    "phone": "\n+1 619-867-3760",
+    "website": "https://hvacmedic.net/",
+    "rating": 4.6
+  },
+  {
+    "url": "https://www.google.com/maps/place/Morse+%26+Bailey+A%2FC+Heating/data=!4m7!3m6!1s0x80d95f4522d0a1f9:0xad737bded9e36caa!8m2!3d32.8525309!4d-116.8769838!16s%2Fg%2F1tdgvpg3!19sChIJ-aHQIkVf2YARqmzj2d57c60?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:35:58.364699",
+    "name": "Morse & Bailey A/C Heating",
+    "address": "\n9464 Palomino Ridge Dr, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-447-6467",
+    "website": "http://stevebaileyac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Fire+%26+Ice+Heating+and+Air+Conditioning,+Inc./data=!4m7!3m6!1s0x80dbe2774bb73e89:0xcc5ff55a704b875a!8m2!3d32.858451!4d-116.9252003!16s%2Fg%2F1tff39_2!19sChIJiT63S3fi24ARWodLcFr1X8w?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:01.412369",
+    "name": "Fire & Ice Heating and Air Conditioning, Inc.",
+    "address": "\n12318 Parkside St, Lakeside, CA 92040, United States",
+    "phone": "\n+1 619-561-8100",
+    "website": "http://fireandicehvac.com/",
+    "rating": 4.5
+  },
+  {
+    "url": "https://www.google.com/maps/place/Blue+Diamond+Heating+and+Air/data=!4m7!3m6!1s0x80d955a5790850b1:0x7cae17fb87f85fb4!8m2!3d32.7732803!4d-117.1455331!16s%2Fg%2F11kpsmbxdl!19sChIJsVAIeaVV2YARtF_4h_sXrnw?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:04.393490",
+    "name": "Blue Diamond Heating and Air",
+    "address": "\n8355 Station Village Ln UNIT 4217, San Diego, CA 92108, United States",
+    "phone": "\n+1 619-304-6761",
+    "website": "https://www.bluediamond.tech/san-diego-hvac-contractor-ac-repair/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Elite+Heating+%26+Air+Conditioning+Services/data=!4m7!3m6!1s0x80d959dc0603fe97:0x6a5c33f9b1f16bdc!8m2!3d32.8343954!4d-116.9636135!16s%2Fg%2F11lnfh8300!19sChIJl_4DBtxZ2YAR3GvxsfkzXGo?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:07.584540",
+    "name": "Elite Heating & Air Conditioning Services",
+    "address": "\n8733 Magnolia Ave Suite 123, Santee, CA 92071, United States",
+    "phone": "\n+1 619-884-4108",
+    "website": "https://www.elitehvacsd.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Southern+Comfort+HVAC,+Inc/data=!4m7!3m6!1s0x2bf774e9fc3a1237:0xe14db5b5affef5de!8m2!3d33.0169285!4d-116.8460104!16s%2Fg%2F11tt6rwdh0!19sChIJNxI6_Ol09ysR3vX-r7W1TeE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:10.551055",
+    "name": "Southern Comfort HVAC, Inc",
+    "phone": "\n+1 619-322-9664",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/San+Diegos+Green+HVAC+Company/data=!4m7!3m6!1s0xa07ec249fd8c1d61:0xc611216afe7e5554!8m2!3d33.1913009!4d-117.3800202!16s%2Fg%2F11rztyzr4v!19sChIJYR2M_UnCfqARVFV-_mohEcY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:13.684249",
+    "name": "San Diegos Green HVAC Company",
+    "address": "\n201 S Myers St, Oceanside, CA 92054, United States",
+    "phone": "\n+1 760-688-8556",
+    "website": "https://www.sandiegosgreenhvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Aelott+Air+Conditioning/data=!4m7!3m6!1s0x80dbf49458e7fdc3:0xa068f13b18d92cf0!8m2!3d33.123771!4d-117.0953359!16s%2Fg%2F1tfrh1dg!19sChIJw_3nWJT024AR8CzZGDvxaKA?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:16.817873",
+    "name": "Aelott Air Conditioning",
+    "address": "\n812 W Washington Ave, Escondido, CA 92025, United States",
+    "phone": "\n+1 760-544-3354",
+    "website": "https://www.aelott.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Aquinas+HVAC+Inc./data=!4m7!3m6!1s0x80dbf9e2af3a97c1:0x7df844e7ec6c5135!8m2!3d32.8338561!4d-117.1598734!16s%2Fg%2F11mvmzjltc!19sChIJwZc6r-L524ARNVFs7OdE-H0?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:19.881591",
+    "name": "Aquinas HVAC Inc.",
+    "address": "\n5046 Ruffner St, San Diego, CA 92111, United States",
+    "phone": "\n+1 408-413-2053",
+    "website": "https://www.aquinashvac.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Excel+Air+Conditioning,+Heating+%26+Plumbing/data=!4m7!3m6!1s0x80dbf4eb0e20cbfb:0x90c0eddb425cf3da!8m2!3d33.1277386!4d-117.126751!16s%2Fg%2F1tg68dbp!19sChIJ-8sgDuv024AR2vNcQtvtwJA?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:23.020277",
+    "name": "Excel Air Conditioning, Heating & Plumbing",
+    "address": "\n530 Opper St Suite B, Escondido, CA 92029, United States",
+    "phone": "\n+1 760-282-2292",
+    "website": "https://excelairca.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Patriot+Air-+Air+Conditioning+%26+Heating/data=!4m7!3m6!1s0x80dc0192b605ccc1:0xc9e6290ff831bb08!8m2!3d32.7976494!4d-117.2544017!16s%2Fg%2F11c550qy_w!19sChIJwcwFtpIB3IARCLsx-A8p5sk?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:26.209480",
+    "name": "Patriot Air- Air Conditioning & Heating",
+    "address": "\n859 Felspar St, San Diego, CA 92109, United States",
+    "phone": "\n+1 858-888-0483",
+    "website": "http://patriotairsd.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Gladstone+Heating+%26+Air+Conditioning/data=!4m7!3m6!1s0x80dbe2e6f3d9e1f1:0x61eaed0f376b81f5!8m2!3d32.8304505!4d-117.114543!16s%2Fg%2F1v5fs5w7!19sChIJ8eHZ8-bi24AR9YFrNw_t6mE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:29.120708",
+    "name": "Gladstone Heating & Air Conditioning",
+    "phone": "\n+1 619-438-1832",
+    "website": "http://www.gladstonehvac.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/CrackerJack+Air+Pros/data=!4m7!3m6!1s0x80dc73a4a182a5cd:0xe5a959d22b4257cb!8m2!3d33.124573!4d-117.2764042!16s%2Fg%2F11h55t3j9b!19sChIJzaWCoaRz3IARy1dCK9JZqeU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:32.569854",
+    "name": "CrackerJack Air Pros",
+    "address": "\n2100 Palomar Airport Rd STE 214, Carlsbad, CA 92011, United States",
+    "phone": "\n+1 501-351-3462",
+    "website": "https://www.crackerjackairpros.com/",
+    "rating": 4.6
+  },
+  {
+    "url": "https://www.google.com/maps/place/Honest+Tech+Hvac/data=!4m7!3m6!1s0x80d959bca67e9ebb:0x8bbd54d1b581bba1!8m2!3d32.7959471!4d-116.9619871!16s%2Fg%2F1tglhlzb!19sChIJu55-prxZ2YARobuBtdFUvYs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:35.607516",
+    "name": "Honest Tech Hvac",
+    "address": "\n141 S Magnolia Ave, El Cajon, CA 92020, United States",
+    "rating": 4.6
+  },
+  {
+    "url": "https://www.google.com/maps/place/The+Repair+Tech+Inc/data=!4m7!3m6!1s0x2506b011db55498f:0x20d478393f4bae6e!8m2!3d33.1241124!4d-117.1104239!16s%2Fg%2F11p133br29!19sChIJj0lV2xGwBiURbq5LPzl41CA?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:38.753676",
+    "name": "The Repair Tech Inc",
+    "address": "\n641 Superior St, Escondido, CA 92029, United States",
+    "phone": "\n+1 858-863-7319",
+    "website": "https://therepairtech.net/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Peace+%26+Comfort+Heating+and+Air/data=!4m7!3m6!1s0x800e21bf7f703925:0xd5f1f79738d133a6!8m2!3d46.423669!4d-129.9427086!16s%2Fg%2F11qbjm9z8f!19sChIJJTlwf78hDoARpjPROJf38dU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:41.900156",
+    "name": "Peace & Comfort Heating and Air",
+    "phone": "\n+1 858-663-0213",
+    "website": "http://peaceandcomfortha.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/San+Diego+Air+Conditioning+%26+Heating+Repair/data=!4m7!3m6!1s0x80dc092a08ef8e01:0xbd5270356a2f600a!8m2!3d32.9611284!4d-117.1910069!16s%2Fg%2F11jzn_b476!19sChIJAY7vCCoJ3IARCmAvajVwUr0?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:44.761993",
+    "name": "San Diego Air Conditioning & Heating Repair",
+    "address": "\n13470 Highlands Pl, San Diego, CA 92130, United States",
+    "phone": "\n+1 858-282-0779",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/TRM+HVAC+Systems/data=!4m7!3m6!1s0x80d958ce8cb18f3b:0x1fa7cc296a916ced!8m2!3d32.8312351!4d-116.898502!16s%2Fg%2F11cn17x8ln!19sChIJO4-xjM5Y2YAR7WyRainMpx8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:47.658394",
+    "name": "TRM HVAC Systems",
+    "address": "\n13525 Los Coches Rd E, El Cajon, CA 92021, United States",
+    "phone": "\n+1 619-467-1610",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/McGee+Mechanical+Heating+%26+Air+Conditioning/data=!4m7!3m6!1s0x80d951065199818f:0x7502cb7b3ebace5f!8m2!3d32.768415!4d-117.039825!16s%2Fg%2F11rwqly58c!19sChIJj4GZUQZR2YARX866PnvLAnU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:50.696792",
+    "name": "McGee Mechanical Heating & Air Conditioning",
+    "address": "\n7317 El Cajon Blvd, La Mesa, CA 91942, United States",
+    "phone": "\n+1 858-808-2148",
+    "website": "http://mcgeeac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Airflow+Heating+Cooling+Solar/data=!4m7!3m6!1s0x80dbfdc8091c0bcb:0x21a17dbeececc265!8m2!3d32.8819464!4d-116.8951385!16s%2Fg%2F11h_4wph20!19sChIJywscCcj924ARZcLs7L59oSE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:54.070035",
+    "name": "Airflow Heating Cooling Solar",
+    "address": "\n9744 Ramo Rd, Santee, CA 92071, United States",
+    "phone": "\n+1 619-954-4114",
+    "website": "https://www.airflowsd.com/",
+    "rating": 4.1
+  },
+  {
+    "url": "https://www.google.com/maps/place/Romey+HVAC/data=!4m7!3m6!1s0x4b9754b4c48670d:0x3660cde347036aa7!8m2!3d32.9821964!4d-117.0302779!16s%2Fg%2F11y917lhpm!19sChIJDWdITEt1uQQRp2oDR-PNYDY?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:36:57.084324",
+    "name": "Romey HVAC",
+    "phone": "\n+1 760-884-7211",
+    "website": "https://www.romeyhvac.net/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Sam%27s+Heating+and+Air+Conditioning/data=!4m7!3m6!1s0x80d957c74bdb919f:0x693d4c015bd3f6cf!8m2!3d32.8436882!4d-116.8460104!16s%2Fg%2F1tdw_v6q!19sChIJn5HbS8dX2YARz_bTWwFMPWk?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:00.300307",
+    "name": "Sam's Heating and Air Conditioning",
+    "phone": "\n+1 619-701-0001",
+    "website": "http://www.heatingandairsandiego.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Commercial+Refrigeration+HVAC,+and+Appliance+Repair/data=!4m7!3m6!1s0x80db8b6786c3c87b:0xc38751af97736e7a!8m2!3d33.14365!4d-117.1961285!16s%2Fg%2F11vjtbqvn8!19sChIJe8jDhmeL24ARem5zl69Rh8M?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:03.296540",
+    "name": "Commercial Refrigeration HVAC, and Appliance Repair",
+    "phone": "\n+1 619-880-2499",
+    "website": "https://prothermal-ca.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/WeDo+HVAC/data=!4m7!3m6!1s0x80dc097a45c58247:0xaa438b6d779332fb!8m2!3d32.9656119!4d-117.1852612!16s%2Fg%2F11lh5km2bm!19sChIJR4LFRXoJ3IAR-zKTd22LQ6o?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:06.655985",
+    "name": "WeDo HVAC",
+    "address": "\n13543 Zinnia Hills Pl, San Diego, CA 92130, United States",
+    "phone": "\n+1 858-250-9778",
+    "website": "http://www.wedohvacus.com/",
+    "rating": 4.4
+  },
+  {
+    "url": "https://www.google.com/maps/place/Perfect+Heating+%26+Air/data=!4m7!3m6!1s0x80dbfa4e8cc9fbb5:0x20e9cbc13a5f46d4!8m2!3d33.0169285!4d-116.8460104!16s%2Fg%2F1tgp12p2!19sChIJtfvJjE7624AR1EZfOsHL6SA?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:09.591332",
+    "name": "Perfect Heating & Air",
+    "phone": "\n+1 858-883-2345",
+    "website": "http://www.perfectheatingandair.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Champion+Air+Conditioning+%26+Heating/data=!4m7!3m6!1s0x80db8a8fffffffff:0xb4a0daf269dad850!8m2!3d33.1485373!4d-117.1955599!16s%2Fg%2F12hljg3gs!19sChIJ_____4-K24ARUNjaafLaoLQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:12.674638",
+    "name": "Champion Air Conditioning & Heating",
+    "address": "\n120 N Pacific St STE A9, San Marcos, CA 92069, United States",
+    "phone": "\n+1 760-736-4100",
+    "website": "http://www.championairsd.com/",
+    "rating": 4.1
+  },
+  {
+    "url": "https://www.google.com/maps/place/JMS+West+HVAC/data=!4m7!3m6!1s0x80db8b1036def241:0xbad2bd94fe6df288!8m2!3d33.1619871!4d-117.1037552!16s%2Fg%2F11j33d8lvh!19sChIJQfLeNhCL24ARiPJt_pS90ro?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:15.791033",
+    "name": "JMS West HVAC",
+    "address": "\n2339 Amber Ln, Escondido, CA 92026, United States",
+    "phone": "\n+1 760-945-1155",
+    "website": "http://www.jmswesthvac.com/",
+    "rating": 4.3
+  },
+  {
+    "url": "https://www.google.com/maps/place/Big+City+HVAC+%26+Appliance+Repair/data=!4m7!3m6!1s0x80dbf93b690d1ecf:0x6412ae1a15941781!8m2!3d32.9661328!4d-117.1173392!16s%2Fg%2F11gwllqj1j!19sChIJzx4NaTv524ARgReUFRquEmQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:19.015056",
+    "name": "Big City HVAC & Appliance Repair",
+    "address": "\n13879 Via Lactea, San Diego, CA 92129, United States",
+    "phone": "\n+1 619-492-2926",
+    "website": "https://bigcityhomeservice.com/?utm_campaign=gmb",
+    "rating": 4.4
+  },
+  {
+    "url": "https://www.google.com/maps/place/Tytum+HVAC/data=!4m7!3m6!1s0x6b70e85c8fb31ff1:0x4e1dda759163142!8m2!3d33.0186248!4d-117.2026129!16s%2Fg%2F11t8bcqyd2!19sChIJ8R-zj1zocGsRQjEWWafd4QQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:22.037914",
+    "name": "Tytum HVAC",
+    "address": "\n16950 Via De Santa Fe, Rancho Santa Fe, CA 92091, United States",
+    "phone": "\n+1 619-240-8593",
+    "website": "https://tytum.com/",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Anderson+Plumbing,+Heating+%26+Air/data=!4m7!3m6!1s0x80d95825767feffd:0x9128f1cbf9c2d015!8m2!3d32.8363403!4d-117.1473157!16s%2Fg%2F1v2f0tcc!19sChIJ_e9_diVY2YARFdDC-cvxKJE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:25.301890",
+    "name": "Anderson Plumbing, Heating & Air",
+    "address": "\n5183 Mercury Point, San Diego, CA 92111, United States",
+    "phone": "\n+1 619-320-1884",
+    "website": "https://www.andersonplumbingheatingandair.com/?utm_source=google&utm_medium=organic&utm_campaign=San%20Diego%20Google%20My%20Business%20Page",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/United+HVAC+Repair+%26+Installation/data=!4m7!3m6!1s0x29be25a18bff3b69:0x39bbb9a8b091729e!8m2!3d33.0169285!4d-116.8460104!16s%2Fg%2F11w_tcqvx5!19sChIJaTv_i6ElvikRnnKRsKi5uzk?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:28.294282",
+    "name": "United HVAC Repair & Installation",
+    "phone": "\n+1 858-500-3616",
+    "website": "https://theunitedhvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Southern+California+Air+Conditioning+Supply+Co./data=!4m7!3m6!1s0x80d9583045bb8ad5:0xb3711615292ccc27!8m2!3d32.8092381!4d-116.9714806!16s%2Fg%2F1tj_5jj5!19sChIJ1Yq7RTBY2YARJ8wsKRUWcbM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:31.426114",
+    "name": "Southern California Air Conditioning Supply Co.",
+    "address": "\n1000 N Johnson Ave, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-440-4162",
+    "website": "http://www.socalac.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/The+Right+Choice+HVAC/data=!4m7!3m6!1s0x80d95823fefc9b4b:0xe588d1c66f6aa8d8!8m2!3d32.8155399!4d-116.9792068!16s%2Fg%2F11byysrr5j!19sChIJS5v8_iNY2YAR2Khqb8bRiOU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:34.439443",
+    "name": "The Right Choice HVAC",
+    "address": "\n1493 Cuyamaca St, El Cajon, CA 92020, United States",
+    "phone": "\n+1 855-597-2399",
+    "rating": 3.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Atlas+HVAC,+Inc/data=!4m7!3m6!1s0x80dbf4a6327688bb:0x41868938c6626047!8m2!3d34.7289605!4d-119.3557881!16s%2Fg%2F1pp2t_lv5!19sChIJu4h2Mqb024ARR2BixjiJhkE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:37.351032",
+    "name": "Atlas HVAC, Inc",
+    "phone": "\n+1 619-568-2842",
+    "website": "https://atlascoolingandheating.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Greater+San+Diego+Air+Conditioning+Inc/data=!4m7!3m6!1s0x80dbfe2eaf3aa3bf:0x53b24b3b23acbaf2!8m2!3d32.8137752!4d-117.1203771!16s%2Fg%2F1wn_6ddh!19sChIJv6M6ry7-24AR8rqsIztLslM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:40.296971",
+    "name": "Greater San Diego Air Conditioning Inc",
+    "address": "\n3883 Ruffin Rd, San Diego, CA 92123, United States",
+    "phone": "\n+1 619-469-7818",
+    "website": "https://www.gsdac.com/",
+    "rating": 3.7
+  },
+  {
+    "url": "https://www.google.com/maps/place/San+Diego+HVAC+%26+Airduct+Cleaning/data=!4m7!3m6!1s0x80dbfae2c26a5d77:0x2157de2c0305e2df!8m2!3d32.9374533!4d-117.0414496!16s%2Fg%2F1tz960xg!19sChIJd11qwuL624AR3-IFAyzeVyE?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:43.302807",
+    "name": "San Diego HVAC & Airduct Cleaning",
+    "address": "\n13350 Gregg St, Poway, CA 92064, United States",
+    "phone": "\n+1 858-222-0819",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/John+Air+Duct+Cleaning+%26+HVAC+Carlsbad/data=!4m7!3m6!1s0x80dc75f3f8397965:0xde945867b997c84d!8m2!3d33.1290482!4d-117.2513988!16s%2Fg%2F11v9zffzhc!19sChIJZXk5-PN13IARTciXuWdYlN4?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:46.299578",
+    "name": "John Air Duct Cleaning & HVAC Carlsbad",
+    "address": "\n2708 Gateway Rd, Carlsbad, CA 92009, United States",
+    "phone": "\n+1 760-249-7042",
+    "rating": 4.9
+  },
+  {
+    "url": "https://www.google.com/maps/place/Carlsbad+HVAC+Expert+Contractors/data=!4m7!3m6!1s0x80dc0b9d79ee39f5:0xe4fe73cfad026be3!8m2!3d33.0749803!4d-117.2386657!16s%2Fg%2F11n_xzdyrf!19sChIJ9TnueZ0L3IAR42sCrc9z_uQ?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:49.251297",
+    "name": "Carlsbad HVAC Expert Contractors",
+    "address": "\n3243 Camino De Los Coches, Carlsbad, CA 92009, United States",
+    "phone": "\n+1 760-260-8899",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/That+HVAC+Guy/data=!4m7!3m6!1s0x80dbe9d55b63a8d5:0x2dbae1689c30baf!8m2!3d33.0413604!4d-116.8792553!16s%2Fg%2F11x5hzms96!19sChIJ1ahjW9Xp24ARrwvDiRau2wI?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:52.302921",
+    "name": "That HVAC Guy",
+    "address": "\n1236 E Main suite A 101, Ramona, CA 92065, United States",
+    "phone": "\n+1 619-523-1120",
+    "website": "https://thathvacguys.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/W+HVAC+Escondido/data=!4m7!3m6!1s0x80dbf5ef18bbc181:0x6ff51591c286c44e!8m2!3d33.1249944!4d-117.1140318!16s%2Fg%2F11jcswwwft!19sChIJgcG7GO_124ARTsSGwpEV9W8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:55.358041",
+    "name": "W HVAC Escondido",
+    "address": "\n631 Enterprise St Suite A2, Escondido, CA 92029, United States",
+    "phone": "\n+1 760-239-5598",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/ProThermal+Refrigeration+%26+HVAC/data=!4m7!3m6!1s0x602ffa147fcc48db:0xaf8507740de3353!8m2!3d33.081003!4d-117.1693646!16s%2Fg%2F11vpz354fy!19sChIJ20jMfxT6L2ARUzPeQHdQ-Ao?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:37:58.443538",
+    "name": "ProThermal Refrigeration & HVAC",
+    "phone": "\n+1 619-880-2499",
+    "website": "https://prothermal-ca.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Performance+Refrigeration+%26+HVAC/data=!4m7!3m6!1s0x80dc73f6be487897:0x6af97e0c97f8b6ec!8m2!3d33.0649936!4d-117.1143729!16s%2Fg%2F11g03y_gvs!19sChIJl3hIvvZz3IAR7Lb4lwx--Wo?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:01.714631",
+    "name": "Performance Refrigeration & HVAC",
+    "phone": "\n+1 619-240-2594",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Star+HVAC+%26+Airduct+Cleaning+San+Diego/data=!4m7!3m6!1s0x80dbffeadf2699ef:0xaf4415124731e86b!8m2!3d32.8193592!4d-117.1528888!16s%2Fg%2F1tj853_q!19sChIJ75km3-r_24ARa-gxRxIVRK8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:04.800104",
+    "name": "Star HVAC & Airduct Cleaning San Diego",
+    "address": "\n7911 Armour St, San Diego, CA 92111, United States",
+    "phone": "\n+1 805-372-2940",
+    "website": "https://hvachelp.info/california/sandiego",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Unity+HVAC+%26+Airduct+Cleaning/data=!4m7!3m6!1s0x80dc0ba8c9cb97cf:0xb345f0ecc24edc4b!8m2!3d33.0714823!4d-117.2664175!16s%2Fg%2F11fk3_fmn8!19sChIJz5fLyagL3IARS9xOwuzwRbM?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:07.853733",
+    "name": "Unity HVAC & Airduct Cleaning",
+    "address": "\n1911 Calle Barcelona, Carlsbad, CA 92009, United States",
+    "phone": "\n+1 805-521-3713",
+    "website": "https://hvachelp.info/california/carlsbad",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Seka+Hvac+%26+Appliance+Repair,+INC/data=!4m7!3m6!1s0x80d9551c2625c06d:0xdb33bd98745f1e1d!8m2!3d32.7901336!4d-117.1707496!16s%2Fg%2F11y2b3d2wy!19sChIJbcAlJhxV2YARHR5fdJi9M9s?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:11.298469",
+    "name": "Seka Hvac & Appliance Repair, INC",
+    "address": "\n6960 Fulton St, San Diego, CA 92111, United States",
+    "phone": "\n+1 619-408-0539",
+    "website": "https://sekahvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Wilson+Heating+%26+Air/data=!4m7!3m6!1s0x80dc730cbe11f735:0x401f840b3bfd88cd!8m2!3d33.3241649!4d-117.1394384!16s%2Fg%2F11ghp03lvz!19sChIJNfcRvgxz3IARzYj9OwuEH0A?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:14.057214",
+    "name": "Wilson Heating & Air",
+    "phone": "\n+1 760-415-4380",
+    "website": "http://www.kwilsonhvac.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Blues+HVAC+%26+Airduct+cleaning+Alpine/data=!4m7!3m6!1s0x80d9608513df5233:0x275028a1b1ebb55e!8m2!3d32.834508!4d-116.786738!16s%2Fg%2F11c58nhs2k!19sChIJM1LfE4Vg2YARXrXrsaEoUCc?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:17.003278",
+    "name": "Blues HVAC & Airduct cleaning Alpine",
+    "address": "\n1389 Nancy Lee Ln, Alpine, CA 91901, United States",
+    "website": "https://hvachelp.info/california/alpine",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/GVK+Heating+%26+Air/data=!4m7!3m6!1s0x80d954191f4559e5:0xcced31e80b346324!8m2!3d32.9830786!4d-117.0223694!16s%2Fg%2F11g_644mv!19sChIJ5VlFHxlU2YARJGM0C-gx7cw?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:20.233544",
+    "name": "GVK Heating & Air",
+    "address": "\n13459 Olive Tree Ln, Poway, CA 92064, United States",
+    "phone": "\n+1 619-277-6279",
+    "website": "http://www.gvkhvac.com/",
+    "rating": 4.8
+  },
+  {
+    "url": "https://www.google.com/maps/place/Glaser+Air+HVAC+-+%231+AC+Contractor/data=!4m7!3m6!1s0x80dc73ac3bfbcbff:0x3bb63bb97cbf418a!8m2!3d33.1526971!4d-117.3075869!16s%2Fg%2F11j9cp6pzw!19sChIJ_8v7O6xz3IARikG_fLk7tjs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:23.330072",
+    "name": "Glaser Air HVAC - #1 AC Contractor",
+    "address": "\n4822 La Paz Ct, Carlsbad, CA 92010, United States",
+    "phone": "\n+1 760-670-9447",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Russell+Sigler+Inc./data=!4m7!3m6!1s0x80db8acc15c23c4f:0x69e25576ff44a7e6!8m2!3d33.1404457!4d-117.1427231!16s%2Fg%2F11bx9q4fdc!19sChIJTzzCFcyK24AR5qdE_3ZV4mk?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:26.488458",
+    "name": "Russell Sigler Inc.",
+    "address": "\n804 Rancheros Dr, San Marcos, CA 92069, United States",
+    "phone": "\n+1 760-975-0290",
+    "rating": 4.6
+  },
+  {
+    "url": "https://www.google.com/maps/place/Flex+HVAC+%26+Airduct+Cleaning+San+Diego/data=!4m7!3m6!1s0x80dc078ececc2859:0x9b21a2a7feb48eb9!8m2!3d32.9445303!4d-117.2310984!16s%2Fg%2F11h15_v8b4!19sChIJWSjMzo4H3IARuY60_qeiIZs?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:29.521661",
+    "name": "Flex HVAC & Airduct Cleaning San Diego",
+    "address": "\n12554 Carmel Creek Rd Ste 96, San Diego, CA 92130, United States",
+    "phone": "\n+1 805-521-3713",
+    "website": "https://hvachelp.info/california/sandiego",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/JOHN+AIR+DUCT+CLEANING+%26+HVAC+SAN+DIEGO/data=!4m7!3m6!1s0x80dc017f9425059f:0xb97ff8c023577058!8m2!3d32.8265275!4d-117.2297393!16s%2Fg%2F11twv6pfyc!19sChIJnwUllH8B3IARWHBXI8D4f7k?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:32.581049",
+    "name": "JOHN AIR DUCT CLEANING & HVAC SAN DIEGO",
+    "address": "\n2631 Ariane Dr, San Diego, CA 92117, United States",
+    "phone": "\n+1 619-837-2612",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Air+Flex+-+HVAC+%26+Solar/data=!4m7!3m6!1s0x80dbe29c97e57695:0x7667dfbef8d49549!8m2!3d32.8164296!4d-116.9782961!16s%2Fg%2F1tdg_l8b!19sChIJlXbll5zi24ARSZXU-L7fZ3Y?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:35.884941",
+    "name": "Air Flex - HVAC & Solar",
+    "address": "\n1586 Fayette St, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-663-2207",
+    "website": "https://airflexpro.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Mechanical+System+Contractors+-+MSC+HVAC/data=!4m7!3m6!1s0x80dbfe4d11f0b3f5:0x1ec3da8e8b9d5542!8m2!3d32.8219972!4d-117.1254623!16s%2Fg%2F1td9qtqd!19sChIJ9bPwEU3-24ARQlWdi47awx4?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:38.983225",
+    "name": "Mechanical System Contractors - MSC HVAC",
+    "address": "\n4444 Viewridge Ave, San Diego, CA 92123, United States",
+    "phone": "\n+1 858-279-4700",
+    "website": "https://mschvac.com/",
+    "rating": 4.5
+  },
+  {
+    "url": "https://www.google.com/maps/place/Carter+Heat+%26+Air/data=!4m7!3m6!1s0x80dbe29fc10ebf13:0x1a2d429cfce786d3!8m2!3d32.8462488!4d-116.9599057!16s%2Fg%2F11s65_xrs5!19sChIJE78OwZ_i24AR04bn_JxCLRo?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:41.821846",
+    "name": "Carter Heat & Air",
+    "address": "\n10925 Wheatlands Ave, Santee, CA 92071, United States",
+    "phone": "\n+1 619-695-3888",
+    "website": "http://carterheatair.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Lake+HVAC/data=!4m7!3m6!1s0x8b0592b78278eb09:0xe0a661bf499511b9!8m2!3d32.8244879!4d-117.10776!16s%2Fg%2F11rhw09jw9!19sChIJCet4greSBYsRuRGVSb9hpuA?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:44.775080",
+    "name": "Lake HVAC",
+    "phone": "\n+1 619-449-1000",
+    "website": "http://hptlakeinc.com/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/AC+Pro/data=!4m7!3m6!1s0x80d958388b8ea895:0xff5987b2cc43d24d!8m2!3d32.8160087!4d-116.9629362!16s%2Fg%2F11b8c25tw1!19sChIJlaiOizhY2YARTdJDzLKHWf8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:47.856136",
+    "name": "AC Pro",
+    "address": "\n1402 Magnolia Ave, El Cajon, CA 92020, United States",
+    "phone": "\n+1 619-566-8130",
+    "website": "https://store.acpro.com/location_details/El%20Cajon",
+    "rating": 4.7
+  },
+  {
+    "url": "https://www.google.com/maps/place/KOL+HVAC+Repair/data=!4m7!3m6!1s0x80d957c36960a521:0x457da4d372e3145a!8m2!3d32.8028775!4d-117.0128103!16s%2Fg%2F11jddjy1w7!19sChIJIaVgacNX2YARWhTjctOkfUU?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:50.965701",
+    "name": "KOL HVAC Repair",
+    "address": "\nLake Murray Blvd, San Diego, CA 92119, United States",
+    "phone": "\n+1 619-277-7461",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Flynn+Commercial+HVAC+Escondido/data=!4m7!3m6!1s0x80dbf5997d2dde6b:0x9d04fd2bb2f24949!8m2!3d33.146429!4d-117.06782!16s%2Fg%2F11fkst3hkw!19sChIJa94tfZn124ARSUnysiv9BJ0?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:53.699733",
+    "name": "Flynn Commercial HVAC Escondido",
+    "phone": "\n+1 760-547-7077",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/CoolHaven+HVAC+Solution/data=!4m7!3m6!1s0x80dc75a5c8d72711:0xd597c096628bef33!8m2!3d33.0410512!4d-117.2935586!16s%2Fg%2F1tf9t3kp!19sChIJESfXyKV13IARM--LYpbAl9U?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:56.725877",
+    "name": "CoolHaven HVAC Solution",
+    "address": "\n850 S Coast Hwy 101, Encinitas, CA 92024, United States",
+    "phone": "\n+1 760-538-4722",
+    "rating": 4.2
+  },
+  {
+    "url": "https://www.google.com/maps/place/ED+Jones+HVAC+Heating+%26+Air+Conditioning+Inc./data=!4m7!3m6!1s0x80d9579a4c9e1441:0xbe86b00c2438aca1!8m2!3d32.7647673!4d-117.023993!16s%2Fg%2F11kh9n2mt2!19sChIJQRSeTJpX2YARoaw4JAywhr4?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:38:59.714033",
+    "name": "ED Jones HVAC Heating & Air Conditioning Inc.",
+    "address": "\n8030 La Mesa Blvd #202, La Mesa, CA 91942, United States",
+    "phone": "\n+1 619-454-9066",
+    "website": "https://pmcindustriesinc.wixsite.com/edjoneshvac",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Vista+Comfort+Air+Zone+HVAC+Installation+Company/data=!4m7!3m6!1s0x80dc75401e61c787:0xf9e3b5d248662bc1!8m2!3d33.184844!4d-117.2402534!16s%2Fg%2F11g0gnybs1!19sChIJh8dhHkB13IARwStmSNK14_k?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:39:02.684473",
+    "name": "Vista Comfort Air Zone HVAC Installation Company",
+    "phone": "\n+1 760-206-3329",
+    "website": "https://comfortairzone.com/special/",
+    "rating": 5.0
+  },
+  {
+    "url": "https://www.google.com/maps/place/Doctor+Home+Services+-+HVAC,+Plumbing+%26+Electrical/data=!4m7!3m6!1s0x80dc7530bb88bf67:0x2fdd216bac3c0b64!8m2!3d33.178824!4d-117.1961285!16s%2Fg%2F11q2bg42s6!19sChIJZ7-IuzB13IARZAs8rGsh3S8?authuser=0&hl=en&rclk=1",
+    "scraped_at": "2025-04-03T18:39:05.648869",
+    "name": "Doctor Home Services - HVAC, Plumbing & Electrical",
+    "phone": "\n+1 760-304-1736",
+    "website": "https://www.doctorhomeservices.com/?utm_campaign=gmb",
+    "rating": 5.0
+  }
+]

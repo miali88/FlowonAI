@@ -5,13 +5,10 @@ import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
-  CreditCard,
-  PhoneForwarded,
   CheckCircle2,
   Loader2,
   Phone,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -253,7 +250,7 @@ export default function Launch({ onNext }: LaunchProps) {
               className="bg-blue-500 hover:bg-blue-600 text-white"
               onClick={() =>
                 window.open(
-                  "http://localhost:3000/guide/call_forwarding",
+                  "/guide/call_forwarding",
                   "_blank"
                 )
               }

@@ -9,11 +9,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Mic,
   BookOpen,
   MessageSquare,
-  Plug,
-  BarChart3,
   Calendar,
   Menu,
   X,

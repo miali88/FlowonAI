@@ -9,45 +9,81 @@ It uses Playwright for browser automation and BeautifulSoup for HTML parsing.
 import os
 import json
 import time
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python path so we can import the logging setup
+sys.path.append(str(Path(__file__).parent.parent))
 from app.core.logging_setup import logger
+
 import asyncio
 import csv
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
-from pathlib import Path
 
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page
 
 # Constants
-GOOGLE_MAPS_URL = "https://www.google.com/maps/place/American+Precision+Routing/@32.8175431,-96.896077,11z/data=!4m10!1m2!2m1!1scarpenter!3m6!1s0x864e958aef79f383:0x3ebe6944c79e053f!8m2!3d32.6030431!4d-96.7513228!15sCgljYXJwZW50ZXJaCyIJY2FycGVudGVykgENY2FiaW5ldF9tYWtlcpoBJENoZERTVWhOTUc5blMwVkpRMEZuU1VNMU5uSlBZMmRSUlJBQuABAPoBBAgAEB4!16s%2Fg%2F1tgtfxkb?entry=ttu&g_ep=EgoyMDI1MDIyNi4xIKXMDSoASAFQAw%3D%3D"
+GOOGLE_MAPS_URL = "https://www.google.com/maps/search/hvac/@32.971775,-117.1325458,11z?entry=ttu&g_ep=EgoyMDI1MDMzMS4wIKXMDSoJLDEwMjExNDU1SAFQAw%3D%3D"
 OUTPUT_DIR = Path("../data/roofers")
 OUTPUT_FILE = OUTPUT_DIR / f"roofers_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 OUTPUT_CSV_FILE = OUTPUT_DIR / f"roofers_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 WAIT_BETWEEN_ACTIONS = 1  # seconds
-MAX_BUSINESSES = 100  # maximum number of businesses to scrape
+MAX_BUSINESSES = 200  # maximum number of businesses to scrape
 
 
 async def setup_browser():
     """Initialize and return a playwright browser instance."""
     logger.info("Setting up browser...")
     playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(headless=False)  # Set to False for debugging
+    browser = await playwright.chromium.launch(
+        headless=False,  # Set to False for debugging
+        args=['--disable-blink-features=AutomationControlled']  # Hide automation
+    )
     context = await browser.new_context(
         viewport={"width": 1280, "height": 800},
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36"
+        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        permissions=['geolocation'],
+        geolocation={'latitude': 32.9652723, 'longitude': -117.1325451},
     )
+    
+    # Add stealth scripts
+    await context.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+        });
+    """)
+    
     page = await context.new_page()
+    logger.info("Browser setup complete")
     return playwright, browser, context, page
 
 
 async def navigate_to_maps(page: Page) -> None:
     """Navigate to Google Maps and wait for the results to load."""
-    logger.info(f"Navigating to Google Maps: {GOOGLE_MAPS_URL}")
-    await page.goto(GOOGLE_MAPS_URL)
-    logger.info("Waiting for search results to load...")
-    await page.wait_for_selector('div[role="feed"]', timeout=30000)
-    await asyncio.sleep(WAIT_BETWEEN_ACTIONS)
+    try:
+        logger.info(f"Navigating to Google Maps: {GOOGLE_MAPS_URL}")
+        await page.goto(GOOGLE_MAPS_URL, wait_until='networkidle')
+        logger.info("Page loaded, waiting for search results...")
+        
+        # Wait for either the feed or the consent dialog
+        result = await page.wait_for_selector('div[role="feed"], button[aria-label*="Accept"]', timeout=30000)
+        
+        # Check if we need to handle consent
+        if result and 'Accept' in (await result.get_attribute('aria-label') or ''):
+            logger.info("Detected consent dialog, accepting...")
+            await result.click()
+            await page.wait_for_selector('div[role="feed"]', timeout=30000)
+        
+        logger.info("Search results loaded successfully")
+        await asyncio.sleep(WAIT_BETWEEN_ACTIONS * 2)  # Give extra time for dynamic content
+        
+    except Exception as e:
+        logger.error(f"Error during navigation: {str(e)}")
+        # Save screenshot for debugging
+        await page.screenshot(path='error_screenshot.png')
+        raise
 
 
 async def scroll_results(page: Page, max_scrolls: int = 60) -> None:
