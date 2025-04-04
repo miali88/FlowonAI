@@ -45,6 +45,7 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
   const [showPurchaseUI, setShowPurchaseUI] = useState<boolean>(false);
   const [isPhonePurchaseLoading, setIsPhonePurchaseLoading] = useState(false);
   const [countryCode, setCountryCode] = useState<string>('US');
+  const [businessName, setBusinessName] = useState<string>("");
 
   // Function to determine country code from address
   const getCountryCodeFromAddress = (address: string): string => {
@@ -99,10 +100,17 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           const setupData = await setupResponse.json();
           console.log("Loaded setup data:", setupData);
 
-          if (setupData.success && setupData.setupData?.businessInformation?.primaryBusinessAddress) {
-            const detectedCountryCode = getCountryCodeFromAddress(setupData.setupData.businessInformation.primaryBusinessAddress);
-            console.log("Detected country code from address:", detectedCountryCode);
-            setCountryCode(detectedCountryCode);
+          if (setupData.success && setupData.setupData) {
+            // Set business name
+            if (setupData.setupData.businessInformation?.businessName) {
+              setBusinessName(setupData.setupData.businessInformation.businessName);
+            }
+
+            if (setupData.setupData?.businessInformation?.primaryBusinessAddress) {
+              const detectedCountryCode = getCountryCodeFromAddress(setupData.setupData.businessInformation.primaryBusinessAddress);
+              console.log("Detected country code from address:", detectedCountryCode);
+              setCountryCode(detectedCountryCode);
+            }
           } else {
             // Fallback to localStorage
             const businessInfoString = localStorage.getItem('flowonAI_businessInfo');
@@ -112,6 +120,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
                 if (businessInfo.countryCode) {
                   console.log("Using country code from localStorage:", businessInfo.countryCode);
                   setCountryCode(businessInfo.countryCode);
+                }
+                if (businessInfo.businessName) {
+                  setBusinessName(businessInfo.businessName);
                 }
               } catch (err) {
                 console.error('Error parsing business info from localStorage:', err);
@@ -228,7 +239,9 @@ export default function TalkToFlowon({ onNext }: TalkToFlowonProps) {
           <PhoneCall className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-xl font-semibold">
-          {hasPhoneNumber ? "Your Flowon Agent Phone Number" : "Assign a Phone Number to your Flowon Agent"}
+          {hasPhoneNumber 
+            ? `${businessName}'s Agent Phone Number` 
+            : `Assign a Phone Number to ${businessName}'s Agent`}
         </h2>
       </div>
 
