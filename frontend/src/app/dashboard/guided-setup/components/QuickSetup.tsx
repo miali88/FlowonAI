@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -46,52 +46,57 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const [newQuestion, setNewQuestion] = useState("");
   
   const { getToken, userId } = useAuth();
+  const { user } = useUser();
 
   // Initialize form with React Hook Form and Zod resolver
   const form = useForm<FormValues>({
     resolver: zodResolver(quickSetupSchema),
-    defaultValues: {
-      trainingSources: {
-        googleBusinessProfile: "",
-        businessWebsite: "",
-      },
-      businessInformation: {
-        businessName: "",
-        businessOverview: "",
-        primaryBusinessAddress: "",
-        primaryBusinessPhone: "",
-        coreServices: [],
-        businessHours: {
-          Monday: { open: "", close: "" },
-          Tuesday: { open: "", close: "" },
-          Wednesday: { open: "", close: "" },
-          Thursday: { open: "", close: "" },
-          Friday: { open: "", close: "" },
-          Saturday: { open: "", close: "" },
-          Sunday: { open: "", close: "" },
+    defaultValues: async () => {
+      const userEmail = user?.primaryEmailAddress?.emailAddress || "";
+      
+      return {
+        trainingSources: {
+          googleBusinessProfile: "",
+          businessWebsite: "",
         },
-      },
-      messageTaking: {
-        callerName: {
-          required: true,
-          alwaysRequested: true,
+        businessInformation: {
+          businessName: "",
+          businessOverview: "",
+          primaryBusinessAddress: "",
+          primaryBusinessPhone: "",
+          coreServices: [],
+          businessHours: {
+            Monday: { open: "", close: "" },
+            Tuesday: { open: "", close: "" },
+            Wednesday: { open: "", close: "" },
+            Thursday: { open: "", close: "" },
+            Friday: { open: "", close: "" },
+            Saturday: { open: "", close: "" },
+            Sunday: { open: "", close: "" },
+          },
         },
-        callerPhoneNumber: {
-          required: true,
-          automaticallyCaptured: true,
+        messageTaking: {
+          callerName: {
+            required: true,
+            alwaysRequested: true,
+          },
+          callerPhoneNumber: {
+            required: true,
+            automaticallyCaptured: true,
+          },
+          specificQuestions: [],
         },
-        specificQuestions: [],
-      },
-      callNotifications: {
-        emailNotifications: {
-          enabled: false,
-          email: "",
+        callNotifications: {
+          emailNotifications: {
+            enabled: true,
+            email: userEmail,
+          },
+          smsNotifications: {
+            enabled: false,
+            phoneNumber: "",
+          },
         },
-        smsNotifications: {
-          enabled: false,
-          phoneNumber: "",
-        },
-      },
+      };
     },
     mode: "onBlur",
   });
@@ -148,8 +153,8 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 callNotifications: {
                   ...data.setupData.callNotifications,
                   emailNotifications: {
-                    ...data.setupData.callNotifications?.emailNotifications,
-                    email: data.setupData.userEmail || data.setupData.callNotifications?.emailNotifications?.email || ""
+                    enabled: true,
+                    email: data.setupData.userEmail || data.setupData.callNotifications?.emailNotifications?.email || user?.primaryEmailAddress?.emailAddress || ""
                   }
                 }
               };
@@ -183,7 +188,13 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 trainingSources: parsedSetupData.trainingSources,
                 businessInformation: parsedSetupData.businessInformation,
                 messageTaking: parsedSetupData.messageTaking,
-                callNotifications: parsedSetupData.callNotifications,
+                callNotifications: {
+                  ...parsedSetupData.callNotifications,
+                  emailNotifications: {
+                    enabled: true, // Always enable email notifications
+                    email: parsedSetupData.callNotifications?.emailNotifications?.email || user?.primaryEmailAddress?.emailAddress || ""
+                  }
+                },
               });
               
               setupDataFound = true;
@@ -204,7 +215,16 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
                 const convertedSetupData = convertOnboardingToSetupData(parsedBusinessInfo);
                 console.log("Converted to setup data:", convertedSetupData);
                 
-                reset(convertedSetupData);
+                reset({
+                  ...convertedSetupData,
+                  callNotifications: {
+                    ...convertedSetupData.callNotifications,
+                    emailNotifications: {
+                      enabled: true, // Always enable email notifications
+                      email: convertedSetupData.callNotifications?.emailNotifications?.email || user?.primaryEmailAddress?.emailAddress || ""
+                    }
+                  }
+                });
                 
                 setupDataFound = true;
               } catch (parseError) {
