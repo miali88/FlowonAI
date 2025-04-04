@@ -25,6 +25,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Sensitive Data
+data/roofers/
 
 # Logs
 logs
