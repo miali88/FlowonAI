@@ -36,17 +36,23 @@ export const viewport: Viewport = {
 // Script to prevent flash of unstyled content
 const preventFOUCScript = `
   (function() {
+    function setTheme(theme) {
+      document.documentElement.classList.remove('dark', 'white');
+      if (theme) {
+        document.documentElement.classList.add(theme);
+      }
+    }
+
     // Try to get saved theme
-    let savedTheme;
     try {
-      savedTheme = localStorage.getItem('flowon-theme-mode');
-    } catch (e) {}
-    
-    // Apply appropriate class
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (savedTheme === 'white') {
-      document.documentElement.classList.add('white');
+      const savedTheme = localStorage.getItem('flowon-theme-mode');
+      if (savedTheme) {
+        setTheme(savedTheme);
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+      }
+    } catch (e) {
+      console.error('Error setting theme:', e);
     }
   })();
 `;
@@ -101,6 +107,12 @@ export default async function RootLayout({
               s.async=1;
               d.getElementsByTagName("head")[0].appendChild(s);
             })();
+          `}
+        </Script>
+        <Script id="vector-script" strategy="afterInteractive">
+          {`
+            !function(e,r){try{if(e.vector)return void console.log("Vector snippet included more than once.");var t={};t.q=t.q||[];for(var o=["load","identify","on"],n=function(e){return function(){var r=Array.prototype.slice.call(arguments);t.q.push([e,r])}},c=0;c<o.length;c++){var a=o[c];t[a]=n(a)}if(e.vector=t,!t.loaded){var i=r.createElement("script");i.type="text/javascript",i.async=!0,i.src="https://cdn.vector.co/pixel.js";var l=r.getElementsByTagName("script")[0];l.parentNode.insertBefore(i,l),t.loaded=!0}}catch(e){console.error("Error loading Vector:",e)}}(window,document);
+            vector.load("26ab1365-f185-41e3-bb0a-b394fda5b685");
           `}
         </Script>
       </head>

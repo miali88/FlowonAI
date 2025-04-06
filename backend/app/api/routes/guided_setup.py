@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 import secrets
 from typing import Dict, Optional
 import time
-from app.core.logging_setup import logger
 
+from app.core.logging_setup import logger
 from app.core.auth import get_current_user
 from backend.app.models.guided_setup import QuickSetupData
 from app.api.schemas.guided_setup import (

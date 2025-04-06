@@ -13,8 +13,8 @@ const CallToActionButton = () => {
   const t = useTranslations('home');
   
   return (
-    <>
-      <div className="flex flex-col items-center relative z-20">
+    <div className="flex flex-col items-center relative z-20">
+      <div className="flex flex-col items-center">
         <Link 
           href="/onboarding" 
           className="inline-block opacity-0 animate-fade-in [--animation-delay:600ms]"
@@ -26,11 +26,11 @@ const CallToActionButton = () => {
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </Link>
+        <p className="text-sm text-gray-500 mt-2 text-center opacity-0 animate-fade-in [--animation-delay:800ms]">
+          {t('noCreditCard')}
+        </p>
       </div>
-      <div className="opacity-0 animate-fade-in [--animation-delay:800ms]">
-        <p className="text-sm text-gray-500 mt-2 text-center">{t('noCreditCard')}</p>
-      </div>
-    </>
+    </div>
   );
 };
 
@@ -39,7 +39,7 @@ const MobileHero = memo(() => {
   const t = useTranslations('home');
   
   return (
-    <div className="w-screen sm:hidden">
+    <section className="w-screen sm:hidden">
       <WavyBackground 
         containerClassName="min-h-[50dvh]"
         className="max-w-[90rem] mx-auto px-4"
@@ -65,7 +65,7 @@ const MobileHero = memo(() => {
         </div>
         <AppUILanding />
       </WavyBackground>
-    </div>
+    </section>
   );
 });
 MobileHero.displayName = 'MobileHero';
@@ -75,7 +75,7 @@ const DesktopHero = memo(() => {
   const t = useTranslations('home');
   
   return (
-    <div className="w-screen hidden sm:block">
+    <section className="w-screen hidden sm:block">
       <WavyBackground 
         containerClassName="min-h-[60dvh]"
         className="max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8"
@@ -101,16 +101,16 @@ const DesktopHero = memo(() => {
         </div>
         <AppUILanding />
       </WavyBackground>
-    </div>
+    </section>
   );
 });
 DesktopHero.displayName = 'DesktopHero';
 
 export function VoiceHero() {
   return (
-    <section className="relative w-screen overflow-x-hidden">
+    <div className="relative w-screen overflow-x-hidden">
       <MobileHero />
       <DesktopHero />
-    </section>
+    </div>
   );
 } 
