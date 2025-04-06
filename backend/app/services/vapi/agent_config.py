@@ -170,6 +170,7 @@ def build_update_payload(
     logger.debug("[CONFIG] build_update_payload: Building update payload")
     
     payload = {}
+    agent_name = get_agent_name_for_voice(voice_id)
     
     if business_name:
         # Calculate max length for business name to ensure total name is under 40 chars
@@ -193,7 +194,7 @@ def build_update_payload(
     if first_message:
         payload["firstMessage"] = first_message
     elif business_name:
-        payload["firstMessage"] = f"Hello, thank you for calling {business_name}, this is {assistant_name}, calls may be recorded for quality purposes, how can I help you today?"
+        payload["firstMessage"] = f"Hello, thank you for calling {business_name}, this is {agent_name}, calls may be recorded for quality purposes, how can I help you today?"
     
     # Update with any additional fields
     payload.update(kwargs)

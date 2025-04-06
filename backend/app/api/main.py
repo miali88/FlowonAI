@@ -6,12 +6,12 @@ from fastapi import APIRouter
 #                             composio, feedback, stripe, onboarding,
 #                             guided_setup, outbound)
 
-from app.api.routes import (guided_setup, clerk, twilio, stripe, vapi, knowledge_base, conversation, user)
+from app.api.routes import (guided_setup, clerk, twilio, stripe, vapi, knowledge_base, conversation, user, hubspot, campaigns)
 
 api_router = APIRouter()
 
 api_router.include_router(guided_setup.router, prefix="/guided_setup", tags=["guided_setup"])
-
+api_router.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])
 api_router.include_router(clerk.router, prefix="/clerk", tags=["clerk"])
 api_router.include_router(twilio.router, prefix="/twilio", tags=["twilio"])
 api_router.include_router(knowledge_base.router, prefix="/knowledge_base", tags=["knowledge_base"])
@@ -19,6 +19,8 @@ api_router.include_router(stripe.router, prefix="/stripe", tags=["stripe"])
 api_router.include_router(vapi.router, prefix="/vapi", tags=["vapi"])
 api_router.include_router(conversation.router, prefix="/conversation", tags=["conversation"])
 api_router.include_router(user.router, prefix="/user", tags=["user"])
+api_router.include_router(hubspot.router, prefix="/hubspot", tags=["hubspot"])
+
 
 # api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 # api_router.include_router(voice.router, prefix="/voice", tags=["voice"])

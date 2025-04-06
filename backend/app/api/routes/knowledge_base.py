@@ -1,20 +1,15 @@
-from typing import Optional, List, Dict, Any, Union, Tuple
-from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any, Union
+from pydantic import BaseModel
 import json
 from app.core.logging_setup import logger
 import tiktoken
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import Request, HTTPException, Depends, Header, APIRouter, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi import Request, HTTPException, Depends, APIRouter, BackgroundTasks
 from fastapi import File, UploadFile
 
-from app.clients.supabase_client import get_supabase
-from app.services.knowledge_base import file_processing
-from app.services.knowledge_base.vectorise_data import kb_item_to_chunks
-from app.services.knowledge_base.kb import get_kb_items, get_kb_headers
-from app.services.knowledge_base.web_scrape import map_url, scrape_url
+from app.services.knowledge_base import knowledge_base
 from app.core.auth import get_current_user
 
 router = APIRouter()
@@ -128,8 +123,7 @@ async def upload_file_handler(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        # Process, store and schedule chunking
-        new_item = await file_processing.process_and_store_file(
+        new_item = await knowledge_base.process_and_store_file(
             file=file,
             user_id=current_user,
             background_tasks=background_tasks
@@ -139,6 +133,9 @@ async def upload_file_handler(
             message="File processed and added to knowledge base successfully",
             data=new_item
         )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
@@ -146,27 +143,25 @@ async def upload_file_handler(
 @router.get("/", response_model=KnowledgeBaseItemsResponse)
 async def get_items_handler(current_user: str = Depends(get_current_user)):
     try:
-        items, total_tokens = await get_kb_items(current_user)
-        
-        # Ensure total_tokens is an integer, default to 0 if None
-        total_tokens = total_tokens or 0
-        
-        # Validate each item (remove this in production)
-        for i, item in enumerate(items):
-            logger.debug(f"Item {i} structure: {json.dumps(item, default=str)}")
+        items, total_tokens = await knowledge_base.get_knowledge_base_items(current_user)
         
         return KnowledgeBaseItemsResponse(
             items=items,
             total_tokens=total_tokens
         )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/", response_model=MessageResponse)
-async def create_item_handler(request: Request, 
-                            background_tasks: BackgroundTasks,
-                            ):
+async def create_item_handler(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    current_user: str = Depends(get_current_user)
+):
     logger.debug("Received POST request to /knowledge_base")
     raw_body = await request.body()
     logger.debug(f"Raw request body: {raw_body.decode()}")
@@ -174,34 +169,25 @@ async def create_item_handler(request: Request,
     logger.debug(f"Request headers: {json.dumps(headers, indent=2)}")
 
     try:
-        supabase = await get_supabase()
-
         data = await request.json()
         logger.debug(f"Parsed request data: {json.dumps(data, indent=2)}")
-
-        # Determine which table to use based on data type
-        data_type = data.get('data_type', 'text')  # Default to 'text' if not specified
-        print("\n\n\n data_type:", data_type)
-        table_name = 'user_web_data' if data_type == 'web' else 'user_text_files'
         
-        # Insert the data into the appropriate Supabase table
-        new_item = await supabase.table(table_name).insert(data).execute()
-        logger.info(f"New item created in {table_name}: {json.dumps(new_item.data[0], indent=2)}")
-
-        # Schedule the kb_item_to_chunks function to run in the background
-        background_tasks.add_task(kb_item_to_chunks, 
-            new_item.data[0]['id'], 
-            new_item.data[0]['content'],
-            new_item.data[0]['user_id'],
-        )
+        # Add user_id to data if not present
+        if 'user_id' not in data:
+            data['user_id'] = current_user
+            
+        new_item = await knowledge_base.create_knowledge_base_item(data, background_tasks)
 
         return MessageResponse(
             message="Item created successfully", 
-            data=new_item.data[0]
+            data=new_item
         )
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON: {str(e)}")
         raise HTTPException(status_code=400, detail="Invalid JSON data")
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"Error creating item: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -213,37 +199,18 @@ async def delete_item_handler(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        supabase = await get_supabase()
-
         # Get the request body
         body = await request.json()
         data_type = body.get('data_type')
         logger.info(f"Deleting item {item_id} with data_type: {data_type}")
 
-        try:
-            if data_type == 'web':
-                # Delete from user_web_data if data_type is web
-                result = await supabase.table('user_web_data').delete().eq('id', item_id).eq('user_id', current_user).execute()
-            else:
-                # Delete from user_text_files for all other data types
-                result = await supabase.table('user_text_files').delete().eq('id', item_id).eq('user_id', current_user).execute()
-            
-            if len(result.data) == 0:
-                raise HTTPException(status_code=404, detail="Item not found or not authorized to delete")
+        await knowledge_base.delete_knowledge_base_item(item_id, data_type, current_user)
                 
-            return MessageResponse(message="Item deleted successfully")
+        return MessageResponse(message="Item deleted successfully")
             
-        except HTTPException as he:
-            # Re-raise HTTP exceptions
-            raise he
-        except Exception as e:
-            # Log and raise database/other errors
-            logger.error(f"Database error while deleting item: {str(e)}")
-            raise HTTPException(status_code=500, detail="Database error while deleting item")
-            
-    except HTTPException as he:
+    except HTTPException as e:
         # Re-raise HTTP exceptions
-        raise he
+        raise e
     except Exception as e:
         # Log and raise request parsing errors
         logger.error(f"Error parsing delete request: {str(e)}")
@@ -252,14 +219,15 @@ async def delete_item_handler(
 @router.get("/headers", response_model=KnowledgeBaseHeadersResponse)
 async def get_items_headers_handler(current_user: str = Depends(get_current_user)):
     try:
-        items, total_tokens = await get_kb_headers(current_user)
-        # Ensure total_tokens is an integer, default to 0 if None
-        total_tokens = total_tokens or 0
+        items, total_tokens = await knowledge_base.get_knowledge_base_headers(current_user)
         
         return KnowledgeBaseHeadersResponse(
             items=items,
             total_tokens=total_tokens
         )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -275,28 +243,33 @@ async def scrape_url_handler(
         request_data: List[str] = request_data.get('urls')
         urls = request_data if isinstance(request_data, list) else [request_data]
         
-        # Schedule scraping to run in the background
-        background_tasks.add_task(scrape_url, urls, current_user)
+        result = await knowledge_base.start_web_scraping(urls, current_user)
         
         return MessageResponse(
-            message="Scraping started in background", 
-            data={"urls_count": len(urls)}
+            message=result["message"], 
+            data={"urls_count": result["urls_count"]}
         )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing URLs: {str(e)}")
 
 @router.post("/crawl_url", response_model=List[str])
 async def crawl_url_handler(request: ScrapeUrlRequest, current_user: str = Depends(get_current_user)):
     try:
-        map_result: List[str] = await map_url(request.url)
+        map_result: List[str] = await knowledge_base.crawl_website(request.url)
         return map_result
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error crawling URL: {str(e)}")
 
 @router.post("/calculate_tokens", response_model=TokenCountResponse)
 async def calculate_tokens_handler(request: TokenCalculationRequest, current_user: str = Depends(get_current_user)):
     try:
-        token_count = num_tokens_from_string(request.content, "cl100k_base")
+        token_count = knowledge_base.calculate_tokens(request.content)
         return TokenCountResponse(token_count=token_count)
     except Exception as e:
         logger.error(f"Error calculating tokens: {str(e)}")
@@ -305,15 +278,38 @@ async def calculate_tokens_handler(request: TokenCalculationRequest, current_use
 @router.get("/users", response_model=UserResponse)
 async def user_info(current_user: str = Depends(get_current_user)):
     try:
-        supabase = await get_supabase()
-
-        user_info = await supabase.table('users').select('*').eq('id', current_user).execute()
-        if not user_info.data:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user_info.data[0]
+        user_info = await knowledge_base.get_user_info(current_user)
+        return user_info
     except Exception as e:
         logger.error(f"Error fetching user info: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error fetching user info: {str(e)}")
+
+@router.post("/scrape_for_setup", response_model=MessageResponse)
+async def scrape_for_setup_handler(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Scrape a website for guided setup and agent training.
+    This endpoint is specifically designed for the guided setup flow.
+    """
+    try:
+        request_data = await request.json()
+        website_url = request_data.get('website_url')
+        
+        result = await knowledge_base.scrape_for_setup(website_url, current_user, background_tasks)
+        
+        return MessageResponse(
+            message="Website scraping started in background", 
+            data=result
+        )
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
+    except Exception as e:
+        logger.error(f"Error in scrape_for_setup: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error scraping website: {str(e)}")
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     """Returns the number of tokens in a text string."""

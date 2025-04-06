@@ -55,3 +55,8 @@ class UpdateTrainingStatusRequest(BaseModel):
     """
     trained_on_website: bool = Field(..., description="Whether the agent has been trained on the website")
  
+class WebsiteScrapeRequest(BaseModel):
+    """
+    Request schema for website scraping during guided setup.
+    """
+    website_url: str
