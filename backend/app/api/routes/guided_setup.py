@@ -22,7 +22,6 @@ from app.services.guided_setup import (
     mark_setup_complete,
     get_formatted_setup_data,
     retrain_agent_service,
-    generate_onboarding_preview_service,
     set_trial_plan_service,
     update_training_status_service,
 )
@@ -238,7 +237,10 @@ async def generate_onboarding_preview(
         # Check rate limits and get session token
         new_session_token = check_rate_limit(req, session_token)
         
-        # Call the service function to generate the preview
+        # DUMMY RESPONSE - Service call commented out
+        logger.info("Returning dummy response for onboarding preview")
+        """
+        # Original service call commented out
         result = await generate_onboarding_preview_service(
             user_id=None,  # No user ID for unauthenticated requests
             business_name=request.businessName,
@@ -246,20 +248,21 @@ async def generate_onboarding_preview(
             business_website=request.businessWebsite,
             agent_language=request.agentLanguage
         )
+        """
         
-        if not result.get("success"):
-            return AudioPreviewResponse(
-                success=False,
-                error=result.get("error", "Failed to generate audio previews")
-            )
+        # Create dummy response
+        dummy_greeting = "Hello! Thank you for calling BUSINESS_NAME. How can I help you today?"
+        dummy_message = "I understand you'd like to leave a message. I'll make sure BUSINESS_NAME receives it right away."
         
-        # Create response with session token
+        # Using a dummy base64 string (this represents a very short audio clip)
+        dummy_audio = "UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
+        
         response_data = AudioPreviewResponse(
             success=True,
-            greeting_audio_data_base64=result.get("greeting_audio_data_base64"),
-            message_audio_data_base64=result.get("message_audio_data_base64"),
-            greeting_text=result.get("greeting_text"),
-            message_text=result.get("message_text")
+            greeting_audio_data_base64=dummy_audio,
+            message_audio_data_base64=dummy_audio,
+            greeting_text=dummy_greeting.replace("BUSINESS_NAME", request.businessName),
+            message_text=dummy_message.replace("BUSINESS_NAME", request.businessName)
         )
         
         # Return response with new session token in header

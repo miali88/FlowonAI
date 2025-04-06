@@ -21,7 +21,7 @@ http://127.0.0.1:4040/inspect/http
 try:
 
     """ static domain - Frontend (Vite)"""
-    port = 3000
+    port = 8000
     http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
     logging.info(f"Frontend (Vite) running on:\n"
                 f"  - Local: http://localhost:{port}\n"

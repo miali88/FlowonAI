@@ -7,7 +7,13 @@ export default function Page() {
         {/* <Image src="/assets/waves.webp" alt="Logo" width={100} height={100} /> */}
       </div>
       <div className="flex justify-center items-center min-h-screen">
-        <SignIn />
+        <SignIn
+          appearance={{
+            elements: {
+              footerAction: { display: "none" }, // Hides the "Don't have an account? Sign up" link
+            },
+          }}
+        />
       </div>
     </div>
   );
