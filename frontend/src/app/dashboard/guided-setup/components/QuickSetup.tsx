@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useForm } from "react-hook-form";
+import { useForm, Control, UseFormSetValue, UseFormGetValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
+import { MessageTaking, MessageTakingFormValues } from "@/components/ui/message-taking";
 
 // Import our updated utilities
 import { 
@@ -26,7 +27,6 @@ import { saveSetupDataToBackend } from "@/utils/setupDataUtils";
 import { quickSetupSchema, FormValues } from "./schema";
 import TrainingSources from "./form-sections/TrainingSources";
 import BusinessInformation from "./form-sections/BusinessInformation";
-import MessageTaking from "./form-sections/MessageTaking";
 import CallNotifications from "./form-sections/CallNotifications";
 import PlaceChangeDialog from "./form-sections/PlaceChangeDialog";
 
@@ -47,7 +47,7 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
   const { getToken, userId } = useAuth();
 
   // Initialize form with React Hook Form and Zod resolver
-  const form = useForm<FormValues>({
+  const form = useForm<FormValues & MessageTakingFormValues>({
     resolver: zodResolver(quickSetupSchema),
     defaultValues: {
       trainingSources: {
@@ -565,14 +565,14 @@ export default function QuickSetup({ onNext }: { onNext: () => void }) {
         </Card>
 
         {/* Message Taking Section */}
-        <MessageTaking 
-          control={control}
-          errors={errors}
+        <MessageTaking
+          control={form.control as unknown as Control<MessageTakingFormValues>}
+          errors={form.formState.errors}
           newQuestion={newQuestion}
           setNewQuestion={setNewQuestion}
           addQuestion={addQuestion}
-          getValues={getValues}
-          setValue={setValue}
+          getValues={form.getValues as unknown as UseFormGetValues<MessageTakingFormValues>}
+          setValue={form.setValue as unknown as UseFormSetValue<MessageTakingFormValues>}
         />
 
         {/* Call Notifications Section */}

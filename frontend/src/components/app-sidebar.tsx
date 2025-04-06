@@ -11,6 +11,7 @@ import {
   Compass,
   Clock,
   AlertCircle,
+  PhoneOutgoing,
 } from "lucide-react";
 import {
   Sidebar,
@@ -203,6 +204,11 @@ export function AppSidebar({
 
   const items = [
     { title: "Guided Setup", icon: Compass, href: "/dashboard/guided-setup" },
+    {
+      title: "Campaigns",
+      icon: PhoneOutgoing,
+      href: "/dashboard/campaigns",
+    },
     {
       title: "Call Logs",
       icon: MessageSquare,

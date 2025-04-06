@@ -21,6 +21,7 @@ const layoutStyles = {
 
 const ROUTE_TITLES = [
   { href: "/dashboard/guided-setup", title: "Guided Setup" },
+  { href: "/dashboard/campaigns", title: "Campaigns" },
   { href: "/dashboard/knowledgebase", title: "Knowledge Base" },
   { href: "/dashboard/conversationlogs", title: "Conversation Logs" },
   { href: "/dashboard/integrations", title: "Integrations" },
@@ -34,10 +35,13 @@ interface HeaderProps {
 }
 
 function Header({ isCollapsed, setIsCollapsed }: HeaderProps) {
-  const { user } = useUser();
   const pathname = usePathname();
 
   const renderTitle = () => {
+     // Check if we're in a campaign detail page
+     if (pathname?.startsWith("/dashboard/campaigns/")) {
+      return "Campaigns";
+    }
     const currentRoute = ROUTE_TITLES.find((route) => route.href === pathname);
     return currentRoute?.title || "Dashboard";
   };
