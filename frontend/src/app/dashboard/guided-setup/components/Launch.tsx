@@ -67,7 +67,7 @@ export default function Launch({ onNext }: LaunchProps) {
         console.error("Error fetching phone number:", err);
         setError("Could not load your Flowon phone number.");
         // Fallback to a constant
-        setPhoneNumber("(814) 261-0317");
+        setPhoneNumber("");
       } finally {
         setIsLoading(false);
       }

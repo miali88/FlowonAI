@@ -52,6 +52,48 @@ export default function PendingSetupHandler({ onSetupComplete }: PendingSetupHan
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const [isProcessingSetup, setIsProcessingSetup] = useState(false);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+
+  // Function to verify trial setup is complete by fetching trial status
+  const verifyTrialSetup = async (token: string, maxRetries = 5, delay = 2000): Promise<boolean> => {
+    try {
+      console.log("[SetupHandler] Verifying trial setup...");
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Get trial status from backend - use the correct user endpoint
+        const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/check_trial_status`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          console.log(`[SetupHandler] Trial status check (attempt ${attempt}):`, statusData);
+          
+          // Check if we have proper trial data (is_trial could be true/false but we need it to be returned)
+          if (statusData && 'is_trial' in statusData) {
+            console.log("[SetupHandler] Trial status verified successfully!");
+            return true;
+          }
+        }
+        
+        console.log(`[SetupHandler] Trial not ready yet (attempt ${attempt}/${maxRetries}), waiting ${delay}ms...`);
+        // Wait before trying again
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Increase delay for exponential backoff
+        delay = Math.min(delay * 1.5, 8000);
+      }
+      
+      console.warn("[SetupHandler] Could not verify trial setup after multiple attempts");
+      return false;
+    } catch (error) {
+      console.error("[SetupHandler] Error verifying trial setup:", error);
+      return false;
+    }
+  };
 
   // Process any pending setup data from signup
   useEffect(() => {
@@ -188,6 +230,8 @@ export default function PendingSetupHandler({ onSetupComplete }: PendingSetupHan
               body: JSON.stringify(trialRequest)
             });
             
+            let trialSetupSuccessful = false;
+            
             if (!trialResponse.ok) {
               const trialError = await trialResponse.json().catch(() => ({}));
               console.error('[SetupHandler] Failed to set trial plan:', trialError);
@@ -196,18 +240,38 @@ export default function PendingSetupHandler({ onSetupComplete }: PendingSetupHan
             } else {
               const trialData = await trialResponse.json();
               console.log("[SetupHandler] Trial plan set successfully:", trialData);
-              toast.success('Setup completed successfully with trial!');
+              trialSetupSuccessful = true;
             }
             
-            // Clear the setup data from localStorage regardless
+            // Clear the setup data from localStorage
             localStorage.removeItem('flowonAI_selectedPlan');
             localStorage.removeItem('flowonAI_billingInterval');
             localStorage.removeItem('flowonAI_pendingSetup');
             
-            // Small delay to ensure all database operations are complete
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Add a significant delay to ensure database operations complete
+            console.log("[SetupHandler] Waiting for backend processing...");
+            toast.info('Setting up your trial plan...', { duration: 3000 });
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
-            // Notify parent component that setup is complete
+            // If trial setup was successful, verify it's correctly set up
+            if (trialSetupSuccessful) {
+              console.log("[SetupHandler] Verifying trial data availability...");
+              // Verify that trial data is fully available before proceeding
+              const isVerified = await verifyTrialSetup(token);
+              
+              if (isVerified) {
+                console.log("[SetupHandler] Trial data verified and ready!");
+                toast.success('Setup completed successfully with trial!');
+              } else {
+                console.warn("[SetupHandler] Trial setup could not be verified");
+                toast.info('Account setup complete! Your trial will be activated shortly.', { duration: 5000 });
+                
+                // Even though verification failed, we'll set a flag in localStorage to try again later
+                localStorage.setItem('flowonAI_trialPendingVerification', 'true');
+              }
+            }
+            
+            // Notify parent component that setup is complete regardless of verification
             if (onSetupComplete) {
               console.log("[SetupHandler] Setup process complete, notifying parent");
               onSetupComplete();

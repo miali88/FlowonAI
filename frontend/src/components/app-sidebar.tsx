@@ -1,13 +1,9 @@
 "use client";
 import {
-  Mic,
   BookOpen,
   MessageSquare,
-  Plug,
-  BarChart3,
   Calendar,
   ChevronLeft,
-  Phone,
   Compass,
   Clock,
   AlertCircle,
