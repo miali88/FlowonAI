@@ -3,15 +3,19 @@
 import { Line, LineChart as RechartsLineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Phone, Users, CheckCircle2, RefreshCcw, Clock, TrendingUp, LucideIcon } from "lucide-react";
+import { CampaignResponse } from "@/types/campaigns";
+import { useMemo } from "react";
 
-// Sample data - replace with real data from your API
-const monthlyData = [
-  { month: 'Jan', calls: 120, answered: 80, retries: 2.5 },
-  { month: 'Feb', calls: 150, answered: 95, retries: 2.1 },
-  { month: 'Mar', calls: 180, answered: 120, retries: 1.8 },
-  { month: 'Apr', calls: 200, answered: 150, retries: 1.5 },
-  { month: 'May', calls: 220, answered: 180, retries: 1.2 },
-];
+interface CampaignMetricProps {
+  campaign: CampaignResponse;
+}
+
+interface MonthlyData {
+  month: string;
+  calls: number;
+  answered: number;
+  retries: number;
+}
 
 const MetricCard = ({ title, value, icon: Icon, description }: { 
   title: string; 
@@ -35,44 +39,68 @@ const MetricCard = ({ title, value, icon: Icon, description }: {
   </Card>
 );
 
-export function CampaignMetric() {
+export function CampaignMetric({ campaign }: CampaignMetricProps) {
+  const metrics = useMemo(() => {
+    const totalCalls = campaign.clients?.reduce((sum, client) => sum + client.status.number_of_calls, 0) || 0;
+    const answeredCalls = campaign.clients?.filter(client => client.status.status === "Completed").length || 0;
+    const remainingClients = campaign.clients?.filter(client => client.status.status === "Pending").length || 0;
+    const avgRetries = totalCalls / (campaign.clients?.length || 1);
+    const avgDuration = 0; // This will need to come from the backend
+    const successRate = (answeredCalls / (campaign.clients?.length || 1)) * 100;
+
+    return {
+      totalCalls,
+      answeredCalls,
+      remainingClients,
+      avgRetries,
+      avgDuration,
+      successRate,
+    };
+  }, [campaign]);
+
+  const monthlyData = useMemo(() => {
+    // This will need to come from the backend
+    const data: MonthlyData[] = [];
+    return data;
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Total Calls"
-          value="1,469"
+          value={metrics.totalCalls}
           icon={Phone}
           description="All attempted calls"
         />
         <MetricCard
           title="Remaining Clients"
-          value="237"
+          value={metrics.remainingClients}
           icon={Users}
           description="Clients yet to be called"
         />
         <MetricCard
           title="Calls Answered"
-          value="881"
+          value={metrics.answeredCalls}
           icon={CheckCircle2}
-          description="60% answer rate"
+          description={`${((metrics.answeredCalls / metrics.totalCalls) * 100).toFixed(0)}% answer rate`}
         />
         <MetricCard
           title="Avg. Retries per Client"
-          value="2.5"
+          value={metrics.avgRetries.toFixed(1)}
           icon={RefreshCcw}
           description="Attempts before success"
         />
         <MetricCard
           title="Avg. Call Duration"
-          value="4.2 min"
+          value={`${metrics.avgDuration.toFixed(1)} min`}
           icon={Clock}
           description="Time spent per call"
         />
         <MetricCard
           title="Success Rate"
-          value="73.5%"
+          value={`${metrics.successRate.toFixed(1)}%`}
           icon={TrendingUp}
           description="Overall campaign performance"
         />

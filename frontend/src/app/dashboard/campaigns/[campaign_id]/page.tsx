@@ -3,41 +3,99 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Clock, PlayCircle, ChevronLeft, Play, Pause } from "lucide-react";
+import { Users, Clock, PlayCircle, ChevronLeft, Play, Pause, Trash2, Loader2 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { AddClients } from "./components/AddClients";
 import { CampaignDetails } from "./components/CampaignDetails";
 import { CampaignLaunch } from "./components/CampaignLaunch";
-import { campaigns, updateCampaignName, updateCampaignStatus } from "@/app/dashboard/campaigns/[campaign_id]/data/campaigns";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { CampaignResponse } from "@/types/campaigns";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { LoadingWithText } from "@/components/ui/loading";
 
 export default function CampaignPage() {
   const [activeTab, setActiveTab] = useState("add-clients");
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [campaignData, setCampaignData] = useState<typeof campaign | undefined>(undefined);
+  const [campaignData, setCampaignData] = useState<CampaignResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const router = useRouter();
   const params = useParams();
-  const campaignId = parseInt(params?.campaign_id as string);
-  const campaign = campaigns.find(c => c.id === campaignId);
+  const campaignId = params?.campaign_id as string;
 
   useEffect(() => {
-    if (campaign) {
-      setCampaignData(campaign);
-      setEditedName(campaign.name);
+    const fetchCampaign = async () => {
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}`);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch campaign');
+        }
+        const campaign = await response.json();
+        setCampaignData(campaign);
+        setEditedName(campaign.name);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch campaign');
+        toast.error(err instanceof Error ? err.message : 'Failed to fetch campaign');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (campaignId) {
+      fetchCampaign();
     }
-  }, [campaign]);
+  }, [campaignId]);
 
   const handleBack = () => {
     router.push("/dashboard/campaigns");
   };
 
-  const handleNameEdit = () => {
-    if (isEditing && editedName.trim() !== "") {
-      updateCampaignName(campaignId, editedName.trim());
-      setCampaignData(prev => prev ? { ...prev, name: editedName.trim() } : undefined);
+  const handleNameEdit = async () => {
+    if (isEditing && editedName.trim() !== "" && campaignData) {
+      setIsUpdating(true);
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...campaignData,
+            name: editedName.trim()
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update campaign name');
+        }
+
+        const updatedCampaign = await response.json();
+        setCampaignData(updatedCampaign);
+        toast.success("Campaign name updated successfully");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update campaign name');
+        toast.error(err instanceof Error ? err.message : 'Failed to update campaign name');
+      } finally {
+        setIsUpdating(false);
+      }
     }
     setIsEditing(!isEditing);
   };
@@ -51,11 +109,69 @@ export default function CampaignPage() {
     }
   };
 
-  const handleStatusChange = () => {
-    const newStatus = campaignData?.status === "Live" ? "Paused" : "Live";
-    updateCampaignStatus(campaignId, newStatus);
-    setCampaignData(prev => prev ? { ...prev, status: newStatus } : undefined);
+  const handleStatusChange = async () => {
+    if (!campaignData) return;
+    
+    setIsUpdating(true);
+    try {
+      const newStatus = campaignData.status === "started" ? "paused" : "started";
+      const response = await fetch(`/api/campaigns/${campaignId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update campaign status');
+      }
+
+      const updatedCampaign = await response.json();
+      setCampaignData(updatedCampaign);
+      toast.success(`Campaign ${newStatus === "started" ? "started" : "paused"} successfully`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update campaign status');
+      toast.error(err instanceof Error ? err.message : 'Failed to update campaign status');
+    } finally {
+      setIsUpdating(false);
+    }
   };
+
+  const handleDeleteCampaign = async () => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete campaign');
+      }
+
+      toast.success("Campaign deleted successfully");
+      router.push("/dashboard/campaigns");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete campaign');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete campaign');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <LoadingWithText text="Loading campaign..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="container mx-auto p-6 text-red-500">Error: {error}</div>;
+  }
 
   if (!campaignData) return null;
 
@@ -81,6 +197,7 @@ export default function CampaignPage() {
                 onBlur={handleNameEdit}
                 onKeyDown={handleKeyPress}
                 autoFocus
+                disabled={isUpdating}
               />
             ) : (
               <div className="flex items-center gap-3">
@@ -93,36 +210,72 @@ export default function CampaignPage() {
                 >
                   {campaignData.name || "Untitled Campaign"}
                 </h1>
-                {campaignData.status === "Live" && (
+                {campaignData.status === "started" && (
                   <Badge 
                     className={cn(
-                      "inline-flex justify-center items-center px-4 py-1 bg-green-50 text-green-700 after:ml-2 after:w-2 after:h-2 after:rounded-full after:bg-green-500 after:animate-[pulse_2s_ease-in-out_infinite]"
+                      "inline-flex justify-center items-center px-4 py-1 bg-green-50 text-green-700",
+                      "after:ml-2 after:w-2 after:h-2 after:rounded-full after:bg-green-500 after:animate-[pulse_2s_ease-in-out_infinite]"
                     )}
                   >
-                    {campaignData.status}
+                    Live
                   </Badge>
                 )}
               </div>
             )}
           </div>
           
-          <Button
-            variant={campaignData.status === "Live" ? "destructive" : "default"}
-            onClick={handleStatusChange}
-            className="min-w-[140px]"
-          >
-            {campaignData.status === "Live" ? (
-              <>
-                <Pause className="mr-2 h-4 w-4" />
-                Pause Campaign
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Start Campaign
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Delete Campaign
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the campaign
+                    and all its associated data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteCampaign}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            
+            <Button
+              variant={campaignData.status === "started" ? "destructive" : "default"}
+              onClick={handleStatusChange}
+              className="min-w-[140px]"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : campaignData.status === "started" ? (
+                <>
+                  <Pause className="mr-2 h-4 w-4" />
+                  Pause Campaign
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Campaign
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -143,15 +296,15 @@ export default function CampaignPage() {
         </TabsList>
 
         <TabsContent value="add-clients">
-          <AddClients />
+          <AddClients campaignId={campaignId} campaign={campaignData} onUpdate={setCampaignData} />
         </TabsContent>
 
         <TabsContent value="campaign-details">
-          <CampaignDetails />
+          <CampaignDetails campaignId={campaignId} campaign={campaignData} onUpdate={setCampaignData} />
         </TabsContent>
 
         <TabsContent value="launch">
-          <CampaignLaunch />
+          <CampaignLaunch campaignId={campaignId} campaign={campaignData} onUpdate={setCampaignData} />
         </TabsContent>
       </Tabs>
     </div>

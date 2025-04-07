@@ -8,10 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clients } from "../data/clients";
 import { StatusBadge } from "./StatusBadge";
+import { CampaignResponse, Client } from "@/types/campaigns";
 
-export function CampaignClients() {
+interface CampaignClientsProps {
+  campaign: CampaignResponse;
+}
+
+export function CampaignClients({ campaign }: CampaignClientsProps) {
   return (
     <Card>
       <CardHeader>
@@ -21,27 +25,31 @@ export function CampaignClients() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Number</TableHead>
-              <TableHead>Language</TableHead>
-              <TableHead>Details</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="w-[20%]">Name</TableHead>
+              <TableHead className="w-[15%]">Number</TableHead>
+              <TableHead className="w-[10%]">Language</TableHead>
+              <TableHead className="w-[30%]">Details</TableHead>
+              <TableHead className="w-[15%]">Status</TableHead>
+              <TableHead className="w-[10%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.id}>
+            {campaign.clients?.map((client: Client, index: number) => (
+              <TableRow key={index}>
                 <TableCell>{client.name}</TableCell>
-                <TableCell>{client.number}</TableCell>
+                <TableCell>{client.phone_number}</TableCell>
                 <TableCell>{client.language}</TableCell>
                 <TableCell>
-                  {JSON.stringify(client.personalDetails)}
-                </TableCell>
-                <TableCell className="flex">
-                  <StatusBadge status={client.status || "Pending"} />
+                  {Object.entries(client.personal_details || {}).map(([key, value]) => (
+                    `${key}: ${value}`
+                  )).join(', ')}
                 </TableCell>
                 <TableCell>
+                  <div className="flex items-center justify-start">
+                    <StatusBadge status={client.status.status} />
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
                   <Button variant="outline" size="sm">
                     Summary
                   </Button>

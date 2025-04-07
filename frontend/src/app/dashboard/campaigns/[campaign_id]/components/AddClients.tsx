@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, ExternalLink } from "lucide-react";
+import { ExternalLink, Upload, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import {
   Dialog,
@@ -18,7 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Client, clients } from "../data/clients";
+import { CampaignResponse } from "@/types/campaigns";
+import { Dispatch, SetStateAction } from "react";
 
 interface Integration {
   id: string;
@@ -29,13 +30,37 @@ interface Integration {
   status: string;
 }
 
-export function AddClients() {
-  const [selectedClients, setSelectedClients] = useState<Client[]>(clients);
+interface AddClientsProps {
+  campaignId: string;
+  campaign: CampaignResponse;
+  onUpdate: Dispatch<SetStateAction<CampaignResponse | null>>;
+}
+
+const downloadTemplate = () => {
+  const headers = ["name,phone_number,language,age,occupation,best_time_to_call,interested_in\n"];
+  const examples = [
+    "John Smith,+1234567890,en,35,Engineer,Morning,Solar Panels\n",
+    "Sarah Johnson,+1987654321,en,42,Teacher,Evening,Home Insurance\n",
+    "Michael Brown,+1122334455,es,28,Designer,Afternoon,Car Insurance"
+  ];
+  
+  const csvContent = headers.concat(examples).join("");
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "clients_template.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+
+export function AddClients({ campaignId, campaign, onUpdate }: AddClientsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isIntegrationDialogOpen, setIsIntegrationDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { toast } = useToast();
 
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -47,11 +72,7 @@ export function AddClients() {
 
   const handleFileUpload = async () => {
     if (!selectedFile) {
-      toast({
-        title: "Error",
-        description: "Please select a file to upload",
-        variant: "destructive",
-      });
+      toast.error("Please select a file to upload");
       return;
     }
 
@@ -60,26 +81,23 @@ export function AddClients() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/upload-csv', {
+      const response = await fetch(`/api/campaigns/${campaignId}/upload-clients`, {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload clients');
+      }
 
-      const data = await response.json();
-      setSelectedClients(data.clients);
+      const updatedCampaign = await response.json();
+      onUpdate(updatedCampaign);
       setIsUploadDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "Clients imported successfully",
-      });
+      toast.success(`Successfully imported ${updatedCampaign.clients?.length || 0} clients`);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload file",
-        variant: "destructive",
-      });
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to upload file");
     } finally {
       setIsUploading(false);
       setSelectedFile(null);
@@ -100,11 +118,7 @@ export function AddClients() {
       }
       setIsIntegrationDialogOpen(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect to integration",
-        variant: "destructive",
-      });
+      toast.error("Failed to connect to integration");
     }
   };
 
@@ -159,25 +173,36 @@ export function AddClients() {
             Connect to Third Party
           </Button>
         </div>
+        <div className="flex items-center gap-2">
+          <Download className="h-4 w-4 text-muted-foreground" />
+          <button
+            onClick={downloadTemplate}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            Download CSV template with example data
+          </button>
+        </div>
         
         <div className="mt-8">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Number</TableHead>
-                <TableHead>Language</TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead className="w-[25%]">Name</TableHead>
+                <TableHead className="w-[25%]">Number</TableHead>
+                <TableHead className="w-[15%]">Language</TableHead>
+                <TableHead className="w-[35%]">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {selectedClients.map((client) => (
-                <TableRow key={client.id}>
+              {campaign.clients?.map((client, index) => (
+                <TableRow key={index}>
                   <TableCell>{client.name}</TableCell>
-                  <TableCell>{client.number}</TableCell>
-                  <TableCell>{client.language}</TableCell>
+                  <TableCell>{client.phone_number}</TableCell>
+                  <TableCell>{client.language || 'en'}</TableCell>
                   <TableCell>
-                    {client.personalDetails.company} - {client.personalDetails.position}
+                    {Object.entries(client.personal_details || {}).map(([key, value]) => (
+                      `${key}: ${value}`
+                    )).join(', ')}
                   </TableCell>
                 </TableRow>
               ))}
