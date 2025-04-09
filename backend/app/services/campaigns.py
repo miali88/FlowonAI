@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from fastapi import HTTPException, UploadFile
 import csv
 import io
@@ -11,8 +11,13 @@ from app.models.campaigns import (
     CampaignCreate, 
     CampaignUpdate, 
     CampaignResponse,
-    Client
+    Client,
+    ClientStatus
 )
+from app.services.vapi.assistants import create_assistant, update_assistant
+from app.services.vapi.constants.voice_ids import get_voice_for_country, get_agent_name_for_voice
+from app.services.guided_setup.language_utils import extract_country_and_language
+from app.services import prompts
 
 class CampaignService:
     @staticmethod
@@ -39,6 +44,222 @@ class CampaignService:
             raise HTTPException(status_code=500, detail=f"Failed to fetch campaigns: {str(e)}")
 
     @staticmethod
+    async def create_campaign_assistant(campaign_data: Dict[str, Any], user_id: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        Create a VAPI assistant for a campaign
+        
+        Args:
+            campaign_data: The campaign data
+            user_id: The user ID
+            
+        Returns:
+            Tuple of (success, message, assistant_data)
+        """
+        try:
+            logger.info(f"Creating VAPI assistant for campaign: {campaign_data.get('name')}")
+            
+            # Extract necessary information from campaign data
+            business_info = campaign_data.get("business_information", {}) or {}
+            business_name = business_info.get("businessName", campaign_data.get("name", "Business"))
+            business_overview = business_info.get("businessOverview", "")
+            
+            # Get country and language from business address
+            business_address = business_info.get("primaryBusinessAddress", "")
+            
+            # Safely extract country and language with error handling
+            try:
+                country_code, agent_language = extract_country_and_language(business_address)
+            except Exception as e:
+                logger.warning(f"Error extracting country and language: {str(e)}")
+                country_code = "US"  # Default to US
+                agent_language = "en-US"
+            
+            # Get voice ID based on country with fallback
+            try:
+                voice_id = get_voice_for_country(country_code)
+            except Exception as e:
+                logger.warning(f"Error getting voice for country: {str(e)}")
+                voice_id = "eleven_labs_female_us"  # Default voice
+            
+            # Prepare message taking information if available
+            message_taking = campaign_data.get("message_taking", {}) or {}
+            specific_questions = message_taking.get("questions", []) or []
+            opening_line = message_taking.get("opening_line", f"Hello! Thank you for calling {business_name}. How can I help you today?")
+            closing_line = message_taking.get("closing_line", "Thank you for your time. We'll get back to you shortly. Have a great day!")
+            
+            # Format specific questions for the assistant
+            questions_text = ""
+            if specific_questions:
+                questions_text = "Please ask the following specific questions:\n"
+                for i, q in enumerate(specific_questions, 1):
+                    if isinstance(q, dict):
+                        question_text = q.get("question", "")
+                    else:
+                        question_text = str(q)
+                    questions_text += f"{i}. {question_text}\n"
+            
+            # Add opening and closing lines to instructions
+            additional_instructions = f"""
+            When starting the call, use this opening line: "{opening_line}"
+            
+            {questions_text}
+            
+            When ending the call, use this closing line: "{closing_line}"
+            """
+            
+            # Prepare system prompt with business information
+            sys_prompt = prompts.answering_service.format(
+                company_name=business_name, 
+                business_overview=business_overview
+            ) + "\n\n" + additional_instructions
+            
+            # Create the assistant using the direct function call
+            logger.info(f"Creating VAPI assistant with business name: {business_name}")
+            assistant_result = await create_assistant(
+                business_name=business_name,
+                voice_id=voice_id,
+                sys_prompt=sys_prompt,
+                metadata={
+                    "campaign_id": campaign_data.get("id", ""),
+                    "user_id": user_id,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+            )
+            
+            if not assistant_result:
+                logger.error("Failed to create VAPI assistant: No response from API")
+                return False, "Failed to create VAPI assistant: No response from API", None
+            
+            if "id" not in assistant_result:
+                logger.error(f"Failed to create VAPI assistant: Missing ID in response: {assistant_result}")
+                return False, "Failed to create VAPI assistant: Missing ID in response", None
+            
+            logger.info(f"Successfully created VAPI assistant with ID: {assistant_result['id']}")
+            return True, f"Created VAPI assistant with ID: {assistant_result['id']}", assistant_result
+        
+        except Exception as e:
+            logger.error(f"Error creating VAPI assistant: {str(e)}")
+            return False, f"Error creating VAPI assistant: {str(e)}", None
+
+    @staticmethod
+    async def update_campaign_assistant(campaign_id: str, campaign_data: Dict[str, Any], user_id: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        Update a VAPI assistant for a campaign
+        
+        Args:
+            campaign_id: The campaign ID
+            campaign_data: The updated campaign data
+            user_id: The user ID
+            
+        Returns:
+            Tuple of (success, message, assistant_data)
+        """
+        try:
+            logger.info(f"Updating VAPI assistant for campaign: {campaign_id}")
+            
+            # Get the assistant ID from the campaign data
+            vapi_assistant_id = campaign_data.get("vapi_assistant_id")
+            
+            # If no assistant ID exists, create a new one
+            if not vapi_assistant_id:
+                logger.info(f"No VAPI assistant ID found for campaign {campaign_id}, creating new assistant")
+                
+                # Create a new assistant
+                success, message, assistant_result = await CampaignService.create_campaign_assistant(
+                    {**campaign_data, "id": campaign_id}, 
+                    user_id
+                )
+                
+                if success and assistant_result and "id" in assistant_result:
+                    # Update the campaign with the new assistant ID
+                    supabase = await get_supabase()
+                    await supabase.table("campaigns").update(
+                        {"vapi_assistant_id": assistant_result["id"]}
+                    ).eq("id", campaign_id).execute()
+                    
+                    logger.info(f"Created new VAPI assistant with ID {assistant_result['id']} for campaign {campaign_id}")
+                    return success, message, assistant_result
+                else:
+                    logger.error(f"Failed to create new VAPI assistant for campaign {campaign_id}: {message}")
+                    return success, message, assistant_result
+            
+            # Extract necessary information from campaign data
+            business_info = campaign_data.get("business_information", {}) or {}
+            business_name = business_info.get("businessName", campaign_data.get("name", "Business"))
+            business_overview = business_info.get("businessOverview", "")
+            
+            # Get country and language from business address
+            business_address = business_info.get("primaryBusinessAddress", "")
+            
+            # Safely extract country and language with error handling
+            try:
+                country_code, agent_language = extract_country_and_language(business_address)
+            except Exception as e:
+                logger.warning(f"Error extracting country and language: {str(e)}")
+                country_code = "US"  # Default to US
+                agent_language = "en-US"
+            
+            # Get voice ID based on country with fallback
+            try:
+                voice_id = get_voice_for_country(country_code)
+            except Exception as e:
+                logger.warning(f"Error getting voice for country: {str(e)}")
+                voice_id = "eleven_labs_female_us"  # Default voice
+            
+            # Prepare message taking information if available
+            message_taking = campaign_data.get("message_taking", {}) or {}
+            specific_questions = message_taking.get("questions", []) or []
+            opening_line = message_taking.get("opening_line", f"Hello! Thank you for calling {business_name}. How can I help you today?")
+            closing_line = message_taking.get("closing_line", "Thank you for your time. We'll get back to you shortly. Have a great day!")
+            
+            # Format specific questions for the assistant
+            questions_text = ""
+            if specific_questions:
+                questions_text = "Please ask the following specific questions:\n"
+                for i, q in enumerate(specific_questions, 1):
+                    if isinstance(q, dict):
+                        question_text = q.get("question", "")
+                    else:
+                        question_text = str(q)
+                    questions_text += f"{i}. {question_text}\n"
+            
+            # Add opening and closing lines to instructions
+            additional_instructions = f"""
+            When starting the call, use this opening line: "{opening_line}"
+            
+            {questions_text}
+            
+            When ending the call, use this closing line: "{closing_line}"
+            """
+            
+            # Prepare system prompt with business information
+            sys_prompt = prompts.answering_service.format(
+                company_name=business_name, 
+                business_overview=business_overview
+            ) + "\n\n" + additional_instructions
+            
+            # Update the assistant using the direct function call
+            logger.info(f"Updating VAPI assistant {vapi_assistant_id} with business name: {business_name}")
+            assistant_result = await update_assistant(
+                assistant_id=vapi_assistant_id,
+                business_name=business_name,
+                voice_id=voice_id,
+                sys_prompt=sys_prompt,
+                first_message=opening_line
+            )
+            
+            if not assistant_result:
+                logger.error("Failed to update VAPI assistant: No response from API")
+                return False, "Failed to update VAPI assistant: No response from API", None
+            
+            logger.info(f"Successfully updated VAPI assistant with ID: {vapi_assistant_id}")
+            return True, f"Updated VAPI assistant with ID: {vapi_assistant_id}", assistant_result
+        
+        except Exception as e:
+            logger.error(f"Error updating VAPI assistant: {str(e)}")
+            return False, f"Error updating VAPI assistant: {str(e)}", None
+
+    @staticmethod
     async def create_campaign(campaign: CampaignCreate, user_id: str) -> Dict[str, Any]:
         """
         Create a new campaign for a user
@@ -48,9 +269,20 @@ class CampaignService:
             # Initialize Supabase client
             supabase = await get_supabase()
             
+            # Fetch business information from guided_setup
+            guided_setup_response = await supabase.table("guided_setup").select("business_information").eq("user_id", user_id).execute()
+            
+            business_information = {}
+            if guided_setup_response.data and len(guided_setup_response.data) > 0:
+                business_information = guided_setup_response.data[0].get("business_information", {})
+                logger.info(f"Retrieved business information for user: {user_id}")
+            else:
+                logger.warning(f"No guided setup data found for user: {user_id}")
+            
             # Prepare campaign data
             campaign_data = campaign.model_dump()
             campaign_data["user_id"] = user_id
+            campaign_data["business_information"] = business_information
             
             # Insert campaign into database
             response = await supabase.table("campaigns").insert(campaign_data).execute()
@@ -58,9 +290,28 @@ class CampaignService:
             if not response.data:
                 logger.error("Failed to create campaign: No data returned from database")
                 raise HTTPException(status_code=500, detail="Failed to create campaign")
+            
+            created_campaign = response.data[0]
+            logger.info(f"Successfully created campaign with ID: {created_campaign['id']}")
+            
+            # Create VAPI assistant for the campaign
+            success, message, assistant_result = await CampaignService.create_campaign_assistant(
+                created_campaign, 
+                user_id
+            )
+            
+            if success and assistant_result and "id" in assistant_result:
+                # Update the campaign with the assistant ID
+                await supabase.table("campaigns").update(
+                    {"vapi_assistant_id": assistant_result["id"]}
+                ).eq("id", created_campaign["id"]).execute()
                 
-            logger.info(f"Successfully created campaign with ID: {response.data[0]['id']}")
-            return response.data[0]
+                created_campaign["vapi_assistant_id"] = assistant_result["id"]
+                logger.info(f"Added VAPI assistant ID {assistant_result['id']} to campaign {created_campaign['id']}")
+            else:
+                logger.warning(f"Failed to create VAPI assistant for campaign: {message}")
+                
+            return created_campaign
         except HTTPException:
             raise
         except Exception as e:
@@ -93,9 +344,9 @@ class CampaignService:
             raise HTTPException(status_code=500, detail=f"Failed to fetch campaign: {str(e)}")
 
     @staticmethod
-    async def update_campaign(campaign_id: str, campaign: CampaignUpdate, user_id: str) -> Dict[str, Any]:
+    async def update_campaign(campaign_id: str, campaign_update: CampaignUpdate, user_id: str) -> Dict[str, Any]:
         """
-        Update a specific campaign by ID
+        Update an existing campaign
         """
         logger.info(f"Updating campaign {campaign_id} for user: {user_id}")
         try:
@@ -103,28 +354,112 @@ class CampaignService:
             supabase = await get_supabase()
             
             # Check if campaign exists and belongs to user
-            check_response = await supabase.table("campaigns").select("id").eq("id", campaign_id).eq("user_id", user_id).execute()
+            campaign_response = await supabase.table("campaigns").select("*").eq("id", campaign_id).eq("user_id", user_id).execute()
             
-            if not check_response.data:
-                logger.warning(f"Campaign {campaign_id} not found for user: {user_id}")
-                raise HTTPException(status_code=404, detail="Campaign not found")
+            if not campaign_response.data:
+                logger.error(f"Campaign {campaign_id} not found or does not belong to user {user_id}")
+                raise HTTPException(status_code=404, detail="Campaign not found or access denied")
             
-            # Filter out None values to only update provided fields
-            update_data = {k: v for k, v in campaign.model_dump().items() if v is not None}
-                    
-            # Update campaign
+            # Get current campaign data
+            current_campaign = campaign_response.data[0]
+            
+            # Prepare update data - only include fields that are provided in the update
+            update_data = campaign_update.model_dump(exclude_unset=True)
+            
+            # Check if any fields were actually changed
+            if not update_data:
+                logger.info(f"No changes detected for campaign {campaign_id}")
+                return current_campaign
+            
+            # Special handling for message_taking field
+            if "message_taking" in update_data:
+                # Get current message_taking or initialize empty dict
+                current_message_taking = current_campaign.get("message_taking", {}) or {}
+                
+                # If update is providing a dict, merge with current values
+                if isinstance(update_data["message_taking"], dict):
+                    # Ensure required fields exist with defaults if not provided
+                    message_taking = {
+                        "opening_line": update_data["message_taking"].get("opening_line") or 
+                                       current_message_taking.get("opening_line") or 
+                                       "Thank you for contacting us! My name is Michael and I will assist you today.",
+                        "closing_line": update_data["message_taking"].get("closing_line") or 
+                                       current_message_taking.get("closing_line") or 
+                                       "We'll get back to you shortly. Have a great day!",
+                        "questions": update_data["message_taking"].get("questions") or 
+                                    current_message_taking.get("questions") or 
+                                    []
+                    }
+                    update_data["message_taking"] = message_taking
+                else:
+                    # If it's not a dict, create the proper structure
+                    update_data["message_taking"] = {
+                        "questions": update_data.get("message_taking", []),
+                        "opening_line": current_message_taking.get("opening_line") or 
+                                       "Thank you for contacting us! My name is Michael and I will assist you today.",
+                        "closing_line": current_message_taking.get("closing_line") or 
+                                       "We'll get back to you shortly. Have a great day!"
+                    }
+            
+            # Handle business_information field - preserve existing data if not provided
+            if "business_information" in update_data and update_data["business_information"] is None:
+                update_data["business_information"] = current_campaign.get("business_information", {})
+            
+            # Handle agent_details field
+            if "agent_details" in update_data:
+                current_agent_details = current_campaign.get("agent_details", {}) or {}
+                if isinstance(update_data["agent_details"], dict):
+                    # Merge with current values
+                    agent_details = {
+                        "cool_off": update_data["agent_details"].get("cool_off", current_agent_details.get("cool_off", None)),
+                        "number_of_retries": update_data["agent_details"].get("number_of_retries", current_agent_details.get("number_of_retries", 3))
+                    }
+                    update_data["agent_details"] = agent_details
+            
+            # Handle clients field - ensure proper structure
+            if "clients" in update_data and update_data["clients"] is not None:
+                # Ensure each client has the required fields
+                for client in update_data["clients"]:
+                    if isinstance(client, dict) and "status" in client:
+                        # Ensure status has the right structure
+                        if not isinstance(client["status"], dict):
+                            client["status"] = {
+                                "status": client["status"] if isinstance(client["status"], str) else "queued",
+                                "number_of_calls": 0,
+                                "call_id": None
+                            }
+            
+            # Update campaign in database
             response = await supabase.table("campaigns").update(update_data).eq("id", campaign_id).execute()
             
             if not response.data:
                 logger.error(f"Failed to update campaign {campaign_id}")
                 raise HTTPException(status_code=500, detail="Failed to update campaign")
-                
+            
+            updated_campaign = response.data[0]
             logger.info(f"Successfully updated campaign {campaign_id}")
-            return response.data[0]
+            
+            # Check if we need to update the VAPI assistant
+            assistant_relevant_fields = ["name", "business_information", "message_taking"]
+            assistant_fields_changed = any(field in update_data for field in assistant_relevant_fields)
+            
+            if assistant_fields_changed:
+                logger.info(f"Assistant-relevant fields changed, updating VAPI assistant")
+                success, message, assistant_result = await CampaignService.update_campaign_assistant(
+                    campaign_id,
+                    {**current_campaign, **update_data},
+                    user_id
+                )
+                
+                if not success:
+                    logger.warning(f"Failed to update VAPI assistant: {message}")
+            
+            return updated_campaign
         except HTTPException:
+            # Re-raise HTTP exceptions
             raise
         except Exception as e:
-            logger.error(f"Error updating campaign {campaign_id}: {str(e)}")
+            logger.error(f"Error updating campaign: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to update campaign: {str(e)}")
 
     @staticmethod

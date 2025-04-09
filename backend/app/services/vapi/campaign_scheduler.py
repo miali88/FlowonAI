@@ -97,8 +97,7 @@ async def process_campaign(campaign: Dict[str, Any]):
             user_id=user_id,
             assistant_id=assistant_id,
             phone_number_id=phone_number_id,
-            max_calls=10,  # Use default or configure as needed
-            force_outside_hours=False  # Respect business hours
+            max_calls=1,  # Use default or configure as needed
         )
         
         if result.get("success", False):
