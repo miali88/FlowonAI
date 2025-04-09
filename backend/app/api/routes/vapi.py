@@ -154,6 +154,7 @@ async def vapi_webhook(request: Request):
     try:
         # Parse the raw JSON
         event_data = await request.json()
+        
         # Log the full event for debugging
         logger.info(f"Webhook payload: {json.dumps(event_data, indent=2)}")
         

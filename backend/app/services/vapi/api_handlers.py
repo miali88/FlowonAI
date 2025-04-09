@@ -1,45 +1,72 @@
 from typing import Any, Dict
 from app.core.logging_setup import logger
 import math
+import json
+from datetime import datetime, timezone
 
 from app.services.vapi.calls import store_call_data
 from app.services.user.usage import update_call_duration
 from app.services.email_service import send_notification_email
 from app.services.vapi.utils import get_user_notification_settings
+from app.services.vapi.outbound_calls import outbound_call_service
 
 class VapiService:
-    """Service class to handle VAPI webhook events."""
+    """Service for handling VAPI API interactions and webhook events"""
     
     async def process_webhook_event(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Process incoming VAPI webhook events and delegate to appropriate handlers.
+        Process incoming webhook events from VAPI
         
         Args:
-            event_data: The webhook payload from VAPI
+            event_data: The webhook event data
             
         Returns:
-            Dict containing the response to be sent back to VAPI
+            Dictionary with processing result
         """
-        # Extract event type from the message object
-        message = event_data.get("message", {})
-        event_type = message.get("type", "unknown")
-        
-        logger.info(f"[SERVICE] process_webhook_event: Processing VAPI event type: {event_type}")
-          
-        # Route the event to the appropriate handler based on type
-        handlers = {
-            "end-of-call-report": self.handle_end_of_call,
-            "function-call": self.handle_function_call,
-            "tool-calls": self.handle_tool_calls,
-            "transfer-request": self.handle_transfer_request,
-        }
-        
-        # Get the appropriate handler or use a default handler
-        handler = handlers.get(event_type, self.handle_unknown_event)
-        logger.debug(f"[SERVICE] process_webhook_event: Selected handler for event type: {event_type}")
+        try:
+            event_type = event_data.get("type")
+            logger.info(f"Processing VAPI webhook event of type: {event_type}")
+            
+            # Handle call status updates
+            if event_type in ["call.completed", "call.failed"]:
+                await self._handle_call_status_update(event_data, event_type)
+            
+            return {"success": True, "message": f"Processed {event_type} event"}
+            
+        except Exception as e:
+            logger.error(f"Error processing webhook event: {str(e)}")
+            return {"success": False, "error": str(e)}
     
-        # Call the handler with the event data
-        return await handler(event_data)
+    async def _handle_call_status_update(self, event_data: Dict[str, Any], event_type: str) -> None:
+        """
+        Handle call status update events (completed or failed)
+        
+        Args:
+            event_data: The webhook event data
+            event_type: The type of event (call.completed or call.failed)
+        """
+        call_id = event_data.get("data", {}).get("id")
+        metadata = event_data.get("data", {}).get("metadata", {})
+        campaign_id = metadata.get("campaign_id")
+        
+        if not call_id:
+            logger.warning("Call status update event missing call ID")
+            return
+            
+        # Map event type to status
+        status = "completed" if event_type == "call.completed" else "failed"
+        logger.info(f"Updating call {call_id} status to {status} for campaign {campaign_id}")
+        
+        # Update call status in campaign
+        result = await outbound_call_service.update_call_status(
+            call_id=call_id,
+            status=status,
+            campaign_id=campaign_id,
+            metadata=metadata
+        )
+        
+        if not result.get("success", False):
+            logger.warning(f"Failed to update call status: {result.get('error')}")
     
     async def handle_end_of_call(self, call_data: Dict[str, Any]) -> Dict[str, Any]:
         """

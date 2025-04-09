@@ -3,8 +3,9 @@ import subprocess
 import psutil
 import platform
 from dotenv import load_dotenv
+import asyncio
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 import sentry_sdk
@@ -13,6 +14,7 @@ from app.core.config import settings
 from app.api.main import api_router
 from app.clients.supabase_client import SupabaseConnection
 from app.core.logging_setup import logger
+from app.services.vapi.campaign_scheduler import process_active_campaigns
 
 load_dotenv()
 
@@ -92,6 +94,17 @@ def kill_processes_on_port(port):
     except Exception as e:
         print(f"Error in kill_processes_on_port: {e}")
 
+# Background task to process campaigns
+async def process_campaigns_periodically():
+    while True:
+        try:
+            await process_active_campaigns()
+        except Exception as e:
+            print(f"Error in campaign processing: {str(e)}")
+        
+        # Wait for 5 minutes before checking again
+        await asyncio.sleep(300)  # 300 seconds = 5 minutes
+
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"{settings.PROJECT_NAME} application started successfully")
@@ -165,6 +178,14 @@ async def startup_event():
         #             logger.error("Failed to start LiveKit server after maximum retries")
         #             raise
         logger.info("LiveKit server startup code has been commented out")
+
+        # Add a delay before starting the campaign processing
+        logger.info("Waiting 5 seconds before starting campaign processing...")
+        await asyncio.sleep(5)
+
+        # Start the background task
+        logger.info("Starting campaign processing background task")
+        asyncio.create_task(process_campaigns_periodically())
     except Exception as e:
         logger.error(f"Error in startup_event: {e}")
         raise

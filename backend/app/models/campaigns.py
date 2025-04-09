@@ -49,6 +49,8 @@ class CampaignUpdate(BaseModel):
     status: Optional[str] = None
     user_text_file_id: Optional[List[str]] = None
     user_web_data_id: Optional[List[str]] = None
+    vapi_assistant_id: Optional[str] = None
+    vapi_phone_number_id: Optional[str] = None
 
 class CampaignResponse(CampaignBase):
     id: str

@@ -2,7 +2,9 @@ from typing import List, Dict, Any, Optional
 from fastapi import HTTPException, UploadFile
 import csv
 import io
+from datetime import datetime
 
+from app.services.vapi.outbound_calls import outbound_call_service
 from app.core.logging_setup import logger
 from app.clients.supabase_client import get_supabase
 from app.models.campaigns import (
@@ -240,7 +242,10 @@ class CampaignService:
                         "status": {
                             "status": "queued",
                             "number_of_calls": 0,
-                            "call_id": None
+                            "call_id": None,
+                            "retry_at": None,
+                            "completion_time": None,
+                            "last_call_time": None
                         }
                     }
                     
@@ -274,3 +279,195 @@ class CampaignService:
         except Exception as e:
             logger.error(f"Error uploading clients CSV for campaign {campaign_id}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to upload clients CSV: {str(e)}")
+
+    @staticmethod
+    async def get_campaign_call_stats(campaign_id: str, user_id: str) -> Dict[str, Any]:
+        """
+        Get statistics about calls in a campaign
+        
+        Args:
+            campaign_id: ID of the campaign
+            user_id: ID of the user who owns the campaign
+            
+        Returns:
+            Dictionary with call statistics
+        """
+        logger.info(f"Getting call stats for campaign {campaign_id}")
+        try:
+            # Initialize Supabase client
+            supabase = await get_supabase()
+            
+            # Get campaign data
+            campaign_response = await supabase.table("campaigns").select("*").eq("id", campaign_id).eq("user_id", user_id).execute()
+            
+            if not campaign_response.data:
+                logger.warning(f"Campaign {campaign_id} not found for user {user_id}")
+                raise HTTPException(status_code=404, detail="Campaign not found")
+            
+            campaign = campaign_response.data[0]
+            clients = campaign.get("clients", [])
+            
+            # Calculate statistics
+            total_clients = len(clients)
+            status_counts = {
+                "queued": 0,
+                "in_progress": 0,
+                "completed": 0,
+                "failed": 0,
+                "retry": 0
+            }
+            
+            for client in clients:
+                status = client.get("status", {}).get("status", "queued")
+                if status in status_counts:
+                    status_counts[status] += 1
+                else:
+                    status_counts[status] = 1
+            
+            # Calculate completion percentage
+            completion_percentage = 0
+            if total_clients > 0:
+                completed = status_counts.get("completed", 0)
+                completion_percentage = (completed / total_clients) * 100
+            
+            return {
+                "campaign_id": campaign_id,
+                "total_clients": total_clients,
+                "status_counts": status_counts,
+                "completion_percentage": completion_percentage
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting campaign call stats: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to get campaign call stats: {str(e)}")
+
+    @staticmethod
+    async def start_campaign_calls(
+        campaign_id: str,
+        user_id: str,
+        assistant_id: str,
+        phone_number_id: str,
+        max_calls: int = 10
+    ) -> Dict[str, Any]:
+        """
+        Start outbound calls for a campaign
+        
+        Args:
+            campaign_id: ID of the campaign
+            user_id: ID of the user who owns the campaign
+            assistant_id: ID of the VAPI assistant to use
+            phone_number_id: ID of the phone number to use
+            max_calls: Maximum number of concurrent calls (default: 10)
+            
+        Returns:
+            Dictionary with results of the call initiation
+        """
+        logger.info(f"Starting calls for campaign {campaign_id} with assistant {assistant_id}")
+        
+        try:
+            # Verify campaign ownership
+            campaign = await CampaignService.get_campaign(campaign_id, user_id)
+            
+            if not campaign:
+                logger.warning(f"Campaign {campaign_id} not found for user {user_id}")
+                raise HTTPException(status_code=404, detail="Campaign not found")
+            
+            # Start the calls
+            result = await outbound_call_service.initiate_campaign_calls(
+                campaign_id=campaign_id,
+                user_id=user_id,
+                assistant_id=assistant_id,
+                phone_number_id=phone_number_id,
+                max_calls=max_calls
+            )
+            
+            if not result.get("success", False):
+                logger.error(f"Failed to initiate calls: {result.get('error')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=result.get("error", "Failed to initiate calls")
+                )
+            
+            # Update campaign status if calls were initiated
+            if result.get("success_count", 0) > 0:
+                await CampaignService.update_campaign_status(
+                    campaign_id=campaign_id,
+                    status="started",
+                    user_id=user_id
+                )
+            
+            return result
+            
+        except HTTPException:
+            # Re-raise HTTP exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Error starting campaign calls: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Failed to start campaign calls: {str(e)}")
+
+    @staticmethod
+    async def schedule_campaign_calls(
+        campaign_id: str,
+        user_id: str,
+        assistant_id: str,
+        phone_number_id: str,
+        schedule_time: datetime,
+        max_calls: int = 10
+    ) -> Dict[str, Any]:
+        """
+        Schedule outbound calls for a campaign at a future time
+        
+        Args:
+            campaign_id: ID of the campaign
+            user_id: ID of the user who owns the campaign
+            assistant_id: ID of the VAPI assistant to use
+            phone_number_id: ID of the phone number to use
+            schedule_time: When to schedule the calls
+            max_calls: Maximum number of concurrent calls (default: 10)
+            
+        Returns:
+            Dictionary with results of the call scheduling
+        """
+        logger.info(f"Scheduling calls for campaign {campaign_id} at {schedule_time}")
+        
+        try:
+            # Verify campaign ownership
+            campaign = await CampaignService.get_campaign(campaign_id, user_id)
+            
+            if not campaign:
+                logger.warning(f"Campaign {campaign_id} not found for user {user_id}")
+                raise HTTPException(status_code=404, detail="Campaign not found")            
+            
+            # Schedule the calls
+            result = await outbound_call_service.schedule_campaign_calls(
+                campaign_id=campaign_id,
+                user_id=user_id,
+                assistant_id=assistant_id,
+                phone_number_id=phone_number_id,
+                schedule_time=schedule_time,
+                max_calls=max_calls
+            )
+            
+            if not result.get("success", False):
+                logger.error(f"Failed to schedule calls: {result.get('error')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=result.get("error", "Failed to schedule calls")
+                )
+            
+            # Update campaign status
+            await CampaignService.update_campaign_status(
+                campaign_id=campaign_id,
+                status="scheduled",
+                user_id=user_id
+            )
+            
+            return result
+            
+        except HTTPException:
+            # Re-raise HTTP exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Error scheduling campaign calls: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Failed to schedule campaign calls: {str(e)}")
