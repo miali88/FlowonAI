@@ -115,6 +115,7 @@ export default function CampaignPage() {
     setIsUpdating(true);
     try {
       const newStatus = campaignData.status === "started" ? "paused" : "started";
+
       const response = await fetch(`/api/campaigns/${campaignId}/status`, {
         method: 'PUT',
         headers: {

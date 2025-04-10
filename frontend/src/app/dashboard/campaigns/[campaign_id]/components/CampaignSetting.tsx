@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import {
   Popover,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { CampaignResponse } from "@/types/campaigns";
 
 interface CampaignSettingProps {
   campaignId: string;
@@ -24,12 +26,14 @@ interface CampaignSettingProps {
   setStartTime: (time: string) => void;
   endTime: string;
   setEndTime: (time: string) => void;
-  onUpdate?: (date: Date | undefined, time: string) => void;
+  onUpdate: (date: Date | undefined, time: string) => void;
   defaultStartDate?: Date;
   defaultWorkingHours?: {
     start: string;
     end: string;
   };
+  campaign: CampaignResponse;
+  onUpdateCampaign: (data: CampaignResponse) => void;
 }
 
 export function CampaignSetting({
@@ -43,10 +47,11 @@ export function CampaignSetting({
   onUpdate,
   defaultStartDate,
   defaultWorkingHours,
+  campaign,
+  onUpdateCampaign,
 }: CampaignSettingProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(defaultStartDate);
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (defaultWorkingHours) {
@@ -57,7 +62,7 @@ export function CampaignSetting({
 
   const handleDateSelect = (date: Date | undefined) => {
     setStartDate(date);
-    setHasChanges(true);
+    onUpdate(date, startTime);
   };
 
   const handleTimeChange = (type: 'start' | 'end', value: string) => {
@@ -66,11 +71,10 @@ export function CampaignSetting({
     } else {
       setEndTime(value);
     }
-    setHasChanges(true);
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
+    setIsSubmitting(true);
     try {
       const response = await fetch(`/api/campaigns/${campaignId}`, {
         method: 'PUT',
@@ -78,34 +82,35 @@ export function CampaignSetting({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          ...campaign,
           agent_details: {
+            ...campaign.agent_details,
             working_hours: {
               start: startTime,
               end: endTime,
-            }
+            },
+            cool_off: control._getWatch("campaignSettings.coolOffPeriod.hours"),
+            number_of_retries: control._getWatch("campaignSettings.numberOfRetries"),
           },
           scheduled_start: startDate ? {
             date: startDate.toISOString(),
             time: startTime,
-          } : undefined,
+          } : campaign.scheduled_start,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save settings');
+        throw new Error(error.error || 'Failed to update campaign settings');
       }
 
-      if (onUpdate) {
-        onUpdate(startDate, startTime);
-      }
-
-      toast.success("Settings saved successfully");
-      setHasChanges(false);
+      const updatedCampaign = await response.json();
+      onUpdateCampaign(updatedCampaign);
+      toast.success("Campaign settings updated successfully");
     } catch (error) {
-      toast.error("Failed to save settings");
+      toast.error("Failed to update campaign settings");
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -149,16 +154,10 @@ export function CampaignSetting({
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => handleTimeChange('start', e.target.value)}
-                      className="w-[120px]"
-                    />
                   </div>
                 </div>
 
-                <hr className="border-t" />
+                <Separator />
 
                 <div className="space-y-2">
                   <Label>Working Hours</Label>
@@ -179,7 +178,7 @@ export function CampaignSetting({
                   </div>
                 </div>
 
-                <hr className="border-t" />
+                <Separator />
 
                 <div className="space-y-2">
                   <Label>Cool-off Period</Label>
@@ -197,7 +196,6 @@ export function CampaignSetting({
                             value={field.value || ""}
                             onChange={(e) => {
                               field.onChange(e);
-                              setHasChanges(true);
                             }}
                           />
                         )}
@@ -217,7 +215,6 @@ export function CampaignSetting({
                             value={field.value || ""}
                             onChange={(e) => {
                               field.onChange(e);
-                              setHasChanges(true);
                             }}
                           />
                         )}
@@ -227,7 +224,7 @@ export function CampaignSetting({
                   </div>
                 </div>
 
-                <hr className="border-t" />
+                <Separator />
 
                 <div className="space-y-2">
                   <Label>Number of Retries</Label>
@@ -242,7 +239,6 @@ export function CampaignSetting({
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
-                          setHasChanges(true);
                         }}
                       />
                     )}
@@ -251,18 +247,18 @@ export function CampaignSetting({
               </div>
 
               <div className="flex justify-end">
-                <Button
+                <Button 
+                  type="button" 
                   onClick={handleSave}
-                  disabled={!hasChanges || isSaving}
-                  className="w-24"
+                  disabled={isSubmitting}
                 >
-                  {isSaving ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving
+                      Saving...
                     </>
                   ) : (
-                    'Save'
+                    'Save Changes'
                   )}
                 </Button>
               </div>

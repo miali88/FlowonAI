@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { MessageTaking, MessageTakingFormValues } from "@/components/ui/message-taking";
 import { CampaignSetting } from "./CampaignSetting";
+import { MessageTaking, MessageTakingFormValues } from "./MessageTaking";
 import { useForm } from "react-hook-form";
 import { Control } from "react-hook-form";
 import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
@@ -9,7 +9,8 @@ import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface CampaignFormValues extends MessageTakingFormValues {
+interface CampaignFormValues {
+  messageTaking: MessageTakingFormValues['messageTaking'];
   campaignSettings: {
     coolOffPeriod: {
       hours: number;
@@ -30,7 +31,6 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
   const [endTime, setEndTime] = useState("17:00");
   const [newQuestion, setNewQuestion] = useState("");
   const [scheduledStart, setScheduledStart] = useState<{ date: Date; time: string } | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CampaignFormValues>({
     defaultValues: {
@@ -44,6 +44,8 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
           automaticallyCaptured: false,
         },
         specificQuestions: [],
+        openingLine: "",
+        closingLine: "",
       },
       campaignSettings: {
         coolOffPeriod: {
@@ -54,6 +56,33 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
       },
     },
   });
+
+  useEffect(() => {
+    if (campaign) {
+      form.reset({
+        messageTaking: {
+          callerName: {
+            required: false,
+            alwaysRequested: false,
+          },
+          callerPhoneNumber: {
+            required: false,
+            automaticallyCaptured: false,
+          },
+          specificQuestions: campaign.message_taking?.questions?.map(q => ({ question: q.question, required: true })) || [],
+          openingLine: campaign.message_taking?.opening_line || "",
+          closingLine: campaign.message_taking?.closing_line || "",
+        },
+        campaignSettings: {
+          coolOffPeriod: {
+            hours: campaign.agent_details?.cool_off || 0,
+            days: 0,
+          },
+          numberOfRetries: campaign.agent_details?.number_of_retries || 3,
+        },
+      });
+    }
+  }, [campaign, form]);
 
   useEffect(() => {
     if (campaign.message_taking) {
@@ -74,6 +103,8 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
             question: q.question,
             required: true,
           })) || [],
+          openingLine: campaign.message_taking.opening_line || "",
+          closingLine: campaign.message_taking.closing_line || "",
         },
         campaignSettings: {
           coolOffPeriod: {
@@ -136,90 +167,6 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
     }
   }, [scheduledStart, campaignId, campaign.status, onUpdate]);
 
-  const addQuestion = async () => {
-    if (newQuestion.trim()) {
-      try {
-        const currentQuestions = form.getValues("messageTaking.specificQuestions");
-        const newQuestions = [...currentQuestions, { question: newQuestion.trim(), required: true }];
-        
-        const response = await fetch(`/api/campaigns/${campaignId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...campaign,
-            message_taking: {
-              ...campaign.message_taking,
-              questions: newQuestions.map(q => ({
-                question: q.question,
-                answered: false,
-              })),
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to add question');
-        }
-
-        const updatedCampaign = await response.json();
-        onUpdate(updatedCampaign);
-        setNewQuestion("");
-        toast.success("Question added successfully");
-      } catch (error) {
-        toast.error("Failed to add question");
-      }
-    }
-  };
-
-  const handleFormSubmit = async (data: CampaignFormValues) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...campaign,
-          message_taking: {
-            opening_line: data.messageTaking.callerName.required ? "Hello" : undefined,
-            closing_line: "Thank you",
-            questions: data.messageTaking.specificQuestions.map(q => ({
-              question: q.question,
-              answered: false,
-            })),
-          },
-          agent_details: {
-            cool_off: data.campaignSettings.coolOffPeriod.hours,
-            number_of_retries: data.campaignSettings.numberOfRetries,
-            working_hours: {
-              start: startTime,
-              end: endTime,
-            },
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update campaign details');
-      }
-
-      const updatedCampaign = await response.json();
-      onUpdate(updatedCampaign);
-      toast.success("Campaign details updated successfully");
-    } catch (error) {
-      toast.error("Failed to update campaign details");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleCampaignStartUpdate = (date: Date | undefined, time: string) => {
     if (date) {
       setScheduledStart({ date, time });
@@ -227,26 +174,26 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
     }
   };
 
-  // Auto-save when form changes
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      if (Object.keys(form.formState.dirtyFields).length > 0) {
-        form.handleSubmit(handleFormSubmit)();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
   return (
-    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+    <div className="space-y-6">
       <MessageTaking
         control={form.control as unknown as Control<MessageTakingFormValues>}
-        errors={form.formState.errors}
+        errors={form.formState.errors.messageTaking || {}}
         newQuestion={newQuestion}
         setNewQuestion={setNewQuestion}
-        addQuestion={addQuestion}
+        addQuestion={() => {
+          const currentQuestions = form.getValues("messageTaking.specificQuestions") || [];
+          form.setValue("messageTaking.specificQuestions", [
+            ...currentQuestions,
+            { question: newQuestion.trim(), required: true },
+          ]);
+          setNewQuestion("");
+        }}
         getValues={form.getValues as unknown as UseFormGetValues<MessageTakingFormValues>}
         setValue={form.setValue as unknown as UseFormSetValue<MessageTakingFormValues>}
+        campaignId={campaignId}
+        campaign={campaign}
+        onUpdate={onUpdate}
       />
       
       <CampaignSetting
@@ -260,7 +207,9 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
         onUpdate={handleCampaignStartUpdate}
         defaultStartDate={scheduledStart?.date}
         defaultWorkingHours={campaign.agent_details?.working_hours}
+        campaign={campaign}
+        onUpdateCampaign={onUpdate}
       />
-    </form>
+    </div>
   );
 } 
