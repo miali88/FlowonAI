@@ -154,6 +154,12 @@ export function CampaignSetting({
                         />
                       </PopoverContent>
                     </Popover>
+                    <Input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => handleTimeChange('start', e.target.value)}
+                      className="w-[120px]"
+                    />
                   </div>
                 </div>
 
