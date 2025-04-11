@@ -284,6 +284,28 @@ class CampaignService:
             campaign_data["user_id"] = user_id
             campaign_data["business_information"] = business_information
             
+            # Ensure message_taking has the proper structure
+            if "message_taking" not in campaign_data or not campaign_data["message_taking"]:
+                campaign_data["message_taking"] = {
+                    "ask_caller_name": False,
+                    "ask_caller_phone_number": False,
+                    "opening_line": "Thank you for contacting us! My name is Michael and I will assist you today.",
+                    "closing_line": "We'll get back to you shortly. Have a great day!",
+                    "questions": []
+                }
+            elif isinstance(campaign_data["message_taking"], dict):
+                # Ensure all required fields exist
+                if "ask_caller_name" not in campaign_data["message_taking"]:
+                    campaign_data["message_taking"]["ask_caller_name"] = False
+                if "ask_caller_phone_number" not in campaign_data["message_taking"]:
+                    campaign_data["message_taking"]["ask_caller_phone_number"] = False
+                if "opening_line" not in campaign_data["message_taking"]:
+                    campaign_data["message_taking"]["opening_line"] = "Thank you for contacting us! My name is Michael and I will assist you today."
+                if "closing_line" not in campaign_data["message_taking"]:
+                    campaign_data["message_taking"]["closing_line"] = "We'll get back to you shortly. Have a great day!"
+                if "questions" not in campaign_data["message_taking"]:
+                    campaign_data["message_taking"]["questions"] = []
+            
             # Insert campaign into database
             response = await supabase.table("campaigns").insert(campaign_data).execute()
             
@@ -380,6 +402,10 @@ class CampaignService:
                 if isinstance(update_data["message_taking"], dict):
                     # Ensure required fields exist with defaults if not provided
                     message_taking = {
+                        "ask_caller_name": update_data["message_taking"].get("ask_caller_name", 
+                                     current_message_taking.get("ask_caller_name", False)),
+                        "ask_caller_phone_number": update_data["message_taking"].get("ask_caller_phone_number", 
+                                             current_message_taking.get("ask_caller_phone_number", False)),
                         "opening_line": update_data["message_taking"].get("opening_line") or 
                                        current_message_taking.get("opening_line") or 
                                        "Thank you for contacting us! My name is Michael and I will assist you today.",
@@ -394,6 +420,8 @@ class CampaignService:
                 else:
                     # If it's not a dict, create the proper structure
                     update_data["message_taking"] = {
+                        "ask_caller_name": current_message_taking.get("ask_caller_name", False),
+                        "ask_caller_phone_number": current_message_taking.get("ask_caller_phone_number", False),
                         "questions": update_data.get("message_taking", []),
                         "opening_line": current_message_taking.get("opening_line") or 
                                        "Thank you for contacting us! My name is Michael and I will assist you today.",
@@ -411,6 +439,7 @@ class CampaignService:
                 if isinstance(update_data["agent_details"], dict):
                     # Merge with current values
                     agent_details = {
+                        "campaign_start_date": update_data["agent_details"].get("campaign_start_date", current_agent_details.get("campaign_start_date", None)),
                         "cool_off": update_data["agent_details"].get("cool_off", current_agent_details.get("cool_off", None)),
                         "number_of_retries": update_data["agent_details"].get("number_of_retries", current_agent_details.get("number_of_retries", 3))
                     }
@@ -806,3 +835,132 @@ class CampaignService:
         except Exception as e:
             logger.error(f"Error scheduling campaign calls: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=f"Failed to schedule campaign calls: {str(e)}")
+
+    @staticmethod
+    async def check_and_start_scheduled_campaigns():
+        """
+        Check for campaigns that have reached their scheduled start date
+        and update their status from 'created' to 'started'.
+        
+        This function is meant to be run periodically as a background task.
+        """
+        logger.info("Checking for campaigns that should be started based on schedule")
+        try:
+            # Initialize Supabase client
+            supabase = await get_supabase()
+            
+            # Get current time in ISO format
+            current_time = datetime.utcnow().isoformat()
+            
+            # Query for all campaigns first, then filter in Python
+            # This avoids the JSON syntax error
+            campaigns_response = await supabase.table("campaigns").select("*").execute()
+            
+            if not campaigns_response.data:
+                logger.info("No campaigns found")
+                return 0
+            
+            # Filter campaigns with status "created" in Python
+            created_campaigns = [c for c in campaigns_response.data if c.get("status") == "created"]
+            
+            if not created_campaigns:
+                logger.info("No campaigns with 'created' status found")
+                return 0
+            
+            campaigns_to_start = []
+            for campaign in created_campaigns:
+                agent_details = campaign.get("agent_details", {}) or {}
+                campaign_start_date = agent_details.get("campaign_start_date")
+                
+                if not campaign_start_date:
+                    continue
+                    
+                # Check if the start date has passed
+                try:
+                    # Parse the date string to a datetime object
+                    start_date = datetime.fromisoformat(campaign_start_date.replace('Z', '+00:00'))
+                    
+                    if datetime.utcnow() >= start_date:
+                        campaigns_to_start.append(campaign)
+                        logger.info(f"Campaign {campaign['id']} scheduled start time has passed, will be started")
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Invalid campaign_start_date format for campaign {campaign['id']}: {str(e)}")
+                    continue
+            
+            # Update the status of campaigns that should be started
+            for campaign in campaigns_to_start:
+                campaign_id = campaign["id"]
+                user_id = campaign["user_id"]
+                
+                # Update campaign status to 'started'
+                await CampaignService.update_campaign_status(
+                    campaign_id=campaign_id,
+                    status="started",
+                    user_id=user_id
+                )
+                
+                logger.info(f"Campaign {campaign_id} status updated to 'started' based on scheduled start date")
+            
+            return len(campaigns_to_start)
+        
+        except Exception as e:
+            logger.error(f"Error checking scheduled campaigns: {str(e)}")
+            # Don't raise exception to prevent background task from failing
+            return 0
+
+    @staticmethod
+    async def schedule_campaign_start(
+        campaign_id: str,
+        start_date: datetime,
+        user_id: str
+    ) -> Dict[str, Any]:
+        """
+        Schedule a campaign to start at a specific date and time
+        
+        Args:
+            campaign_id: ID of the campaign
+            start_date: Date and time when the campaign should start
+            user_id: ID of the user who owns the campaign
+            
+        Returns:
+            Dictionary with the updated campaign data
+        """
+        logger.info(f"Scheduling campaign {campaign_id} to start at {start_date}")
+        
+        try:
+            # Get the current campaign
+            campaign = await CampaignService.get_campaign(campaign_id, user_id)
+            
+            if not campaign:
+                logger.warning(f"Campaign {campaign_id} not found for user {user_id}")
+                raise HTTPException(status_code=404, detail="Campaign not found")
+            
+            # Update the agent_details with the campaign_start_date
+            agent_details = campaign.get("agent_details", {}) or {}
+            agent_details["campaign_start_date"] = start_date.isoformat()
+            
+            # Create update object
+            update_data = CampaignUpdate(
+                agent_details=agent_details,
+                status="created"  # Ensure status is 'created' so it can be started by the scheduler
+            )
+            
+            # Update the campaign
+            updated_campaign = await CampaignService.update_campaign(
+                campaign_id=campaign_id,
+                campaign_update=update_data,
+                user_id=user_id
+            )
+            
+            return {
+                "success": True,
+                "message": f"Campaign scheduled to start at {start_date}",
+                "campaign": updated_campaign
+            }
+            
+        except HTTPException:
+            # Re-raise HTTP exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Error scheduling campaign start: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to schedule campaign start: {str(e)}")

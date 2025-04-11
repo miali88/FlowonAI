@@ -15,6 +15,7 @@ from app.api.main import api_router
 from app.clients.supabase_client import SupabaseConnection
 from app.core.logging_setup import logger
 from app.services.vapi.campaign_scheduler import process_active_campaigns
+from app.services.campaigns import CampaignService
 
 load_dotenv()
 
@@ -105,6 +106,19 @@ async def process_campaigns_periodically():
         # Wait for 5 minutes before checking again
         await asyncio.sleep(300)  # 300 seconds = 5 minutes
 
+# Background task to check for scheduled campaigns
+async def check_scheduled_campaigns():
+    while True:
+        try:
+            logger.info("Running scheduled campaign check")
+            started_count = await CampaignService.check_and_start_scheduled_campaigns()
+            logger.info(f"Scheduled campaign check completed. Started {started_count} campaigns.")
+        except Exception as e:
+            logger.error(f"Error in scheduled campaign check: {str(e)}")
+        
+        # Wait for 5 minutes before checking again
+        await asyncio.sleep(300)  # 300 seconds = 5 minutes
+
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"{settings.PROJECT_NAME} application started successfully")
@@ -186,6 +200,10 @@ async def startup_event():
         # Start the background task
         logger.info("Starting campaign processing background task")
         asyncio.create_task(process_campaigns_periodically())
+
+        # Start the background task to check for scheduled campaigns
+        asyncio.create_task(check_scheduled_campaigns())
+        logger.info("Started background task to check scheduled campaigns")
     except Exception as e:
         logger.error(f"Error in startup_event: {e}")
         raise

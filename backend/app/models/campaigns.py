@@ -12,6 +12,7 @@ class MessageTaking(BaseModel):
     # Include other guided_setup fields
 
 class AgentDetails(BaseModel):
+    campaign_start_date: Optional[str] = None
     cool_off: Optional[int] = None  # Cool off period in hours
     number_of_retries: Optional[int] = 3
 

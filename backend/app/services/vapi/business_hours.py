@@ -9,14 +9,14 @@ class BusinessHoursService:
     @staticmethod
     def is_within_business_hours(
         business_information: Dict[str, Any], 
-        timezone_name: str = "America/New_York"
+        timezone_name: str = "Europe/London"
     ) -> bool:
         """
         Check if current time is within business hours for the current day
         
         Args:
             business_information: Dictionary containing business information including hours
-            timezone_name: Timezone to use for checking hours (default: America/New_York)
+            timezone_name: Timezone to use for checking hours (default: Europe/London)
             
         Returns:
             Boolean indicating whether current time is within business hours
@@ -94,14 +94,14 @@ class BusinessHoursService:
     @staticmethod
     def get_next_business_hours(
         business_information: Dict[str, Any], 
-        timezone_name: str = "America/New_York"
+        timezone_name: str = "Europe/London"
     ) -> Tuple[Optional[datetime], Optional[str]]:
         """
         Get the next available business hours
         
         Args:
             business_information: Dictionary containing business information including hours
-            timezone_name: Timezone to use for checking hours
+            timezone_name: Timezone to use for checking hours (default: Europe/London)
             
         Returns:
             Tuple of (next_open_datetime, day_name) or (None, None) if not found

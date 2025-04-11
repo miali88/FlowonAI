@@ -179,4 +179,23 @@ async def schedule_campaign_calls(
         phone_number_id=request.phone_number_id,
         schedule_time=request.schedule_time,
         max_calls=request.max_calls
+    )
+
+class ScheduleStartRequest(BaseModel):
+    start_date: datetime
+
+@router.post("/{campaign_id}/schedule_start")
+@FlowTracker.track_function()
+async def schedule_campaign_start(
+    campaign_id: str,
+    request: ScheduleStartRequest,
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Schedule a campaign to start at a specific date and time
+    """
+    return await CampaignService.schedule_campaign_start(
+        campaign_id=campaign_id,
+        start_date=request.start_date,
+        user_id=current_user
     ) 
