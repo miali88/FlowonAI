@@ -60,24 +60,25 @@ class OutboundCallService:
             
             # Check business hours unless forced
             if not force_outside_hours:
-                business_info = campaign.get("business_information", {})
-                timezone_str = business_info.get("timezone", "America/New_York")
+                agent_details = campaign.get("agent_details", {})
+                working_hours = agent_details.get("working_hours", {"start": "09:00", "end": "17:00"})
+                timezone_str = "America/New_York"  # Default timezone
                 
-                if not business_hours_service.is_within_business_hours(business_info, timezone_str):
+                if not business_hours_service.is_within_business_hours(working_hours, timezone_str):
                     # Get next business hours
-                    next_open, next_day = business_hours_service.get_next_business_hours(business_info, timezone_str)
+                    next_open, next_day = business_hours_service.get_next_business_hours(working_hours, timezone_str)
                     
                     if next_open:
-                        logger.info(f"Outside business hours. Next available time: {next_open} ({next_day})")
+                        logger.info(f"Outside working hours. Next available time: {next_open} ({next_day})")
                         return {
                             "success": False, 
-                            "error": "Outside business hours",
+                            "error": "Outside working hours",
                             "next_available": next_open.isoformat(),
                             "next_day": next_day
                         }
                     else:
-                        logger.warning(f"No business hours configured for campaign {campaign_id}")
-                        return {"success": False, "error": "No business hours configured"}
+                        logger.warning(f"No working hours configured for campaign {campaign_id}")
+                        return {"success": False, "error": "No working hours configured"}
             
             # Continue with the existing implementation
             clients = campaign.get("clients", [])
@@ -416,7 +417,9 @@ class OutboundCallService:
                         status["retry_at"] = None  # Clear retry time
                     else:
                         # Schedule for retry
-                        retry_time = current_time + timedelta(hours=cool_off_hours)
+                        # Ensure cool_off_hours is a valid number
+                        retry_hours = cool_off_hours if cool_off_hours is not None else 1
+                        retry_time = current_time + timedelta(hours=retry_hours)
                         status["status"] = "retry"
                         status["error"] = result.get("error")
                         status["last_call_time"] = current_time.isoformat()

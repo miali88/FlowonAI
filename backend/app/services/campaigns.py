@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from fastapi import HTTPException, UploadFile
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.vapi.outbound_calls import outbound_call_service
 from app.core.logging_setup import logger
@@ -437,11 +437,21 @@ class CampaignService:
             if "agent_details" in update_data:
                 current_agent_details = current_campaign.get("agent_details", {}) or {}
                 agent_details = {
-                    "campaign_start_date": update_data["agent_details"].get("campaign_start_date", current_agent_details.get("campaign_start_date", None)),
-                    "cool_off": update_data["agent_details"].get("cool_off", current_agent_details.get("cool_off", None)),
-                    "number_of_retries": update_data["agent_details"].get("number_of_retries", current_agent_details.get("number_of_retries", 3)),
-                    "working_hours": update_data["agent_details"].get("working_hours", current_agent_details.get("working_hours", {"start": "09:00", "end": "17:00"}))
+                    "campaign_start_date": current_agent_details.get("campaign_start_date", None),
+                    "cool_off": current_agent_details.get("cool_off", 1),
+                    "number_of_retries": current_agent_details.get("number_of_retries", 3),
+                    "working_hours": current_agent_details.get("working_hours", {"start": "09:00", "end": "17:00"})
                 }
+
+                # Update only the fields that are being changed
+                if "campaign_start_date" in update_data["agent_details"]:
+                    agent_details["campaign_start_date"] = update_data["agent_details"]["campaign_start_date"]
+                if "cool_off" in update_data["agent_details"]:
+                    agent_details["cool_off"] = update_data["agent_details"]["cool_off"]
+                if "number_of_retries" in update_data["agent_details"]:
+                    agent_details["number_of_retries"] = update_data["agent_details"]["number_of_retries"]
+                if "working_hours" in update_data["agent_details"]:
+                    agent_details["working_hours"] = update_data["agent_details"]["working_hours"]
 
                 # Validate campaign_start_date format if it exists
                 if agent_details.get("campaign_start_date"):
@@ -462,8 +472,8 @@ class CampaignService:
                     except ValueError:
                         raise ValueError(f"Invalid time format for working_hours.{time_key}: {time_str}. Expected format: HH:MM")
 
-                if agent_details != current_agent_details:
-                    update_data["agent_details"] = agent_details
+                # Always update agent_details to ensure all fields are preserved
+                update_data["agent_details"] = agent_details
             
             # Handle clients field - ensure proper structure
             if "clients" in update_data and update_data["clients"] is not None:
@@ -477,6 +487,25 @@ class CampaignService:
                                 "number_of_calls": 0,
                                 "call_id": None
                             }
+            
+            # Validate campaign_start_date if present
+            if "agent_details" in update_data and "campaign_start_date" in update_data["agent_details"]:
+                try:
+                    start_date = datetime.fromisoformat(update_data["agent_details"]["campaign_start_date"].replace('Z', '+00:00'))
+                    if not start_date.tzinfo:
+                        start_date = start_date.replace(tzinfo=timezone.utc)
+                    
+                    current_time = datetime.now(timezone.utc)
+                    if start_date < current_time:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Campaign start date cannot be in the past"
+                        )
+                except (ValueError, TypeError) as e:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid campaign start date format: {str(e)}"
+                    )
             
             # Update campaign in database
             response = await supabase.table("campaigns").update(update_data).eq("id", campaign_id).execute()
@@ -870,7 +899,7 @@ class CampaignService:
             supabase = await get_supabase()
             
             # Get current time in ISO format
-            current_time = datetime.utcnow().isoformat()
+            current_time = datetime.utcnow().replace(tzinfo=timezone.utc)
             
             # Query for all campaigns first, then filter in Python
             # This avoids the JSON syntax error
@@ -897,10 +926,12 @@ class CampaignService:
                     
                 # Check if the start date has passed
                 try:
-                    # Parse the date string to a datetime object
+                    # Parse the date string to a datetime object and ensure it's timezone-aware
                     start_date = datetime.fromisoformat(campaign_start_date.replace('Z', '+00:00'))
+                    if not start_date.tzinfo:
+                        start_date = start_date.replace(tzinfo=timezone.utc)
                     
-                    if datetime.utcnow() >= start_date:
+                    if current_time >= start_date:
                         campaigns_to_start.append(campaign)
                         logger.info(f"Campaign {campaign['id']} scheduled start time has passed, will be started")
                 except (ValueError, TypeError) as e:
