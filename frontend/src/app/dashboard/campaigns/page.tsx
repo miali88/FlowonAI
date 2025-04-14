@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, PhoneOutgoing } from "lucide-react";
+import { Plus, Trash2, PhoneOutgoing, CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Table,
@@ -214,7 +214,16 @@ export default function CampaignsPage() {
                   >
                     <TableCell className="w-1/2 py-4 font-medium">{campaign.name}</TableCell>
                     <TableCell className="w-1/4 py-4">
-                      {campaign.created_at ? format(new Date(campaign.created_at), 'MMM d, yyyy') : '-'}
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {(() => {
+                            const dateStr = campaign.scheduled_start?.date || campaign.agent_details?.campaign_start_date;
+                            if (!dateStr) return "Not scheduled";
+                            return format(new Date(dateStr), "PPP");
+                          })()}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="w-1/4 py-4">
                       <div className="flex items-center justify-between">

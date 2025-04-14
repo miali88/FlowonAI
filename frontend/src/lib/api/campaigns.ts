@@ -88,4 +88,32 @@ export async function uploadClientsCSV(campaignId: string, file: File): Promise<
     throw new Error('Failed to upload clients CSV');
   }
   return response.json();
+}
+
+export async function createOrUpdateCampaignAssistant(
+  campaignId: string, 
+  campaign: CampaignResponse
+): Promise<{ 
+  success: boolean; 
+  message: string; 
+  assistant_data: { 
+    id: string;
+    name: string;
+    voice_id: string;
+    first_message: string;
+    metadata: Record<string, string>;
+  } 
+}> {
+  const response = await fetch(`/api/campaigns/${campaignId}/assistant`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(campaign),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create/update campaign assistant');
+  }
+  return response.json();
 } 

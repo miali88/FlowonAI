@@ -1,4 +1,5 @@
-import { Control, Controller, FieldErrors } from "react-hook-form";
+// Updated CampaignSetting.tsx
+import { FieldErrors } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,14 +20,11 @@ import { toast } from "sonner";
 import { CampaignResponse } from "@/types/campaigns";
 
 interface CampaignSettingProps {
-  campaignId: string;
-  control: Control<Record<string, unknown>>;
-  errors: FieldErrors;
   startTime: string;
   setStartTime: (time: string) => void;
   endTime: string;
   setEndTime: (time: string) => void;
-  onUpdate: (date: Date | undefined, time: string) => void;
+  onUpdate: (date: Date | undefined) => void;
   defaultStartDate?: Date;
   defaultWorkingHours?: {
     start: string;
@@ -34,12 +32,10 @@ interface CampaignSettingProps {
   };
   campaign: CampaignResponse;
   onUpdateCampaign: (data: CampaignResponse) => void;
+  errors: FieldErrors;
 }
 
 export function CampaignSetting({
-  campaignId,
-  control,
-  errors,
   startTime,
   setStartTime,
   endTime,
@@ -49,23 +45,50 @@ export function CampaignSetting({
   defaultWorkingHours,
   campaign,
   onUpdateCampaign,
+  errors,
 }: CampaignSettingProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(defaultStartDate);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coolOff, setCoolOff] = useState<number>(campaign?.agent_details?.cool_off || 1);
+  const [retries, setRetries] = useState<number>(campaign?.agent_details?.number_of_retries || 3);
+  const [isValidTime, setIsValidTime] = useState({ start: true, end: true });
+
+  useEffect(() => {
+    // Check both possible date sources
+    if (campaign?.scheduled_start?.date) {
+      setStartDate(new Date(campaign.scheduled_start.date));
+    } else if (campaign?.agent_details?.campaign_start_date) {
+      setStartDate(new Date(campaign.agent_details.campaign_start_date));
+    }
+
+    // Set working hours from agent_details
+    if (campaign?.agent_details?.working_hours) {
+      setStartTime(campaign.agent_details.working_hours.start);
+      setEndTime(campaign.agent_details.working_hours.end);
+    }
+
+    // Set other agent details
+    if (campaign?.agent_details) {
+      setCoolOff(campaign.agent_details.cool_off || 1);
+      setRetries(campaign.agent_details.number_of_retries || 3);
+    }
+  }, [campaign]);
 
   useEffect(() => {
     if (defaultWorkingHours) {
       setStartTime(defaultWorkingHours.start);
       setEndTime(defaultWorkingHours.end);
     }
-  }, [defaultWorkingHours, setStartTime, setEndTime]);
+  }, [defaultWorkingHours]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setStartDate(date);
-    onUpdate(date, startTime);
+  const validateTime = (time: string): boolean => {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(time);
   };
 
   const handleTimeChange = (type: 'start' | 'end', value: string) => {
+    const isValid = validateTime(value);
+    setIsValidTime(prev => ({ ...prev, [type]: isValid }));
     if (type === 'start') {
       setStartTime(value);
     } else {
@@ -74,41 +97,46 @@ export function CampaignSetting({
   };
 
   const handleSave = async () => {
+    if (!startDate) {
+      toast.error("Please select a start date");
+      return;
+    }
+
+    if (!isValidTime.start || !isValidTime.end) {
+      toast.error("Please enter valid working hours in HH:MM format");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/campaigns/${campaign.id}`, {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...campaign,
           agent_details: {
-            ...campaign.agent_details,
             working_hours: {
               start: startTime,
-              end: endTime,
+              end: endTime
             },
-            cool_off: control._getWatch("campaignSettings.coolOffPeriod.hours"),
-            number_of_retries: control._getWatch("campaignSettings.numberOfRetries"),
-          },
-          scheduled_start: startDate ? {
-            date: startDate.toISOString(),
-            time: startTime,
-          } : campaign.scheduled_start,
+            campaign_start_date: startDate.toISOString()
+          }
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update campaign settings');
+        throw new Error(error.message || "Failed to update campaign settings");
       }
 
       const updatedCampaign = await response.json();
       onUpdateCampaign(updatedCampaign);
+      onUpdate(startDate);
       toast.success("Campaign settings updated successfully");
     } catch (error) {
-      toast.error("Failed to update campaign settings");
+      console.error("Error updating campaign settings:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update campaign settings");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +165,7 @@ export function CampaignSetting({
                         <Button
                           variant="outline"
                           className={cn(
-                            "w-[240px] justify-start text-left font-normal",
+                            "w-42 justify-start text-left font-normal",
                             !startDate && "text-muted-foreground"
                           )}
                         >
@@ -149,84 +177,59 @@ export function CampaignSetting({
                         <Calendar
                           mode="single"
                           selected={startDate}
-                          onSelect={handleDateSelect}
+                          onSelect={(date) => setStartDate(date)}
                           initialFocus
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => handleTimeChange('start', e.target.value)}
-                      className="w-[120px]"
-                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Working Hours</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => handleTimeChange('start', e.target.value)}
+                        className={cn(
+                          "w-32 text-center",
+                          !isValidTime.start && 'border-red-500'
+                        )}
+                      />
+                      <span className="text-sm text-muted-foreground">to</span>
+                      <Input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => handleTimeChange('end', e.target.value)}
+                        className={cn(
+                          "w-32 text-center",
+                          !isValidTime.end && 'border-red-500'
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label>Working Hours</Label>
-                  <div className="flex items-center gap-4">
+                  <Label>Cool-off Period (hours)</Label>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Minimum time between retry attempts for failed calls
+                  </p>
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => handleTimeChange('start', e.target.value)}
-                      className="w-32"
+                      type="number"
+                      min="1"
+                      value={coolOff}
+                      onChange={(e) => setCoolOff(parseInt(e.target.value) || 1)}
+                      className="w-32 text-center"
                     />
-                    <span className="self-center">to</span>
-                    <Input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => handleTimeChange('end', e.target.value)}
-                      className="w-32"
-                    />
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Label>Cool-off Period</Label>
-                  <div className="flex gap-4 items-center">
-                    <div className="flex items-center gap-2">
-                      <Controller
-                        control={control}
-                        name="campaignSettings.coolOffPeriod.hours"
-                        render={({ field }) => (
-                          <Input 
-                            type="number" 
-                            placeholder="Hours" 
-                            className="w-24"
-                            {...field}
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              field.onChange(e);
-                            }}
-                          />
-                        )}
-                      />
-                      <span className="text-sm text-muted-foreground">hours</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Controller
-                        control={control}
-                        name="campaignSettings.coolOffPeriod.days"
-                        render={({ field }) => (
-                          <Input 
-                            type="number" 
-                            placeholder="Days" 
-                            className="w-24"
-                            {...field}
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              field.onChange(e);
-                            }}
-                          />
-                        )}
-                      />
-                      <span className="text-sm text-muted-foreground">days</span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">hours</span>
                   </div>
                 </div>
 
@@ -234,39 +237,38 @@ export function CampaignSetting({
 
                 <div className="space-y-2">
                   <Label>Number of Retries</Label>
-                  <Controller
-                    control={control}
-                    name="campaignSettings.numberOfRetries"
-                    render={({ field }) => (
-                      <Input 
-                        type="number" 
-                        placeholder="3" 
-                        className="w-32" 
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                        }}
-                      />
-                    )}
-                  />
+                  <p className="text-sm text-gray-500 mb-4">
+                    Maximum number of retry attempts for failed calls (0-10)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={retries}
+                      onChange={(e) => setRetries(parseInt(e.target.value) || 0)}
+                      className="w-32 text-center"
+                    />
+                    <span className="text-sm text-muted-foreground">attempts</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end">
-                <Button 
-                  type="button" 
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </AccordionContent>
@@ -274,4 +276,4 @@ export function CampaignSetting({
       </Accordion>
     </Card>
   );
-} 
+}

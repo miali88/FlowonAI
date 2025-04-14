@@ -116,7 +116,40 @@ export default function CampaignPage() {
     try {
       const newStatus = campaignData.status === "started" ? "paused" : "started";
 
-      const response = await fetch(`/api/campaigns/${campaignId}/status`, {
+      // First, ensure we have a VAPI assistant ID
+      if (newStatus === "started" && !campaignData.vapi_assistant_id) {
+        // Create/update the assistant first
+        const response = await fetch(`/api/campaigns/${campaignId}/assistant`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            business_information: campaignData.business_information,
+            message_taking: campaignData.message_taking,
+            name: campaignData.name
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create/update campaign assistant');
+        }
+
+        const assistantData = await response.json();
+        if (!assistantData.success) {
+          throw new Error(assistantData.message || 'Failed to create/update campaign assistant');
+        }
+
+        // Update local campaign data with new assistant ID
+        setCampaignData(prev => ({
+          ...prev!,
+          vapi_assistant_id: assistantData.assistant_data.id
+        }));
+      }
+
+      // Update campaign status
+      const statusResponse = await fetch(`/api/campaigns/${campaignId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,12 +157,12 @@ export default function CampaignPage() {
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (!statusResponse.ok) {
+        const error = await statusResponse.json();
         throw new Error(error.error || 'Failed to update campaign status');
       }
 
-      const updatedCampaign = await response.json();
+      const updatedCampaign = await statusResponse.json();
       setCampaignData(updatedCampaign);
       toast.success(`Campaign ${newStatus === "started" ? "started" : "paused"} successfully`);
     } catch (err) {

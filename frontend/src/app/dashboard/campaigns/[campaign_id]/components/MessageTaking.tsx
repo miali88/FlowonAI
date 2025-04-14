@@ -8,7 +8,7 @@ import { X, Loader2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CampaignResponse } from "@/types/campaigns";
 // Define the form values interface
 export interface MessageTakingFormValues {
@@ -67,6 +67,8 @@ export function MessageTaking({
     setIsSubmitting(true);
     try {
       const messageTakingData = getValues("messageTaking");
+      
+      // First, update the campaign with message taking settings
       const response = await fetch(`/api/campaigns/${campaignId}`, {
         method: 'PUT',
         headers: {
@@ -100,14 +102,79 @@ export function MessageTaking({
       }
 
       const updatedCampaign = await response.json();
-      onUpdate(updatedCampaign);
+      
+      // If campaign is started, update the assistant with new message taking settings
+      if (updatedCampaign.status === "started" && updatedCampaign.vapi_assistant_id) {
+        const assistantResponse = await fetch(`/api/campaigns/${campaignId}/assistant`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedCampaign),
+        });
+
+        if (!assistantResponse.ok) {
+          const error = await assistantResponse.json();
+          throw new Error(error.error || 'Failed to update campaign assistant');
+        }
+
+        const assistantData = await assistantResponse.json();
+        if (!assistantData.success) {
+          throw new Error(assistantData.message || 'Failed to update campaign assistant');
+        }
+      }
+
+      // Update the local campaign data with the new message taking settings
+      onUpdate({
+        ...updatedCampaign,
+        message_taking: {
+          ...updatedCampaign.message_taking,
+          caller_name: {
+            required: messageTakingData.callerName.required,
+            always_requested: messageTakingData.callerName.alwaysRequested,
+          },
+          caller_phone_number: {
+            required: messageTakingData.callerPhoneNumber.required,
+            automatically_captured: messageTakingData.callerPhoneNumber.automaticallyCaptured,
+          },
+        },
+      });
+      
       toast.success("Message taking settings updated successfully");
     } catch (error) {
-      toast.error("Failed to update message taking settings");
+      toast.error(error instanceof Error ? error.message : "Failed to update message taking settings");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Add useEffect to update form values when campaign data changes
+  useEffect(() => {
+    if (campaign.message_taking) {
+      // Only set values if they haven't been set yet
+      const currentValues = getValues("messageTaking");
+      if (!currentValues.callerName) {
+        setValue("messageTaking.callerName.required", campaign.message_taking.caller_name?.required || false);
+        setValue("messageTaking.callerName.alwaysRequested", campaign.message_taking.caller_name?.always_requested || false);
+      }
+      if (!currentValues.callerPhoneNumber) {
+        setValue("messageTaking.callerPhoneNumber.required", campaign.message_taking.caller_phone_number?.required || false);
+        setValue("messageTaking.callerPhoneNumber.automaticallyCaptured", campaign.message_taking.caller_phone_number?.automatically_captured || false);
+      }
+      if (!currentValues.openingLine) {
+        setValue("messageTaking.openingLine", campaign.message_taking.opening_line || "");
+      }
+      if (!currentValues.closingLine) {
+        setValue("messageTaking.closingLine", campaign.message_taking.closing_line || "");
+      }
+      if (!currentValues.specificQuestions?.length) {
+        setValue("messageTaking.specificQuestions", campaign.message_taking.questions?.map(q => ({
+          question: q.question,
+          required: true,
+        })) || []);
+      }
+    }
+  }, [campaign, setValue, getValues]);
 
   return (
     <Card className={errors.messageTaking ? "border-red-500" : ""}>

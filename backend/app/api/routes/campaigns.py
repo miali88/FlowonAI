@@ -198,4 +198,39 @@ async def schedule_campaign_start(
         campaign_id=campaign_id,
         start_date=request.start_date,
         user_id=current_user
-    ) 
+    )
+
+@router.post("/{campaign_id}/assistant")
+@FlowTracker.track_function()
+async def create_update_assistant(
+    campaign_id: str,
+    campaign_data: Dict[str, Any],
+    current_user: str = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Create or update a VAPI assistant for a campaign
+    """
+    # Get the current campaign first to ensure it exists and belongs to the user
+    campaign = await CampaignService.get_campaign(campaign_id, current_user)
+    
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    # Merge the current campaign data with the update data
+    merged_data = {**campaign, **campaign_data, "id": campaign_id}
+    
+    # Create or update the assistant
+    success, message, assistant_data = await CampaignService.update_campaign_assistant(
+        campaign_id=campaign_id,
+        campaign_data=merged_data,
+        user_id=current_user
+    )
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    return {
+        "success": True,
+        "message": message,
+        "assistant_data": assistant_data
+    } 

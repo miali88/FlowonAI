@@ -4,9 +4,20 @@ export interface MessageQuestion {
 }
 
 export interface MessageTaking {
-  opening_line?: string;
-  closing_line?: string;
-  questions?: MessageQuestion[];
+  opening_line: string;
+  closing_line: string;
+  questions: Array<{
+    question: string;
+    answered: boolean;
+  }>;
+  caller_name?: {
+    required: boolean;
+    always_requested: boolean;
+  };
+  caller_phone_number?: {
+    required: boolean;
+    automatically_captured: boolean;
+  };
 }
 
 export interface WorkingHours {
@@ -23,6 +34,7 @@ export interface AgentDetails {
   cool_off?: number;
   number_of_retries?: number;
   working_hours?: WorkingHours;
+  campaign_start_date?: string;
 }
 
 export interface ClientStatus {
@@ -86,4 +98,5 @@ export interface CampaignResponse extends CampaignBase {
   user_id: string;
   created_at?: string;
   updated_at?: string;
+  vapi_assistant_id?: string;
 } 

@@ -436,13 +436,33 @@ class CampaignService:
             # Handle agent_details field
             if "agent_details" in update_data:
                 current_agent_details = current_campaign.get("agent_details", {}) or {}
-                if isinstance(update_data["agent_details"], dict):
-                    # Merge with current values
-                    agent_details = {
-                        "campaign_start_date": update_data["agent_details"].get("campaign_start_date", current_agent_details.get("campaign_start_date", None)),
-                        "cool_off": update_data["agent_details"].get("cool_off", current_agent_details.get("cool_off", None)),
-                        "number_of_retries": update_data["agent_details"].get("number_of_retries", current_agent_details.get("number_of_retries", 3))
-                    }
+                agent_details = {
+                    "campaign_start_date": update_data["agent_details"].get("campaign_start_date", current_agent_details.get("campaign_start_date", None)),
+                    "cool_off": update_data["agent_details"].get("cool_off", current_agent_details.get("cool_off", None)),
+                    "number_of_retries": update_data["agent_details"].get("number_of_retries", current_agent_details.get("number_of_retries", 3)),
+                    "working_hours": update_data["agent_details"].get("working_hours", current_agent_details.get("working_hours", {"start": "09:00", "end": "17:00"}))
+                }
+
+                # Validate campaign_start_date format if it exists
+                if agent_details.get("campaign_start_date"):
+                    try:
+                        datetime.fromisoformat(agent_details["campaign_start_date"].replace('Z', '+00:00'))
+                    except ValueError:
+                        raise ValueError(f"Invalid campaign_start_date format for campaign {campaign_id}: {agent_details['campaign_start_date']}")
+
+                # Validate working_hours format
+                working_hours = agent_details.get("working_hours", {})
+                if not isinstance(working_hours, dict) or "start" not in working_hours or "end" not in working_hours:
+                    raise ValueError("working_hours must be an object with 'start' and 'end' time strings")
+
+                for time_key in ["start", "end"]:
+                    time_str = working_hours[time_key]
+                    try:
+                        datetime.strptime(time_str, "%H:%M")
+                    except ValueError:
+                        raise ValueError(f"Invalid time format for working_hours.{time_key}: {time_str}. Expected format: HH:MM")
+
+                if agent_details != current_agent_details:
                     update_data["agent_details"] = agent_details
             
             # Handle clients field - ensure proper structure
