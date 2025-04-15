@@ -416,6 +416,11 @@ class CampaignService:
                                     current_message_taking.get("questions") or 
                                     []
                     }
+                    
+                    # Ensure boolean fields are explicitly set to boolean values
+                    message_taking["ask_caller_name"] = bool(message_taking["ask_caller_name"])
+                    message_taking["ask_caller_phone_number"] = bool(message_taking["ask_caller_phone_number"])
+                    
                     update_data["message_taking"] = message_taking
                 else:
                     # If it's not a dict, create the proper structure
@@ -435,6 +440,10 @@ class CampaignService:
             
             # Handle agent_details field
             if "agent_details" in update_data:
+                logger.info(f"Updating agent_details for campaign {campaign_id}")
+                logger.info(f"Current agent_details: {current_campaign.get('agent_details')}")
+                logger.info(f"Update agent_details: {update_data['agent_details']}")
+                
                 current_agent_details = current_campaign.get("agent_details", {}) or {}
                 agent_details = {
                     "campaign_start_date": current_agent_details.get("campaign_start_date", None),
@@ -472,8 +481,8 @@ class CampaignService:
                     except ValueError:
                         raise ValueError(f"Invalid time format for working_hours.{time_key}: {time_str}. Expected format: HH:MM")
 
-                # Always update agent_details to ensure all fields are preserved
-                update_data["agent_details"] = agent_details
+                if agent_details != current_agent_details:
+                    update_data["agent_details"] = agent_details
             
             # Handle clients field - ensure proper structure
             if "clients" in update_data and update_data["clients"] is not None:
@@ -508,6 +517,7 @@ class CampaignService:
                     )
             
             # Update campaign in database
+            logger.info(f"Sending update to database: {update_data}")
             response = await supabase.table("campaigns").update(update_data).eq("id", campaign_id).execute()
             
             if not response.data:
@@ -531,6 +541,7 @@ class CampaignService:
                 
                 if not success:
                     logger.warning(f"Failed to update VAPI assistant: {message}")
+            logger.info(f"Updated campaign data: {updated_campaign}")
             
             return updated_campaign
         except HTTPException:

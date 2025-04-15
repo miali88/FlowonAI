@@ -9,12 +9,15 @@ class MessageTaking(BaseModel):
     opening_line: Optional[str] = None
     closing_line: Optional[str] = None
     questions: Optional[List[MessageQuestion]] = []
+    ask_caller_name: Optional[bool] = False
+    ask_caller_phone_number: Optional[bool] = False
     # Include other guided_setup fields
 
 class AgentDetails(BaseModel):
     campaign_start_date: Optional[str] = None
     cool_off: Optional[int] = None  # Cool off period in hours
     number_of_retries: Optional[int] = 3
+    working_hours: Optional[Dict[str, str]] = None  # Format: {"start": "HH:MM", "end": "HH:MM"}
 
 class ClientStatus(BaseModel):
     status: str = "queued"  # queued, in_progress, called

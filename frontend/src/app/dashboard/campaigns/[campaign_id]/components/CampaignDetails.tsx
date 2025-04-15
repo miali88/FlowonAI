@@ -35,8 +35,8 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
   const form = useForm<CampaignFormValues>({
     defaultValues: {
       messageTaking: {
-        callerName: { required: false, alwaysRequested: false },
-        callerPhoneNumber: { required: false, automaticallyCaptured: false },
+        ask_caller_name: false,
+        ask_caller_phone_number: false,
         specificQuestions: [],
         openingLine: "",
         closingLine: "",
@@ -52,14 +52,8 @@ export function CampaignDetails({ campaignId, campaign, onUpdate }: CampaignDeta
     if (campaign) {
       form.reset({
         messageTaking: {
-          callerName: {
-            required: campaign.message_taking?.caller_name?.required || false,
-            alwaysRequested: campaign.message_taking?.caller_name?.always_requested || false,
-          },
-          callerPhoneNumber: {
-            required: campaign.message_taking?.caller_phone_number?.required || false,
-            automaticallyCaptured: campaign.message_taking?.caller_phone_number?.automatically_captured || false,
-          },
+          ask_caller_name: campaign.message_taking?.ask_caller_name || false,
+          ask_caller_phone_number: campaign.message_taking?.ask_caller_phone_number || false,
           specificQuestions: campaign.message_taking?.questions?.map(q => ({ question: q.question, required: true })) || [],
           openingLine: campaign.message_taking?.opening_line || "",
           closingLine: campaign.message_taking?.closing_line || "",

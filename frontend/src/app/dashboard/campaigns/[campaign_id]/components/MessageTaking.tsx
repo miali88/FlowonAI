@@ -13,14 +13,8 @@ import { CampaignResponse } from "@/types/campaigns";
 // Define the form values interface
 export interface MessageTakingFormValues {
   messageTaking: {
-    callerName: {
-      required: boolean;
-      alwaysRequested: boolean;
-    };
-    callerPhoneNumber: {
-      required: boolean;
-      automaticallyCaptured: boolean;
-    };
+    ask_caller_name: boolean;
+    ask_caller_phone_number: boolean;
     specificQuestions: Array<{
       question: string;
       required: boolean;
@@ -75,17 +69,9 @@ export function MessageTaking({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...campaign,
           message_taking: {
-            ...campaign.message_taking,
-            caller_name: {
-              required: messageTakingData.callerName.required,
-              always_requested: messageTakingData.callerName.alwaysRequested,
-            },
-            caller_phone_number: {
-              required: messageTakingData.callerPhoneNumber.required,
-              automatically_captured: messageTakingData.callerPhoneNumber.automaticallyCaptured,
-            },
+            ask_caller_name: messageTakingData.ask_caller_name,
+            ask_caller_phone_number: messageTakingData.ask_caller_phone_number,
             opening_line: messageTakingData.openingLine,
             closing_line: messageTakingData.closingLine,
             questions: messageTakingData.specificQuestions.map(q => ({
@@ -110,17 +96,23 @@ export function MessageTaking({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(updatedCampaign),
+          body: JSON.stringify({
+            message_taking: {
+              ask_caller_name: messageTakingData.ask_caller_name,
+              ask_caller_phone_number: messageTakingData.ask_caller_phone_number,
+              opening_line: messageTakingData.openingLine,
+              closing_line: messageTakingData.closingLine,
+              questions: messageTakingData.specificQuestions.map(q => ({
+                question: q.question,
+                answered: false,
+              })),
+            },
+          }),
         });
 
         if (!assistantResponse.ok) {
           const error = await assistantResponse.json();
           throw new Error(error.error || 'Failed to update campaign assistant');
-        }
-
-        const assistantData = await assistantResponse.json();
-        if (!assistantData.success) {
-          throw new Error(assistantData.message || 'Failed to update campaign assistant');
         }
       }
 
@@ -128,15 +120,14 @@ export function MessageTaking({
       onUpdate({
         ...updatedCampaign,
         message_taking: {
-          ...updatedCampaign.message_taking,
-          caller_name: {
-            required: messageTakingData.callerName.required,
-            always_requested: messageTakingData.callerName.alwaysRequested,
-          },
-          caller_phone_number: {
-            required: messageTakingData.callerPhoneNumber.required,
-            automatically_captured: messageTakingData.callerPhoneNumber.automaticallyCaptured,
-          },
+          ask_caller_name: messageTakingData.ask_caller_name,
+          ask_caller_phone_number: messageTakingData.ask_caller_phone_number,
+          opening_line: messageTakingData.openingLine,
+          closing_line: messageTakingData.closingLine,
+          questions: messageTakingData.specificQuestions.map(q => ({
+            question: q.question,
+            answered: false,
+          })),
         },
       });
       
@@ -151,30 +142,17 @@ export function MessageTaking({
   // Add useEffect to update form values when campaign data changes
   useEffect(() => {
     if (campaign.message_taking) {
-      // Only set values if they haven't been set yet
-      const currentValues = getValues("messageTaking");
-      if (!currentValues.callerName) {
-        setValue("messageTaking.callerName.required", campaign.message_taking.caller_name?.required || false);
-        setValue("messageTaking.callerName.alwaysRequested", campaign.message_taking.caller_name?.always_requested || false);
-      }
-      if (!currentValues.callerPhoneNumber) {
-        setValue("messageTaking.callerPhoneNumber.required", campaign.message_taking.caller_phone_number?.required || false);
-        setValue("messageTaking.callerPhoneNumber.automaticallyCaptured", campaign.message_taking.caller_phone_number?.automatically_captured || false);
-      }
-      if (!currentValues.openingLine) {
-        setValue("messageTaking.openingLine", campaign.message_taking.opening_line || "");
-      }
-      if (!currentValues.closingLine) {
-        setValue("messageTaking.closingLine", campaign.message_taking.closing_line || "");
-      }
-      if (!currentValues.specificQuestions?.length) {
-        setValue("messageTaking.specificQuestions", campaign.message_taking.questions?.map(q => ({
-          question: q.question,
-          required: true,
-        })) || []);
-      }
+      // Always update values when campaign data changes
+      setValue("messageTaking.ask_caller_name", campaign.message_taking.ask_caller_name || false);
+      setValue("messageTaking.ask_caller_phone_number", campaign.message_taking.ask_caller_phone_number || false);
+      setValue("messageTaking.openingLine", campaign.message_taking.opening_line || "");
+      setValue("messageTaking.closingLine", campaign.message_taking.closing_line || "");
+      setValue("messageTaking.specificQuestions", campaign.message_taking.questions?.map(q => ({
+        question: q.question,
+        required: true,
+      })) || []);
     }
-  }, [campaign, setValue, getValues]);
+  }, [campaign, setValue]);
 
   return (
     <Card className={errors.messageTaking ? "border-red-500" : ""}>
@@ -193,10 +171,10 @@ export function MessageTaking({
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Caller Name</Label>
+                  <Label>Ask for Caller Name</Label>
                   <Controller
                     control={control}
-                    name="messageTaking.callerName.alwaysRequested"
+                    name="messageTaking.ask_caller_name"
                     render={({ field }) => (
                       <Switch
                         checked={field.value}
@@ -206,10 +184,10 @@ export function MessageTaking({
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label>Caller Phone Number</Label>
+                  <Label>Ask for Caller Phone Number</Label>
                   <Controller
                     control={control}
-                    name="messageTaking.callerPhoneNumber.automaticallyCaptured"
+                    name="messageTaking.ask_caller_phone_number"
                     render={({ field }) => (
                       <Switch
                         checked={field.value}

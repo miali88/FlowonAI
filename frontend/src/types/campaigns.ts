@@ -10,14 +10,8 @@ export interface MessageTaking {
     question: string;
     answered: boolean;
   }>;
-  caller_name?: {
-    required: boolean;
-    always_requested: boolean;
-  };
-  caller_phone_number?: {
-    required: boolean;
-    automatically_captured: boolean;
-  };
+  ask_caller_name?: boolean;
+  ask_caller_phone_number?: boolean;
 }
 
 export interface WorkingHours {

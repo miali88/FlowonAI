@@ -63,8 +63,13 @@ export function CampaignSetting({
 
     // Set working hours from agent_details
     if (campaign?.agent_details?.working_hours) {
-      setStartTime(campaign.agent_details.working_hours.start);
-      setEndTime(campaign.agent_details.working_hours.end);
+      const { start, end } = campaign.agent_details.working_hours;
+      setStartTime(start);
+      setEndTime(end);
+      setIsValidTime({
+        start: validateTime(start),
+        end: validateTime(end)
+      });
     }
 
     // Set other agent details
@@ -107,36 +112,87 @@ export function CampaignSetting({
       return;
     }
 
+    // Validate that end time is after start time
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    if (end <= start) {
+      toast.error("End time must be after start time");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      console.log("Saving campaign settings:", {
+        startTime,
+        endTime,
+        startDate,
+        coolOff,
+        retries
+      });
+
+      // Prepare the update data with all fields
+      const updateData = {
+        agent_details: {
+          working_hours: {
+            start: startTime,
+            end: endTime
+          },
+          campaign_start_date: startDate.toISOString(),
+          cool_off: coolOff,
+          number_of_retries: retries
+        }
+      };
+
+      console.log("Sending update:", updateData);
+
       const response = await fetch(`/api/campaigns/${campaign.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          agent_details: {
-            working_hours: {
-              start: startTime,
-              end: endTime
-            },
-            campaign_start_date: startDate.toISOString()
-          }
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update campaign settings");
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to update campaign settings");
       }
 
-      const updatedCampaign = await response.json();
+      const updatedCampaign: CampaignResponse = await response.json();
+      console.log("Updated campaign response:", updatedCampaign);
+      
+      // Validate the response and update all local state
+      if (!updatedCampaign.agent_details) {
+        console.error("Agent details missing from response:", updatedCampaign);
+        throw new Error("Agent details not found in updated campaign response");
+      }
+
+      const { working_hours, cool_off, number_of_retries, campaign_start_date } = updatedCampaign.agent_details;
+
+      // Update all local state with the response data
+      if (working_hours) {
+        setStartTime(working_hours.start);
+        setEndTime(working_hours.end);
+      }
+      if (cool_off !== undefined) {
+        setCoolOff(cool_off);
+      }
+      if (number_of_retries !== undefined) {
+        setRetries(number_of_retries);
+      }
+      if (campaign_start_date) {
+        const newStartDate = new Date(campaign_start_date);
+        setStartDate(newStartDate);
+        onUpdate(newStartDate);
+      }
+      
+      // Update parent component
       onUpdateCampaign(updatedCampaign);
-      onUpdate(startDate);
       toast.success("Campaign settings updated successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating campaign settings:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update campaign settings");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update campaign settings";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
