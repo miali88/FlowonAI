@@ -99,13 +99,6 @@ const nextConfig = {
         pathname: "/**",
       }
     ],
-    domains: [
-      "assets.aceternity.com", 
-      "framerusercontent.com", 
-      "www.google.com",
-      "maps.googleapis.com",
-      "lh3.googleusercontent.com"
-    ],
   },
   // Disable TypeScript and ESLint during the build process
   typescript: {
