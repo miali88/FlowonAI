@@ -1,0 +1,399 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.agent_actions (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  action_name text,
+  config jsonb,
+  user_id text,
+  assigned_agent_id text,
+  CONSTRAINT agent_actions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.agents (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  agentName character varying NOT NULL,
+  userId text,
+  agentPurpose character varying NOT NULL,
+  instructions text,
+  dataSource character varying,
+  openingLine text,
+  voice character varying,
+  language character varying,
+  features jsonb,
+  assigned_telephone character varying,
+  datetime_creation timestamp with time zone DEFAULT now(),
+  form_fields jsonb,
+  voiceProvider text,
+  notify boolean,
+  multi_state jsonb,
+  workflows text,
+  company_name character varying,
+  showSourcesInChat boolean,
+  chat_ui jsonb,
+  agent_logo text,
+  guided_setup_id uuid,
+  CONSTRAINT agents_pkey PRIMARY KEY (id),
+  CONSTRAINT agents_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.campaigns (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id text,
+  name text NOT NULL,
+  business_information jsonb,
+  message_taking jsonb,
+  agent_details jsonb,
+  clients jsonb,
+  status jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  user_text_file_id bigint,
+  user_web_data_id uuid,
+  vapi_assistant_id uuid,
+  CONSTRAINT campaigns_pkey PRIMARY KEY (id),
+  CONSTRAINT campaigns_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT campaigns_user_text_file_id_fkey FOREIGN KEY (user_text_file_id) REFERENCES public.user_text_files(id),
+  CONSTRAINT campaigns_user_web_data_id_fkey FOREIGN KEY (user_web_data_id) REFERENCES public.user_web_data(id)
+);
+CREATE TABLE public.case_documents (
+  document_id integer NOT NULL DEFAULT nextval('case_documents_document_id_seq'::regclass),
+  case_id integer NOT NULL,
+  user_id text NOT NULL,
+  document_title character varying NOT NULL,
+  document_type character varying,
+  file_path character varying,
+  file_size bigint,
+  upload_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  uploaded_by text NOT NULL,
+  document_status character varying,
+  version integer DEFAULT 1,
+  metadata jsonb,
+  base64 text,
+  CONSTRAINT case_documents_pkey PRIMARY KEY (document_id),
+  CONSTRAINT case_documents_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.case_portfolio(case_id),
+  CONSTRAINT case_documents_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT case_documents_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.case_portfolio (
+  case_id integer NOT NULL DEFAULT nextval('case_portfolio_case_id_seq'::regclass),
+  case_number character varying NOT NULL UNIQUE,
+  case_title character varying NOT NULL,
+  user_id text NOT NULL,
+  case_type character varying,
+  stage character varying,
+  appointment_date date,
+  closing_date date,
+  lead_ip character varying,
+  jurisdiction character varying,
+  billing_status character varying,
+  description text,
+  priority_level character varying,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  is_active boolean DEFAULT true,
+  CONSTRAINT case_portfolio_pkey PRIMARY KEY (case_id),
+  CONSTRAINT case_portfolio_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.chunks (
+  id bigint NOT NULL DEFAULT nextval('chunks_id_seq'::regclass),
+  parent_id bigint,
+  content text NOT NULL,
+  chunk_index integer NOT NULL,
+  jina_embedding USER-DEFINED,
+  user_id character varying,
+  tag character varying,
+  token_count integer DEFAULT 0,
+  date_created timestamp with time zone DEFAULT now(),
+  title text,
+  CONSTRAINT chunks_pkey PRIMARY KEY (id),
+  CONSTRAINT chunks_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.user_text_files(id)
+);
+CREATE TABLE public.conversation_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  job_id character varying UNIQUE,
+  room_sid text,
+  room_name text,
+  transcript text,
+  user_id text,
+  summary text,
+  agent_id text,
+  lead character varying,
+  function_calls jsonb,
+  participant_identity character varying,
+  call_duration text,
+  nylas_notification jsonb,
+  call_type character varying,
+  token_count integer,
+  jina_embedding USER-DEFINED,
+  feedback jsonb,
+  CONSTRAINT conversation_logs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.corporate_law (
+  id integer NOT NULL DEFAULT nextval('stock_chunks_id_seq'::regclass),
+  heading ARRAY NOT NULL,
+  content ARRAY NOT NULL,
+  embedding USER-DEFINED,
+  token_count integer,
+  act text,
+  part text,
+  voyage_embedding USER-DEFINED,
+  jina_embedding USER-DEFINED,
+  CONSTRAINT corporate_law_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.guided_setup (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id text NOT NULL,
+  training_sources jsonb,
+  business_information jsonb,
+  message_taking jsonb,
+  call_notifications jsonb,
+  phone_number text,
+  setup_completed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  agent_language text,
+  vapi_assistant_id uuid,
+  trained_on_website boolean DEFAULT false,
+  booking_link jsonb,
+  call_transfers jsonb,
+  CONSTRAINT guided_setup_pkey PRIMARY KEY (id),
+  CONSTRAINT guided_setup_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.insights (
+  user_id text NOT NULL,
+  total_interactions bigint,
+  form_start_rate bigint,
+  form_complete_rate bigint,
+  repeat_visitor_rate bigint,
+  topics_discussed ARRAY,
+  CONSTRAINT insights_pkey PRIMARY KEY (user_id)
+);
+CREATE TABLE public.nylas (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  grant_id uuid,
+  user_id uuid,
+  email_authenticated ARRAY,
+  CONSTRAINT nylas_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.onboarding_steps (
+  user_id text NOT NULL,
+  create_agent boolean NOT NULL DEFAULT false,
+  knowledge_base_add boolean NOT NULL DEFAULT false,
+  first_agent_interaction boolean NOT NULL DEFAULT false,
+  integrate_first_app boolean NOT NULL DEFAULT false,
+  CONSTRAINT onboarding_steps_pkey PRIMARY KEY (user_id),
+  CONSTRAINT onboarding_steps_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.twilio_events (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  event_id text NOT NULL,
+  payload jsonb NOT NULL,
+  timestamp timestamp with time zone DEFAULT now(),
+  CONSTRAINT twilio_events_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.twilio_numbers (
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  phone_number character varying NOT NULL,
+  owner_user_id character varying,
+  area_code character varying,
+  account_sid character varying,
+  number_sid character varying,
+  assigned_agent_id uuid,
+  assigned_agent_name text,
+  user_paid_cost integer,
+  status text,
+  currency character varying,
+  is_trial_number boolean,
+  country_code text,
+  CONSTRAINT twilio_numbers_pkey PRIMARY KEY (phone_number)
+);
+CREATE TABLE public.user_integrations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id text NOT NULL,
+  integration_type character varying NOT NULL,
+  credentials jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_integrations_pkey PRIMARY KEY (id),
+  CONSTRAINT user_integrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.user_tabular_data (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id character varying,
+  file_id bigint,
+  file_name text,
+  sheet_name text,
+  row_data jsonb,
+  row_number integer,
+  tag character varying,
+  guided_setup_id uuid DEFAULT gen_random_uuid(),
+  CONSTRAINT user_tabular_data_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_file FOREIGN KEY (file_id) REFERENCES public.user_text_files(id),
+  CONSTRAINT user_tabular_data_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.user_text_files (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id character varying,
+  heading text,
+  content text,
+  data_type text,
+  token_count integer,
+  file_name text,
+  title text,
+  tag character varying,
+  guided_setup_id uuid,
+  CONSTRAINT user_text_files_pkey PRIMARY KEY (id),
+  CONSTRAINT user_text_files_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.user_text_files_headers (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id character varying,
+  heading text,
+  data_type text,
+  token_count integer,
+  file_name text,
+  title text,
+  tag character varying,
+  parent_id bigint,
+  rag_query text,
+  guided_setup_id uuid,
+  CONSTRAINT user_text_files_headers_pkey PRIMARY KEY (id),
+  CONSTRAINT user_text_files_headers_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.user_web_data (
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  header text,
+  content text,
+  token_count integer,
+  url text,
+  jina_embedding USER-DEFINED,
+  user_id text,
+  user_name character varying,
+  tag character varying,
+  root_url text,
+  id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+  rag_query text,
+  guided_setup_id uuid,
+  CONSTRAINT user_web_data_pkey PRIMARY KEY (id),
+  CONSTRAINT user_web_data_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT user_web_data_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.user_web_data_headers (
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  header text,
+  token_count integer,
+  url text,
+  user_id text,
+  user_name character varying,
+  tag character varying,
+  root_url text,
+  id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+  rag_query text,
+  guided_setup_id uuid,
+  CONSTRAINT user_web_data_headers_pkey PRIMARY KEY (id),
+  CONSTRAINT user_web_data_headers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT user_web_data_headers_guided_setup_id_fkey FOREIGN KEY (guided_setup_id) REFERENCES public.guided_setup(id)
+);
+CREATE TABLE public.users (
+  id text NOT NULL,
+  username character varying NOT NULL UNIQUE,
+  email character varying NOT NULL,
+  password_hash character varying NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  last_login timestamp with time zone,
+  is_active boolean DEFAULT true,
+  role character varying DEFAULT 'user'::character varying,
+  notification_settings jsonb,
+  account_settings jsonb,
+  user_plan text,
+  telephony_numbers jsonb,
+  stripe_customer_id text,
+  onboarding_completed boolean DEFAULT false,
+  trial_start_date timestamp with time zone,
+  trial_end_date timestamp with time zone,
+  is_trial boolean DEFAULT false,
+  trial_plan_type text,
+  trial_minutes_used integer DEFAULT 0,
+  trial_minutes_total integer DEFAULT 25,
+  is_test_user text,
+  total_call_time bigint DEFAULT '0'::bigint,
+  call_count integer DEFAULT 0,
+  first_name text,
+  last_name text,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.vapi_calls (
+  id uuid NOT NULL,
+  call_id text NOT NULL,
+  timestamp bigint NOT NULL,
+  type text NOT NULL,
+  summary text,
+  transcript text,
+  stereo_recording_url text,
+  phone_number text,
+  cost double precision,
+  ended_reason text,
+  started_at text,
+  ended_at text,
+  duration_seconds double precision,
+  duration_minutes double precision,
+  created_at timestamp with time zone DEFAULT now(),
+  customer_number text,
+  user_id text,
+  recording_url text,
+  CONSTRAINT vapi_calls_pkey PRIMARY KEY (id),
+  CONSTRAINT vapi_calls_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.workflow (
+  id integer NOT NULL DEFAULT nextval('workflow_instances_instance_id_seq'::regclass),
+  user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  current_state_id character varying NOT NULL,
+  context_data jsonb,
+  started_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  last_updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  completed_at timestamp without time zone,
+  CONSTRAINT workflow_pkey PRIMARY KEY (id),
+  CONSTRAINT workflow_instances_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT workflow_instances_current_state_id_fkey FOREIGN KEY (current_state_id) REFERENCES public.workflow_states(state_id)
+);
+CREATE TABLE public.workflow_states (
+  state_id character varying NOT NULL,
+  user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  configuration text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT workflow_states_pkey PRIMARY KEY (state_id),
+  CONSTRAINT workflow_states_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.workflow_transition_history (
+  history_id integer NOT NULL DEFAULT nextval('workflow_transition_history_history_id_seq'::regclass),
+  user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  instance_id integer NOT NULL,
+  from_state_id character varying NOT NULL,
+  to_state_id character varying NOT NULL,
+  transition_timestamp timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  transition_data jsonb,
+  CONSTRAINT workflow_transition_history_pkey PRIMARY KEY (history_id),
+  CONSTRAINT workflow_transition_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT workflow_transition_history_instance_id_fkey FOREIGN KEY (instance_id) REFERENCES public.workflow(id),
+  CONSTRAINT workflow_transition_history_from_state_id_fkey FOREIGN KEY (from_state_id) REFERENCES public.workflow_states(state_id),
+  CONSTRAINT workflow_transition_history_to_state_id_fkey FOREIGN KEY (to_state_id) REFERENCES public.workflow_states(state_id)
+);
+CREATE TABLE public.workflow_transitions (
+  transition_id integer NOT NULL DEFAULT nextval('workflow_transitions_transition_id_seq'::regclass),
+  user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  from_state_id character varying NOT NULL,
+  to_state_id character varying NOT NULL,
+  transition_name character varying DEFAULT 'Edge'::character varying,
+  conditions jsonb,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT workflow_transitions_pkey PRIMARY KEY (transition_id),
+  CONSTRAINT workflow_transitions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT workflow_transitions_from_state_id_fkey FOREIGN KEY (from_state_id) REFERENCES public.workflow_states(state_id),
+  CONSTRAINT workflow_transitions_to_state_id_fkey FOREIGN KEY (to_state_id) REFERENCES public.workflow_states(state_id)
+);
